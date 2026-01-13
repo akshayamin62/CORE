@@ -7,6 +7,7 @@ import adminRoutes from "./routes/adminRoutes";
 import serviceRoutes from "./routes/serviceRoutes";
 import formAnswerRoutes from "./routes/formAnswerRoutes";
 import studentRoutes from "./routes/studentRoutes";
+import adminStudentRoutes from "./routes/adminStudentRoutes";
 
 // Import all models to register them with Mongoose
 import "./models/User";
@@ -29,6 +30,7 @@ app.use(cors());
 app.use(express.json()); // Parse JSON bodies
 
 app.use("/api/auth", authRoutes);
+app.use("/api/admin/students", adminStudentRoutes); // More specific route must come first
 app.use("/api/admin", adminRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/forms", formAnswerRoutes);

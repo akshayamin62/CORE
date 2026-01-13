@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI, serviceAPI } from '@/lib/api';
-import { Service, StudentServiceRegistration } from '@/types';
+import { Service, StudentServiceRegistration, User, USER_ROLE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import ServiceCard from '@/components/ServiceCard';
 
@@ -15,6 +15,7 @@ export default function Home() {
   const [registeringServiceId, setRegisteringServiceId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -25,9 +26,13 @@ export default function Home() {
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        await authAPI.getProfile();
+        const response = await authAPI.getProfile();
+        setUser(response.data.data.user);
         setIsLoggedIn(true);
-        fetchMyServices();
+        // Only fetch registrations for students
+        if (response.data.data.user.role === USER_ROLE.STUDENT) {
+          fetchMyServices();
+        }
       }
     } catch (error) {
       setIsLoggedIn(false);
@@ -66,6 +71,12 @@ export default function Home() {
     if (!isLoggedIn) {
       toast.error('Please login to register for services');
       router.push('/login');
+      return;
+    }
+
+    // Only students can register
+    if (user?.role !== USER_ROLE.STUDENT) {
+      toast.error('Only students can register for services');
       return;
     }
 
@@ -138,16 +149,23 @@ export default function Home() {
           </div>
         ) : services.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.map((service) => (
-              <ServiceCard
-                key={service._id}
-                service={service}
-                isRegistered={isRegistered(service._id)}
-                onRegister={isLoggedIn ? handleRegister : undefined}
-                onViewDetails={isRegistered(service._id) ? handleViewDetails : undefined}
-                loading={registeringServiceId === service._id}
-              />
-            ))}
+            {services.map((service) => {
+              // Show register button only for students
+              const canRegister = user?.role === USER_ROLE.STUDENT;
+              const showRegisterButton = isLoggedIn && canRegister;
+              
+              return (
+                <ServiceCard
+                  key={service._id}
+                  service={service}
+                  isRegistered={isRegistered(service._id)}
+                  onRegister={showRegisterButton ? handleRegister : undefined}
+                  onViewDetails={isRegistered(service._id) ? handleViewDetails : undefined}
+                  loading={registeringServiceId === service._id}
+                  showLearnMore={!showRegisterButton || !isRegistered(service._id)}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-16 bg-white rounded-xl border border-gray-200">

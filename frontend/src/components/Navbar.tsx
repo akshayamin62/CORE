@@ -83,26 +83,39 @@ export default function Navbar() {
 
             {isLoggedIn ? (
               <>
-                <Link
-                  href="/dashboard"
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    isActive('/dashboard')
-                      ? 'text-blue-600 bg-blue-50 shadow-md'
-                      : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-sm'
-                  }`}
-                >
-                  Dashboard
-                </Link>
-                {(userRole?.toLowerCase() === 'admin' || userRole === 'ADMIN') && (
+                {/* Dashboard link - routes based on user role */}
+                {(userRole?.toLowerCase() === 'admin' || userRole === 'ADMIN') ? (
                   <Link
-                    href="/admin"
+                    href="/admin/dashboard"
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                      isActive('/admin')
-                        ? 'text-red-600 bg-red-50 shadow-md'
-                        : 'text-gray-700 hover:text-red-600 hover:bg-red-50/50 hover:shadow-sm'
+                      pathname.startsWith('/admin')
+                        ? 'text-blue-600 bg-blue-50 shadow-md'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-sm'
                     }`}
                   >
-                    Admin
+                    Dashboard
+                  </Link>
+                ) : (userRole?.toLowerCase() === 'counselor' || userRole === 'COUNSELOR') ? (
+                  <Link
+                    href="/counselor/dashboard"
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      pathname.startsWith('/counselor')
+                        ? 'text-blue-600 bg-blue-50 shadow-md'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-sm'
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <Link
+                    href="/dashboard"
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      isActive('/dashboard')
+                        ? 'text-blue-600 bg-blue-50 shadow-md'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-sm'
+                    }`}
+                  >
+                    Dashboard
                   </Link>
                 )}
                 {/* Profile Dropdown */}
@@ -250,28 +263,42 @@ export default function Navbar() {
 
             {isLoggedIn ? (
               <>
-                <Link
-                  href="/dashboard"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    isActive('/dashboard')
-                      ? 'text-blue-600 bg-blue-50'
-                      : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                  }`}
-                >
-                  Dashboard
-                </Link>
-                {(userRole?.toLowerCase() === 'admin' || userRole === 'ADMIN') && (
+                {/* Dashboard link - routes based on user role */}
+                {(userRole?.toLowerCase() === 'admin' || userRole === 'ADMIN') ? (
                   <Link
-                    href="/admin"
+                    href="/admin/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
                     className={`block px-3 py-2 rounded-md text-base font-medium ${
-                      isActive('/admin')
-                        ? 'text-red-600 bg-red-50'
-                        : 'text-gray-700 hover:text-red-600 hover:bg-gray-50'
+                      pathname.startsWith('/admin')
+                        ? 'text-blue-600 bg-blue-50'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                     }`}
                   >
-                    Admin
+                    Dashboard
+                  </Link>
+                ) : (userRole?.toLowerCase() === 'counselor' || userRole === 'COUNSELOR') ? (
+                  <Link
+                    href="/counselor/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${
+                      pathname.startsWith('/counselor')
+                        ? 'text-blue-600 bg-blue-50'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${
+                      isActive('/dashboard')
+                        ? 'text-blue-600 bg-blue-50'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    Dashboard
                   </Link>
                 )}
                 <Link
