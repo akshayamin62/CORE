@@ -11,6 +11,7 @@ interface FormSubSectionRendererProps {
   onAdd?: () => void;
   onRemove?: (index: number) => void;
   errors?: { [key: string]: string }[];
+  isAdminEdit?: boolean;
 }
 
 export default function FormSubSectionRenderer({
@@ -20,6 +21,7 @@ export default function FormSubSectionRenderer({
   onAdd,
   onRemove,
   errors = [],
+  isAdminEdit = false,
 }: FormSubSectionRendererProps) {
   const [expandedIndices, setExpandedIndices] = useState<Set<number>>(
     new Set([0])
@@ -163,6 +165,7 @@ export default function FormSubSectionRenderer({
                           onChange={(key, value) => onChange(index, key, value)}
                           error={errors[index]?.[field.key]}
                           allValues={instanceValues}
+                          isAdminEdit={isAdminEdit}
                         />
                       </div>
                     );
@@ -178,6 +181,7 @@ export default function FormSubSectionRenderer({
                           onChange={(key, value) => onChange(index, key, value)}
                           error={errors[index]?.[field.key]}
                           allValues={instanceValues}
+                          isAdminEdit={isAdminEdit}
                         />
                       </div>
                     );
@@ -195,6 +199,7 @@ export default function FormSubSectionRenderer({
                           onChange={(key, value) => onChange(index, key, value)}
                           error={errors[index]?.[sortedFields[i].key]}
                           allValues={instanceValues}
+                          isAdminEdit={isAdminEdit}
                         />
                         <FormFieldRenderer
                           field={sortedFields[i + 1]}
@@ -202,6 +207,7 @@ export default function FormSubSectionRenderer({
                           onChange={(key, value) => onChange(index, key, value)}
                           error={errors[index]?.[sortedFields[i + 1].key]}
                           allValues={instanceValues}
+                          isAdminEdit={isAdminEdit}
                         />
                         <FormFieldRenderer
                           field={sortedFields[i + 2]}
@@ -209,6 +215,7 @@ export default function FormSubSectionRenderer({
                           onChange={(key, value) => onChange(index, key, value)}
                           error={errors[index]?.[sortedFields[i + 2].key]}
                           allValues={instanceValues}
+                          isAdminEdit={isAdminEdit}
                         />
                       </div>
                     );
@@ -226,6 +233,7 @@ export default function FormSubSectionRenderer({
                           onChange={(key, value) => onChange(index, key, value)}
                           error={errors[index]?.[sortedFields[i].key]}
                           allValues={instanceValues}
+                          isAdminEdit={isAdminEdit}
                         />
                         <FormFieldRenderer
                           field={sortedFields[i + 1]}
@@ -233,6 +241,7 @@ export default function FormSubSectionRenderer({
                           onChange={(key, value) => onChange(index, key, value)}
                           error={errors[index]?.[sortedFields[i + 1].key]}
                           allValues={instanceValues}
+                          isAdminEdit={isAdminEdit}
                         />
                       </div>
                     );
@@ -316,6 +325,7 @@ export default function FormSubSectionRenderer({
                           onChange={(key, value) => onChange(index, key, value)}
                           error={errors[index]?.[sortedFields[i].key]}
                           allValues={instanceValues}
+                          isAdminEdit={isAdminEdit}
                         />
                         <FormFieldRenderer
                           field={sortedFields[i + 1]}
@@ -323,6 +333,7 @@ export default function FormSubSectionRenderer({
                           onChange={(key, value) => onChange(index, key, value)}
                           error={errors[index]?.[sortedFields[i + 1].key]}
                           allValues={instanceValues}
+                          isAdminEdit={isAdminEdit}
                         />
                       </div>
                     );
@@ -339,6 +350,7 @@ export default function FormSubSectionRenderer({
                           onChange={(key, value) => onChange(index, key, value)}
                           error={errors[index]?.[sortedFields[i].key]}
                           allValues={instanceValues}
+                          isAdminEdit={isAdminEdit}
                         />
                         <FormFieldRenderer
                           field={sortedFields[i + 1]}
@@ -346,6 +358,7 @@ export default function FormSubSectionRenderer({
                           onChange={(key, value) => onChange(index, key, value)}
                           error={errors[index]?.[sortedFields[i + 1].key]}
                           allValues={instanceValues}
+                          isAdminEdit={isAdminEdit}
                         />
                       </div>
                     );
@@ -383,6 +396,7 @@ export default function FormSubSectionRenderer({
                             value={instanceValues?.[field.key]}
                             onChange={(key, value) => onChange(index, key, value)}
                             error={errors[index]?.[field.key]}
+                            isAdminEdit={isAdminEdit}
                           />
                         </div>
                       );

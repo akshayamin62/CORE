@@ -1,0 +1,427 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { authAPI, serviceAPI } from '@/lib/api';
+import { User, USER_ROLE, FormStructure, FormSection } from '@/types';
+import AdminLayout from '@/components/AdminLayout';
+import FormSectionRenderer from '@/components/FormSectionRenderer';
+import FormPartsNavigation from '@/components/FormPartsNavigation';
+import FormSectionsNavigation from '@/components/FormSectionsNavigation';
+import FormSaveButtons from '@/components/FormSaveButtons';
+import StudentFormHeader from '@/components/StudentFormHeader';
+import toast, { Toaster } from 'react-hot-toast';
+import axios from 'axios';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+export default function StudentFormEditPage() {
+  const router = useRouter();
+  const params = useParams();
+  const studentId = params?.studentId as string;
+  const registrationId = params?.registrationId as string;
+
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
+  // Form structure
+  const [formStructure, setFormStructure] = useState<FormStructure[]>([]);
+  const [currentPartIndex, setCurrentPartIndex] = useState(0);
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
+  
+  // Form data
+  const [formValues, setFormValues] = useState<any>({});
+  const [studentInfo, setStudentInfo] = useState<any>(null);
+  const [serviceInfo, setServiceInfo] = useState<any>(null);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  // Pre-fill email field when student info and form structure are loaded
+  useEffect(() => {
+    if (studentInfo?.userId?.email && formStructure.length > 0 && Object.keys(formValues).length > 0) {
+      const studentEmail = studentInfo.userId.email;
+      
+      setFormValues((prev: any) => {
+        const newValues = JSON.parse(JSON.stringify(prev));
+        let updated = false;
+        
+        // Find and set email field in all parts
+        formStructure.forEach((part) => {
+          const partKey = part.part.key;
+          if (!newValues[partKey]) newValues[partKey] = {};
+          
+          part.sections?.forEach((section) => {
+            if (!newValues[partKey][section._id]) newValues[partKey][section._id] = {};
+            
+            section.subSections?.forEach((subSection) => {
+              if (!newValues[partKey][section._id][subSection._id]) {
+                newValues[partKey][section._id][subSection._id] = [{}];
+              }
+              
+              // Check if this subsection has an email field
+              const hasEmailField = subSection.fields?.some(field => field.key === 'email');
+              
+              if (hasEmailField) {
+                const instances = newValues[partKey][section._id][subSection._id];
+                if (Array.isArray(instances)) {
+                  instances.forEach((instance: any) => {
+                    if (instance.email !== studentEmail) {
+                      instance.email = studentEmail;
+                      updated = true;
+                    }
+                  });
+                }
+              }
+            });
+          });
+        });
+        
+        return updated ? newValues : prev;
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [studentInfo, formStructure]);
+
+  const checkAuth = async () => {
+    try {
+      const response = await authAPI.getProfile();
+      const userData = response.data.data.user;
+
+      if (userData.role !== USER_ROLE.COUNSELOR) {
+        toast.error('Access denied.');
+        router.push('/');
+        return;
+      }
+
+      setUser(userData);
+      // First fetch student info to get serviceId
+      await fetchStudentInfo();
+      // Then fetch form structure first
+      const formStructureData = await fetchFormStructure();
+      // Finally fetch form answers with formStructure data
+      await fetchFormAnswers(formStructureData);
+    } catch (error) {
+      toast.error('Please login to continue');
+      router.push('/login');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStudentInfo = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      // First get the full student details with populated userId
+      const studentResponse = await axios.get(
+        `${API_URL}/admin/students/${studentId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setStudentInfo(studentResponse.data.data.student);
+      
+      // Get registration details
+      const regResponse = await axios.get(
+        `${API_URL}/admin/students/${studentId}/registrations/${registrationId}/answers`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setServiceInfo(regResponse.data.data.registration.serviceId);
+    } catch (error: any) {
+      console.error('Fetch student info error:', error);
+      toast.error('Failed to fetch student information');
+    }
+  };
+
+  const fetchFormStructure = async (): Promise<FormStructure[]> => {
+    try {
+      // Get serviceId from registration response
+      const token = localStorage.getItem('token');
+      const regResponse = await axios.get(
+        `${API_URL}/admin/students/${studentId}/registrations/${registrationId}/answers`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const regServiceId = regResponse.data.data.registration.serviceId;
+      const extractedServiceId = typeof regServiceId === 'object' ? regServiceId._id : regServiceId;
+      
+      if (!extractedServiceId) {
+        throw new Error('Service ID not found');
+      }
+      
+      // Fetch form structure using serviceId
+      const response = await serviceAPI.getServiceForm(extractedServiceId);
+      const structure = response.data.data.formStructure || [];
+      setFormStructure(structure);
+      return structure;
+    } catch (error: any) {
+      console.error('Fetch form structure error:', error);
+      toast.error('Failed to fetch form structure');
+      return [];
+    }
+  };
+
+  const fetchFormAnswers = async (formStructureData?: FormStructure[]) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(
+        `${API_URL}/admin/students/${studentId}/registrations/${registrationId}/answers`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      const answers = response.data.data.answers || [];
+      console.log('Raw answers from API:', answers); // Debug
+      console.log('Number of answers:', answers.length); // Debug
+      
+      const formattedAnswers: any = {};
+      
+      // Format answers to match form structure: partKey -> sectionId -> subSectionId -> [instances]
+      answers.forEach((answer: any) => {
+        if (answer && answer.partKey) {
+          // Handle both cases: answer.answers exists or is null/undefined
+          formattedAnswers[answer.partKey] = answer.answers || {};
+        }
+      });
+      
+      console.log('Formatted answers before email:', formattedAnswers); // Debug
+      console.log('Formatted answers keys:', Object.keys(formattedAnswers)); // Debug
+      
+      // Use formStructureData if provided, otherwise use state
+      const structureToUse = formStructureData || formStructure;
+      
+      // Pre-fill email field with student's login email if available
+      if (studentInfo?.userId?.email && structureToUse.length > 0) {
+        const studentEmail = studentInfo.userId.email;
+        
+        // Find and set email field in all parts
+        structureToUse.forEach((part) => {
+          const partKey = part.part.key;
+          if (!formattedAnswers[partKey]) formattedAnswers[partKey] = {};
+          
+          part.sections?.forEach((section) => {
+            if (!formattedAnswers[partKey][section._id]) formattedAnswers[partKey][section._id] = {};
+            
+            section.subSections?.forEach((subSection) => {
+              // Check if this subsection has an email field
+              const hasEmailField = subSection.fields?.some(field => field.key === 'email');
+              
+              if (hasEmailField) {
+                if (!formattedAnswers[partKey][section._id][subSection._id]) {
+                  formattedAnswers[partKey][section._id][subSection._id] = [{}];
+                }
+                
+                const instances = formattedAnswers[partKey][section._id][subSection._id];
+                if (Array.isArray(instances)) {
+                  instances.forEach((instance: any) => {
+                    // Set email if not already set
+                    if (!instance.email) {
+                      instance.email = studentEmail;
+                    }
+                  });
+                }
+              }
+            });
+          });
+        });
+      }
+      
+      console.log('Final formatted answers:', formattedAnswers); // Debug
+      setFormValues(formattedAnswers);
+    } catch (error: any) {
+      console.error('Fetch form answers error:', error);
+      toast.error('Failed to fetch form answers');
+    }
+  };
+
+  const handleFieldChange = (
+    partKey: string,
+    sectionId: string,
+    subSectionId: string,
+    index: number,
+    key: string,
+    value: any
+  ) => {
+    setFormValues((prev: any) => {
+      const newValues = JSON.parse(JSON.stringify(prev));
+      
+      if (!newValues[partKey]) newValues[partKey] = {};
+      if (!newValues[partKey][sectionId]) newValues[partKey][sectionId] = {};
+      if (!newValues[partKey][sectionId][subSectionId]) newValues[partKey][sectionId][subSectionId] = [];
+      if (!newValues[partKey][sectionId][subSectionId][index]) newValues[partKey][sectionId][subSectionId][index] = {};
+
+      newValues[partKey][sectionId][subSectionId][index][key] = value;
+
+      // Handle "Same as Mailing Address" checkbox
+      if (key === 'sameAsMailingAddress') {
+        const currentFormStruct = formStructure[currentPartIndex];
+        const personalSections = currentFormStruct?.sections?.filter(s => s.title === 'Personal Details') || [];
+        if (personalSections.length > 0) {
+          const mailingSubSection = personalSections[0].subSections.find((s: any) => s.title === 'Mailing Address');
+          const permanentSubSection = personalSections[0].subSections.find((s: any) => s.title === 'Permanent Address');
+          
+          if (value && mailingSubSection && permanentSubSection) {
+            const mailingValues = newValues[partKey][sectionId][mailingSubSection._id]?.[0] || {};
+            newValues[partKey][sectionId][subSectionId][index]['permanentAddress1'] = mailingValues['mailingAddress1'] || '';
+            newValues[partKey][sectionId][subSectionId][index]['permanentAddress2'] = mailingValues['mailingAddress2'] || '';
+            newValues[partKey][sectionId][subSectionId][index]['permanentCountry'] = mailingValues['mailingCountry'] || '';
+            newValues[partKey][sectionId][subSectionId][index]['permanentState'] = mailingValues['mailingState'] || '';
+            newValues[partKey][sectionId][subSectionId][index]['permanentCity'] = mailingValues['mailingCity'] || '';
+            newValues[partKey][sectionId][subSectionId][index]['permanentPostalCode'] = mailingValues['mailingPostalCode'] || '';
+          }
+        }
+      }
+
+      // Cascading dropdown logic
+      if (key.includes('Country')) {
+        const stateKey = key.replace('Country', 'State');
+        const cityKey = key.replace('Country', 'City');
+        newValues[partKey][sectionId][subSectionId][index][stateKey] = '';
+        newValues[partKey][sectionId][subSectionId][index][cityKey] = '';
+      } else if (key.includes('State')) {
+        const cityKey = key.replace('State', 'City');
+        newValues[partKey][sectionId][subSectionId][index][cityKey] = '';
+      }
+
+      return newValues;
+    });
+  };
+
+  const handleAddInstance = (partKey: string, sectionId: string, subSectionId: string) => {
+    setFormValues((prev: any) => {
+      const newValues = JSON.parse(JSON.stringify(prev));
+      
+      if (!newValues[partKey]) newValues[partKey] = {};
+      if (!newValues[partKey][sectionId]) newValues[partKey][sectionId] = {};
+      if (!newValues[partKey][sectionId][subSectionId]) newValues[partKey][sectionId][subSectionId] = [];
+
+      newValues[partKey][sectionId][subSectionId].push({});
+      return newValues;
+    });
+  };
+
+  const handleRemoveInstance = (partKey: string, sectionId: string, subSectionId: string, index: number) => {
+    setFormValues((prev: any) => {
+      const newValues = JSON.parse(JSON.stringify(prev));
+      
+      if (newValues[partKey]?.[sectionId]?.[subSectionId]) {
+        newValues[partKey][sectionId][subSectionId].splice(index, 1);
+      }
+      
+      return newValues;
+    });
+  };
+
+  const handleSaveSection = async () => {
+    const currentFormStructure = formStructure[currentPartIndex];
+    if (!currentFormStructure) return;
+
+    setSaving(true);
+    try {
+      const token = localStorage.getItem('token');
+      const partKey = currentFormStructure.part.key;
+      const answers = formValues[partKey] || {};
+
+      await axios.put(
+        `${API_URL}/admin/students/${studentId}/answers/${partKey}`,
+        { answers },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success('Changes saved successfully!');
+    } catch (error: any) {
+      console.error('Save error:', error);
+      toast.error(error.response?.data?.message || 'Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const currentFormStructure = formStructure[currentPartIndex];
+  const currentPart = currentFormStructure?.part;
+  const currentSection = currentFormStructure?.sections?.[currentSectionIndex];
+
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="spinner mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Toaster position="top-right" />
+      <AdminLayout user={user}>
+        <div className="p-8">
+          {/* Back Button */}
+          <button
+            onClick={() => router.back()}
+            className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Student Details
+          </button>
+
+          {/* Student & Service Info */}
+          {studentInfo && serviceInfo && (
+            <StudentFormHeader
+              studentName={studentInfo.userId?.name || 'Student'}
+              serviceName={serviceInfo.name}
+              editMode="counselor"
+            />
+          )}
+
+          {/* Form Parts Navigation */}
+          <FormPartsNavigation
+            formStructure={formStructure}
+            currentPartIndex={currentPartIndex}
+            onPartChange={(index) => {
+              setCurrentPartIndex(index);
+              setCurrentSectionIndex(0);
+            }}
+          />
+
+          {/* Sections Navigation */}
+          {currentFormStructure && (
+            <FormSectionsNavigation
+              sections={currentFormStructure.sections}
+              currentSectionIndex={currentSectionIndex}
+              onSectionChange={setCurrentSectionIndex}
+            />
+          )}
+
+          {/* Current Section Form */}
+          {currentSection && currentPart && (
+            <div className="mb-6">
+              <FormSectionRenderer
+                section={currentSection}
+                values={formValues[currentPart.key]?.[currentSection._id] || {}}
+                onChange={(subSectionId, index, key, value) =>
+                  handleFieldChange(currentPart.key, currentSection._id, subSectionId, index, key, value)
+                }
+                onAddInstance={(subSectionId) =>
+                  handleAddInstance(currentPart.key, currentSection._id, subSectionId)
+                }
+                onRemoveInstance={(subSectionId, index) =>
+                  handleRemoveInstance(currentPart.key, currentSection._id, subSectionId, index)
+                }
+                isAdminEdit={true}
+              />
+            </div>
+          )}
+
+          {/* Save Button */}
+          <FormSaveButtons
+            onSave={handleSaveSection}
+            saving={saving}
+          />
+        </div>
+      </AdminLayout>
+    </>
+  );
+}
+

@@ -206,6 +206,7 @@ interface FormFieldRendererProps {
   onChange: (key: string, value: any) => void;
   error?: string;
   allValues?: any; // All form values for cascading dropdowns
+  isAdminEdit?: boolean; // If true, email field should be read-only
 }
 
 export default function FormFieldRenderer({
@@ -214,6 +215,7 @@ export default function FormFieldRenderer({
   onChange,
   error,
   allValues = {},
+  isAdminEdit = false,
 }: FormFieldRendererProps) {
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const newValue = field.type === FieldType.CHECKBOX 
@@ -231,6 +233,8 @@ export default function FormFieldRenderer({
       case FieldType.TEXT:
       case FieldType.EMAIL:
       case FieldType.PHONE:
+        // Make email field read-only in admin/counselor edit mode
+        const isEmailReadOnly = isAdminEdit && field.key === 'email';
         return (
           <input
             type={field.type === FieldType.EMAIL ? 'email' : field.type === FieldType.PHONE ? 'tel' : 'text'}
@@ -239,7 +243,9 @@ export default function FormFieldRenderer({
             onChange={handleChange}
             placeholder={field.placeholder}
             required={field.required}
-            className={baseInputClasses}
+            readOnly={isEmailReadOnly}
+            disabled={isEmailReadOnly}
+            className={`${baseInputClasses} ${isEmailReadOnly ? 'bg-gray-100 cursor-not-allowed' : ''}`}
           />
         );
 

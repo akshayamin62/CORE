@@ -11,6 +11,7 @@ interface FormSectionRendererProps {
   onAddInstance: (subSectionId: string) => void;
   onRemoveInstance: (subSectionId: string, index: number) => void;
   errors?: { [subSectionId: string]: { [key: string]: string }[] };
+  isAdminEdit?: boolean;
 }
 
 export default function FormSectionRenderer({
@@ -20,6 +21,7 @@ export default function FormSectionRenderer({
   onAddInstance,
   onRemoveInstance,
   errors = {},
+  isAdminEdit = false,
 }: FormSectionRendererProps) {
   // Check if this is a test section (Standardized Tests)
   const isTestSection = section.title.toLowerCase().includes('test');
@@ -53,6 +55,7 @@ export default function FormSectionRenderer({
                     onChange(subSection._id, index, key, value)
                   }
                   errors={errors[subSection._id]}
+                  isAdminEdit={isAdminEdit}
                 />
               );
             }
@@ -75,6 +78,7 @@ export default function FormSectionRenderer({
                   onAdd={() => onAddInstance(subSection._id)}
                   onRemove={(index) => onRemoveInstance(subSection._id, index)}
                   errors={errors[subSection._id]}
+                  isAdminEdit={isAdminEdit}
                 />
               </div>
             );

@@ -9,6 +9,7 @@ interface TestSubSectionRendererProps {
   values: any[];
   onChange: (index: number, key: string, value: any) => void;
   errors?: { [key: string]: string }[];
+  isAdminEdit?: boolean;
 }
 
 export default function TestSubSectionRenderer({
@@ -16,6 +17,7 @@ export default function TestSubSectionRenderer({
   values,
   onChange,
   errors = [],
+  isAdminEdit = false,
 }: TestSubSectionRendererProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -115,6 +117,7 @@ export default function TestSubSectionRenderer({
                       value={instanceValues?.[field.key]}
                       onChange={(key, value) => onChange(0, key, value)}
                       error={errors[0]?.[field.key]}
+                      isAdminEdit={isAdminEdit}
                     />
                   </div>
                 );
@@ -129,6 +132,7 @@ export default function TestSubSectionRenderer({
                       value={instanceValues?.[field.key]}
                       onChange={(key, value) => onChange(0, key, value)}
                       error={errors[0]?.[field.key]}
+                      isAdminEdit={isAdminEdit}
                     />
                   </div>
                 );
