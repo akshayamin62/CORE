@@ -59,6 +59,13 @@ export const adminAPI = {
     api.patch(`/admin/users/${userId}/toggle-status`),
   
   deleteUser: (userId: string) => api.delete(`/admin/users/${userId}`),
+  
+  createCounselor: (data: {
+    name: string;
+    email: string;
+    phoneNumber?: string;
+    specializations?: string[];
+  }) => api.post('/admin/counselors', data),
 };
 
 // Service API

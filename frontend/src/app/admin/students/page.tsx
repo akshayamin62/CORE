@@ -115,7 +115,7 @@ export default function AdminStudentsPage() {
                 placeholder="Search by name, email, or mobile..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
               />
               <svg
                 className="w-5 h-5 text-gray-400 absolute left-4 top-4"

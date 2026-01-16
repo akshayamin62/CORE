@@ -27,6 +27,20 @@ export default function FormSubSectionRenderer({
     new Set([0])
   );
 
+  // When a new instance is added, expand it automatically
+  const handleAddInstance = () => {
+    if (onAdd) {
+      const currentLength = values.length;
+      onAdd();
+      // Add the new index to expanded set (it will be the last index)
+      setExpandedIndices(prev => {
+        const newSet = new Set(prev);
+        newSet.add(currentLength); // Add the new instance index
+        return newSet;
+      });
+    }
+  };
+
   const toggleExpanded = (index: number) => {
     const newExpanded = new Set(expandedIndices);
     if (newExpanded.has(index)) {
@@ -56,7 +70,7 @@ export default function FormSubSectionRenderer({
             type="button"
             onClick={(e) => {
               e.preventDefault();
-              onAdd?.();
+              handleAddInstance();
             }}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2"
           >
@@ -418,7 +432,8 @@ export default function FormSubSectionRenderer({
           type="button"
           onClick={(e) => {
             e.preventDefault();
-            onAdd?.();
+            handleAddInstance();
+            // onAdd?.();
           }}
           className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 bg-white hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors flex items-center justify-center gap-2 font-medium text-sm"
         >

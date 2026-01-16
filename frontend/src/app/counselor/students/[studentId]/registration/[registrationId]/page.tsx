@@ -39,51 +39,6 @@ export default function StudentFormEditPage() {
     checkAuth();
   }, []);
 
-  // Pre-fill email field when student info and form structure are loaded
-  useEffect(() => {
-    if (studentInfo?.userId?.email && formStructure.length > 0 && Object.keys(formValues).length > 0) {
-      const studentEmail = studentInfo.userId.email;
-      
-      setFormValues((prev: any) => {
-        const newValues = JSON.parse(JSON.stringify(prev));
-        let updated = false;
-        
-        // Find and set email field in all parts
-        formStructure.forEach((part) => {
-          const partKey = part.part.key;
-          if (!newValues[partKey]) newValues[partKey] = {};
-          
-          part.sections?.forEach((section) => {
-            if (!newValues[partKey][section._id]) newValues[partKey][section._id] = {};
-            
-            section.subSections?.forEach((subSection) => {
-              if (!newValues[partKey][section._id][subSection._id]) {
-                newValues[partKey][section._id][subSection._id] = [{}];
-              }
-              
-              // Check if this subsection has an email field
-              const hasEmailField = subSection.fields?.some(field => field.key === 'email');
-              
-              if (hasEmailField) {
-                const instances = newValues[partKey][section._id][subSection._id];
-                if (Array.isArray(instances)) {
-                  instances.forEach((instance: any) => {
-                    if (instance.email !== studentEmail) {
-                      instance.email = studentEmail;
-                      updated = true;
-                    }
-                  });
-                }
-              }
-            });
-          });
-        });
-        
-        return updated ? newValues : prev;
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [studentInfo, formStructure]);
 
   const checkAuth = async () => {
     try {
@@ -188,11 +143,11 @@ export default function StudentFormEditPage() {
       // Use formStructureData if provided, otherwise use state
       const structureToUse = formStructureData || formStructure;
       
-      // Pre-fill email field with student's login email if available
-      if (studentInfo?.userId?.email && structureToUse.length > 0) {
-        const studentEmail = studentInfo.userId.email;
-        
-        // Find and set email field in all parts
+      // Get student data from response if available
+      const studentData = response.data.data.student || {};
+      
+      // Pre-fill phone and country defaults
+      if (structureToUse.length > 0) {
         structureToUse.forEach((part) => {
           const partKey = part.part.key;
           if (!formattedAnswers[partKey]) formattedAnswers[partKey] = {};
@@ -201,23 +156,26 @@ export default function StudentFormEditPage() {
             if (!formattedAnswers[partKey][section._id]) formattedAnswers[partKey][section._id] = {};
             
             section.subSections?.forEach((subSection) => {
-              // Check if this subsection has an email field
-              const hasEmailField = subSection.fields?.some(field => field.key === 'email');
+              if (!formattedAnswers[partKey][section._id][subSection._id]) {
+                formattedAnswers[partKey][section._id][subSection._id] = [{}];
+              }
               
-              if (hasEmailField) {
-                if (!formattedAnswers[partKey][section._id][subSection._id]) {
-                  formattedAnswers[partKey][section._id][subSection._id] = [{}];
-                }
-                
-                const instances = formattedAnswers[partKey][section._id][subSection._id];
-                if (Array.isArray(instances)) {
-                  instances.forEach((instance: any) => {
-                    // Set email if not already set
-                    if (!instance.email) {
-                      instance.email = studentEmail;
+              const instances = formattedAnswers[partKey][section._id][subSection._id];
+              if (Array.isArray(instances)) {
+                instances.forEach((instance: any) => {
+                  // Set phone number from student table if available
+                  const phoneField = subSection.fields?.find(f => f.key === 'phone' || f.key === 'phoneNumber' || f.key === 'mobileNumber');
+                  if (phoneField && studentData.mobileNumber && !instance[phoneField.key]) {
+                    instance[phoneField.key] = studentData.mobileNumber;
+                  }
+                  
+                  // Set India as default for country fields
+                  subSection.fields?.forEach((field) => {
+                    if ((field.key === 'mailingCountry' || field.key === 'permanentCountry') && !instance[field.key]) {
+                      instance[field.key] = field.defaultValue || 'IN';
                     }
                   });
-                }
+                });
               }
             });
           });

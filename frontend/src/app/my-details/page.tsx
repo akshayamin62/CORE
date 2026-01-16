@@ -46,7 +46,8 @@ function MyDetailsContent() {
 
       // Fetch existing answers from database (for auto-fill)
       const answersResponse = await formAnswerAPI.getFormAnswers(registrationId!);
-      const answers = answersResponse.data.data.answers;
+      const answers = answersResponse.data.data.answers || [];
+      const studentData = answersResponse.data.data.student || {};
       
       // Convert answers to form values structure
       const values: any = {};
@@ -58,6 +59,48 @@ function MyDetailsContent() {
         // The answers object contains section-wise data
         values[partKey] = answer.answers;
       });
+      
+      // Initialize form structure and pre-fill phone and country defaults
+      if (formStructure.length > 0) {
+        formStructure.forEach((part) => {
+          const partKey = part.part.key;
+          if (!values[partKey]) values[partKey] = {};
+          
+          part.sections?.forEach((section) => {
+            if (!values[partKey][section._id]) values[partKey][section._id] = {};
+            
+            section.subSections?.forEach((subSection) => {
+              if (!values[partKey][section._id][subSection._id]) {
+                values[partKey][section._id][subSection._id] = [{}];
+              }
+              
+              const instances = values[partKey][section._id][subSection._id];
+              if (Array.isArray(instances) && instances.length > 0) {
+                const instance = instances[0];
+                
+                // Pre-fill phone number from student table
+                const phoneField = subSection.fields?.find(f => f.key === 'phone' || f.key === 'phoneNumber' || f.key === 'mobileNumber');
+                if (phoneField && studentData.mobileNumber) {
+                  if (!instance[phoneField.key]) {
+                    instance[phoneField.key] = studentData.mobileNumber;
+                  }
+                }
+                
+                // Set India as default for country fields (always set if not present)
+                subSection.fields?.forEach((field) => {
+                  if (field.key === 'mailingCountry' || field.key === 'permanentCountry') {
+                    // Always set default if field is empty or undefined
+                    if (!instance[field.key] || instance[field.key] === '') {
+                      instance[field.key] = field.defaultValue || 'IN';
+                    }
+                  }
+                });
+              }
+            });
+          });
+        });
+      }
+      
       setFormValues(values);
 
     } catch (error: any) {
@@ -153,8 +196,26 @@ function MyDetailsContent() {
       if (!newValues[partKey][sectionId][subSectionId]) {
         newValues[partKey][sectionId][subSectionId] = [];
       }
-      // Add exactly one new empty instance
-      newValues[partKey][sectionId][subSectionId].push({});
+      
+      // Create new instance with default values for country fields
+      const newInstance: any = {};
+      
+      // Find the subsection to get field defaults
+      const currentPart = formStructure.find(p => p.part.key === partKey);
+      const section = currentPart?.sections?.find(s => s._id === sectionId);
+      const subSection = section?.subSections?.find(ss => ss._id === subSectionId);
+      
+      if (subSection) {
+        subSection.fields?.forEach((field) => {
+          // Set default for country fields
+          if ((field.key === 'mailingCountry' || field.key === 'permanentCountry') && field.defaultValue) {
+            newInstance[field.key] = field.defaultValue;
+          }
+        });
+      }
+      
+      // Add the new instance with defaults
+      newValues[partKey][sectionId][subSectionId].push(newInstance);
       return newValues;
     });
   };
@@ -192,7 +253,26 @@ function MyDetailsContent() {
       subSectionValues.forEach((instanceValues: any, index: number) => {
         subSection.fields.forEach((field) => {
           if (field.required) {
-            const value = instanceValues?.[field.key];
+            let value = instanceValues?.[field.key];
+            
+            // If value is empty and field has defaultValue, use defaultValue
+            if ((!value || (typeof value === 'string' && value.trim() === '')) && field.defaultValue) {
+              value = field.defaultValue;
+              // Update the instance value with default to ensure it's saved
+              if (instanceValues) {
+                instanceValues[field.key] = field.defaultValue;
+              }
+              // Also update formValues state to persist the default
+              setFormValues((prev: any) => {
+                const newValues = JSON.parse(JSON.stringify(prev));
+                if (newValues[partKey]?.[sectionId]?.[subSection._id]?.[index]) {
+                  newValues[partKey][sectionId][subSection._id][index][field.key] = field.defaultValue;
+                }
+                return newValues;
+              });
+            }
+            
+            // Now validate
             if (!value || (typeof value === 'string' && value.trim() === '')) {
               if (!newErrors[subSection._id]) newErrors[subSection._id] = [];
               if (!newErrors[subSection._id][index]) newErrors[subSection._id][index] = {};

@@ -219,10 +219,11 @@ export const verifySignupOTP = async (req: VerifyOTPRequest, res: Response): Pro
       user.isVerified = true;
       user.isActive = true;
       
-      // Create Student entry with empty mobile number (to be filled later)
+      // Create Student entry with email and empty mobile number (to be filled later)
       try {
         await Student.create({
           userId: user._id,
+          email: user.email, // Copy email from User to Student
           mobileNumber: "", // Will be filled when student updates profile
         });
       } catch (error) {

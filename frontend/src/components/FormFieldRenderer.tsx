@@ -233,8 +233,6 @@ export default function FormFieldRenderer({
       case FieldType.TEXT:
       case FieldType.EMAIL:
       case FieldType.PHONE:
-        // Make email field read-only in admin/counselor edit mode
-        const isEmailReadOnly = isAdminEdit && field.key === 'email';
         return (
           <input
             type={field.type === FieldType.EMAIL ? 'email' : field.type === FieldType.PHONE ? 'tel' : 'text'}
@@ -243,9 +241,7 @@ export default function FormFieldRenderer({
             onChange={handleChange}
             placeholder={field.placeholder}
             required={field.required}
-            readOnly={isEmailReadOnly}
-            disabled={isEmailReadOnly}
-            className={`${baseInputClasses} ${isEmailReadOnly ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+            className={baseInputClasses}
           />
         );
 
@@ -294,11 +290,13 @@ export default function FormFieldRenderer({
         // Handle Country dropdown - Show all countries
         if (field.key.includes('Country')) {
           const countryOptions = countries.map((c) => ({ label: c.name, value: c.code }));
+          // Use defaultValue if value is empty or undefined
+          const currentValue = (value && value.trim() !== '') ? value : (field.defaultValue || '');
           
           return (
             <select
               id={field.key}
-              value={value || ''}
+              value={currentValue}
               onChange={handleChange}
               required={field.required}
               className={baseInputClasses}
@@ -369,10 +367,12 @@ export default function FormFieldRenderer({
         
         // Regular select with predefined options
         const regularOptions = field.options || [];
+        // Use defaultValue if value is empty or undefined
+        const selectValue = (value && value.trim() !== '') ? value : (field.defaultValue || '');
         return (
           <select
             id={field.key}
-            value={value || ''}
+            value={selectValue}
             onChange={handleChange}
             required={field.required}
             className={baseInputClasses}
@@ -388,10 +388,12 @@ export default function FormFieldRenderer({
       }
 
       case FieldType.COUNTRY:
+        // Use defaultValue if value is empty or undefined
+        const countryValue = (value && value.trim() !== '') ? value : (field.defaultValue || '');
         return (
           <select
             id={field.key}
-            value={value || ''}
+            value={countryValue}
             onChange={handleChange}
             required={field.required}
             className={baseInputClasses}

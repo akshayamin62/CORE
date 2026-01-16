@@ -1,14 +1,15 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface IStudent extends Document {
-  userId: mongoose.Types.ObjectId;
-  email?: string;
+export interface ICounselor extends Document {
+  userId: mongoose.Types.ObjectId; // Reference to User model
+  email: string;
   mobileNumber?: string;
+  specializations?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-const studentSchema = new Schema<IStudent>(
+const counselorSchema = new Schema<ICounselor>(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -18,19 +19,22 @@ const studentSchema = new Schema<IStudent>(
     },
     email: {
       type: String,
-      required: false,
-      trim: true,
+      required: true,
+      unique: true,
       lowercase: true,
     },
     mobileNumber: {
       type: String,
       required: false,
       trim: true,
-      default: "",
+    },
+    specializations: {
+      type: [String],
+      default: [],
     },
   },
   { timestamps: true }
 );
 
-export default mongoose.model<IStudent>("Student", studentSchema);
+export default mongoose.model<ICounselor>("Counselor", counselorSchema);
 

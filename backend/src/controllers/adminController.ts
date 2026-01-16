@@ -400,3 +400,112 @@ export const getPendingApprovals = async (_req: Request, res: Response): Promise
   }
 };
 
+/**
+ * Create a new counselor (admin only)
+ */
+export const createCounselor = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { name, email, phoneNumber, specializations } = req.body;
+
+    // Validate required fields
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        message: "Name and email are required",
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid email address",
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "User with this email already exists",
+      });
+    }
+
+    // Validate specializations if provided
+    const validSpecializations = [
+      'Study Abroad',
+      'Ivy League',
+      'Education Planning',
+      'IELTS',
+      'GRE',
+      'GMAT',
+      'TOEFL',
+      'PTE',
+      'Duolingo',
+      'SAT',
+      'ACT',
+      'Other'
+    ];
+
+    let validSpecializationsList: string[] = [];
+    if (specializations && Array.isArray(specializations)) {
+      validSpecializationsList = specializations.filter((spec: string) =>
+        validSpecializations.includes(spec)
+      );
+    }
+
+    // Create counselor user
+    const counselorUser = await User.create({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      role: USER_ROLE.COUNSELOR,
+      isVerified: true, // Auto-verify counselors created by admin
+      isActive: true,
+    });
+
+    // Create counselor record
+    const Counselor = (await import("../models/Counselor")).default;
+    const counselor = await Counselor.create({
+      userId: counselorUser._id,
+      email: email.toLowerCase().trim(),
+      mobileNumber: phoneNumber?.trim() || undefined,
+      specializations: validSpecializationsList,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Counselor created successfully",
+      data: {
+        counselor: {
+          id: counselorUser._id,
+          name: counselorUser.name,
+          email: counselor.email,
+          mobileNumber: counselor.mobileNumber,
+          specializations: counselor.specializations,
+          role: counselorUser.role,
+          isVerified: counselorUser.isVerified,
+          isActive: counselorUser.isActive,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error("Create counselor error:", error);
+    
+    // Handle duplicate email error
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "User with this email already exists",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Error creating counselor",
+      error: error.message,
+    });
+  }
+};
+

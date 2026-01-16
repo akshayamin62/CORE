@@ -34,6 +34,37 @@ export const saveFormAnswers = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Extract phone number from answers if present (PROFILE part)
+    if (partKey === 'PROFILE' && answers) {
+      let studentUpdated = false;
+      
+      // Navigate through the nested structure: answers[sectionId][subSectionId][index]
+      for (const sectionId in answers) {
+        const sectionData = answers[sectionId];
+        if (typeof sectionData === 'object' && sectionData !== null) {
+          for (const subSectionId in sectionData) {
+            const subSectionData = sectionData[subSectionId];
+            if (Array.isArray(subSectionData)) {
+              // Check first instance (index 0)
+              const instanceData = subSectionData[0] || {};
+              
+              // Update phone number if present (check multiple possible keys)
+              const phoneValue = instanceData.phoneNumber || instanceData.mobileNumber || instanceData.phone;
+              if (phoneValue && phoneValue.trim()) {
+                student.mobileNumber = phoneValue.trim();
+                studentUpdated = true;
+              }
+            }
+          }
+        }
+      }
+      
+      // Save student updates if any
+      if (studentUpdated) {
+        await student.save();
+      }
+    }
+
     // Find or create answer document (linked to student, not registration)
     // This allows answers to be reused across multiple services
     let answerDoc = await StudentFormAnswer.findOne({
@@ -120,7 +151,12 @@ export const getFormAnswers = async (req: AuthRequest, res: Response) => {
     return res.status(200).json({
       success: true,
       message: "Form answers fetched successfully",
-      data: { answers },
+      data: { 
+        answers,
+        student: {
+          mobileNumber: student.mobileNumber,
+        },
+      },
     });
   } catch (error: any) {
     console.error("Get form answers error:", error);

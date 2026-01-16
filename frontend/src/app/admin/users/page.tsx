@@ -238,7 +238,7 @@ export default function UserManagementPage() {
 
             {/* Filters */}
             {activeTab === 'all' && (
-              <div className="p-6 border-b border-gray-200 bg-gray-50">
+              <div className="p-6 border-b border-gray-200 bg-gray-50 text-gray-900">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <input
                     type="text"

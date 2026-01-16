@@ -117,12 +117,18 @@ export const getStudentFormAnswers = async (req: AuthRequest, res: Response): Pr
       studentId,
     }).sort({ lastSavedAt: -1 });
 
+    // Get student record to include mobileNumber
+    const student = await Student.findById(studentId);
+
     return res.status(200).json({
       success: true,
       message: 'Form answers fetched successfully',
       data: {
         registration,
         answers,
+        student: student ? {
+          mobileNumber: student.mobileNumber,
+        } : null,
       },
     });
   } catch (error: any) {

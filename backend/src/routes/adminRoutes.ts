@@ -7,6 +7,7 @@ import {
   toggleUserStatus,
   deleteUser,
   getPendingApprovals,
+  createCounselor,
 } from "../controllers/adminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
@@ -68,6 +69,14 @@ router.patch("/users/:userId/toggle-status", toggleUserStatus);
  * @access  Admin only
  */
 router.delete("/users/:userId", deleteUser);
+
+/**
+ * @route   POST /api/admin/counselors
+ * @desc    Create a new counselor
+ * @access  Admin only
+ * @body    name, email, phoneNumber (optional), specializations (optional array)
+ */
+router.post("/counselors", createCounselor);
 
 export default router;
 
