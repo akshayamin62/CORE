@@ -53,16 +53,16 @@ export default function Navbar() {
   return (
     <nav className="bg-white sticky top-0 z-50 shadow-lg border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-1 lg:px-1">
-        <div className="flex justify-between h-20 animate-fade-in">
+        <div className="flex justify-between h-25 animate-fade-in">
           {/* Logo and Brand */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center group">
               <div className="relative">
                 {/* <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-300"></div> */}
                 <img 
-                  src="/logo.png" 
+                  src="/l1.png" 
                   alt="CORE Logo" 
-                  className="relative h-18 w-auto object-contain"
+                  className="relative h-20 w-auto object-contain"
                 />
               </div>
             </Link>
