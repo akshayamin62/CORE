@@ -8,6 +8,7 @@ import {
   deleteUser,
   getPendingApprovals,
   createCounselor,
+  getCounselorsBySpecialization,
 } from "../controllers/adminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
@@ -77,6 +78,14 @@ router.delete("/users/:userId", deleteUser);
  * @body    name, email, phoneNumber (optional), specializations (optional array)
  */
 router.post("/counselors", createCounselor);
+
+/**
+ * @route   GET /api/admin/counselors
+ * @desc    Get counselors by specialization
+ * @access  Admin only
+ * @query   specialization (optional)
+ */
+router.get("/counselors", getCounselorsBySpecialization);
 
 export default router;
 

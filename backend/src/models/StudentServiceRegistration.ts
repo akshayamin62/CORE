@@ -10,6 +10,7 @@ export enum ServiceRegistrationStatus {
 export interface IStudentServiceRegistration extends Document {
   studentId: mongoose.Types.ObjectId;
   serviceId: mongoose.Types.ObjectId;
+  assignedCounselorId?: mongoose.Types.ObjectId;
   status: ServiceRegistrationStatus;
   registeredAt: Date;
   completedAt?: Date;
@@ -32,6 +33,11 @@ const studentServiceRegistrationSchema = new Schema<IStudentServiceRegistration>
       type: Schema.Types.ObjectId,
       ref: "Service",
       required: true,
+    },
+    assignedCounselorId: {
+      type: Schema.Types.ObjectId,
+      ref: "Counselor",
+      required: false,
     },
     status: {
       type: String,

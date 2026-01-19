@@ -27,7 +27,7 @@ export default function FormSectionRenderer({
   const isTestSection = section.title.toLowerCase().includes('test');
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden relative z-10">
       {/* Section Header */}
       <div className="bg-blue-600 px-6 py-4 border-b border-blue-700">
         <h3 className="text-xl font-semibold text-white">{section.title}</h3>

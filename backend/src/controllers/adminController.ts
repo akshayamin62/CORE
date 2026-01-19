@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import User from "../models/User";
 import { USER_ROLE } from "../types/roles";
+import Counselor from "../models/Counselor";
 // import { sendEmail } from "../utils/email";
 
 /**
@@ -504,6 +505,63 @@ export const createCounselor = async (req: Request, res: Response): Promise<Resp
     return res.status(500).json({
       success: false,
       message: "Error creating counselor",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get counselors by specialization or service name
+ */
+export const getCounselorsBySpecialization = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { specialization, serviceName } = req.query;
+
+    let query: any = {};
+    
+    // Map service names to specializations
+    const serviceToSpecializationMap: { [key: string]: string[] } = {
+      'Study Abroad': ['Study Abroad', 'Education Planning'],
+      'Ivy League': ['Ivy League', 'Study Abroad', 'Education Planning'],
+      'Education Planning': ['Education Planning', 'Study Abroad'],
+      'IELTS': ['IELTS'],
+      'GRE': ['GRE'],
+      'GMAT': ['GMAT'],
+      'TOEFL': ['TOEFL'],
+      'PTE': ['PTE'],
+      'Duolingo': ['Duolingo'],
+      'SAT': ['SAT'],
+    };
+
+    if (serviceName) {
+      const specializations = serviceToSpecializationMap[serviceName as string] || [serviceName as string];
+      query.specializations = { $in: specializations };
+    } else if (specialization) {
+      query.specializations = { $in: [specialization] };
+    }
+
+    const counselors = await Counselor.find(query)
+      .populate('userId', 'name email')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Counselors fetched successfully',
+      data: {
+        counselors: counselors.map(c => ({
+          _id: c._id,
+          userId: c.userId,
+          email: c.email,
+          mobileNumber: c.mobileNumber,
+          specializations: c.specializations,
+        })),
+      },
+    });
+  } catch (error: any) {
+    console.error('Get counselors by specialization error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch counselors',
       error: error.message,
     });
   }

@@ -6,6 +6,8 @@ import { serviceAPI, formAnswerAPI } from '@/lib/api';
 import { FormStructure, StudentServiceRegistration, Service } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import FormSectionRenderer from '@/components/FormSectionRenderer';
+import StudentLayout from '@/components/StudentLayout';
+import ApplicationProgramSection from '@/components/ApplicationProgramSection';
 
 function MyDetailsContent() {
   const router = useRouter();
@@ -372,112 +374,89 @@ function MyDetailsContent() {
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-right" />
 
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="text-blue-600 hover:text-blue-700 flex items-center gap-2 mb-2 font-medium transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to Dashboard
-              </button>
-              <h1 className="text-2xl font-bold text-gray-900">
-                {service?.name || 'Service'} - My Details
-              </h1>
-              <p className="text-gray-600 mt-1 text-sm">
-                Status: <span className="font-semibold text-blue-600">{registration.status}</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Part Navigation (Horizontal Tabs) - Modern Pills */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex gap-2 overflow-x-auto">
-            {formStructure.map((part, index) => (
-              <button
-                key={part.part._id}
-                onClick={() => {
-                  setSelectedPartIndex(index);
-                  setSelectedSectionIndex(0);
-                }}
-                className={`px-5 py-2.5 rounded-full font-semibold transition-all whitespace-nowrap text-sm ${
-                  selectedPartIndex === index
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {part.part.title}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Section Navigation (Horizontal Tabs) - Segmented Control Style */}
-      <div className="bg-gray-50 border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="inline-flex bg-white rounded-lg p-1 border border-gray-200 overflow-x-auto">
-            {currentPart.sections
-              .sort((a, b) => a.order - b.order)
-              .map((section, index) => (
-                <button
-                  key={section._id}
-                  onClick={() => setSelectedSectionIndex(index)}
-                  className={`px-4 py-2 rounded-md font-medium transition-all whitespace-nowrap text-sm ${
-                    selectedSectionIndex === index
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-gray-700 hover:text-gray-900'
-                  }`}
-                >
-                  {section.title}
-                </button>
-              ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Form Content - Single Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="space-y-5">
-          {currentSection && (
-            <div>
-              <FormSectionRenderer
-                section={currentSection}
-                values={formValues[currentPart.part.key]?.[currentSection._id] || {}}
-                onChange={(subSectionId, index, key, value) =>
-                  handleFieldChange(currentPart.part.key, currentSection._id, subSectionId, index, key, value)
-                }
-                onAddInstance={(subSectionId) =>
-                  handleAddInstance(currentPart.part.key, currentSection._id, subSectionId)
-                }
-                onRemoveInstance={(subSectionId, index) =>
-                  handleRemoveInstance(currentPart.part.key, currentSection._id, subSectionId, index)
-                }
-                errors={errors}
-              />
-              
-              {/* Save Button */}
-              <div className="flex justify-end gap-3 mt-5">
-                <button
-                  onClick={handleSaveSection}
-                  disabled={saving}
-                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
+      {/* Student Layout with Vertical Sidebar */}
+      <StudentLayout
+        formStructure={formStructure}
+        currentPartIndex={selectedPartIndex}
+        currentSectionIndex={selectedSectionIndex}
+        onPartChange={(index) => {
+          setSelectedPartIndex(index);
+          setSelectedSectionIndex(0);
+        }}
+        onSectionChange={setSelectedSectionIndex}
+        serviceName={service?.name || 'Service'}
+      >
+        {/* Section Navigation (Horizontal Tabs) */}
+        {currentPart && currentPart.sections && currentPart.sections.length > 0 && (
+          <div className="bg-white border-b border-gray-200 sticky top-20 z-20 shadow-sm">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <div className="inline-flex bg-gray-100 rounded-lg p-1 border border-gray-200 overflow-x-auto">
+                {[...currentPart.sections]
+                  .sort((a, b) => a.order - b.order)
+                  .map((section, index) => (
+                    <button
+                      key={section._id}
+                      onClick={() => setSelectedSectionIndex(index)}
+                      className={`px-4 py-2 rounded-md font-medium transition-all whitespace-nowrap text-sm ${
+                        selectedSectionIndex === index
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-gray-700 hover:text-gray-900'
+                      }`}
+                    >
+                      {section.title}
+                    </button>
+                  ))}
               </div>
             </div>
-          )}
+          </div>
+        )}
+
+        {/* Form Content - Single Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-8">
+          <div className="space-y-5">
+            {currentSection && (
+              <div>
+                {/* Check if this is Application section with program management */}
+                {currentPart.part.key === 'APPLICATION' && 
+                 (currentSection.title === 'Apply to Program' || currentSection.title === 'Applied Program') ? (
+                  <ApplicationProgramSection
+                    sectionTitle={currentSection.title}
+                    registrationId={registrationId!}
+                  />
+                ) : (
+                  <>
+                    <FormSectionRenderer
+                      section={currentSection}
+                      values={formValues[currentPart.part.key]?.[currentSection._id] || {}}
+                      onChange={(subSectionId, index, key, value) =>
+                        handleFieldChange(currentPart.part.key, currentSection._id, subSectionId, index, key, value)
+                      }
+                      onAddInstance={(subSectionId) =>
+                        handleAddInstance(currentPart.part.key, currentSection._id, subSectionId)
+                      }
+                      onRemoveInstance={(subSectionId, index) =>
+                        handleRemoveInstance(currentPart.part.key, currentSection._id, subSectionId, index)
+                      }
+                      errors={errors}
+                    />
+                    
+                    {/* Save Button */}
+                    <div className="flex justify-end gap-3 mt-5">
+                      <button
+                        onClick={handleSaveSection}
+                        disabled={saving}
+                        className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {saving ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </StudentLayout>
     </div>
   );
 }

@@ -44,9 +44,14 @@ export default function LoginPage() {
       
       toast.success('Login successful!');
       
-      // Redirect to dashboard
+      // Redirect based on role
+      const redirectPath = 
+        user.role === 'ADMIN' ? '/admin/dashboard' :
+        user.role === 'COUNSELOR' ? '/counselor/dashboard' :
+        '/dashboard';
+      
       setTimeout(() => {
-        router.push('/dashboard');
+        router.push(redirectPath);
       }, 1000);
     } catch (error: any) {
       const message = error.response?.data?.message || 'Invalid OTP. Please try again.';

@@ -1,0 +1,126 @@
+'use client';
+
+interface Program {
+  _id: string;
+  university: string;
+  universityRanking: {
+    webometricsWorld?: number;
+    webometricsNational?: number;
+    usNews?: number;
+    qs?: number;
+  };
+  programName: string;
+  websiteUrl?: string;
+  campus: string;
+  country: string;
+  studyLevel: string;
+  duration: number;
+  ieltsScore: number;
+  applicationFee: number;
+  yearlyTuitionFees: number;
+  priority?: number;
+  intake?: string;
+  year?: string;
+}
+
+interface ProgramCardProps {
+  program: Program;
+  showPriority?: boolean;
+  showActions?: boolean;
+  onEdit?: (programId: string) => void;
+  editingProgramId?: string | null;
+}
+
+export default function ProgramCard({
+  program,
+  showPriority = false,
+  showActions = false,
+  onEdit,
+  editingProgramId,
+}: ProgramCardProps) {
+  return (
+    <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors bg-white">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          {showPriority && (program.priority || program.intake || program.year) && (
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
+              {program.priority && (
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                  Priority: {program.priority}
+                </span>
+              )}
+              {program.intake && (
+                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                  Intake: {program.intake}
+                </span>
+              )}
+              {program.year && (
+                <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">
+                  Year: {program.year}
+                </span>
+              )}
+            </div>
+          )}
+          <h4 className="font-semibold text-gray-900 mb-1">{program.programName}</h4>
+          <p className="text-sm text-gray-600 mb-2">{program.university}</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+            <div>
+              <span className="font-medium">Campus:</span> {program.campus}
+            </div>
+            <div>
+              <span className="font-medium">Country:</span> {program.country}
+            </div>
+            <div>
+              <span className="font-medium">Study Level:</span> {program.studyLevel}
+            </div>
+            <div>
+              <span className="font-medium">Duration:</span> {program.duration} months
+            </div>
+            <div>
+              <span className="font-medium">IELTS:</span> {program.ieltsScore}
+            </div>
+            <div>
+              <span className="font-medium">Tuition:</span> £{program.yearlyTuitionFees.toLocaleString()}
+            </div>
+            <div>
+              <span className="font-medium">Application Fee:</span> £{program.applicationFee.toLocaleString()}
+            </div>
+            {program.websiteUrl && (
+              <div>
+                <span className="font-medium">Website:</span>{' '}
+                <a href={program.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                  View Program
+                </a>
+              </div>
+            )}
+          </div>
+          {program.universityRanking && (
+            <div className="mt-2 flex gap-4 text-xs text-gray-500">
+              {program.universityRanking.webometricsWorld && (
+                <span>Webometrics World: {program.universityRanking.webometricsWorld}</span>
+              )}
+              {program.universityRanking.webometricsNational && (
+                <span>Webometrics National: {program.universityRanking.webometricsNational}</span>
+              )}
+              {program.universityRanking.usNews && (
+                <span>US News: {program.universityRanking.usNews}</span>
+              )}
+              {program.universityRanking.qs && (
+                <span>QS: {program.universityRanking.qs}</span>
+              )}
+            </div>
+          )}
+        </div>
+        {showActions && onEdit && editingProgramId !== program._id && (
+          <button
+            onClick={() => onEdit(program._id)}
+            className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          >
+            Edit
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+

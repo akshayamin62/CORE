@@ -1322,116 +1322,29 @@ const seedFormData = async () => {
       },
     ]);
 
-    // ========== STEP 14: Create APPLICATION Section (Reusable) ==========
-    console.log("📝 Creating APPLICATION section...");
-    const applicationSection = await FormSection.create({
+    // ========== STEP 14: Create APPLICATION Sections (Split into two) ==========
+    console.log("📝 Creating APPLICATION sections...");
+    
+    // Section 1: Apply to Program
+    await FormSection.create({
       partId: applicationPart._id,
       title: "Apply to Program",
-      description: "Select universities and programs",
+      description: "Browse and select programs added by your counselor",
       order: 1,
       isActive: true,
     });
 
-    const programSubSection = await FormSubSection.create({
-      sectionId: applicationSection._id,
-      title: "Program Selection",
-      description: "Add programs you want to apply to",
-      order: 1,
-      isRepeatable: true,
-      maxRepeat: 20,
+    // Section 2: Applied Program
+    await FormSection.create({
+      partId: applicationPart._id,
+      title: "Applied Program",
+      description: "View your selected programs with priority and intake",
+      order: 2,
       isActive: true,
     });
 
-    await FormField.insertMany([
-      {
-        subSectionId: programSubSection._id,
-        label: "Year",
-        key: "applicationYear",
-        type: FieldType.SELECT,
-        required: true,
-        order: 1,
-        isActive: true,
-        options: [
-          { label: "2026", value: "2026" },
-          { label: "2027", value: "2027" },
-          { label: "2028", value: "2028" },
-        ],
-      },
-      {
-        subSectionId: programSubSection._id,
-        label: "Intake",
-        key: "intake",
-        type: FieldType.SELECT,
-        required: true,
-        order: 2,
-        isActive: true,
-        options: [
-          // Seasons
-          { label: "Spring", value: "spring" },
-          { label: "Summer", value: "summer" },
-          { label: "Fall", value: "fall" },
-          { label: "Winter", value: "winter" },
-      
-          // Months
-          { label: "January", value: "january" },
-          { label: "February", value: "february" },
-          { label: "March", value: "march" },
-          { label: "April", value: "april" },
-          { label: "May", value: "may" },
-          { label: "June", value: "june" },
-          { label: "July", value: "july" },
-          { label: "August", value: "august" },
-          { label: "September", value: "september" },
-          { label: "October", value: "october" },
-          { label: "November", value: "november" },
-          { label: "December", value: "december" },
-        ],
-      },
-      {
-        subSectionId: programSubSection._id,
-        label: "University",
-        key: "university",
-        type: FieldType.TEXT,
-        placeholder: "Enter university name",
-        required: true,
-        order: 3,
-        isActive: true,
-      },
-      {
-        subSectionId: programSubSection._id,
-        label: "Program",
-        key: "program",
-        type: FieldType.TEXT,
-        placeholder: "Enter program name",
-        required: true,
-        order: 4,
-        isActive: true,
-      },
-      {
-        subSectionId: programSubSection._id,
-        label: "Program Link",
-        key: "programLink",
-        type: FieldType.TEXT,
-        placeholder: "https://example.com/program",
-        required: false,
-        order: 5,
-        isActive: true,
-      },
-      {
-        subSectionId: programSubSection._id,
-        label: "Degree Level",
-        key: "degreeLevel",
-        type: FieldType.SELECT,
-        required: true,
-        order: 6,
-        isActive: true,
-        options: [
-          { label: "Bachelor's", value: "bachelors" },
-          { label: "Master's", value: "masters" },
-          { label: "Doctorate", value: "doctorate" },
-        ],
-      },
-    ]);
+    // Note: Program selection is now handled by custom component (ApplicationProgramSection)
+    // No subsections or fields needed for these sections
 
     // ========== STEP 14: Create DOCUMENT Section (Reusable) ==========
     console.log("📄 Creating DOCUMENT section...");

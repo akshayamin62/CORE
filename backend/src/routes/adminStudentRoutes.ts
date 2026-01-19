@@ -8,6 +8,7 @@ import {
   getStudentFormAnswers,
   updateStudentFormAnswers,
   getStudentsWithRegistrations,
+  assignCounselor,
 } from '../controllers/adminStudentController';
 
 const router = express.Router();
@@ -30,6 +31,9 @@ router.get('/:studentId/registrations/:registrationId/answers', getStudentFormAn
 
 // Update student form answers
 router.put('/:studentId/answers/:partKey', updateStudentFormAnswers);
+
+// Assign counselor to a registration (admin only)
+router.post('/registrations/:registrationId/assign-counselor', authorize([USER_ROLE.ADMIN]), assignCounselor);
 
 export default router;
 

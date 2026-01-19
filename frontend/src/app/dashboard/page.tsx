@@ -17,8 +17,20 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchProfile();
-    fetchMyServices();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      // Redirect admin/counselor to their dashboard
+      if (user.role === 'ADMIN') {
+        router.push('/admin/dashboard');
+      } else if (user.role === 'COUNSELOR') {
+        router.push('/counselor/dashboard');
+      } else {
+        fetchMyServices();
+      }
+    }
+  }, [user]);
 
   const fetchProfile = async () => {
     try {
@@ -41,10 +53,22 @@ export default function DashboardPage() {
 
   const fetchMyServices = async () => {
     try {
+      // Only fetch services if user is a student
+      if (user?.role !== 'STUDENT') {
+        return;
+      }
       const response = await serviceAPI.getMyServices();
       setRegistrations(response.data.data.registrations);
     } catch (error: any) {
       console.error('Failed to fetch my services:', error);
+      // If 404 or unauthorized, user might be admin/counselor - redirect them
+      if (error.response?.status === 404 || error.response?.status === 401) {
+        if (user?.role === 'ADMIN') {
+          router.push('/admin/dashboard');
+        } else if (user?.role === 'COUNSELOR') {
+          router.push('/counselor/dashboard');
+        }
+      }
     }
   };
 

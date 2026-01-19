@@ -10,6 +10,8 @@ import FormPartsNavigation from '@/components/FormPartsNavigation';
 import FormSectionsNavigation from '@/components/FormSectionsNavigation';
 import FormSaveButtons from '@/components/FormSaveButtons';
 import StudentFormHeader from '@/components/StudentFormHeader';
+import ApplicationProgramSection from '@/components/ApplicationProgramSection';
+import AdminAppliedProgramSection from '@/components/AdminAppliedProgramSection';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -355,20 +357,37 @@ export default function StudentFormEditPage() {
           {/* Current Section Form */}
           {currentSection && currentPart && (
             <div className="mb-6">
-              <FormSectionRenderer
-                section={currentSection}
-                values={formValues[currentPart.key]?.[currentSection._id] || {}}
-                onChange={(subSectionId, index, key, value) =>
-                  handleFieldChange(currentPart.key, currentSection._id, subSectionId, index, key, value)
-                }
-                onAddInstance={(subSectionId) =>
-                  handleAddInstance(currentPart.key, currentSection._id, subSectionId)
-                }
-                onRemoveInstance={(subSectionId, index) =>
-                  handleRemoveInstance(currentPart.key, currentSection._id, subSectionId, index)
-                }
-                isAdminEdit={true}
-              />
+              {/* Check if this is Application section with program management */}
+              {currentPart.key === 'APPLICATION' && 
+               (currentSection.title === 'Apply to Program' || currentSection.title === 'Applied Program') ? (
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="bg-blue-600 px-6 py-4 -mx-6 -mt-6 mb-6 border-b border-blue-700">
+                    <h3 className="text-xl font-semibold text-white">{currentSection.title}</h3>
+                    {currentSection.description && (
+                      <p className="text-blue-100 text-sm mt-1">{currentSection.description}</p>
+                    )}
+                  </div>
+                  <AdminAppliedProgramSection
+                    studentId={studentId}
+                    sectionTitle={currentSection.title}
+                  />
+                </div>
+              ) : (
+                <FormSectionRenderer
+                  section={currentSection}
+                  values={formValues[currentPart.key]?.[currentSection._id] || {}}
+                  onChange={(subSectionId, index, key, value) =>
+                    handleFieldChange(currentPart.key, currentSection._id, subSectionId, index, key, value)
+                  }
+                  onAddInstance={(subSectionId) =>
+                    handleAddInstance(currentPart.key, currentSection._id, subSectionId)
+                  }
+                  onRemoveInstance={(subSectionId, index) =>
+                    handleRemoveInstance(currentPart.key, currentSection._id, subSectionId, index)
+                  }
+                  isAdminEdit={true}
+                />
+              )}
             </div>
           )}
 

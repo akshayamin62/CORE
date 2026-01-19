@@ -8,7 +8,7 @@ import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 interface StudentDetails {
   _id: string;
@@ -25,6 +25,18 @@ interface StudentDetails {
   createdAt: string;
 }
 
+interface Counselor {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  email: string;
+  mobileNumber?: string;
+  specializations?: string[];
+}
+
 interface Registration {
   _id: string;
   serviceId: {
@@ -32,6 +44,12 @@ interface Registration {
     name: string;
     slug: string;
     shortDescription: string;
+  };
+  assignedCounselorId?: {
+    _id: string;
+    email: string;
+    mobileNumber?: string;
+    specializations?: string[];
   };
   status: string;
   createdAt: string;
@@ -46,6 +64,8 @@ export default function StudentDetailPage() {
   const [student, setStudent] = useState<StudentDetails | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
+  const [counselorsByService, setCounselorsByService] = useState<{ [key: string]: Counselor[] }>({});
+  const [assigningCounselor, setAssigningCounselor] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -78,11 +98,51 @@ export default function StudentDetailPage() {
       });
       setStudent(response.data.data.student);
       setRegistrations(response.data.data.registrations);
+      
+      // Fetch counselors for each service
+      const serviceCounselors: { [key: string]: Counselor[] } = {};
+      for (const reg of response.data.data.registrations) {
+        try {
+          const counselorsResponse = await axios.get(`${API_URL}/admin/counselors`, {
+            params: { serviceName: reg.serviceId.name },
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          serviceCounselors[reg._id] = counselorsResponse.data.data.counselors;
+        } catch (err) {
+          console.error('Failed to fetch counselors for service:', err);
+          serviceCounselors[reg._id] = [];
+        }
+      }
+      setCounselorsByService(serviceCounselors);
     } catch (error: any) {
       toast.error('Failed to fetch student details');
       console.error('Fetch student details error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAssignCounselor = async (registrationId: string, counselorId: string) => {
+    if (!counselorId) {
+      toast.error('Please select a counselor');
+      return;
+    }
+
+    setAssigningCounselor(registrationId);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API_URL}/admin/students/registrations/${registrationId}/assign-counselor`,
+        { counselorId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Counselor assigned successfully');
+      fetchStudentDetails(); // Refresh data
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to assign counselor');
+      console.error('Assign counselor error:', error);
+    } finally {
+      setAssigningCounselor(null);
     }
   };
 
@@ -216,6 +276,46 @@ export default function StudentDetailPage() {
                             {registration.status}
                           </span>
                         </div>
+                        {user?.role === USER_ROLE.ADMIN && (
+                          <div className="mt-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Assign Counselor
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <select
+                                value={registration.assignedCounselorId?._id || ''}
+                                onChange={(e) => handleAssignCounselor(registration._id, e.target.value)}
+                                disabled={assigningCounselor === registration._id}
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
+                              >
+                                <option value="">Select Counselor</option>
+                                {counselorsByService[registration._id]?.map((counselor) => (
+                                  <option key={counselor._id} value={counselor._id}>
+                                    {counselor.userId?.name || counselor.email}
+                                    {counselor.specializations && counselor.specializations.length > 0 && 
+                                      ` (${counselor.specializations.join(', ')})`
+                                    }
+                                  </option>
+                                ))}
+                              </select>
+                              {assigningCounselor === registration._id && (
+                                <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                              )}
+                            </div>
+                            {registration.assignedCounselorId && (
+                              <p className="mt-1 text-xs text-gray-600">
+                                Assigned: {registration.assignedCounselorId.email}
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        {user?.role === USER_ROLE.COUNSELOR && registration.assignedCounselorId && (
+                          <div className="mt-2">
+                            <p className="text-xs text-gray-600">
+                              Assigned Counselor: {registration.assignedCounselorId.email}
+                            </p>
+                          </div>
+                        )}
                       </div>
                       <button
                         onClick={() => handleViewFormData(registration._id)}

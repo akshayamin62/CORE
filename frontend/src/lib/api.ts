@@ -115,5 +115,47 @@ export const studentAPI = {
   deleteProfile: () => api.delete('/student/profile'),
 };
 
+// Program API
+export const programAPI = {
+  getStudentPrograms: () => api.get('/programs/student/programs'),
+  selectProgram: (data: { programId: string; priority: number; intake: string; year: string }) =>
+    api.post('/programs/student/programs/select', data),
+  removeProgram: (programId: string) => api.delete(`/programs/student/programs/${programId}`),
+  getCounselorPrograms: () => api.get('/programs/counselor/programs'),
+  createProgram: (data: any) => api.post('/programs/counselor/programs', data),
+  uploadProgramsExcel: (file: File, studentId?: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (studentId) {
+      formData.append('studentId', studentId);
+    }
+    return api.post('/programs/counselor/programs/upload-excel', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  getCounselorStudentPrograms: (studentId: string) => api.get(`/programs/counselor/student/${studentId}/programs`),
+  createCounselorStudentProgram: (studentId: string, data: any) => api.post(`/programs/counselor/student/${studentId}/programs`, data),
+  uploadCounselorStudentProgramsExcel: (studentId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('studentId', studentId);
+    return api.post(`/programs/counselor/student/${studentId}/programs/upload-excel`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  // Admin functions
+  getAdminStudentPrograms: (studentId: string, section?: string) => {
+    const params = section ? { section } : {};
+    return api.get(`/programs/admin/student/${studentId}/programs`, { params });
+  },
+  getStudentAppliedPrograms: (studentId: string) => api.get(`/programs/admin/student/${studentId}/applied-programs`),
+  updateProgramSelection: (programId: string, data: { priority: number; intake: string; year: string }) => 
+    api.put(`/programs/admin/programs/${programId}/selection`, data),
+};
+
 export default api;
 

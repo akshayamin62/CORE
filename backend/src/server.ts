@@ -8,10 +8,12 @@ import serviceRoutes from "./routes/serviceRoutes";
 import formAnswerRoutes from "./routes/formAnswerRoutes";
 import studentRoutes from "./routes/studentRoutes";
 import adminStudentRoutes from "./routes/adminStudentRoutes";
+import programRoutes from "./routes/programRoutes";
 
 // Import all models to register them with Mongoose
 import "./models/User";
 import "./models/Student";
+import "./models/Counselor";
 import "./models/Service";
 import "./models/FormPart";
 import "./models/ServiceFormPart";
@@ -20,6 +22,7 @@ import "./models/FormSubSection";
 import "./models/FormField";
 import "./models/StudentServiceRegistration";
 import "./models/StudentFormAnswer";
+import "./models/Program";
 
 dotenv.config();
 
@@ -28,6 +31,7 @@ const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json()); // Parse JSON bodies
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
 app.use("/api/auth", authRoutes);
 app.use("/api/admin/students", adminStudentRoutes); // More specific route must come first
@@ -35,6 +39,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/forms", formAnswerRoutes);
 app.use("/api/student", studentRoutes);
+app.use("/api/programs", programRoutes);
 
 // Basic test route
 app.get('/', (_req, res) => {

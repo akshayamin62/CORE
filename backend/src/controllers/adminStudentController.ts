@@ -1,16 +1,56 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import Student from '../models/Student';
-// import User from '../models/User';
+import User from '../models/User';
+import Counselor from '../models/Counselor';
 import StudentServiceRegistration from '../models/StudentServiceRegistration';
 import StudentFormAnswer from '../models/StudentFormAnswer';
+import { USER_ROLE } from '../types/roles';
 
 /**
  * Get all students with their registrations
+ * For counselors: only show students assigned to them
+ * For admins: show all students
  */
-export const getAllStudents = async (_req: AuthRequest, res: Response): Promise<Response> => {
+export const getAllStudents = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
-    const students = await Student.find()
+    const userId = req.user?.userId;
+    const user = await User.findById(userId);
+    
+    let studentQuery: any = {};
+    
+    // If user is a counselor, filter by assigned registrations
+    if (user?.role === USER_ROLE.COUNSELOR) {
+      const counselor = await Counselor.findOne({ userId });
+      if (!counselor) {
+        return res.status(404).json({
+          success: false,
+          message: 'Counselor record not found',
+        });
+      }
+      
+      // Get all registrations assigned to this counselor
+      const registrations = await StudentServiceRegistration.find({
+        assignedCounselorId: counselor._id,
+      }).select('studentId');
+      
+      const studentIds = [...new Set(registrations.map(r => r.studentId.toString()))];
+      
+      if (studentIds.length === 0) {
+        return res.status(200).json({
+          success: true,
+          message: 'Students fetched successfully',
+          data: {
+            students: [],
+            total: 0,
+          },
+        });
+      }
+      
+      studentQuery = { _id: { $in: studentIds } };
+    }
+    
+    const students = await Student.find(studentQuery)
       .populate('userId', 'name email isVerified isActive createdAt')
       .sort({ createdAt: -1 });
 
@@ -73,6 +113,7 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
       studentId: student._id,
     })
       .populate('serviceId', 'name slug shortDescription icon')
+      .populate('assignedCounselorId', 'email mobileNumber specializations')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -212,6 +253,62 @@ export const getStudentsWithRegistrations = async (req: AuthRequest, res: Respon
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch students',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Assign counselor to a student service registration
+ */
+export const assignCounselor = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { registrationId } = req.params;
+    const { counselorId } = req.body;
+
+    if (!counselorId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Counselor ID is required',
+      });
+    }
+
+    const registration = await StudentServiceRegistration.findById(registrationId);
+    if (!registration) {
+      return res.status(404).json({
+        success: false,
+        message: 'Registration not found',
+      });
+    }
+
+    // Verify counselor exists
+    const counselor = await Counselor.findById(counselorId);
+    if (!counselor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Counselor not found',
+      });
+    }
+
+    registration.assignedCounselorId = counselorId;
+    await registration.save();
+
+    const updatedRegistration = await StudentServiceRegistration.findById(registrationId)
+      .populate('serviceId', 'name slug shortDescription icon')
+      .populate('assignedCounselorId', 'email mobileNumber specializations');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Counselor assigned successfully',
+      data: {
+        registration: updatedRegistration,
+      },
+    });
+  } catch (error: any) {
+    console.error('Assign counselor error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to assign counselor',
       error: error.message,
     });
   }
