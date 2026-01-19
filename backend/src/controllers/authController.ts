@@ -20,12 +20,16 @@ interface SignupRequest extends Request {
     name: string;
     email: string;
     role: USER_ROLE;
+    captcha: string;
+    captchaInput: string;
   };
 }
 
 interface LoginRequest extends Request {
   body: {
     email: string;
+    captcha: string;
+    captchaInput: string;
   };
 }
 
@@ -38,10 +42,27 @@ interface VerifyOTPRequest extends Request {
 
 export const signup = async (req: SignupRequest, res: Response): Promise<Response> => {
   try {
-    const { name, email, role } = req.body;
+    const { name, email, role, captcha, captchaInput } = req.body;
+
+    const emailKey = email.toLowerCase().trim();
+
+    // Verify captcha (comparing hashed values)
+    if (!captcha || !captchaInput) {
+      return res.status(400).json({
+        success: false,
+        message: "Captcha is required",
+      });
+    }
+
+    if (captcha !== captchaInput) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid captcha. Please try again.",
+      });
+    }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const existingUser = await User.findOne({ email: emailKey });
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -55,13 +76,13 @@ export const signup = async (req: SignupRequest, res: Response): Promise<Respons
     const otpExpires = getOTPExpiration(10); // 10 minutes
     console.log("otp", otp);
 
-    // Create temporary user record (will be activated after OTP verification)
+    // Create user record
     const user = await User.create({
       name: name.trim(),
-      email: email.toLowerCase().trim(),
+      email: emailKey,
       role,
-      isVerified: false, // Will be set to true after OTP verification
-      isActive: false, // Will be set based on role after OTP verification
+      isVerified: false,
+      isActive: false,
       otp: hashedOTP,
       otpExpires,
     });
@@ -106,10 +127,27 @@ export const signup = async (req: SignupRequest, res: Response): Promise<Respons
 // Request OTP for login
 export const login = async (req: LoginRequest, res: Response): Promise<Response> => {
   try {
-    const { email } = req.body;
+    const { email, captcha, captchaInput } = req.body;
 
-    // Find user by email (case-insensitive)
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const emailKey = email.toLowerCase().trim();
+
+    // Verify captcha (comparing hashed values)
+    if (!captcha || !captchaInput) {
+      return res.status(400).json({
+        success: false,
+        message: "Captcha is required",
+      });
+    }
+
+    if (captcha !== captchaInput) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid captcha. Please try again.",
+      });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email: emailKey });
     if (!user) {
       // Don't reveal if user exists (security best practice)
       return res.status(200).json({

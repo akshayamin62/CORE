@@ -22,13 +22,13 @@ api.interceptors.request.use((config) => {
 
 // API functions
 export const authAPI = {
-  signup: (data: { name: string; email: string; role: string }) =>
+  signup: (data: { name: string; email: string; role: string; captcha: string; captchaInput: string }) =>
     api.post('/auth/signup', data),
   
   verifySignupOTP: (data: { email: string; otp: string }) =>
     api.post('/auth/verify-signup-otp', data),
   
-  login: (data: { email: string }) =>
+  login: (data: { email: string; captcha: string; captchaInput: string }) =>
     api.post('/auth/login', data),
   
   verifyOTP: (data: { email: string; otp: string }) =>
