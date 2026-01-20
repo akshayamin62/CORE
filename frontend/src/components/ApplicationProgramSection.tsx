@@ -322,14 +322,14 @@ export default function ApplicationProgramSection({
                         <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
                           Priority: {program.priority}
                         </span>
-                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                          Intake: {program.intake}
-                        </span>
                         {program.year && (
                           <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">
                             Year: {program.year}
                           </span>
                         )}
+                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                          Intake: {program.intake}
+                        </span>
                       </div>
                       <h4 className="font-semibold text-gray-900 mb-1">{program.programName}</h4>
                       <p className="text-sm text-gray-600 mb-2">{program.university}</p>
