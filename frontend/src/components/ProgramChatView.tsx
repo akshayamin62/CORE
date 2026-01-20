@@ -66,12 +66,24 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
   }, []);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
   };
 
+  // Only scroll to bottom when messages count changes (new message arrives)
+  const prevMessagesLengthRef = useRef(messages.length);
+  const isInitialLoadRef = useRef(true);
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    // Scroll on initial load when messages first populate
+    if (isInitialLoadRef.current && messages.length > 0) {
+      scrollToBottom();
+      isInitialLoadRef.current = false;
+    }
+    // Or scroll when new messages arrive (count increases)
+    else if (messages.length > prevMessagesLengthRef.current) {
+      scrollToBottom();
+    }
+    prevMessagesLengthRef.current = messages.length;
+  }, [messages.length]);
 
   useEffect(() => {
     fetchChatAndMessages();
@@ -174,122 +186,24 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-50 rounded-2xl shadow-2xl w-full h-[90vh] flex overflow-hidden">
-        {/* Left Panel - Program Details */}
-        <div className="w-1/2 bg-white border-r border-gray-200 p-6 overflow-y-auto">
-          <div className="mb-6">
-            <button
-              onClick={onClose}
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors mb-4"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back to Programs
-            </button>
-            <h2 className="text-2xl font-bold text-gray-900">Program Details</h2>
+    <div className="w-full h-[600px] bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
+      {/* Chat Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold mb-1">Program Chat</h3>
+            <p className="text-sm text-blue-100">{program.programName} - {program.university}</p>
           </div>
-
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-1">{program.programName}</h3>
-                <p className="text-lg text-blue-600 font-semibold">{program.university}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-blue-200">
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Campus</p>
-                  <p className="text-sm font-semibold text-gray-900">{program.campus}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Country</p>
-                  <p className="text-sm font-semibold text-gray-900">{program.country}</p>
-                </div>
-              </div>
-
-              {program.priority && program.intake && program.year && (
-                <div className="grid grid-cols-3 gap-3 pt-4 border-t border-blue-200">
-                  <div className="bg-white rounded-lg p-3 text-center">
-                    <p className="text-xs text-gray-500 uppercase mb-1">Priority</p>
-                    <p className="text-lg font-bold text-blue-600">{program.priority}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-3 text-center">
-                    <p className="text-xs text-gray-500 uppercase mb-1">Intake</p>
-                    <p className="text-sm font-bold text-green-600">{program.intake}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-3 text-center">
-                    <p className="text-xs text-gray-500 uppercase mb-1">Year</p>
-                    <p className="text-sm font-bold text-purple-600">{program.year}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Participants */}
-          {chatInfo && (
-            <div className="mt-6">
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">Chat Participants</h4>
-              <div className="space-y-2">
-                {chatInfo.participants.student && (
-                  <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg">
-                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                      {chatInfo.participants.student.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">{chatInfo.participants.student.name}</p>
-                      <p className="text-xs text-gray-500">Student</p>
-                    </div>
-                  </div>
-                )}
-                {chatInfo.participants.counselor && (
-                  <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
-                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold">
-                      {chatInfo.participants.counselor.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">{chatInfo.participants.counselor.name}</p>
-                      <p className="text-xs text-gray-500">Counselor</p>
-                    </div>
-                  </div>
-                )}
-                {chatInfo.participants.admin && (
-                  <div className="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg">
-                    <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                      {chatInfo.participants.admin.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">{chatInfo.participants.admin.name}</p>
-                      <p className="text-xs text-gray-500">Admin</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          <button
+            onClick={onClose}
+            className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-
-        {/* Right Panel - Chat */}
-        <div className="w-1/2 flex flex-col bg-white">
-          {/* Chat Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 shadow-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold mb-1">Program Chat</h3>
-                <p className="text-sm text-blue-100">Discuss this program with your team</p>
-              </div>
-              <button
-                onClick={onClose}
-                className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          </div>
+      </div>
 
           {/* Messages Container */}
           <div
@@ -407,7 +321,5 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
             </form>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
+    );
+  }

@@ -529,11 +529,13 @@ export default function ProgramSection({
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className={`flex gap-4 ${selectedChatProgram ? '' : 'flex-col'}`}>
+            {/* Programs List */}
+            <div className={`space-y-4 ${selectedChatProgram ? 'w-1/2 overflow-y-auto max-h-[600px]' : 'w-full'}`}>
             {role === 'ADMIN' ? (
               // Admin view with edit functionality
               programs.map((program) => (
-                <div key={program._id}>
+                <div key={program._id} className={selectedChatProgram?._id === program._id ? 'bg-gray-200 rounded-lg p-2' : ''}>
                   {editingProgram === program._id ? (
                     <div className="border border-gray-300 rounded-lg p-4 bg-blue-50">
                       <ProgramCard program={program} showPriority={false} showActions={false} />
@@ -627,7 +629,8 @@ export default function ProgramSection({
             ) : (
               // Student/Counselor view
               programs.map((program) => (
-                <div key={program._id} className="relative">
+                <div key={program._id} className={`${selectedChatProgram?._id === program._id ? 'bg-gray-200 rounded-lg p-2' : ''}`}>
+                  <div className="relative">
                   <ProgramCard
                     program={program}
                     showPriority={true}
@@ -644,19 +647,23 @@ export default function ProgramSection({
                       <span>Chat</span>
                     </button>
                   )}
+                  </div>
                 </div>
               ))
             )}
           </div>
-        )}
 
-        {/* Chat Modal */}
-        {selectedChatProgram && (
-          <ProgramChatView
-            program={selectedChatProgram}
-            onClose={() => setSelectedChatProgram(null)}
-            userRole={role}
-          />
+          {/* Chat View */}
+          {selectedChatProgram && (
+            <div className="w-1/2">
+              <ProgramChatView
+                program={selectedChatProgram}
+                onClose={() => setSelectedChatProgram(null)}
+                userRole={role}
+              />
+            </div>
+          )}
+        </div>
         )}
       </div>
     );
