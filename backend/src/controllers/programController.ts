@@ -40,12 +40,8 @@ export const getStudentPrograms = async (req: AuthRequest, res: Response): Promi
       ],
     })
       .populate({
-        path: 'counselorId',
-        select: 'email mobileNumber specializations userId',
-        populate: {
-          path: 'userId',
-          select: 'name email'
-        }
+        path: 'createdBy',
+        select: 'name email role'
       })
       .sort({ createdAt: -1 });
 
@@ -124,12 +120,8 @@ export const getCounselorStudentPrograms = async (req: AuthRequest, res: Respons
       };
       const programs = await Program.find(query)
         .populate({
-          path: 'counselorId',
-          select: 'email mobileNumber specializations userId',
-          populate: {
-            path: 'userId',
-            select: 'name email'
-          }
+          path: 'createdBy',
+          select: 'name email role'
         })
         .sort({ priority: 1, selectedAt: 1 });
       
@@ -147,12 +139,8 @@ export const getCounselorStudentPrograms = async (req: AuthRequest, res: Respons
       };
       const programs = await Program.find(query)
         .populate({
-          path: 'counselorId',
-          select: 'email mobileNumber specializations userId',
-          populate: {
-            path: 'userId',
-            select: 'name email'
-          }
+          path: 'createdBy',
+          select: 'name email role'
         })
         .sort({ createdAt: -1 });
       
@@ -222,23 +210,15 @@ export const createProgram = async (req: AuthRequest, res: Response): Promise<Re
     const userId = req.user?.userId;
     const user = await User.findById(userId);
     
-    if (user?.role !== USER_ROLE.COUNSELOR) {
+    if (user?.role !== USER_ROLE.COUNSELOR && user?.role !== USER_ROLE.STUDENT && user?.role !== USER_ROLE.ADMIN) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
       });
     }
 
-    const counselor = await Counselor.findOne({ userId });
-    if (!counselor) {
-      return res.status(404).json({
-        success: false,
-        message: 'Counselor record not found',
-      });
-    }
-
     const {
-      studentId, // Optional: if provided, link program to specific student
+      studentId, // Optional for counselor/admin: if provided, link program to specific student
       university,
       universityRanking,
       programName,
@@ -260,9 +240,52 @@ export const createProgram = async (req: AuthRequest, res: Response): Promise<Re
       });
     }
 
-    // If studentId is provided, validate it exists
-    let studentObjectId = undefined;
-    if (studentId) {
+    let counselorObjectId;
+    let studentObjectId;
+
+    // Handle different user roles
+    if (user.role === USER_ROLE.STUDENT) {
+      // Student creates program for themselves
+      const student = await Student.findOne({ userId });
+      if (!student) {
+        return res.status(404).json({
+          success: false,
+          message: 'Student record not found',
+        });
+      }
+      studentObjectId = student._id;
+      // No counselorId for student-created programs
+      counselorObjectId = null;
+    } else if (user.role === USER_ROLE.COUNSELOR) {
+      // Counselor creates program
+      const counselor = await Counselor.findOne({ userId });
+      if (!counselor) {
+        return res.status(404).json({
+          success: false,
+          message: 'Counselor record not found',
+        });
+      }
+      counselorObjectId = counselor._id;
+      
+      // If studentId is provided, validate it exists
+      if (studentId) {
+        const student = await Student.findById(studentId);
+        if (!student) {
+          return res.status(404).json({
+            success: false,
+            message: 'Student not found',
+          });
+        }
+        studentObjectId = student._id;
+      }
+    } else if (user.role === USER_ROLE.ADMIN) {
+      // Admin creates program - must provide studentId
+      if (!studentId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Student ID is required for admin',
+        });
+      }
       const student = await Student.findById(studentId);
       if (!student) {
         return res.status(404).json({
@@ -271,10 +294,13 @@ export const createProgram = async (req: AuthRequest, res: Response): Promise<Re
         });
       }
       studentObjectId = student._id;
+      // No counselorId for admin-created programs
+      counselorObjectId = null;
     }
 
     const program = await Program.create({
-      counselorId: counselor._id,
+      createdBy: userId,
+      counselorId: counselorObjectId,
       studentId: studentObjectId, // Link to specific student if provided
       university,
       universityRanking: universityRanking || {},
@@ -521,12 +547,8 @@ export const getAdminStudentPrograms = async (req: AuthRequest, res: Response): 
       };
       const programs = await Program.find(query)
         .populate({
-          path: 'counselorId',
-          select: 'email mobileNumber specializations userId',
-          populate: {
-            path: 'userId',
-            select: 'name email'
-          }
+          path: 'createdBy',
+          select: 'name email role'
         })
         .sort({ priority: 1, selectedAt: 1 });
       
@@ -544,12 +566,8 @@ export const getAdminStudentPrograms = async (req: AuthRequest, res: Response): 
       };
       const programs = await Program.find(query)
         .populate({
-          path: 'counselorId',
-          select: 'email mobileNumber specializations userId',
-          populate: {
-            path: 'userId',
-            select: 'name email'
-          }
+          path: 'createdBy',
+          select: 'name email role'
         })
         .sort({ createdAt: -1 });
       
@@ -598,7 +616,10 @@ export const getStudentAppliedPrograms = async (req: AuthRequest, res: Response)
       studentId: studentId,
       isSelectedByStudent: true,
     })
-      .populate('counselorId', 'email mobileNumber specializations')
+      .populate({
+        path: 'createdBy',
+        select: 'name email role'
+      })
       .sort({ priority: 1, selectedAt: 1 });
 
     return res.status(200).json({
@@ -624,19 +645,23 @@ export const uploadProgramsFromExcel = async (req: AuthRequest & { file?: Expres
     const userId = req.user?.userId;
     const user = await User.findById(userId);
     
-    if (user?.role !== USER_ROLE.COUNSELOR) {
+    if (user?.role !== USER_ROLE.COUNSELOR && user?.role !== USER_ROLE.ADMIN) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
       });
     }
 
-    const counselor = await Counselor.findOne({ userId });
-    if (!counselor) {
-      return res.status(404).json({
-        success: false,
-        message: 'Counselor record not found',
-      });
+    // Get counselor record if user is counselor
+    let counselor = null;
+    if (user.role === USER_ROLE.COUNSELOR) {
+      counselor = await Counselor.findOne({ userId });
+      if (!counselor) {
+        return res.status(404).json({
+          success: false,
+          message: 'Counselor record not found',
+        });
+      }
     }
 
     // Check if file is uploaded
@@ -708,7 +733,7 @@ export const uploadProgramsFromExcel = async (req: AuthRequest & { file?: Expres
         }
 
         const programData: any = {
-          counselorId: counselor._id,
+          createdBy: userId, // Track who created the program
           studentId: studentObjectId, // Link to specific student if provided
           university: getValue(['University', 'university', 'UNIVERSITY']),
           programName: getValue(['Program Name', 'Program Name', 'programName', 'Program', 'program']),

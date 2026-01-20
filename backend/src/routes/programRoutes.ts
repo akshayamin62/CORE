@@ -43,6 +43,7 @@ router.use(authenticate);
 // Student routes
 router.get('/student/programs', authorize([USER_ROLE.STUDENT]), getStudentPrograms);
 router.post('/student/programs/select', authorize([USER_ROLE.STUDENT]), selectProgram);
+router.post('/student/programs/create', authorize([USER_ROLE.STUDENT]), createProgram);
 router.delete('/student/programs/:programId', authorize([USER_ROLE.STUDENT]), removeProgram);
 
 // Counselor routes
@@ -54,6 +55,8 @@ router.post('/counselor/programs/upload-excel', authorize([USER_ROLE.COUNSELOR])
 // Admin routes
 router.get('/admin/student/:studentId/programs', authorize([USER_ROLE.ADMIN]), getAdminStudentPrograms);
 router.get('/admin/student/:studentId/applied-programs', authorize([USER_ROLE.ADMIN]), getStudentAppliedPrograms);
+router.post('/admin/programs/create', authorize([USER_ROLE.ADMIN]), createProgram);
+router.post('/admin/programs/upload-excel', authorize([USER_ROLE.ADMIN]), upload.single('file'), uploadProgramsFromExcel);
 router.put('/admin/programs/:programId/selection', authorize([USER_ROLE.ADMIN]), updateProgramSelection);
 
 export default router;

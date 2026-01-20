@@ -30,13 +30,11 @@ interface Program {
   intake?: string;
   year?: string;
   isSelectedByStudent?: boolean;
-  counselorId?: {
+  createdBy?: {
     _id: string;
+    name: string;
     email: string;
-    userId?: {
-      name: string;
-      email: string;
-    };
+    role: string;
   };
 }
 

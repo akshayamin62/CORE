@@ -131,6 +131,7 @@ export const programAPI = {
   selectProgram: (data: { programId: string; priority: number; intake: string; year: string }) =>
     api.post('/programs/student/programs/select', data),
   removeProgram: (programId: string) => api.delete(`/programs/student/programs/${programId}`),
+  createStudentProgram: (data: any) => api.post('/programs/student/programs/create', data),
   getCounselorPrograms: () => api.get('/programs/counselor/programs'),
   createProgram: (data: any) => api.post('/programs/counselor/programs', data),
   uploadProgramsExcel: (file: File, studentId?: string) => {
@@ -165,6 +166,17 @@ export const programAPI = {
   getStudentAppliedPrograms: (studentId: string) => api.get(`/programs/admin/student/${studentId}/applied-programs`),
   updateProgramSelection: (programId: string, data: { priority: number; intake: string; year: string }) => 
     api.put(`/programs/admin/programs/${programId}/selection`, data),
+  createAdminProgram: (studentId: string, data: any) => api.post('/programs/admin/programs/create', { ...data, studentId }),
+  uploadAdminProgramsExcel: (file: File, studentId: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('studentId', studentId);
+    return api.post('/programs/admin/programs/upload-excel', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };
 
 export default api;

@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IProgram extends Document {
-  counselorId: mongoose.Types.ObjectId; // Counselor who added this program
+  createdBy: mongoose.Types.ObjectId; // User who created this program (can be student, counselor, or admin)
   studentId?: mongoose.Types.ObjectId; // Student who selected this program (if selected)
   university: string;
   universityRanking: {
@@ -30,9 +30,9 @@ export interface IProgram extends Document {
 
 const programSchema = new Schema<IProgram>(
   {
-    counselorId: {
+    createdBy: {
       type: Schema.Types.ObjectId,
-      ref: "Counselor",
+      ref: "User",
       required: true,
     },
     studentId: {
