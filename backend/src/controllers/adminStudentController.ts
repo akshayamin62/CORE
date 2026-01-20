@@ -19,7 +19,7 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
     
     let studentQuery: any = {};
     
-    // If user is a counselor, filter by assigned registrations
+    // If user is a counselor, filter by active assignments only
     if (user?.role === USER_ROLE.COUNSELOR) {
       const counselor = await Counselor.findOne({ userId });
       if (!counselor) {
@@ -29,9 +29,15 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
         });
       }
       
-      // Get all registrations assigned to this counselor
+      // Get all registrations where this counselor is ACTIVE
+      // Note: Only active counselors can see students
+      // Fallback to primaryCounselorId if activeCounselorId is not set (for backward compatibility)
       const registrations = await StudentServiceRegistration.find({
-        assignedCounselorId: counselor._id,
+        $or: [
+          { activeCounselorId: counselor._id },
+          { activeCounselorId: { $exists: false }, primaryCounselorId: counselor._id },
+          { activeCounselorId: null, primaryCounselorId: counselor._id }
+        ]
       }).select('studentId');
       
       const studentIds = [...new Set(registrations.map(r => r.studentId.toString()))];
@@ -91,10 +97,13 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
 
 /**
  * Get student details with all registrations
+ * For counselors: only show details if they are active counselor for at least one registration
  */
 export const getStudentDetails = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const { studentId } = req.params;
+    const userId = req.user?.userId;
+    const user = await User.findById(userId);
 
     const student = await Student.findById(studentId).populate(
       'userId',
@@ -113,8 +122,35 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
       studentId: student._id,
     })
       .populate('serviceId', 'name slug shortDescription icon')
-      .populate('assignedCounselorId', 'email mobileNumber specializations')
+      .populate('primaryCounselorId')
+      .populate('secondaryCounselorId')
+      .populate('activeCounselorId')
       .sort({ createdAt: -1 });
+
+    // If user is counselor, verify they are active counselor for at least one registration
+    if (user?.role === USER_ROLE.COUNSELOR) {
+      const counselor = await Counselor.findOne({ userId });
+      if (!counselor) {
+        return res.status(404).json({
+          success: false,
+          message: 'Counselor record not found',
+        });
+      }
+
+      const hasAccess = registrations.some(reg => {
+        // Handle both populated (document) and unpopulated (ObjectId) counselor references
+        const activeCounselorIdValue = reg.activeCounselorId || reg.primaryCounselorId;
+        const activeCounselorIdString = activeCounselorIdValue?._id?.toString() || activeCounselorIdValue?.toString();
+        return activeCounselorIdString === counselor._id.toString();
+      });
+
+      if (!hasAccess) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. You are not the active counselor for this student.',
+        });
+      }
+    }
 
     return res.status(200).json({
       success: true,
@@ -136,21 +172,48 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
 
 /**
  * Get student form answers for a specific registration
+ * For counselors: only allow access if they are the active counselor
  */
 export const getStudentFormAnswers = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const { studentId, registrationId } = req.params;
+    const userId = req.user?.userId;
+    const user = await User.findById(userId);
 
     const registration = await StudentServiceRegistration.findOne({
       _id: registrationId,
       studentId,
-    }).populate('serviceId', 'name');
+    })
+      .populate('serviceId', 'name')
+      .populate('activeCounselorId');
 
     if (!registration) {
       return res.status(404).json({
         success: false,
         message: 'Registration not found',
       });
+    }
+
+    // If user is counselor, verify they are the active counselor for this registration
+    if (user?.role === USER_ROLE.COUNSELOR) {
+      const counselor = await Counselor.findOne({ userId });
+      if (!counselor) {
+        return res.status(404).json({
+          success: false,
+          message: 'Counselor record not found',
+        });
+      }
+
+      // Handle both populated (document) and unpopulated (ObjectId) counselor references
+      const activeCounselorIdValue = registration.activeCounselorId || registration.primaryCounselorId;
+      const activeCounselorIdString = activeCounselorIdValue?._id?.toString() || activeCounselorIdValue?.toString();
+      
+      if (activeCounselorIdString !== counselor._id.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. You are not the active counselor for this registration.',
+        });
+      }
     }
 
     // Get all form answers for this student
@@ -259,17 +322,17 @@ export const getStudentsWithRegistrations = async (req: AuthRequest, res: Respon
 };
 
 /**
- * Assign counselor to a student service registration
+ * Assign primary and secondary counselors to a student service registration
  */
-export const assignCounselor = async (req: AuthRequest, res: Response): Promise<Response> => {
+export const assignCounselors = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const { registrationId } = req.params;
-    const { counselorId } = req.body;
+    const { primaryCounselorId, secondaryCounselorId } = req.body;
 
-    if (!counselorId) {
+    if (!primaryCounselorId && !secondaryCounselorId) {
       return res.status(400).json({
         success: false,
-        message: 'Counselor ID is required',
+        message: 'At least one counselor ID is required',
       });
     }
 
@@ -281,34 +344,115 @@ export const assignCounselor = async (req: AuthRequest, res: Response): Promise<
       });
     }
 
-    // Verify counselor exists
-    const counselor = await Counselor.findById(counselorId);
-    if (!counselor) {
-      return res.status(404).json({
-        success: false,
-        message: 'Counselor not found',
-      });
+    // Verify primary counselor exists
+    if (primaryCounselorId) {
+      const primaryCounselor = await Counselor.findById(primaryCounselorId);
+      if (!primaryCounselor) {
+        return res.status(404).json({
+          success: false,
+          message: 'Primary counselor not found',
+        });
+      }
+      registration.primaryCounselorId = primaryCounselorId;
+      
+      // Set as active if no active counselor or if updating primary
+      if (!registration.activeCounselorId) {
+        registration.activeCounselorId = primaryCounselorId;
+      }
     }
 
-    registration.assignedCounselorId = counselorId;
+    // Verify secondary counselor exists
+    if (secondaryCounselorId) {
+      const secondaryCounselor = await Counselor.findById(secondaryCounselorId);
+      if (!secondaryCounselor) {
+        return res.status(404).json({
+          success: false,
+          message: 'Secondary counselor not found',
+        });
+      }
+      registration.secondaryCounselorId = secondaryCounselorId;
+    }
+
     await registration.save();
 
     const updatedRegistration = await StudentServiceRegistration.findById(registrationId)
       .populate('serviceId', 'name slug shortDescription icon')
-      .populate('assignedCounselorId', 'email mobileNumber specializations');
+      .populate('primaryCounselorId')
+      .populate('secondaryCounselorId')
+      .populate('activeCounselorId');
 
     return res.status(200).json({
       success: true,
-      message: 'Counselor assigned successfully',
+      message: 'Counselors assigned successfully',
       data: {
         registration: updatedRegistration,
       },
     });
   } catch (error: any) {
-    console.error('Assign counselor error:', error);
+    console.error('Assign counselors error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to assign counselor',
+      message: 'Failed to assign counselors',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Switch active counselor between primary and secondary
+ */
+export const switchActiveCounselor = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { registrationId } = req.params;
+    const { activeCounselorId } = req.body;
+
+    if (!activeCounselorId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Active counselor ID is required',
+      });
+    }
+
+    const registration = await StudentServiceRegistration.findById(registrationId);
+    if (!registration) {
+      return res.status(404).json({
+        success: false,
+        message: 'Registration not found',
+      });
+    }
+
+    // Verify the counselor is either primary or secondary
+    const isPrimary = registration.primaryCounselorId?.toString() === activeCounselorId;
+    const isSecondary = registration.secondaryCounselorId?.toString() === activeCounselorId;
+
+    if (!isPrimary && !isSecondary) {
+      return res.status(400).json({
+        success: false,
+        message: 'Selected counselor must be either primary or secondary counselor',
+      });
+    }
+
+    registration.activeCounselorId = activeCounselorId;
+    await registration.save();
+
+    const updatedRegistration = await StudentServiceRegistration.findById(registrationId)
+      .populate('serviceId', 'name slug shortDescription icon')
+      .populate('primaryCounselorId')
+      .populate('secondaryCounselorId')
+      .populate('activeCounselorId');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Active counselor switched successfully',
+      data: {
+        registration: updatedRegistration,
+      },
+    });
+  } catch (error: any) {
+    console.error('Switch active counselor error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to switch active counselor',
       error: error.message,
     });
   }

@@ -45,12 +45,9 @@ interface Registration {
     slug: string;
     shortDescription: string;
   };
-  assignedCounselorId?: {
-    _id: string;
-    email: string;
-    mobileNumber?: string;
-    specializations?: string[];
-  };
+  primaryCounselorId?: Counselor;
+  secondaryCounselorId?: Counselor;
+  activeCounselorId?: Counselor;
   status: string;
   createdAt: string;
 }
@@ -64,8 +61,9 @@ export default function StudentDetailPage() {
   const [student, setStudent] = useState<StudentDetails | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [counselorsByService, setCounselorsByService] = useState<{ [key: string]: Counselor[] }>({});
+  const [counselors, setCounselors] = useState<Counselor[]>([]);
   const [assigningCounselor, setAssigningCounselor] = useState<string | null>(null);
+  const [switchingActive, setSwitchingActive] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -99,32 +97,36 @@ export default function StudentDetailPage() {
       setStudent(response.data.data.student);
       setRegistrations(response.data.data.registrations);
       
-      // Fetch counselors for each service
-      const serviceCounselors: { [key: string]: Counselor[] } = {};
-      for (const reg of response.data.data.registrations) {
-        try {
-          const counselorsResponse = await axios.get(`${API_URL}/admin/counselors`, {
-            params: { serviceName: reg.serviceId.name },
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          serviceCounselors[reg._id] = counselorsResponse.data.data.counselors;
-        } catch (err) {
-          console.error('Failed to fetch counselors for service:', err);
-          serviceCounselors[reg._id] = [];
-        }
+      // Fetch all counselors
+      try {
+        const counselorsResponse = await axios.get(`${API_URL}/admin/counselors`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCounselors(counselorsResponse.data.data.counselors || []);
+      } catch (err) {
+        console.error('Failed to fetch counselors:', err);
+        setCounselors([]);
       }
-      setCounselorsByService(serviceCounselors);
     } catch (error: any) {
-      toast.error('Failed to fetch student details');
+      if (error.response?.status === 403) {
+        toast.error('Access denied. You are not the active counselor for this student.');
+        router.push('/counselor/students');
+      } else {
+        toast.error('Failed to fetch student details');
+      }
       console.error('Fetch student details error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAssignCounselor = async (registrationId: string, counselorId: string) => {
-    if (!counselorId) {
-      toast.error('Please select a counselor');
+  const handleAssignCounselors = async (
+    registrationId: string, 
+    primaryId: string, 
+    secondaryId: string
+  ) => {
+    if (!primaryId && !secondaryId) {
+      toast.error('Please select at least one counselor');
       return;
     }
 
@@ -132,17 +134,44 @@ export default function StudentDetailPage() {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `${API_URL}/admin/students/registrations/${registrationId}/assign-counselor`,
-        { counselorId },
+        `${API_URL}/admin/students/registrations/${registrationId}/assign-counselors`,
+        { 
+          primaryCounselorId: primaryId || undefined,
+          secondaryCounselorId: secondaryId || undefined
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Counselor assigned successfully');
+      toast.success('Counselors assigned successfully');
       fetchStudentDetails(); // Refresh data
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to assign counselor');
-      console.error('Assign counselor error:', error);
+      toast.error(error.response?.data?.message || 'Failed to assign counselors');
+      console.error('Assign counselors error:', error);
     } finally {
       setAssigningCounselor(null);
+    }
+  };
+
+  const handleSwitchActiveCounselor = async (registrationId: string, counselorId: string) => {
+    if (!counselorId) {
+      toast.error('Please select a counselor');
+      return;
+    }
+
+    setSwitchingActive(registrationId);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API_URL}/admin/students/registrations/${registrationId}/switch-active-counselor`,
+        { activeCounselorId: counselorId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Active counselor switched successfully');
+      fetchStudentDetails(); // Refresh data
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to switch active counselor');
+      console.error('Switch active counselor error:', error);
+    } finally {
+      setSwitchingActive(null);
     }
   };
 
@@ -277,43 +306,140 @@ export default function StudentDetailPage() {
                           </span>
                         </div>
                         {user?.role === USER_ROLE.ADMIN && (
-                          <div className="mt-3">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Assign Counselor
-                            </label>
-                            <div className="flex items-center gap-2">
-                              <select
-                                value={registration.assignedCounselorId?._id || ''}
-                                onChange={(e) => handleAssignCounselor(registration._id, e.target.value)}
-                                disabled={assigningCounselor === registration._id}
-                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
-                              >
-                                <option value="">Select Counselor</option>
-                                {counselorsByService[registration._id]?.map((counselor) => (
-                                  <option key={counselor._id} value={counselor._id}>
-                                    {counselor.userId?.name || counselor.email}
-                                    {counselor.specializations && counselor.specializations.length > 0 && 
-                                      ` (${counselor.specializations.join(', ')})`
-                                    }
-                                  </option>
-                                ))}
-                              </select>
-                              {assigningCounselor === registration._id && (
-                                <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                              )}
+                          <div className="mt-4 space-y-4 border-t pt-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {/* Primary Counselor */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Primary Counselor
+                                </label>
+                                <select
+                                  id={`primary-${registration._id}`}
+                                  value={registration.primaryCounselorId?._id || ''}
+                                  onChange={(e) => {
+                                    const secondarySelect = document.getElementById(`secondary-${registration._id}`) as HTMLSelectElement;
+                                    handleAssignCounselors(registration._id, e.target.value, secondarySelect?.value || '');
+                                  }}
+                                  disabled={assigningCounselor === registration._id}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
+                                >
+                                  <option value="">Select Primary Counselor</option>
+                                  {counselors.map((counselor) => (
+                                    <option key={counselor._id} value={counselor._id}>
+                                      {counselor.userId?.name || counselor.email}
+                                      {counselor.specializations && counselor.specializations.length > 0 && 
+                                        ` (${counselor.specializations.join(', ')})`
+                                      }
+                                    </option>
+                                  ))}
+                                </select>
+                                {registration.primaryCounselorId && (
+                                  <p className="mt-1 text-xs text-gray-600">
+                                    {registration.primaryCounselorId.userId?.name || registration.primaryCounselorId.email}
+                                  </p>
+                                )}
+                              </div>
+
+                              {/* Secondary Counselor */}
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Secondary Counselor
+                                </label>
+                                <select
+                                  id={`secondary-${registration._id}`}
+                                  value={registration.secondaryCounselorId?._id || ''}
+                                  onChange={(e) => {
+                                    const primarySelect = document.getElementById(`primary-${registration._id}`) as HTMLSelectElement;
+                                    handleAssignCounselors(registration._id, primarySelect?.value || '', e.target.value);
+                                  }}
+                                  disabled={assigningCounselor === registration._id}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
+                                >
+                                  <option value="">Select Secondary Counselor</option>
+                                  {counselors.map((counselor) => (
+                                    <option key={counselor._id} value={counselor._id}>
+                                      {counselor.userId?.name || counselor.email}
+                                      {counselor.specializations && counselor.specializations.length > 0 && 
+                                        ` (${counselor.specializations.join(', ')})`
+                                      }
+                                    </option>
+                                  ))}
+                                </select>
+                                {registration.secondaryCounselorId && (
+                                  <p className="mt-1 text-xs text-gray-600">
+                                    {registration.secondaryCounselorId.userId?.name || registration.secondaryCounselorId.email}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                            {registration.assignedCounselorId && (
-                              <p className="mt-1 text-xs text-gray-600">
-                                Assigned: {registration.assignedCounselorId.email}
-                              </p>
+
+                            {/* Active Counselor Switcher */}
+                            {(registration.primaryCounselorId || registration.secondaryCounselorId) && (
+                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <label className="block text-sm font-semibold text-blue-900 mb-2">
+                                  🎯 Active Counselor (Has Access)
+                                </label>
+                                <div className="flex items-center gap-3">
+                                  <select
+                                    value={registration.activeCounselorId?._id || ''}
+                                    onChange={(e) => handleSwitchActiveCounselor(registration._id, e.target.value)}
+                                    disabled={switchingActive === registration._id}
+                                    className="flex-1 px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 text-sm font-medium"
+                                  >
+                                    <option value="">Select Active Counselor</option>
+                                    {registration.primaryCounselorId && (
+                                      <option value={registration.primaryCounselorId._id}>
+                                        Primary: {registration.primaryCounselorId.userId?.name || registration.primaryCounselorId.email}
+                                      </option>
+                                    )}
+                                    {registration.secondaryCounselorId && (
+                                      <option value={registration.secondaryCounselorId._id}>
+                                        Secondary: {registration.secondaryCounselorId.userId?.name || registration.secondaryCounselorId.email}
+                                      </option>
+                                    )}
+                                  </select>
+                                  {switchingActive === registration._id && (
+                                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                  )}
+                                </div>
+                                {registration.activeCounselorId && (
+                                  <div className="mt-2 flex items-center text-sm">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                      ✓ Active
+                                    </span>
+                                    <span className="ml-2 text-gray-700">
+                                      {registration.activeCounselorId.userId?.name || registration.activeCounselorId.email}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {assigningCounselor === registration._id && (
+                              <div className="flex items-center justify-center py-2">
+                                <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                                <span className="text-sm text-gray-600">Updating counselors...</span>
+                              </div>
                             )}
                           </div>
                         )}
-                        {user?.role === USER_ROLE.COUNSELOR && registration.assignedCounselorId && (
-                          <div className="mt-2">
-                            <p className="text-xs text-gray-600">
-                              Assigned Counselor: {registration.assignedCounselorId.email}
-                            </p>
+                        {user?.role === USER_ROLE.COUNSELOR && (registration.primaryCounselorId || registration.secondaryCounselorId) && (
+                          <div className="mt-3 space-y-2">
+                            {registration.primaryCounselorId && (
+                              <p className="text-xs text-gray-600">
+                                <span className="font-medium">Primary:</span> {registration.primaryCounselorId.userId?.name || registration.primaryCounselorId.email}
+                              </p>
+                            )}
+                            {registration.secondaryCounselorId && (
+                              <p className="text-xs text-gray-600">
+                                <span className="font-medium">Secondary:</span> {registration.secondaryCounselorId.userId?.name || registration.secondaryCounselorId.email}
+                              </p>
+                            )}
+                            {registration.activeCounselorId && (
+                              <p className="text-xs font-medium text-green-600">
+                                ✓ Active: {registration.activeCounselorId.userId?.name || registration.activeCounselorId.email}
+                              </p>
+                            )}
                           </div>
                         )}
                       </div>

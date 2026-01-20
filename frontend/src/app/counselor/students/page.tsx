@@ -63,7 +63,11 @@ export default function CounselorStudentsPage() {
       });
       setStudents(response.data.data.students);
     } catch (error: any) {
-      toast.error('Failed to fetch students');
+      if (error.response?.status === 403) {
+        toast.error('Access denied. You need to be assigned as an active counselor.');
+      } else {
+        toast.error('Failed to fetch students');
+      }
       console.error('Fetch students error:', error);
     } finally {
       setLoading(false);

@@ -84,8 +84,14 @@ export default function StudentFormEditPage() {
       );
       setServiceInfo(regResponse.data.data.registration.serviceId);
     } catch (error: any) {
+      if (error.response?.status === 403) {
+        toast.error('Access denied. You are not assigned as the active counselor for this student.');
+        router.push('/counselor/students');
+        throw error; // Re-throw to stop checkAuth flow
+      }
       console.error('Fetch student info error:', error);
       toast.error('Failed to fetch student information');
+      throw error;
     }
   };
 
@@ -110,6 +116,11 @@ export default function StudentFormEditPage() {
       setFormStructure(structure);
       return structure;
     } catch (error: any) {
+      if (error.response?.status === 403) {
+        toast.error('Access denied. You are not assigned as the active counselor for this student.');
+        router.push('/counselor/students');
+        return [];
+      }
       console.error('Fetch form structure error:', error);
       toast.error('Failed to fetch form structure');
       return [];
@@ -186,6 +197,11 @@ export default function StudentFormEditPage() {
       console.log('Final formatted answers:', formattedAnswers); // Debug
       setFormValues(formattedAnswers);
     } catch (error: any) {
+      if (error.response?.status === 403) {
+        toast.error('Access denied. You are not assigned as the active counselor for this student.');
+        router.push('/counselor/students');
+        return;
+      }
       console.error('Fetch form answers error:', error);
       toast.error('Failed to fetch form answers');
     }

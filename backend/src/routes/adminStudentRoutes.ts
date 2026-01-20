@@ -8,7 +8,8 @@ import {
   getStudentFormAnswers,
   updateStudentFormAnswers,
   getStudentsWithRegistrations,
-  assignCounselor,
+  assignCounselors,
+  switchActiveCounselor,
 } from '../controllers/adminStudentController';
 
 const router = express.Router();
@@ -32,8 +33,11 @@ router.get('/:studentId/registrations/:registrationId/answers', getStudentFormAn
 // Update student form answers
 router.put('/:studentId/answers/:partKey', updateStudentFormAnswers);
 
-// Assign counselor to a registration (admin only)
-router.post('/registrations/:registrationId/assign-counselor', authorize([USER_ROLE.ADMIN]), assignCounselor);
+// Assign counselors to a registration (admin only)
+router.post('/registrations/:registrationId/assign-counselors', authorize([USER_ROLE.ADMIN]), assignCounselors);
+
+// Switch active counselor (admin only)
+router.post('/registrations/:registrationId/switch-active-counselor', authorize([USER_ROLE.ADMIN]), switchActiveCounselor);
 
 export default router;
 

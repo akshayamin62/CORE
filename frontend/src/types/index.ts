@@ -48,10 +48,21 @@ export interface Service {
   order: number;
 }
 
+export interface Counselor {
+  _id: string;
+  userId: string;
+  email: string;
+  mobileNumber?: string;
+  specializations?: string[];
+}
+
 export interface StudentServiceRegistration {
   _id: string;
   studentId: string;
   serviceId: Service | string;
+  primaryCounselorId?: Counselor | string;
+  secondaryCounselorId?: Counselor | string;
+  activeCounselorId?: Counselor | string;
   status: 'REGISTERED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   registeredAt: string;
   completedAt?: string;

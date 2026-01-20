@@ -66,6 +66,16 @@ export const adminAPI = {
     phoneNumber?: string;
     specializations?: string[];
   }) => api.post('/admin/counselors', data),
+  
+  getCounselors: () => api.get('/admin/counselors'),
+  
+  assignCounselors: (registrationId: string, data: {
+    primaryCounselorId?: string;
+    secondaryCounselorId?: string;
+  }) => api.post(`/admin/students/registrations/${registrationId}/assign-counselors`, data),
+  
+  switchActiveCounselor: (registrationId: string, activeCounselorId: string) =>
+    api.post(`/admin/students/registrations/${registrationId}/switch-active-counselor`, { activeCounselorId }),
 };
 
 // Service API

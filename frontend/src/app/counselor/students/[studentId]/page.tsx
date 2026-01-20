@@ -79,8 +79,13 @@ export default function StudentDetailPage() {
       setStudent(response.data.data.student);
       setRegistrations(response.data.data.registrations);
     } catch (error: any) {
-      toast.error('Failed to fetch student details');
-      console.error('Fetch student details error:', error);
+      if (error.response?.status === 403) {
+        toast.error('Access denied. You are not assigned as the active counselor for this student.');
+        router.push('/counselor/students');
+      } else {
+        toast.error('Failed to fetch student details');
+        console.error('Fetch student details error:', error);
+      }
     } finally {
       setLoading(false);
     }

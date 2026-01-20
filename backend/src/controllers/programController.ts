@@ -31,14 +31,23 @@ export const getStudentPrograms = async (req: AuthRequest, res: Response): Promi
     }
 
     // Get all programs added by counselors assigned to this student
-    // First, get all registrations for this student to find assigned counselors
+    // First, get all registrations for this student to find active counselors
     const StudentServiceRegistration = (await import('../models/StudentServiceRegistration')).default;
     const registrations = await StudentServiceRegistration.find({
       studentId: student._id,
-      assignedCounselorId: { $exists: true },
-    }).select('assignedCounselorId');
+      $or: [
+        { activeCounselorId: { $exists: true, $ne: null } },
+        { activeCounselorId: { $exists: false }, primaryCounselorId: { $exists: true, $ne: null } },
+        { activeCounselorId: null, primaryCounselorId: { $exists: true, $ne: null } }
+      ]
+    }).select('activeCounselorId primaryCounselorId');
 
-    const counselorIds = [...new Set(registrations.map(r => r.assignedCounselorId?.toString()).filter(Boolean) as string[])];
+    const counselorIds = [...new Set(
+      registrations.map(r => {
+        const counselorId = r.activeCounselorId || r.primaryCounselorId;
+        return counselorId?.toString();
+      }).filter(Boolean) as string[]
+    )];
 
     if (counselorIds.length === 0) {
       return res.status(200).json({
@@ -347,11 +356,15 @@ export const selectProgram = async (req: AuthRequest, res: Response): Promise<Re
       });
     }
 
-    // Verify student has access to this program (counselor is assigned)
+    // Verify student has access to this program (counselor is active)
     const StudentServiceRegistration = (await import('../models/StudentServiceRegistration')).default;
     const registration = await StudentServiceRegistration.findOne({
       studentId: student._id,
-      assignedCounselorId: program.counselorId,
+      $or: [
+        { activeCounselorId: program.counselorId },
+        { activeCounselorId: { $exists: false }, primaryCounselorId: program.counselorId },
+        { activeCounselorId: null, primaryCounselorId: program.counselorId }
+      ]
     });
 
     if (!registration) {

@@ -10,7 +10,9 @@ export enum ServiceRegistrationStatus {
 export interface IStudentServiceRegistration extends Document {
   studentId: mongoose.Types.ObjectId;
   serviceId: mongoose.Types.ObjectId;
-  assignedCounselorId?: mongoose.Types.ObjectId;
+  primaryCounselorId?: mongoose.Types.ObjectId;
+  secondaryCounselorId?: mongoose.Types.ObjectId;
+  activeCounselorId?: mongoose.Types.ObjectId;  // Points to either primary or secondary
   status: ServiceRegistrationStatus;
   registeredAt: Date;
   completedAt?: Date;
@@ -34,7 +36,17 @@ const studentServiceRegistrationSchema = new Schema<IStudentServiceRegistration>
       ref: "Service",
       required: true,
     },
-    assignedCounselorId: {
+    primaryCounselorId: {
+      type: Schema.Types.ObjectId,
+      ref: "Counselor",
+      required: false,
+    },
+    secondaryCounselorId: {
+      type: Schema.Types.ObjectId,
+      ref: "Counselor",
+      required: false,
+    },
+    activeCounselorId: {
       type: Schema.Types.ObjectId,
       ref: "Counselor",
       required: false,
