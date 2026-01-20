@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import ProgramCard from './ProgramCard';
 import ProgramFormModal from './ProgramFormModal';
+import ProgramChatView from './ProgramChatView';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -57,6 +58,9 @@ export default function ProgramSection({
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
+  // For chat feature
+  const [selectedChatProgram, setSelectedChatProgram] = useState<Program | null>(null);
   
   // For student selection of programs
   const [selectingProgram, setSelectingProgram] = useState<string | null>(null);
@@ -422,7 +426,7 @@ export default function ProgramSection({
                                 ...prev,
                                 [program._id]: { ...prev[program._id], year: e.target.value }
                               }))}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-gray-900"
                             >
                               <option value="">Select Year</option>
                               {yearOptions.map(year => (
@@ -440,7 +444,7 @@ export default function ProgramSection({
                                 ...prev,
                                 [program._id]: { ...prev[program._id], priority: parseInt(e.target.value) || 1 }
                               }))}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-gray-900"
                             />
                           </div>
                           <div>
@@ -451,7 +455,7 @@ export default function ProgramSection({
                                 ...prev,
                                 [program._id]: { ...prev[program._id], intake: e.target.value }
                               }))}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-gray-900"
                             >
                               <option value="">Select Intake</option>
                               {intakeOptions.map(intake => (
@@ -598,12 +602,23 @@ export default function ProgramSection({
                     <div className="relative">
                       <ProgramCard program={program} showPriority={true} showActions={false} />
                       {!isReadOnly && (
-                        <button
-                          onClick={() => handleEdit(program._id, program)}
-                          className="absolute top-4 right-4 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                        >
-                          Edit Details
-                        </button>
+                        <div className="absolute top-4 right-4 flex gap-2">
+                          <button
+                            onClick={() => setSelectedChatProgram(program)}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium shadow-md hover:shadow-lg flex items-center space-x-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            <span>Chat</span>
+                          </button>
+                          <button
+                            onClick={() => handleEdit(program._id, program)}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-md hover:shadow-lg"
+                          >
+                            Edit Details
+                          </button>
+                        </div>
                       )}
                     </div>
                   )}
@@ -612,15 +627,36 @@ export default function ProgramSection({
             ) : (
               // Student/Counselor view
               programs.map((program) => (
-                <ProgramCard
-                  key={program._id}
-                  program={program}
-                  showPriority={true}
-                  showActions={false}
-                />
+                <div key={program._id} className="relative">
+                  <ProgramCard
+                    program={program}
+                    showPriority={true}
+                    showActions={false}
+                  />
+                  {!isReadOnly && (
+                    <button
+                      onClick={() => setSelectedChatProgram(program)}
+                      className="absolute top-4 right-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium shadow-md hover:shadow-lg flex items-center space-x-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      <span>Chat</span>
+                    </button>
+                  )}
+                </div>
               ))
             )}
           </div>
+        )}
+
+        {/* Chat Modal */}
+        {selectedChatProgram && (
+          <ProgramChatView
+            program={selectedChatProgram}
+            onClose={() => setSelectedChatProgram(null)}
+            userRole={role}
+          />
         )}
       </div>
     );

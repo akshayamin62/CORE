@@ -179,5 +179,20 @@ export const programAPI = {
   },
 };
 
+export const chatAPI = {
+  // Get or create chat for a program
+  getOrCreateChat: (programId: string) => api.get(`/chat/program/${programId}/chat`),
+  
+  // Get all messages for a program
+  getMessages: (programId: string) => api.get(`/chat/program/${programId}/messages`),
+  
+  // Send a message
+  sendMessage: (programId: string, message: string) => 
+    api.post(`/chat/program/${programId}/messages`, { message }),
+  
+  // Get all chats for current user
+  getMyChatsList: () => api.get('/chat/my-chats'),
+};
+
 export default api;
 
