@@ -7,7 +7,7 @@ import { FormStructure, StudentServiceRegistration, Service } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import FormSectionRenderer from '@/components/FormSectionRenderer';
 import StudentLayout from '@/components/StudentLayout';
-import ApplicationProgramSection from '@/components/ApplicationProgramSection';
+import ProgramSection from '@/components/ProgramSection';
 
 function MyDetailsContent() {
   const router = useRouter();
@@ -419,9 +419,10 @@ function MyDetailsContent() {
                 {/* Check if this is Application section with program management */}
                 {currentPart.part.key === 'APPLICATION' && 
                  (currentSection.title === 'Apply to Program' || currentSection.title === 'Applied Program') ? (
-                  <ApplicationProgramSection
+                  <ProgramSection
                     sectionTitle={currentSection.title}
-                    registrationId={registrationId!}
+                    studentId={registrationId!}
+                    role="STUDENT"
                   />
                 ) : (
                   <>

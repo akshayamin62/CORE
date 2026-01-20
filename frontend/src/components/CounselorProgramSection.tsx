@@ -5,6 +5,7 @@ import { programAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import ProgramCard from './ProgramCard';
+import ProgramFormModal from './ProgramFormModal';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -50,26 +51,7 @@ export default function CounselorProgramSection({
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showExcelModal, setShowExcelModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    university: '',
-    universityRanking: {
-      webometricsWorld: '',
-      webometricsNational: '',
-      usNews: '',
-      qs: '',
-    },
-    programName: '',
-    websiteUrl: '',
-    campus: '',
-    country: '',
-    studyLevel: '',
-    duration: '',
-    ieltsScore: '',
-    applicationFee: '',
-    yearlyTuitionFees: '',
-  });
 
   useEffect(() => {
     fetchPrograms();
@@ -95,24 +77,7 @@ export default function CounselorProgramSection({
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    if (name.startsWith('ranking.')) {
-      const rankingKey = name.split('.')[1];
-      setFormData(prev => ({
-        ...prev,
-        universityRanking: {
-          ...prev.universityRanking,
-          [rankingKey]: value ? parseInt(value) : undefined,
-        },
-      }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (formData: any) => {
     setSubmitting(true);
 
     try {
@@ -144,7 +109,6 @@ export default function CounselorProgramSection({
       );
       toast.success('Program created successfully');
       setShowAddModal(false);
-      resetForm();
       fetchPrograms();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to create program');
@@ -193,27 +157,6 @@ export default function CounselorProgramSection({
       setSubmitting(false);
       e.target.value = '';
     }
-  };
-
-  const resetForm = () => {
-    setFormData({
-      university: '',
-      universityRanking: {
-        webometricsWorld: '',
-        webometricsNational: '',
-        usNews: '',
-        qs: '',
-      },
-      programName: '',
-      websiteUrl: '',
-      campus: '',
-      country: '',
-      studyLevel: '',
-      duration: '',
-      ieltsScore: '',
-      applicationFee: '',
-      yearlyTuitionFees: '',
-    });
   };
 
   if (loading) {
@@ -294,206 +237,12 @@ export default function CounselorProgramSection({
       )}
 
       {/* Add Program Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">Add New Program</h2>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">University *</label>
-                  <input
-                    type="text"
-                    name="university"
-                    value={formData.university}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Program Name *</label>
-                  <input
-                    type="text"
-                    name="programName"
-                    value={formData.programName}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Website URL *</label>
-                  <input
-                    type="url"
-                    name="websiteUrl"
-                    value={formData.websiteUrl}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Campus *</label>
-                  <input
-                    type="text"
-                    name="campus"
-                    value={formData.campus}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Country *</label>
-                  <input
-                    type="text"
-                    name="country"
-                    value={formData.country}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Study Level *</label>
-                  <select
-                    name="studyLevel"
-                    value={formData.studyLevel}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                  >
-                    <option value="">Select Level</option>
-                    <option value="Undergraduate">Undergraduate</option>
-                    <option value="Postgraduate">Postgraduate</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Duration (months) *</label>
-                  <input
-                    type="number"
-                    name="duration"
-                    value={formData.duration}
-                    onChange={handleInputChange}
-                    required
-                    min="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">IELTS Score *</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    name="ieltsScore"
-                    value={formData.ieltsScore}
-                    onChange={handleInputChange}
-                    required
-                    min="0"
-                    max="9"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Application Fee (GBP) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="applicationFee"
-                    value={formData.applicationFee}
-                    onChange={handleInputChange}
-                    required
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Yearly Tuition Fees (GBP) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="yearlyTuitionFees"
-                    value={formData.yearlyTuitionFees}
-                    onChange={handleInputChange}
-                    required
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                  />
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 pt-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">University Rankings</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Webometrics World</label>
-                    <input
-                      type="number"
-                      name="ranking.webometricsWorld"
-                      value={formData.universityRanking.webometricsWorld}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Webometrics National</label>
-                    <input
-                      type="number"
-                      name="ranking.webometricsNational"
-                      value={formData.universityRanking.webometricsNational}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">US News</label>
-                    <input
-                      type="number"
-                      name="ranking.usNews"
-                      value={formData.universityRanking.usNews}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">QS Ranking</label>
-                    <input
-                      type="number"
-                      name="ranking.qs"
-                      value={formData.universityRanking.qs}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4 border-t border-gray-200">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {submitting ? 'Creating...' : 'Create Program'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddModal(false);
-                    resetForm();
-                  }}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ProgramFormModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSubmit={handleSubmit}
+        submitting={submitting}
+      />
 
     </div>
   );

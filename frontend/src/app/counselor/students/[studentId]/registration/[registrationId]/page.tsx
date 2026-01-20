@@ -10,7 +10,7 @@ import FormPartsNavigation from '@/components/FormPartsNavigation';
 import FormSectionsNavigation from '@/components/FormSectionsNavigation';
 import FormSaveButtons from '@/components/FormSaveButtons';
 import StudentFormHeader from '@/components/StudentFormHeader';
-import CounselorProgramSection from '@/components/CounselorProgramSection';
+import ProgramSection from '@/components/ProgramSection';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -382,9 +382,10 @@ export default function StudentFormEditPage() {
                       <p className="text-blue-100 text-sm mt-1">{currentSection.description}</p>
                     )}
                   </div>
-                  <CounselorProgramSection
+                  <ProgramSection
                     studentId={studentId}
                     sectionTitle={currentSection.title}
+                    role="COUNSELOR"
                   />
                 </div>
               ) : (
