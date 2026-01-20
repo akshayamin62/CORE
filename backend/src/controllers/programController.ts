@@ -30,48 +30,23 @@ export const getStudentPrograms = async (req: AuthRequest, res: Response): Promi
       });
     }
 
-    // Get all programs added by counselors assigned to this student
-    // First, get all registrations for this student to find active counselors
-    const StudentServiceRegistration = (await import('../models/StudentServiceRegistration')).default;
-    const registrations = await StudentServiceRegistration.find({
-      studentId: student._id,
-      $or: [
-        { activeCounselorId: { $exists: true, $ne: null } },
-        { activeCounselorId: { $exists: false }, primaryCounselorId: { $exists: true, $ne: null } },
-        { activeCounselorId: null, primaryCounselorId: { $exists: true, $ne: null } }
-      ]
-    }).select('activeCounselorId primaryCounselorId');
-
-    const counselorIds = [...new Set(
-      registrations.map(r => {
-        const counselorId = r.activeCounselorId || r.primaryCounselorId;
-        return counselorId?.toString();
-      }).filter(Boolean) as string[]
-    )];
-
-    if (counselorIds.length === 0) {
-      return res.status(200).json({
-        success: true,
-        message: 'Programs fetched successfully',
-        data: {
-          availablePrograms: [],
-          appliedPrograms: [],
-        },
-      });
-    }
-
-    // Get all programs from assigned counselors that are either:
-    // 1. Linked to this specific student (studentId matches)
-    // 2. Not linked to any student (studentId is null/undefined - general programs)
+    // Get all programs made for this student by any counselor
+    // Show all programs where studentId matches, regardless of which counselor created them
     const allPrograms = await Program.find({
-      counselorId: { $in: counselorIds },
       $or: [
         { studentId: student._id }, // Programs specifically for this student
         { studentId: null }, // General programs (not linked to any student)
         { studentId: { $exists: false } }, // Programs without studentId field
       ],
     })
-      .populate('counselorId', 'email')
+      .populate({
+        path: 'counselorId',
+        select: 'email mobileNumber specializations userId',
+        populate: {
+          path: 'userId',
+          select: 'name email'
+        }
+      })
       .sort({ createdAt: -1 });
 
     // Separate available and applied programs
@@ -136,7 +111,7 @@ export const getCounselorStudentPrograms = async (req: AuthRequest, res: Respons
       });
     }
 
-    // Get all programs added by this counselor for this specific student
+    // Get all programs for this student from ANY counselor (not just this counselor)
     // If section is "Applied Program", only return programs selected by the student
     // If section is "all" or not specified, only show programs NOT selected by student (for "Apply to Program")
     const { section } = req.query;
@@ -144,12 +119,19 @@ export const getCounselorStudentPrograms = async (req: AuthRequest, res: Respons
     // If requesting applied programs, only show selected ones
     if (section === 'applied') {
       const query = {
-        counselorId: counselor._id,
         studentId: studentId,
         isSelectedByStudent: true,
       };
       const programs = await Program.find(query)
-        .sort({ createdAt: -1 });
+        .populate({
+          path: 'counselorId',
+          select: 'email mobileNumber specializations userId',
+          populate: {
+            path: 'userId',
+            select: 'name email'
+          }
+        })
+        .sort({ priority: 1, selectedAt: 1 });
       
       return res.status(200).json({
         success: true,
@@ -160,11 +142,18 @@ export const getCounselorStudentPrograms = async (req: AuthRequest, res: Respons
       // For "Apply to Program", show only programs that are NOT selected
       // $ne: true will match false, null, and undefined (since default is false)
       const query = {
-        counselorId: counselor._id,
         studentId: studentId,
         isSelectedByStudent: { $ne: true },
       };
       const programs = await Program.find(query)
+        .populate({
+          path: 'counselorId',
+          select: 'email mobileNumber specializations userId',
+          populate: {
+            path: 'userId',
+            select: 'name email'
+          }
+        })
         .sort({ createdAt: -1 });
       
       return res.status(200).json({
@@ -356,21 +345,11 @@ export const selectProgram = async (req: AuthRequest, res: Response): Promise<Re
       });
     }
 
-    // Verify student has access to this program (counselor is active)
-    const StudentServiceRegistration = (await import('../models/StudentServiceRegistration')).default;
-    const registration = await StudentServiceRegistration.findOne({
-      studentId: student._id,
-      $or: [
-        { activeCounselorId: program.counselorId },
-        { activeCounselorId: { $exists: false }, primaryCounselorId: program.counselorId },
-        { activeCounselorId: null, primaryCounselorId: program.counselorId }
-      ]
-    });
-
-    if (!registration) {
+    // Verify the program is made for this student (or is a general program)
+    if (program.studentId && program.studentId.toString() !== student._id.toString()) {
       return res.status(403).json({
         success: false,
-        message: 'You do not have access to this program',
+        message: 'This program is not available for you',
       });
     }
 
@@ -541,7 +520,14 @@ export const getAdminStudentPrograms = async (req: AuthRequest, res: Response): 
         isSelectedByStudent: true,
       };
       const programs = await Program.find(query)
-        .populate('counselorId', 'email mobileNumber specializations')
+        .populate({
+          path: 'counselorId',
+          select: 'email mobileNumber specializations userId',
+          populate: {
+            path: 'userId',
+            select: 'name email'
+          }
+        })
         .sort({ priority: 1, selectedAt: 1 });
       
       return res.status(200).json({
@@ -557,7 +543,14 @@ export const getAdminStudentPrograms = async (req: AuthRequest, res: Response): 
         isSelectedByStudent: { $ne: true },
       };
       const programs = await Program.find(query)
-        .populate('counselorId', 'email mobileNumber specializations')
+        .populate({
+          path: 'counselorId',
+          select: 'email mobileNumber specializations userId',
+          populate: {
+            path: 'userId',
+            select: 'name email'
+          }
+        })
         .sort({ createdAt: -1 });
       
       return res.status(200).json({

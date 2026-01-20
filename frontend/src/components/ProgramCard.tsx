@@ -21,6 +21,14 @@ interface Program {
   priority?: number;
   intake?: string;
   year?: string;
+  counselorId?: {
+    _id: string;
+    email: string;
+    userId?: {
+      name: string;
+      email: string;
+    };
+  };
 }
 
 interface ProgramCardProps {
@@ -63,6 +71,11 @@ export default function ProgramCard({
           )}
           <h4 className="font-semibold text-gray-900 mb-1">{program.programName}</h4>
           <p className="text-sm text-gray-600 mb-2">{program.university}</p>
+          {program.counselorId?.userId?.name && (
+            <p className="text-xs text-blue-600 mb-2">
+              Added by: <span className="font-medium">{program.counselorId.userId.name}</span>
+            </p>
+          )}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
             <div>
               <span className="font-medium">Campus:</span> {program.campus}

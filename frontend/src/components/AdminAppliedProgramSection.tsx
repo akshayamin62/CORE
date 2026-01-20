@@ -30,6 +30,14 @@ interface Program {
   intake?: string;
   year?: string;
   isSelectedByStudent?: boolean;
+  counselorId?: {
+    _id: string;
+    email: string;
+    userId?: {
+      name: string;
+      email: string;
+    };
+  };
 }
 
 interface AdminAppliedProgramSectionProps {
