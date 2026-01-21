@@ -7,6 +7,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
 });
 
 // Add auth token to requests if available
@@ -19,6 +20,28 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+      const customError = new Error('Unable to connect to server. Please check if the backend is running.');
+      customError.name = 'NetworkError';
+      (customError as any).isNetworkError = true;
+      return Promise.reject(customError);
+    }
+    
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      const customError = new Error('Request timeout. The server is taking too long to respond.');
+      customError.name = 'TimeoutError';
+      (customError as any).isTimeout = true;
+      return Promise.reject(customError);
+    }
+    
+    return Promise.reject(error);
+  }
+);
 
 // API functions
 export const authAPI = {

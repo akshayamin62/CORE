@@ -46,7 +46,14 @@ export default function Home() {
       const response = await serviceAPI.getAllServices();
       setServices(response.data.data.services);
     } catch (error: any) {
-      console.error('Failed to fetch services:', error);
+      console.warn('Failed to fetch services:', error);
+      if ((error as any).isNetworkError) {
+        toast.error('Cannot connect to server. Please ensure the backend is running.');
+      } else if ((error as any).isTimeout) {
+        toast.error('Server request timeout. Please try again.');
+      } else {
+        toast.error('Failed to load services. Please try again later.');
+      }
     }
   };
 
@@ -55,7 +62,12 @@ export default function Home() {
       const response = await serviceAPI.getMyServices();
       setRegistrations(response.data.data.registrations);
     } catch (error: any) {
-      console.error('Failed to fetch my services:', error);
+      console.warn('Failed to fetch my services:', error);
+      if ((error as any).isNetworkError) {
+        toast.error('Cannot connect to server. Please ensure the backend is running.');
+      } else if ((error as any).isTimeout) {
+        toast.error('Server request timeout. Please try again.');
+      }
     }
   };
 

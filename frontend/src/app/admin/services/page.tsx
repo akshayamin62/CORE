@@ -41,8 +41,14 @@ export default function AdminServicesPage() {
       const response = await serviceAPI.getAllServices();
       setServices(response.data.data.services || []);
     } catch (error: any) {
-      toast.error('Failed to fetch services');
-      console.error('Fetch services error:', error);
+      if ((error as any).isNetworkError) {
+        toast.error('Cannot connect to server. Please ensure the backend is running.');
+      } else if ((error as any).isTimeout) {
+        toast.error('Server request timeout. Please try again.');
+      } else {
+        toast.error('Failed to fetch services');
+      }
+      console.warn('Fetch services error:', error);
     } finally {
       setLoading(false);
     }
