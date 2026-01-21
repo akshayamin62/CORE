@@ -269,7 +269,7 @@ export default function Home() {
     });
 
     if (registration) {
-      router.push(`/my-services/details?registrationId=${registration._id}`);
+      router.push(`/my-details?registrationId=${registration._id}`);
     }
   };
 
