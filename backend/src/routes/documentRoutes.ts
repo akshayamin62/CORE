@@ -1,0 +1,65 @@
+import express from "express";
+import {
+  uploadDocument,
+  getDocuments,
+  downloadDocument,
+  viewDocument,
+  approveDocument,
+  rejectDocument,
+  addCustomField,
+  deleteDocument,
+} from "../controllers/documentController";
+import {
+  getDocumentFields,
+  addDocumentField,
+  deleteDocumentField,
+} from "../controllers/formFieldController";
+import { authenticate } from "../middleware/auth";
+import { authorize } from "../middleware/authorize";
+import { USER_ROLE } from "../types/roles";
+import { upload, handleMulterError } from "../middleware/upload";
+
+const router = express.Router();
+
+// All routes require authentication
+router.use(authenticate);
+
+// Get document fields (all FILE type fields)
+router.get("/fields/list", getDocumentFields);
+
+// Add new document field (Admin/Counselor only)
+router.post("/fields/add", authorize(USER_ROLE.ADMIN, USER_ROLE.COUNSELOR), addDocumentField);
+
+// Delete document field (Admin only)
+router.delete("/fields/:fieldId", authorize(USER_ROLE.ADMIN), deleteDocumentField);
+
+// Upload document (auto-save)
+router.post(
+  "/upload",
+  upload.single("file"),
+  handleMulterError,
+  uploadDocument
+);
+
+// Get all documents for a registration
+router.get("/:registrationId", getDocuments);
+
+// View specific document (inline)
+router.get("/:documentId/view", viewDocument);
+
+// Download specific document
+router.get("/:documentId/download", downloadDocument);
+
+// Approve document (Counselor/Admin only)
+router.put("/:documentId/approve", approveDocument);
+
+// Reject document (Counselor/Admin only)
+router.put("/:documentId/reject", rejectDocument);
+
+// Add custom document field (DEPRECATED - use /fields/add instead)
+router.post("/add-custom-field", addCustomField);
+
+// Delete document
+router.delete("/:documentId", deleteDocument);
+
+export default router;

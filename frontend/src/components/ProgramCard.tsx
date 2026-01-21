@@ -106,7 +106,7 @@ export default function ProgramCard({
             )}
           </div>
           {program.universityRanking && (
-            <div className="mt-2 flex gap-4 text-xs text-gray-500">
+            <div className="mt-2 flex gap-4 text-xs text-gray-700">
               {program.universityRanking.webometricsWorld && (
                 <span>Webometrics World: {program.universityRanking.webometricsWorld}</span>
               )}

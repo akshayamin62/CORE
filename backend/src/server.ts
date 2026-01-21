@@ -10,6 +10,8 @@ import studentRoutes from "./routes/studentRoutes";
 import adminStudentRoutes from "./routes/adminStudentRoutes";
 import programRoutes from "./routes/programRoutes";
 import chatRoutes from "./routes/chatRoutes";
+import documentRoutes from "./routes/documentRoutes";
+import ksDocumentRoutes from "./routes/ksDocumentRoutes";
 
 // Import all models to register them with Mongoose
 import "./models/User";
@@ -26,6 +28,8 @@ import "./models/StudentFormAnswer";
 import "./models/Program";
 import "./models/ProgramChat";
 import "./models/ChatMessage";
+import "./models/StudentDocument";
+import "./models/KSDocumentField";
 
 dotenv.config();
 
@@ -44,6 +48,8 @@ app.use("/api/forms", formAnswerRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/programs", programRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/documents", documentRoutes);
+app.use("/api/ks-documents", ksDocumentRoutes);
 
 // Basic test route
 app.get('/', (_req, res) => {

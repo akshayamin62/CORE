@@ -141,7 +141,7 @@ export default function Navbar() {
                         {/* User Info */}
                         <div className="px-4 py-3 border-b border-gray-100">
                           <p className="text-sm font-semibold text-gray-900">{userName}</p>
-                          <p className="text-xs text-gray-500 capitalize mt-1">{userRole?.replace('_', ' ')}</p>
+                          <p className="text-xs text-gray-700 capitalize mt-1">{userRole?.replace('_', ' ')}</p>
                         </div>
                         
                         {/* My Profile Link */}

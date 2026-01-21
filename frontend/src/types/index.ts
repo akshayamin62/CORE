@@ -169,3 +169,62 @@ export interface StudentFormAnswer {
   completedAt?: string;
 }
 
+// Document Types
+export enum DocumentCategory {
+  PRIMARY = 'PRIMARY',
+  SECONDARY = 'SECONDARY',
+}
+
+export enum DocumentStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export interface StudentDocument {
+  _id: string;
+  registrationId: string;
+  studentId: string;
+  documentCategory: DocumentCategory;
+  documentName: string;
+  documentKey: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedAt: string;
+  uploadedBy: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  uploadedByRole: 'STUDENT' | 'COUNSELOR' | 'ADMIN';
+  status: DocumentStatus;
+  approvedBy?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  approvedAt?: string;
+  rejectedBy?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  rejectedAt?: string;
+  rejectionMessage?: string;
+  version: number;
+  isCustomField: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface DocumentFieldConfig {
+  documentKey: string;
+  documentName: string;
+  category: DocumentCategory;
+  isCustomField: boolean;
+  required?: boolean;
+  helpText?: string;
+}
+

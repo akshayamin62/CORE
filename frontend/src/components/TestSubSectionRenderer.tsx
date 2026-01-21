@@ -76,11 +76,11 @@ export default function TestSubSectionRenderer({
 
         {/* Expand/Collapse Icon */}
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500 font-medium">
+          <span className="text-sm text-gray-700 font-medium">
             {isExpanded ? 'Hide' : 'Show'}
           </span>
           <svg
-            className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+            className={`w-5 h-5 text-gray-700 transition-transform duration-200 ${
               isExpanded ? 'rotate-180' : ''
             }`}
             fill="none"

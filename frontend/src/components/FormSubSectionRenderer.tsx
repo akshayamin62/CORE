@@ -60,7 +60,7 @@ export default function FormSubSectionRenderer({
             {subSection.title}
           </h4>
           {subSection.description && (
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-800 mt-1">
               {subSection.description}
             </p>
           )}

@@ -25,7 +25,7 @@ export default function FormPartsNavigation({
             className={`flex-1 px-6 py-4 font-medium transition-colors border-b-2 ${
               currentPartIndex === index
                 ? 'border-blue-600 text-blue-600 bg-blue-50'
-                : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                : 'border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50'
             }`}
           >
             {formStruct.part.title}

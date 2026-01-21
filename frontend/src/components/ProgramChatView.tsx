@@ -225,8 +225,8 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                   </div>
-                  <p className="text-gray-500 font-medium">No messages yet</p>
-                  <p className="text-gray-400 text-sm mt-1">Start the conversation!</p>
+                  <p className="text-gray-700 font-medium">No messages yet</p>
+                  <p className="text-gray-600 text-sm mt-1">Start the conversation!</p>
                 </div>
               </div>
             ) : (
@@ -270,7 +270,7 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
                       }`}>
                         <p className="text-sm leading-relaxed break-words">{msg.message}</p>
                       </div>
-                      <p className="text-xs text-gray-400 mt-1 ml-1">{formatTimestamp(msg.timestamp)}</p>
+                      <p className="text-xs text-gray-600 mt-1 ml-1">{formatTimestamp(msg.timestamp)}</p>
                     </div>
                   </div>
                 );
@@ -297,7 +297,7 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-sm text-gray-900"
                   disabled={sending}
                 />
-                <p className="text-xs text-gray-400 mt-1 ml-1">Press Enter to send, Shift+Enter for new line</p>
+                <p className="text-xs text-gray-600 mt-1 ml-1">Press Enter to send, Shift+Enter for new line</p>
               </div>
               <button
                 type="submit"

@@ -402,6 +402,9 @@ export default function StudentFormEditPage() {
                     handleRemoveInstance(currentPart.key, currentSection._id, subSectionId, index)
                   }
                   isAdminEdit={true}
+                  registrationId={registrationId}
+                  studentId={studentId}
+                  userRole="COUNSELOR"
                 />
               )}
             </div>

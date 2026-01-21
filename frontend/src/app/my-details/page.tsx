@@ -424,6 +424,25 @@ function MyDetailsContent() {
                     studentId={registrationId!}
                     role="STUDENT"
                   />
+                ) : currentPart.part.key === 'DOCUMENT' ? (
+                  // Document sections - no save button, auto-save on upload
+                  <FormSectionRenderer
+                    section={currentSection}
+                    values={formValues[currentPart.part.key]?.[currentSection._id] || {}}
+                    onChange={(subSectionId, index, key, value) =>
+                      handleFieldChange(currentPart.part.key, currentSection._id, subSectionId, index, key, value)
+                    }
+                    onAddInstance={(subSectionId) =>
+                      handleAddInstance(currentPart.part.key, currentSection._id, subSectionId)
+                    }
+                    onRemoveInstance={(subSectionId, index) =>
+                      handleRemoveInstance(currentPart.part.key, currentSection._id, subSectionId, index)
+                    }
+                    errors={errors}
+                    registrationId={registrationId!}
+                    studentId={registration?.studentId?.toString()}
+                    userRole="STUDENT"
+                  />
                 ) : (
                   <>
                     <FormSectionRenderer

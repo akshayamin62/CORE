@@ -3,6 +3,7 @@
 import { FormSection } from '@/types';
 import FormSubSectionRenderer from './FormSubSectionRenderer';
 import TestSubSectionRenderer from './TestSubSectionRenderer';
+import DocumentUploadSection from './DocumentUploadSection';
 
 interface FormSectionRendererProps {
   section: FormSection;
@@ -12,6 +13,9 @@ interface FormSectionRendererProps {
   onRemoveInstance: (subSectionId: string, index: number) => void;
   errors?: { [subSectionId: string]: { [key: string]: string }[] };
   isAdminEdit?: boolean;
+  registrationId?: string;
+  studentId?: string;
+  userRole?: 'STUDENT' | 'COUNSELOR' | 'ADMIN';
 }
 
 export default function FormSectionRenderer({
@@ -22,9 +26,40 @@ export default function FormSectionRenderer({
   onRemoveInstance,
   errors = {},
   isAdminEdit = false,
+  registrationId,
+  studentId,
+  userRole,
 }: FormSectionRendererProps) {
+  // Check if this is a document section
+  const isDocumentSection = section.title.toLowerCase().includes('document');
+  
   // Check if this is a test section (Standardized Tests)
   const isTestSection = section.title.toLowerCase().includes('test');
+
+  // Render document upload section for document sections
+  if (isDocumentSection && registrationId && studentId && userRole) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden relative z-10">
+        {/* Section Header */}
+        <div className="bg-blue-600 px-6 py-4 border-b border-blue-700">
+          <h3 className="text-xl font-semibold text-white">{section.title}</h3>
+          {section.description && (
+            <p className="text-blue-100 text-sm mt-1">{section.description}</p>
+          )}
+        </div>
+
+        {/* Document Upload Component */}
+        <div className="p-6">
+          <DocumentUploadSection
+            registrationId={registrationId}
+            studentId={studentId}
+            userRole={userRole}
+            sectionTitle={section.title}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden relative z-10">

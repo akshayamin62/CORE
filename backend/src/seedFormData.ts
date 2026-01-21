@@ -1346,106 +1346,11 @@ const seedFormData = async () => {
     // Note: Program selection is now handled by custom component (ApplicationProgramSection)
     // No subsections or fields needed for these sections
 
-    // ========== STEP 14: Create DOCUMENT Section (Reusable) ==========
-    console.log("📄 Creating DOCUMENT section...");
-    const documentSections = await FormSection.insertMany([
-      {
-        partId: documentPart._id,
-        title: "Your Documents",
-        description: "Upload your documents",
-        order: 1,
-        isActive: true,
-      },
-      {
-        partId: documentPart._id,
-        title: "KC Documents",
-        description: "Documents from Kareer Consultancy",
-        order: 2,
-        isActive: true,
-      },
-    ]);
+    // ========== STEP 14: Create DOCUMENT Section ==========
+    // NOTE: Document sections and fields are now handled by seedDocument.ts
+    // Run: npm run seed:documents after seeding main form data
 
-    const yourDocsSubSections = await FormSubSection.insertMany([
-      {
-        sectionId: documentSections[0]._id,
-        title: "Mandatory Documents",
-        order: 1,
-        isRepeatable: false,
-        isActive: true,
-      },
-      {
-        sectionId: documentSections[0]._id,
-        title: "Optional Documents",
-        order: 2,
-        isRepeatable: false,
-        isActive: true,
-      },
-    ]);
-
-    await FormField.insertMany([
-      {
-        subSectionId: yourDocsSubSections[0]._id,
-        label: "Passport Copy",
-        key: "passportCopy",
-        type: FieldType.FILE,
-        required: true,
-        order: 1,
-        isActive: true,
-        helpText: "Upload a clear copy of your passport",
-      },
-      {
-        subSectionId: yourDocsSubSections[0]._id,
-        label: "Academic Transcripts",
-        key: "transcripts",
-        type: FieldType.FILE,
-        required: true,
-        order: 2,
-        isActive: true,
-        helpText: "Upload all academic transcripts",
-      },
-      {
-        subSectionId: yourDocsSubSections[0]._id,
-        label: "Test Scores",
-        key: "testScores",
-        type: FieldType.FILE,
-        required: false,
-        order: 3,
-        isActive: true,
-        helpText: "Upload GRE/GMAT/IELTS/TOEFL score reports",
-      },
-      {
-        subSectionId: yourDocsSubSections[1]._id,
-        label: "Resume/CV",
-        key: "resume",
-        type: FieldType.FILE,
-        required: false,
-        order: 1,
-        isActive: true,
-      },
-      {
-        subSectionId: yourDocsSubSections[1]._id,
-        label: "Statement of Purpose",
-        key: "sop",
-        type: FieldType.FILE,
-        required: false,
-        order: 2,
-        isActive: true,
-      },
-      {
-        subSectionId: yourDocsSubSections[1]._id,
-        label: "Letters of Recommendation",
-        key: "lor",
-        type: FieldType.FILE,
-        required: false,
-        order: 3,
-        isActive: true,
-      },
-    ]);
-
-    console.log("✅ Form data seeded successfully!");
-    console.log(`   - ${services.length} services created`);
-    console.log(`   - ${formParts.length} form parts created`);
-    // ========== STEP 14: Create PAYMENT Section (Placeholder) ==========
+    // ========== STEP 15: Create PAYMENT Section (Placeholder) ==========
     console.log("💳 Creating PAYMENT section...");
     const paymentSection = await FormSection.create({
       partId: paymentPart._id,
