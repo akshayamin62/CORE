@@ -14,6 +14,7 @@ export default function DashboardPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [registrations, setRegistrations] = useState<StudentServiceRegistration[]>([]);
   const [registeringServiceId, setRegisteringServiceId] = useState<string | null>(null);
+  const [otherServices, setOtherServices] = useState<Service[]>([]);
 
   useEffect(() => {
     fetchProfile();
@@ -59,6 +60,9 @@ export default function DashboardPage() {
       }
       const response = await serviceAPI.getMyServices();
       setRegistrations(response.data.data.registrations);
+      
+      // Fetch all services to show other available services
+      fetchOtherServices(response.data.data.registrations);
     } catch (error: any) {
       console.error('Failed to fetch my services:', error);
       // If 404 or unauthorized, user might be admin/counselor - redirect them
@@ -72,12 +76,32 @@ export default function DashboardPage() {
     }
   };
 
+  const fetchOtherServices = async (myRegistrations: StudentServiceRegistration[]) => {
+    try {
+      const response = await serviceAPI.getAllServices();
+      const allServices = response.data.data.services || [];
+      
+      // Filter out services the student is already registered for
+      const registeredServiceIds = myRegistrations.map((r) => 
+        typeof r.serviceId === 'object' ? r.serviceId._id : r.serviceId
+      );
+      
+      const unregisteredServices = allServices.filter((service: Service) => 
+        !registeredServiceIds.includes(service._id)
+      );
+      
+      setOtherServices(unregisteredServices);
+    } catch (error: any) {
+      console.error('Failed to fetch other services:', error);
+    }
+  };
+
   const handleRegister = async (serviceId: string) => {
     setRegisteringServiceId(serviceId);
     try {
       await serviceAPI.registerForService(serviceId);
       toast.success('Successfully registered for service!');
-      fetchMyServices();
+      await fetchMyServices(); // Refresh both my services and other services
     } catch (error: any) {
       const message = error.response?.data?.message || 'Failed to register for service';
       toast.error(message);
@@ -177,6 +201,32 @@ export default function DashboardPage() {
               >
                 Explore Services
               </button>
+            </div>
+          )}
+
+          {/* Other Services Section */}
+          {otherServices.length > 0 && (
+            <div className="mt-12 animate-fade-in" style={{animationDelay: '0.2s'}}>
+              <div className="mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                  Other Services
+                </h2>
+                <p className="text-gray-600 text-base mt-2">
+                  Explore and register for additional services.
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {otherServices.map((service) => (
+                  <ServiceCard
+                    key={service._id}
+                    service={service}
+                    isRegistered={false}
+                    onRegister={handleRegister}
+                    loading={registeringServiceId === service._id}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </div>
