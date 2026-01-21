@@ -60,7 +60,7 @@ export default function Navbar() {
               <div className="relative">
                 {/* <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-300"></div> */}
                 <img 
-                  src="/l1.jpeg" 
+                  src="/logo.jpeg" 
                   alt="CORE Logo" 
                   className="relative h-20 w-auto object-contain"
                 />

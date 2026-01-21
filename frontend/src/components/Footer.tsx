@@ -19,7 +19,7 @@ export default function Footer() {
               <div className="relative">
                 {/* <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg blur opacity-30 group-hover:opacity-50 transition duration-300"></div> */}
                 <img 
-                  src="/logo.png" 
+                  src="/logo.jpeg" 
                   alt="CORE Logo" 
                   className="relative h-16 w-auto object-contain"
                 />
