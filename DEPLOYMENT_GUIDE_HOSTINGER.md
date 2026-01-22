@@ -206,11 +206,11 @@ EMAIL_ADDRESS=your-email@gmail.com
 EMAIL_PASSWORD=your-app-password-16-chars
 
 # Frontend URLs for Email Links
-EMAIL_VERIFICATION_URL=https://yourdomain.com/verify-email
-PASSWORD_RESET_URL=https://yourdomain.com/reset-password
+EMAIL_VERIFICATION_URL=https://core.admitra.io/verify-email
+PASSWORD_RESET_URL=https://core.admitra.io/reset-password
 
 # CORS Configuration
-FRONTEND_URL=https://yourdomain.com
+FRONTEND_URL=https://core.admitra.io
 ```
 
 **Save file**: Press `Ctrl + X`, then `Y`, then `Enter`
@@ -279,7 +279,7 @@ nano .env.local
 **Paste this content**:
 ```env
 # Backend API URL (use HTTPS in production)
-NEXT_PUBLIC_API_URL=https://yourdomain.com/api
+NEXT_PUBLIC_API_URL=https://api.core.admitra.io/api
 ```
 
 **Save file**: Press `Ctrl + X`, then `Y`, then `Enter`
@@ -327,11 +327,36 @@ pm2 logs core-frontend
 sudo nano /etc/nginx/sites-available/core-api
 ```
 
-**Paste this configuration**:
+**Paste this configuration** (also available in `nginx-core-api.conf`):
 ```nginx
+# HTTP - Redirect to HTTPS
 server {
     listen 80;
-    server_name api.yourdomain.com;
+    listen [::]:80;
+    server_name api.core.admitra.io;
+    return 301 https://$server_name$request_uri;
+}
+
+# HTTPS - Main API Server
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name api.core.admitra.io;
+
+    ssl_certificate /etc/letsencrypt/live/core.admitra.io/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/core.admitra.io/privkey.pem;
+    
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    client_max_body_size 50M;
 
     location / {
         proxy_pass http://localhost:5000;
@@ -339,16 +364,24 @@ server {
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
 
-    # Gzip compression
     gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml+rss;
     gzip_min_length 1000;
+
+    access_log /var/log/nginx/core-api-access.log;
+    error_log /var/log/nginx/core-api-error.log;
 }
 ```
 
@@ -360,33 +393,91 @@ server {
 sudo nano /etc/nginx/sites-available/core-web
 ```
 
-**Paste this configuration**:
+**Paste this configuration** (also available in `nginx-core-web.conf`):
 ```nginx
+# HTTP - Redirect to HTTPS
 server {
     listen 80;
-    server_name yourdomain.com www.yourdomain.com;
+    listen [::]:80;
+    server_name core.admitra.io www.core.admitra.io;
+    return 301 https://$server_name$request_uri;
+}
 
+# HTTPS - Main Frontend Server
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name core.admitra.io www.core.admitra.io;
+
+    ssl_certificate /etc/letsencrypt/live/core.admitra.io/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/core.admitra.io/privkey.pem;
+    
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    client_max_body_size 50M;
+
+    # Next.js static files
+    location /_next/static {
+        proxy_pass http://localhost:3000;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Next.js images
+    location /_next/image {
+        proxy_pass http://localhost:3000;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Next.js data files
+    location /_next/data {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Main app
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # Cache static assets
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
+        proxy_cache_bypass $http_upgrade;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
 
     gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml+rss;
     gzip_min_length 1000;
+
+    access_log /var/log/nginx/core-web-access.log;
+    error_log /var/log/nginx/core-web-error.log;
 }
 ```
 
@@ -420,89 +511,25 @@ sudo systemctl status nginx
 
 ### Step 6.1: Configure DNS
 
-1. Go to your domain registrar (GoDaddy, Namecheap, etc.)
-2. Navigate to DNS settings
-3. Add/Update these records:
+1. Go to your domain registrar where you purchased **admitra.io**
+2. Navigate to DNS Management/DNS Settings
+3. Add/Update these DNS records:
 
-**For main domain** (yourdomain.com):
+**Record 1: Main subdomain** (core.admitra.io):
 ```
 Type: A
-Name: @ (or leave blank)
-Value: YOUR_HOSTINGER_IP
-TTL: 3600
-```
+**Note:** If you followed Step 5.1 and 5.2 correctly with the complete configurations above, your Nginx files already include HTTPS settings. You can **skip this step** and proceed to Step 6.4.
 
-**For API subdomain** (api.yourdomain.com):
-```
-Type: A
-Name: api
-Value: YOUR_HOSTINGER_IP
-TTL: 3600
-```
-
-Wait 5-10 minutes for DNS to propagate.
-
-### Step 6.2: Install SSL Certificates with Let's Encrypt
+However, if you only set up HTTP initially, update them now:
 
 ```bash
-# Request certificate for both domains
-sudo certbot certonly --nginx \
-  -d yourdomain.com \
-  -d www.yourdomain.com \
-  -d api.yourdomain.com
-
-# Follow prompts:
-# - Enter email for notifications
-# - Agree to terms (A)
-```
-
-### Step 6.3: Update Nginx Configuration for HTTPS
-
-```bash
-# Update API config
+# Update API config with HTTPS
 sudo nano /etc/nginx/sites-available/core-api
-```
+# Copy the complete configuration from Step 5.1 above
 
-**Replace entire content with**:
-```nginx
-server {
-    listen 80;
-    server_name api.yourdomain.com;
-    return 301 https://$server_name$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name api.yourdomain.com;
-
-    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
-
-    # SSL security headers
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-    ssl_prefer_server_ciphers on;
-
-    location / {
-        proxy_pass http://localhost:5000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
-    gzip_min_length 1000;
-}
-```
-
-**Update frontend config**:
-```bash
+# Update frontend config with HTTPS
+sudo nano /etc/nginx/sites-available/core-web
+# Copy the complete configuration from Step 5.2 above``bash
 sudo nano /etc/nginx/sites-available/core-web
 ```
 
@@ -510,21 +537,33 @@ sudo nano /etc/nginx/sites-available/core-web
 ```nginx
 server {
     listen 80;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name core.admitra.io www.core.admitra.io;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name yourdomain.com www.yourdomain.com;
+    server_name core.admitra.io www.core.admitra.io;
 
-    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/core.admitra.io/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/core.admitra.io/privkey.pem;
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
 
+    # Next.js static files
+    location /_next/static {
+        proxy_pass http://localhost:3000;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # Next.js images
+    location /_next/image {
+        proxy_pass http://localhost:3000;
+    }
+
+    # Main app
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
@@ -537,13 +576,9 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-
+    # Gzip compression
     gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/x-javascript;
     gzip_min_length 1000;
 }
 ```
@@ -588,7 +623,7 @@ npm run seed:documents
 ### Test Backend API
 ```bash
 # Check if backend is running
-curl https://api.yourdomain.com/
+curl https://api.core.admitra.io/
 
 # Expected response: "API is running!"
 ```
@@ -596,7 +631,7 @@ curl https://api.yourdomain.com/
 ### Test Frontend
 ```bash
 # Visit in browser
-https://yourdomain.com
+https://core.admitra.io
 ```
 
 ### Monitor Applications
@@ -692,19 +727,66 @@ JWT_SECRET=unique-secret-key-at-least-32-chars-long
 JWT_EXPIRES_IN=7d
 EMAIL_ADDRESS=your-email@gmail.com
 EMAIL_PASSWORD=gmail-app-password
-EMAIL_VERIFICATION_URL=https://yourdomain.com/verify-email
-PASSWORD_RESET_URL=https://yourdomain.com/reset-password
-FRONTEND_URL=https://yourdomain.com
+EMAIL_VERIFICATION_URL=https://core.admitra.io/verify-email
+PASSWORD_RESET_URL=https://core.admitra.io/reset-password
+FRONTEND_URL=https://core.admitra.io
 ```
 
 ### Production .env.local (Frontend)
 ```env
-NEXT_PUBLIC_API_URL=https://api.yourdomain.com/api
+NEXT_PUBLIC_API_URL=https://api.core.admitra.io/api
 ```
 
 ---
 
 ## PART 12: COMMON ISSUES & TROUBLESHOOTING
+
+### Issue: CSS Not Loading (HTML Only, No Styles)
+
+**Symptoms:** Website loads but appears unstyled, only HTML visible
+
+**Solution:**
+```bash
+# 1. Rebuild Next.js application
+cd /var/www/core/frontend
+npm run build
+
+# 2. Restart frontend
+pm2 restart core-frontend
+
+# 3. Update Nginx configuration (already included in guide above)
+# Make sure your nginx config has _next/static location block
+
+
+
+# 4. Test Nginx config and reload
+sudo nginx -t
+sudo systemctl reload nginx
+
+# 5. Clear browser cache or test in incognito mode
+
+# 6. Check if Next.js is running properly
+pm2 logs core-frontend
+curl http://localhost:3000
+
+# 7. Check for console errors in browser (F12 > Console tab)
+```
+
+**Additional checks:**
+```bash
+# Verify frontend build completed successfully
+cd /var/www/core/frontend
+ls -la .next/
+# Should see: server/, static/, cache/ folders
+
+# Check if PM2 is serving correctly
+pm2 status
+# core-frontend should show "online" status
+```
+
+---
+
+### Other Common Issues
 
 | Issue | Solution |
 |-------|----------|

@@ -7,7 +7,7 @@ import { authAPI } from '@/lib/api';
 import toast, { Toaster } from 'react-hot-toast';
 
 // Generate random captcha
-const generateCaptcha = (length: number = 1): string => {
+const generateCaptcha = (length: number = 6): string => {
   const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let result = '';
   for (let i = 0; i < length; i++) {
