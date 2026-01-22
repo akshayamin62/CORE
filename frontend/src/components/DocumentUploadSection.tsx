@@ -37,8 +37,7 @@ export default function DocumentUploadSection({
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState<string | null>(null);
   const [showAddFieldModal, setShowAddFieldModal] = useState(false);
-  const [showRejectModal, setShowRejectModal] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<StudentDocument | null>(null);
+  const [rejectingDocumentId, setRejectingDocumentId] = useState<string | null>(null);
   const [rejectionMessage, setRejectionMessage] = useState('');
   const [newFieldName, setNewFieldName] = useState('');
   const [newFieldHelpText, setNewFieldHelpText] = useState('');
@@ -178,23 +177,21 @@ export default function DocumentUploadSection({
     }
   };
 
-  const handleRejectClick = (doc: StudentDocument) => {
-    setSelectedDocument(doc);
+  const handleRejectClick = (documentId: string) => {
+    setRejectingDocumentId(documentId);
     setRejectionMessage('');
-    setShowRejectModal(true);
   };
 
-  const handleRejectSubmit = async () => {
+  const handleRejectSubmit = async (documentId: string) => {
     if (!rejectionMessage.trim()) {
       toast.error('Please provide a rejection reason');
       return;
     }
 
     try {
-      await documentAPI.rejectDocument(selectedDocument!._id, rejectionMessage);
+      await documentAPI.rejectDocument(documentId, rejectionMessage);
       toast.success('Document rejected');
-      setShowRejectModal(false);
-      setSelectedDocument(null);
+      setRejectingDocumentId(null);
       setRejectionMessage('');
       await fetchDocuments();
     } catch (error: any) {
@@ -356,7 +353,7 @@ export default function DocumentUploadSection({
                             Approve
                           </button>
                           <button
-                            onClick={() => handleRejectClick(document)}
+                            onClick={() => handleRejectClick(document._id)}
                             className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-xs font-medium flex items-center gap-1"
                           >
                             <X className="w-3 h-3" />
@@ -409,6 +406,43 @@ export default function DocumentUploadSection({
                               </button>
                             </div>
                           )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Inline Rejection Form */}
+                    {rejectingDocumentId === document._id && (
+                      <div className="mt-3 border-t pt-3">
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                          <h4 className="text-sm font-semibold text-red-900 mb-2">Reject Document</h4>
+                          <p className="text-xs text-red-700 mb-3">
+                            Please provide a reason for rejecting this document.
+                          </p>
+                          <textarea
+                            value={rejectionMessage}
+                            onChange={(e) => setRejectionMessage(e.target.value)}
+                            className="w-full px-3 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-sm text-gray-900 bg-white"
+                            placeholder="Enter rejection reason..."
+                            rows={3}
+                            autoFocus
+                          />
+                          <div className="flex justify-end gap-2 mt-3">
+                            <button
+                              onClick={() => {
+                                setRejectingDocumentId(null);
+                                setRejectionMessage('');
+                              }}
+                              className="px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => handleRejectSubmit(document._id)}
+                              className="px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                            >
+                              Reject Document
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -508,42 +542,6 @@ export default function DocumentUploadSection({
             </div>
           )}
         </div>
-
-        {/* Reject Modal */}
-        {showRejectModal && selectedDocument && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Reject Document</h3>
-              <p className="text-sm text-gray-700 mb-4">
-                Please provide a reason for rejecting <strong className="text-gray-900">{selectedDocument.documentName}</strong>
-              </p>
-              <textarea
-                value={rejectionMessage}
-                onChange={(e) => setRejectionMessage(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-32 text-gray-900"
-                placeholder="Enter rejection reason..."
-              />
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  onClick={() => {
-                    setShowRejectModal(false);
-                    setSelectedDocument(null);
-                    setRejectionMessage('');
-                  }}
-                  className="px-4 py-2 text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleRejectSubmit}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Reject Document
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </>
     );
   }
@@ -663,42 +661,6 @@ export default function DocumentUploadSection({
           </div>
         )}
         </div>
-
-        {/* Reject Modal */}
-        {showRejectModal && selectedDocument && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Reject Document</h3>
-              <p className="text-sm text-gray-700 mb-4">
-                Please provide a reason for rejecting <strong className="text-gray-900">{selectedDocument.documentName}</strong>
-              </p>
-              <textarea
-                value={rejectionMessage}
-                onChange={(e) => setRejectionMessage(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-32 text-gray-900"
-                placeholder="Enter rejection reason..."
-              />
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  onClick={() => {
-                    setShowRejectModal(false);
-                    setSelectedDocument(null);
-                    setRejectionMessage('');
-                  }}
-                  className="px-4 py-2 text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleRejectSubmit}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Reject Document
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </>
     );
   }
