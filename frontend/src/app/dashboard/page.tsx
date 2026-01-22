@@ -97,6 +97,13 @@ export default function DashboardPage() {
   };
 
   const handleRegister = async (serviceId: string) => {
+    // Check if service is configured (only study-abroad is currently configured)
+    const service = otherServices.find(s => s._id === serviceId);
+    if (service && service.slug !== 'study-abroad') {
+      toast('Coming soon! This service is not yet available for registration.');
+      return;
+    }
+
     setRegisteringServiceId(serviceId);
     try {
       await serviceAPI.registerForService(serviceId);

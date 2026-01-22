@@ -248,6 +248,13 @@ export default function Home() {
       return;
     }
 
+    // Check if service is configured (only study-abroad is currently configured)
+    const service = services.find(s => s._id === serviceId);
+    if (service && service.slug !== 'study-abroad') {
+      toast('Coming soon! This service is not yet available for registration.');
+      return;
+    }
+
     setRegisteringServiceId(serviceId);
     try {
       await serviceAPI.registerForService(serviceId);
@@ -763,43 +770,101 @@ export default function Home() {
                               {/* Action Buttons */}
                               <div className="space-y-3">
                                 {showRegisterButton && !isRegistered(service._id) ? (
-                                  <button
-                                    onClick={() => handleRegister(service._id)}
-                                    disabled={registeringServiceId === service._id}
-                                    className="w-full px-6 py-4 bg-gradient-to-r from-[#0876b8] to-[#0660a0] text-white rounded-2xl font-bold hover:from-[#0660a0] hover:to-[#0876b8] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                                  >
-                                    {registeringServiceId === service._id ? (
-                                      <span className="flex items-center justify-center gap-2">
-                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                        Registering...
-                                      </span>
+                                  <>
+                                    <button
+                                      onClick={() => handleRegister(service._id)}
+                                      disabled={registeringServiceId === service._id}
+                                      className="w-full px-6 py-4 bg-gradient-to-r from-[#0876b8] to-[#0660a0] text-white rounded-2xl font-bold hover:from-[#0660a0] hover:to-[#0876b8] transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                                    >
+                                      {registeringServiceId === service._id ? (
+                                        <span className="flex items-center justify-center gap-2">
+                                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                          Registering...
+                                        </span>
+                                      ) : (
+                                        <span className="flex items-center justify-center gap-2">
+                                          Register Now
+                                          <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                        </span>
+                                      )}
+                                    </button>
+                                    {service.learnMoreUrl ? (
+                                      <button
+                                        onClick={() => window.open(service.learnMoreUrl, '_blank')}
+                                        className="w-full px-6 py-4 text-[#0876b8] border-2 border-[#0876b8] rounded-2xl font-bold hover:bg-blue-50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                                      >
+                                        <span className="flex items-center justify-center gap-2">
+                                          Learn More
+                                          <ArrowRight size={18} />
+                                        </span>
+                                      </button>
                                     ) : (
-                                      <span className="flex items-center justify-center gap-2">
-                                        Register Now
-                                        <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                                      </span>
+                                      <button
+                                        onClick={() => toast('Coming soon!')}
+                                        className="w-full px-6 py-4 text-[#0876b8] border-2 border-[#0876b8] rounded-2xl font-bold hover:bg-blue-50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                                      >
+                                        <span className="flex items-center justify-center gap-2">
+                                          Learn More
+                                          <ArrowRight size={18} />
+                                        </span>
+                                      </button>
                                     )}
-                                  </button>
+                                  </>
                                 ) : isRegistered(service._id) ? (
-                                  <button
-                                    onClick={() => handleViewDetails(service._id)}
-                                    className="w-full px-6 py-4 bg-gradient-to-r from-green-50 to-green-100 text-green-700 rounded-2xl font-bold border-2 border-green-200 hover:from-green-100 hover:to-green-200 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-1"
-                                  >
-                                    <span className="flex items-center justify-center gap-2">
-                                      <CheckCircle2 size={18} />
-                                      View Details
-                                    </span>
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() => handleViewDetails(service._id)}
+                                      className="w-full px-6 py-4 bg-gradient-to-r from-green-50 to-green-100 text-green-700 rounded-2xl font-bold border-2 border-green-200 hover:from-green-100 hover:to-green-200 transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-1"
+                                    >
+                                      <span className="flex items-center justify-center gap-2">
+                                        <CheckCircle2 size={18} />
+                                        View Details
+                                      </span>
+                                    </button>
+                                    {service.learnMoreUrl ? (
+                                      <button
+                                        onClick={() => window.open(service.learnMoreUrl, '_blank')}
+                                        className="w-full px-6 py-4 text-[#0876b8] border-2 border-[#0876b8] rounded-2xl font-bold hover:bg-blue-50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                                      >
+                                        <span className="flex items-center justify-center gap-2">
+                                          Learn More
+                                          <ArrowRight size={18} />
+                                        </span>
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={() => toast('Coming soon!')}
+                                        className="w-full px-6 py-4 text-[#0876b8] border-2 border-[#0876b8] rounded-2xl font-bold hover:bg-blue-50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                                      >
+                                        <span className="flex items-center justify-center gap-2">
+                                          Learn More
+                                          <ArrowRight size={18} />
+                                        </span>
+                                      </button>
+                                    )}
+                                  </>
                                 ) : (
-                                  <Link
-                                    href={`/services/${service._id}`}
-                                    className="block w-full px-6 py-4 text-[#0876b8] border-2 border-[#0876b8] rounded-2xl font-bold text-center hover:bg-blue-50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-                                  >
-                                    <span className="flex items-center justify-center gap-2">
-                                      Learn More
-                                      <ArrowRight size={18} />
-                                    </span>
-                                  </Link>
+                                  service.learnMoreUrl ? (
+                                    <button
+                                      onClick={() => window.open(service.learnMoreUrl, '_blank')}
+                                      className="w-full px-6 py-4 text-[#0876b8] border-2 border-[#0876b8] rounded-2xl font-bold hover:bg-blue-50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                                    >
+                                      <span className="flex items-center justify-center gap-2">
+                                        Learn More
+                                        <ArrowRight size={18} />
+                                      </span>
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => toast('Coming soon!')}
+                                      className="w-full px-6 py-4 text-[#0876b8] border-2 border-[#0876b8] rounded-2xl font-bold hover:bg-blue-50 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                                    >
+                                      <span className="flex items-center justify-center gap-2">
+                                        Learn More
+                                        <ArrowRight size={18} />
+                                      </span>
+                                    </button>
+                                  )
                                 )}
                               </div>
                             </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Service } from '@/types';
+import toast from 'react-hot-toast';
 
 interface ServiceCardProps {
   service: Service;
@@ -81,13 +82,22 @@ export default function ServiceCard({
               >
                 View Details
               </button>
-              {showLearnMore && service.learnMoreUrl && (
-                <button
-                  onClick={() => window.open(service.learnMoreUrl, '_blank')}
-                  className="px-4 py-2 border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-all duration-200"
-                >
-                  Learn More
-                </button>
+              {showLearnMore && (
+                service.learnMoreUrl ? (
+                  <button
+                    onClick={() => window.open(service.learnMoreUrl, '_blank')}
+                    className="px-4 py-2 border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-all duration-200"
+                  >
+                    Learn More
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => toast('Coming soon!')}
+                    className="px-4 py-2 border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-all duration-200"
+                  >
+                    Learn More
+                  </button>
+                )
               )}
             </>
           ) : (
@@ -126,13 +136,22 @@ export default function ServiceCard({
                   )}
                 </button>
               )}
-              {showLearnMore && service.learnMoreUrl && (
-                <button
-                  onClick={() => window.open(service.learnMoreUrl, '_blank')}
-                  className={`px-4 py-2 border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-all duration-200 ${!onRegister ? 'flex-1' : ''}`}
-                >
-                  Learn More
-                </button>
+              {showLearnMore && (
+                service.learnMoreUrl ? (
+                  <button
+                    onClick={() => window.open(service.learnMoreUrl, '_blank')}
+                    className={`px-4 py-2 border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-all duration-200 ${!onRegister ? 'flex-1' : ''}`}
+                  >
+                    Learn More
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => toast('Coming soon!')}
+                    className={`px-4 py-2 border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-all duration-200 ${!onRegister ? 'flex-1' : ''}`}
+                  >
+                    Learn More
+                  </button>
+                )
               )}
             </>
           )}
