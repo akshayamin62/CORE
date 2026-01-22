@@ -410,11 +410,13 @@ export default function StudentFormEditPage() {
             </div>
           )}
 
-          {/* Save Button */}
-          <FormSaveButtons
-            onSave={handleSaveSection}
-            saving={saving}
-          />
+          {/* Save Button - Hide for document sections */}
+          {currentSection && !currentSection.title.toLowerCase().includes('document') && (
+            <FormSaveButtons
+              onSave={handleSaveSection}
+              saving={saving}
+            />
+          )}
         </div>
       </AdminLayout>
     </>
