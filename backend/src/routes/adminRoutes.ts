@@ -5,7 +5,7 @@ import {
   approveUser,
   rejectUser,
   toggleUserStatus,
-  deleteUser,
+  // deleteUser,
   getPendingApprovals,
   createCounselor,
   getCounselorsBySpecialization,
@@ -69,7 +69,7 @@ router.patch("/users/:userId/toggle-status", toggleUserStatus);
  * @desc    Delete a user
  * @access  Admin only
  */
-router.delete("/users/:userId", deleteUser);
+// router.delete("/users/:userId", deleteUser);
 
 /**
  * @route   POST /api/admin/counselors

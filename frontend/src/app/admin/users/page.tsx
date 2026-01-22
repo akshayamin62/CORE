@@ -378,6 +378,7 @@ export default function UserManagementPage() {
                                 >
                                   {user.isActive ? 'Deactivate' : 'Activate'}
                                 </button>
+                                {/* Delete button hidden as per requirement
                                 <button
                                   onClick={() => handleDelete(user._id || user.id!)}
                                   disabled={actionLoading === (user._id || user.id)}
@@ -385,6 +386,7 @@ export default function UserManagementPage() {
                                 >
                                   Delete
                                 </button>
+                                */}
                               </>
                             )}
                           </div>
