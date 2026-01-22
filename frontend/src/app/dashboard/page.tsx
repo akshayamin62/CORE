@@ -194,13 +194,7 @@ export default function DashboardPage() {
                 </svg>
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">No Services Yet</h3>
-              <p className="text-gray-600 mb-6">You haven't registered for any services yet.</p>
-              <button
-                onClick={() => router.push('/')}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                Explore Services
-              </button>
+              <p className="text-gray-600">You haven't registered for any services yet.</p>
             </div>
           )}
 

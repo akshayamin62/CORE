@@ -40,6 +40,7 @@ const seedFormData = async () => {
         description:
           "Comprehensive education planning services to help you chart your academic journey",
         shortDescription: "Plan your educational path with expert guidance",
+        learnMoreUrl: "https://www.kareerstudio.com/education-n-career-planning.html",
         isActive: true,
         order: 1,
       },
@@ -49,6 +50,7 @@ const seedFormData = async () => {
         description:
           "Complete support for studying abroad including university selection, applications, and visa assistance",
         shortDescription: "Your gateway to international education",
+        learnMoreUrl: "https://www.kareerstudio.com/study-abroad.html",
         isActive: true,
         order: 2,
       },
@@ -58,6 +60,7 @@ const seedFormData = async () => {
         description:
           "Specialized preparation for Ivy League and top-tier university admissions",
         shortDescription: "Elite university admission preparation",
+        learnMoreUrl: "",
         isActive: true,
         order: 3,
       },
@@ -67,6 +70,7 @@ const seedFormData = async () => {
         description:
           "Expert IELTS coaching to help you achieve your target band score",
         shortDescription: "Achieve your target IELTS score",
+        learnMoreUrl: "https://www.kareerstudio.com/ielts.html",
         isActive: true,
         order: 4,
       },
@@ -76,6 +80,7 @@ const seedFormData = async () => {
         description:
           "Comprehensive GRE preparation for graduate school admissions",
         shortDescription: "Master the GRE with expert coaching",
+        learnMoreUrl: "https://www.kareerstudio.com/gre.html",
         isActive: true,
         order: 5,
       },

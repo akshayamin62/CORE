@@ -6,6 +6,7 @@ export interface IService extends Document {
   description: string;
   shortDescription: string;
   icon?: string;
+  learnMoreUrl?: string;
   isActive: boolean;
   order: number;
   createdAt?: Date;
@@ -34,6 +35,10 @@ const serviceSchema = new Schema<IService>(
       required: true,
     },
     icon: {
+      type: String,
+      default: undefined,
+    },
+    learnMoreUrl: {
       type: String,
       default: undefined,
     },

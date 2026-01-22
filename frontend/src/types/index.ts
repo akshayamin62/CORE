@@ -44,6 +44,7 @@ export interface Service {
   description: string;
   shortDescription: string;
   icon?: string;
+  learnMoreUrl?: string;
   isActive: boolean;
   order: number;
 }

@@ -73,13 +73,23 @@ export default function ServiceCard({
         {/* Action Buttons */}
         <div className="flex gap-2 mt-4">
           {isRegistered ? (
-            <button
-              onClick={() => onViewDetails?.(service._id)}
-              disabled={loading}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-cyan-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              View Details
-            </button>
+            <>
+              <button
+                onClick={() => onViewDetails?.(service._id)}
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-cyan-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                View Details
+              </button>
+              {showLearnMore && service.learnMoreUrl && (
+                <button
+                  onClick={() => window.open(service.learnMoreUrl, '_blank')}
+                  className="px-4 py-2 border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-all duration-200"
+                >
+                  Learn More
+                </button>
+              )}
+            </>
           ) : (
             <>
               {onRegister && (
@@ -116,8 +126,9 @@ export default function ServiceCard({
                   )}
                 </button>
               )}
-              {showLearnMore && (
+              {showLearnMore && service.learnMoreUrl && (
                 <button
+                  onClick={() => window.open(service.learnMoreUrl, '_blank')}
                   className={`px-4 py-2 border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-all duration-200 ${!onRegister ? 'flex-1' : ''}`}
                 >
                   Learn More
