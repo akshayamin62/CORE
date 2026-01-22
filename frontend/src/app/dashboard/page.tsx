@@ -209,7 +209,7 @@ export default function DashboardPage() {
             <div className="mt-12 animate-fade-in" style={{animationDelay: '0.2s'}}>
               <div className="mb-6">
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                  Other Services
+                  Services
                 </h2>
                 <p className="text-gray-600 text-base mt-2">
                   Explore and register for additional services.
