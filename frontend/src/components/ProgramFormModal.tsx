@@ -175,8 +175,11 @@ export default function ProgramFormModal({
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
               >
                 <option value="">Select Level</option>
+                <option value="Certificate">Certificate</option>
+                <option value="Diploma">Diploma</option>
                 <option value="Undergraduate">Undergraduate</option>
-                <option value="Postgraduate">Postgraduate</option>
+                <option value="Postgraduate/Master">Postgraduate/Master</option>
+                <option value="PhD">PhD</option>
               </select>
             </div>
             <div>
