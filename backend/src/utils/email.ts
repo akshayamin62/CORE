@@ -87,25 +87,21 @@ export const sendOTPEmail = async (
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Your OTP Code</title>
     </head>
-    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 0;">
-      <div style="max-width: 600px; margin: 20px auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-        <h2 style="color: #2563eb; text-align: center; margin-bottom: 30px;">Your OTP Code</h2>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; margin: 0; padding: 0;">
+      <div style="max-width: 600px; margin: 20px auto; background-color: white; padding: 30px; border: 1px solid #ddd;">
+        <h2 style="color: #333; margin-bottom: 20px;">Your OTP Code</h2>
         <p>Hi ${name},</p>
         <p>Your ${purpose === 'signup' ? 'signup' : 'login'} verification code is:</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <div style="background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%); color: white; padding: 20px; border-radius: 10px; display: inline-block; font-size: 32px; font-weight: bold; letter-spacing: 8px;">
+        <div style="margin: 20px 0;">
+          <p style="font-size: 28px; font-weight: bold; letter-spacing: 5px; margin: 10px 0;">
             ${otp}
-          </div>
+          </p>
         </div>
-        <p style="text-align: center; color: #666; font-size: 14px;">
-          <strong>This code will expire in 10 minutes.</strong>
+        <p style="color: #666; font-size: 14px;">
+          This code will expire in 10 minutes.
         </p>
-        <p style="color: #999; font-size: 12px; margin-top: 30px;">
+        <p style="color: #999; font-size: 12px; margin-top: 20px;">
           If you didn't ${purpose === 'signup' ? 'sign up' : 'request this code'}, please ignore this email.
-        </p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-        <p style="color: #999; font-size: 12px; text-align: center;">
-          This is an automated message. Please do not reply to this email.
         </p>
       </div>
     </body>
