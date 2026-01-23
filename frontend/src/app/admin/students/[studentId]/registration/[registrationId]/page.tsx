@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI, serviceAPI } from '@/lib/api';
 import { User, USER_ROLE, FormStructure, FormSection } from '@/types';
@@ -36,7 +36,15 @@ export default function StudentFormEditPage() {
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [serviceInfo, setServiceInfo] = useState<any>(null);
 
+  // ⏱️ Performance tracking
+  const pageLoadStartRef = useRef<number>(performance.now());
+  const hasFetchedRef = useRef(false);
+
   useEffect(() => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+    
+    console.log('🔵 [REGISTRATION FORM] Page load started');
     checkAuth();
   }, []);
 
@@ -63,11 +71,14 @@ export default function StudentFormEditPage() {
       toast.error('Please login to continue');
       router.push('/login');
     } finally {
+      const totalTime = performance.now() - pageLoadStartRef.current;
+      console.log(`\n📊 [REGISTRATION FORM] Total Load Time: ${totalTime.toFixed(2)}ms (${(totalTime / 1000).toFixed(1)}s)\n`);
       setLoading(false);
     }
   };
 
   const fetchStudentInfo = async () => {
+    const start = performance.now();
     try {
       const token = localStorage.getItem('token');
       // First get the full student details with populated userId
@@ -83,6 +94,9 @@ export default function StudentFormEditPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setServiceInfo(regResponse.data.data.registration.serviceId);
+      
+      const duration = performance.now() - start;
+      console.log(`   └─ fetchStudentInfo: ${duration.toFixed(2)}ms`);
     } catch (error: any) {
       console.error('Fetch student info error:', error);
       toast.error('Failed to fetch student information');
@@ -90,6 +104,7 @@ export default function StudentFormEditPage() {
   };
 
   const fetchFormStructure = async (): Promise<FormStructure[]> => {
+    const start = performance.now();
     try {
       // Get serviceId from registration response
       const token = localStorage.getItem('token');
@@ -108,6 +123,10 @@ export default function StudentFormEditPage() {
       const response = await serviceAPI.getServiceForm(extractedServiceId);
       const structure = response.data.data.formStructure || [];
       setFormStructure(structure);
+      
+      const duration = performance.now() - start;
+      console.log(`   └─ fetchFormStructure: ${duration.toFixed(2)}ms`);
+      
       return structure;
     } catch (error: any) {
       console.error('Fetch form structure error:', error);
@@ -117,6 +136,7 @@ export default function StudentFormEditPage() {
   };
 
   const fetchFormAnswers = async (formStructureData?: FormStructure[]) => {
+    const start = performance.now();
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
@@ -125,8 +145,6 @@ export default function StudentFormEditPage() {
       );
       
       const answers = response.data.data.answers || [];
-      console.log('Raw answers from API:', answers); // Debug
-      console.log('Number of answers:', answers.length); // Debug
       
       const formattedAnswers: any = {};
       
@@ -137,9 +155,6 @@ export default function StudentFormEditPage() {
           formattedAnswers[answer.partKey] = answer.answers || {};
         }
       });
-      
-      console.log('Formatted answers before email:', formattedAnswers); // Debug
-      console.log('Formatted answers keys:', Object.keys(formattedAnswers)); // Debug
       
       // Use formStructureData if provided, otherwise use state
       const structureToUse = formStructureData || formStructure;
@@ -183,8 +198,11 @@ export default function StudentFormEditPage() {
         });
       }
       
-      console.log('Final formatted answers:', formattedAnswers); // Debug
+      // console.log('Final formatted answers:', formattedAnswers); // Debug
       setFormValues(formattedAnswers);
+      
+      const duration = performance.now() - start;
+      console.log(`   └─ fetchFormAnswers: ${duration.toFixed(2)}ms`);
     } catch (error: any) {
       console.error('Fetch form answers error:', error);
       toast.error('Failed to fetch form answers');

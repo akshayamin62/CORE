@@ -194,7 +194,7 @@ export default function StudentFormEditPage() {
         });
       }
       
-      console.log('Final formatted answers:', formattedAnswers); // Debug
+      // console.log('Final formatted answers:', formattedAnswers); // Debug
       setFormValues(formattedAnswers);
     } catch (error: any) {
       if (error.response?.status === 403) {
