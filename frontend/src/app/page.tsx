@@ -251,7 +251,7 @@ export default function Home() {
     // Check if service is configured (only study-abroad is currently configured)
     const service = services.find(s => s._id === serviceId);
     if (service && service.slug !== 'study-abroad') {
-      toast('Coming soon! This service is not yet available for registration.');
+      toast('This service will be available soon for registration.');
       return;
     }
 
@@ -460,7 +460,7 @@ export default function Home() {
                 <img 
                   src="/image2.jpg" 
                   alt="Student Dashboard Preview" 
-                  className="w-full h-85 object-cover"
+                  className="w-full h-75 object-cover"
                 />
               </div>
 

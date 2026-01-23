@@ -297,11 +297,21 @@ const seedFormData = async () => {
       },
       {
         subSectionId: personalSubSections[0]._id,
+        label: "Birth City",
+        key: "birthcity",
+        type: FieldType.TEXT,
+        placeholder: "City",
+        required: true,
+        order: 5,
+        isActive: true,
+      },
+      {
+        subSectionId: personalSubSections[0]._id,
         label: "Gender",
         key: "gender",
         type: FieldType.SELECT,
         required: true,
-        order: 5,
+        order: 6,
         isActive: true,
         options: [
           { label: "Male", value: "male" },
@@ -315,7 +325,7 @@ const seedFormData = async () => {
         key: "maritalStatus",
         type: FieldType.SELECT,
         required: true,
-        order: 6,
+        order: 7,
         isActive: true,
         options: [
           { label: "Single", value: "single" },
@@ -331,7 +341,7 @@ const seedFormData = async () => {
         type: FieldType.PHONE,
         placeholder: "+1 (555) 000-0000",
         required: true,
-        order: 7,
+        order: 8,
         isActive: true,
       },
     ]);
@@ -663,7 +673,7 @@ const seedFormData = async () => {
     console.log("💼 Creating Work Experience subsections...");
     const workSubSection = await FormSubSection.create({
       sectionId: workExperienceSection._id,
-      title: "Work Experience",
+      title: "Work Experience/Internship",
       description: "Add your work experience",
       order: 1,
       isRepeatable: true,
@@ -1351,9 +1361,42 @@ const seedFormData = async () => {
     // Note: Program selection is now handled by custom component (ApplicationProgramSection)
     // No subsections or fields needed for these sections
 
-    // ========== STEP 14: Create DOCUMENT Section ==========
-    // NOTE: Document sections and fields are now handled by seedDocument.ts
-    // Run: npm run seed:documents after seeding main form data
+    // ========== STEP 14.5: Create DOCUMENT Sections ==========
+    console.log("📄 Creating DOCUMENT sections...");
+    const documentSections = await FormSection.insertMany([
+      {
+        partId: documentPart._id,
+        title: "Your Documents",
+        description: "Upload your documents",
+        order: 1,
+        isActive: true,
+      },
+      {
+        partId: documentPart._id,
+        title: "KS Documents",
+        description: "Documents from Kareer Studio",
+        order: 2,
+        isActive: true,
+      },
+    ]);
+
+    console.log("📂 Creating document subsections...");
+    await FormSubSection.insertMany([
+      {
+        sectionId: documentSections[0]._id,
+        title: "Primary Documents",
+        order: 1,
+        isRepeatable: false,
+        isActive: true,
+      },
+      {
+        sectionId: documentSections[0]._id,
+        title: "Secondary Documents",
+        order: 2,
+        isRepeatable: false,
+        isActive: true,
+      },
+    ]);
 
     // ========== STEP 15: Create PAYMENT Section (Placeholder) ==========
     console.log("💳 Creating PAYMENT section...");
