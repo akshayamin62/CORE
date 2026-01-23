@@ -580,7 +580,8 @@ export const rejectDocument = async (req: AuthRequest, res: Response) => {
               user.name,
               document.documentName,
               rejectionMessage,
-              rejectedByRole
+              rejectedByRole,
+              document.registrationId.toString()
             );
             console.log(`✅ Document rejection email sent to ${user.email}`);
           }

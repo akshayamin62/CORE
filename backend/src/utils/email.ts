@@ -52,7 +52,7 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
 
   try {
     await transporter.sendMail({
-      from: `"Community Platform" <${process.env.EMAIL_ADDRESS}>`,
+      from: `"CORE-Community Platform" <${process.env.EMAIL_ADDRESS}>`,
       to: options.to,
       subject: options.subject,
       html: options.html,
@@ -140,8 +140,13 @@ export const sendDocumentRejectionEmail = async (
   studentName: string,
   documentName: string,
   rejectionMessage: string,
-  rejectedBy: string = 'counselor'
+  rejectedBy: string = 'counselor',
+  registrationId?: string
 ): Promise<void> => {
+  const detailsUrl = registrationId 
+    ? `${process.env.FRONTEND_URL || 'http://localhost:3000'}/my-details?registrationId=${registrationId}`
+    : `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard`;
+    
   const html = `
     <!DOCTYPE html>
     <html>
@@ -169,7 +174,7 @@ export const sendDocumentRejectionEmail = async (
         </ol>
         
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/my-details" 
+          <a href="${detailsUrl}" 
              style="background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
             Upload Document Again
           </a>
