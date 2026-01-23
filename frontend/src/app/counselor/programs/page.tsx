@@ -113,7 +113,7 @@ export default function CounselorProgramsPage() {
     setSubmitting(true);
 
     try {
-      const programData = {
+      const programData: any = {
         university: formData.university,
         universityRanking: {
           webometricsWorld: formData.universityRanking.webometricsWorld ? parseInt(formData.universityRanking.webometricsWorld) : undefined,
@@ -123,14 +123,16 @@ export default function CounselorProgramsPage() {
         },
         programName: formData.programName,
         websiteUrl: formData.websiteUrl,
-        campus: formData.campus,
         country: formData.country,
         studyLevel: formData.studyLevel,
-        duration: parseInt(formData.duration),
-        ieltsScore: parseFloat(formData.ieltsScore),
-        applicationFee: parseFloat(formData.applicationFee),
-        yearlyTuitionFees: parseFloat(formData.yearlyTuitionFees),
       };
+
+      // Add optional fields only if they have values
+      if (formData.campus) programData.campus = formData.campus;
+      if (formData.duration) programData.duration = parseInt(formData.duration);
+      if (formData.ieltsScore) programData.ieltsScore = parseFloat(formData.ieltsScore);
+      if (formData.applicationFee) programData.applicationFee = parseFloat(formData.applicationFee);
+      if (formData.yearlyTuitionFees) programData.yearlyTuitionFees = parseFloat(formData.yearlyTuitionFees);
 
       await programAPI.createProgram(programData);
       toast.success('Program created successfully');
@@ -255,10 +257,10 @@ export default function CounselorProgramsPage() {
                     <tr key={program._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 text-sm text-gray-900">{program.university}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">{program.programName}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{program.campus}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{program.campus || 'N/A'}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{program.country}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">£{program.yearlyTuitionFees.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{program.ieltsScore}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{program.yearlyTuitionFees ? `£${program.yearlyTuitionFees.toLocaleString()}` : 'N/A'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{program.ieltsScore || 'N/A'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -315,13 +317,12 @@ export default function CounselorProgramsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Campus *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Campus</label>
                     <input
                       type="text"
                       name="campus"
                       value={formData.campus}
                       onChange={handleInputChange}
-                      required
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     />
                   </div>
@@ -351,53 +352,49 @@ export default function CounselorProgramsPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Duration (months) *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Duration (months)</label>
                     <input
                       type="number"
                       name="duration"
                       value={formData.duration}
                       onChange={handleInputChange}
-                      required
                       min="1"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">IELTS Score *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">IELTS Score</label>
                     <input
                       type="number"
                       step="0.5"
                       name="ieltsScore"
                       value={formData.ieltsScore}
                       onChange={handleInputChange}
-                      required
                       min="0"
                       max="9"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Application Fee (GBP) *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Application Fee (GBP)</label>
                     <input
                       type="number"
                       step="0.01"
                       name="applicationFee"
                       value={formData.applicationFee}
                       onChange={handleInputChange}
-                      required
                       min="0"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Yearly Tuition Fees (GBP) *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Yearly Tuition Fees (GBP)</label>
                     <input
                       type="number"
                       step="0.01"
                       name="yearlyTuitionFees"
                       value={formData.yearlyTuitionFees}
                       onChange={handleInputChange}
-                      required
                       min="0"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
                     />

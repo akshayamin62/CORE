@@ -139,7 +139,7 @@ export default function AdminAppliedProgramSection({
 
     try {
       const token = localStorage.getItem('token');
-      const programData = {
+      const programData: any = {
         studentId: studentId,
         university: formData.university,
         universityRanking: {
@@ -150,14 +150,16 @@ export default function AdminAppliedProgramSection({
         },
         programName: formData.programName,
         websiteUrl: formData.websiteUrl,
-        campus: formData.campus,
         country: formData.country,
         studyLevel: formData.studyLevel,
-        duration: parseInt(formData.duration),
-        ieltsScore: parseFloat(formData.ieltsScore),
-        applicationFee: parseFloat(formData.applicationFee),
-        yearlyTuitionFees: parseFloat(formData.yearlyTuitionFees),
       };
+
+      // Add optional fields only if they have values
+      if (formData.campus) programData.campus = formData.campus;
+      if (formData.duration) programData.duration = parseInt(formData.duration);
+      if (formData.ieltsScore) programData.ieltsScore = parseFloat(formData.ieltsScore);
+      if (formData.applicationFee) programData.applicationFee = parseFloat(formData.applicationFee);
+      if (formData.yearlyTuitionFees) programData.yearlyTuitionFees = parseFloat(formData.yearlyTuitionFees);
 
       await axios.post(
         `${API_URL}/programs/admin/programs/create`,

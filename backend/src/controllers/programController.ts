@@ -232,11 +232,11 @@ export const createProgram = async (req: AuthRequest, res: Response): Promise<Re
       yearlyTuitionFees,
     } = req.body;
 
-    // Validate required fields
-    if (!university || !programName || !websiteUrl || !campus || !country || !studyLevel || !duration || !ieltsScore || !applicationFee || !yearlyTuitionFees) {
+    // Validate required fields (only 5 fields are required)
+    if (!university || !programName || !websiteUrl || !country || !studyLevel) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields',
+        message: 'Missing required fields: University, Program Name, Website URL, Country, and Study Level are required',
       });
     }
 
@@ -754,12 +754,12 @@ export const uploadProgramsFromExcel = async (req: AuthRequest & { file?: Expres
           isSelectedByStudent: false,
         };
 
-        // Validate required fields
+        // Validate required fields (only 5 fields are required)
         if (!programData.university || !programData.programName || !programData.websiteUrl || 
-            !programData.campus || !programData.country || !programData.studyLevel) {
+            !programData.country || !programData.studyLevel) {
           errors.push({
             row: i + 2, // +2 because Excel rows start at 1 and we have header
-            error: 'Missing required fields',
+            error: 'Missing required fields: University, Program Name, Website URL, Country, and Study Level are required',
           });
           continue;
         }

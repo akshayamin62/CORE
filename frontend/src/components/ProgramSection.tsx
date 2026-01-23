@@ -132,7 +132,7 @@ export default function ProgramSection({
 
     try {
       const token = localStorage.getItem('token');
-      const programData = {
+      const programData: any = {
         studentId: studentId,
         university: formData.university,
         universityRanking: {
@@ -143,14 +143,16 @@ export default function ProgramSection({
         },
         programName: formData.programName,
         websiteUrl: formData.websiteUrl,
-        campus: formData.campus,
         country: formData.country,
         studyLevel: formData.studyLevel,
-        duration: parseInt(formData.duration),
-        ieltsScore: parseFloat(formData.ieltsScore),
-        applicationFee: parseFloat(formData.applicationFee),
-        yearlyTuitionFees: parseFloat(formData.yearlyTuitionFees),
       };
+
+      // Add optional fields only if they have values
+      if (formData.campus) programData.campus = formData.campus;
+      if (formData.duration) programData.duration = parseInt(formData.duration);
+      if (formData.ieltsScore) programData.ieltsScore = parseFloat(formData.ieltsScore);
+      if (formData.applicationFee) programData.applicationFee = parseFloat(formData.applicationFee);
+      if (formData.yearlyTuitionFees) programData.yearlyTuitionFees = parseFloat(formData.yearlyTuitionFees);
 
       let endpoint = '';
       if (role === 'STUDENT') {
@@ -393,13 +395,13 @@ export default function ProgramSection({
                           </p>
                         )}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                          <div><span className="font-medium">Campus:</span> {program.campus}</div>
+                          {program.campus && <div><span className="font-medium">Campus:</span> {program.campus}</div>}
                           <div><span className="font-medium">Country:</span> {program.country}</div>
                           <div><span className="font-medium">Study Level:</span> {program.studyLevel}</div>
-                          <div><span className="font-medium">Duration:</span> {program.duration} months</div>
-                          <div><span className="font-medium">IELTS:</span> {program.ieltsScore}</div>
-                          <div><span className="font-medium">Tuition:</span> £{program.yearlyTuitionFees.toLocaleString()}</div>
-                          <div><span className="font-medium">App Fee:</span> £{program.applicationFee.toLocaleString()}</div>
+                          {program.duration && <div><span className="font-medium">Duration:</span> {program.duration} months</div>}
+                          {program.ieltsScore && <div><span className="font-medium">IELTS:</span> {program.ieltsScore}</div>}
+                          {program.yearlyTuitionFees && <div><span className="font-medium">Tuition:</span> £{program.yearlyTuitionFees.toLocaleString()}</div>}
+                          {program.applicationFee && <div><span className="font-medium">App Fee:</span> £{program.applicationFee.toLocaleString()}</div>}
                           {program.websiteUrl && (
                             <div className="col-span-2">
                               <a href={program.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">

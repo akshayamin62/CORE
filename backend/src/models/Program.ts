@@ -60,7 +60,7 @@ const programSchema = new Schema<IProgram>(
     },
     campus: {
       type: String,
-      required: true,
+      required: false,
     },
     country: {
       type: String,
@@ -72,19 +72,19 @@ const programSchema = new Schema<IProgram>(
     },
     duration: {
       type: Number,
-      required: true,
+      required: false,
     },
     ieltsScore: {
       type: Number,
-      required: true,
+      required: false,
     },
     applicationFee: {
       type: Number,
-      required: true,
+      required: false,
     },
     yearlyTuitionFees: {
       type: Number,
-      required: true,
+      required: false,
     },
     priority: {
       type: Number,

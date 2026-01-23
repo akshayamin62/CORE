@@ -145,13 +145,12 @@ export default function ProgramFormModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Campus *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Campus</label>
               <input
                 type="text"
                 name="campus"
                 value={formData.campus}
                 onChange={handleInputChange}
-                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
               />
             </div>
@@ -181,53 +180,49 @@ export default function ProgramFormModal({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Duration (months) *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Duration (months)</label>
               <input
                 type="number"
                 name="duration"
                 value={formData.duration}
                 onChange={handleInputChange}
-                required
                 min="1"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">IELTS Score *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">IELTS Score</label>
               <input
                 type="number"
                 step="0.5"
                 name="ieltsScore"
                 value={formData.ieltsScore}
                 onChange={handleInputChange}
-                required
                 min="0"
                 max="9"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Application Fee (GBP) *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Application Fee (GBP)</label>
               <input
                 type="number"
                 step="0.01"
                 name="applicationFee"
                 value={formData.applicationFee}
                 onChange={handleInputChange}
-                required
                 min="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Yearly Tuition Fees (GBP) *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Yearly Tuition Fees (GBP)</label>
               <input
                 type="number"
                 step="0.01"
                 name="yearlyTuitionFees"
                 value={formData.yearlyTuitionFees}
                 onChange={handleInputChange}
-                required
                 min="0"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
               />

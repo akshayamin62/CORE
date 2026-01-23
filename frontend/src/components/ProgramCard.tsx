@@ -75,27 +75,37 @@ export default function ProgramCard({
             </p>
           )}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-            <div>
-              <span className="font-medium">Campus:</span> {program.campus}
-            </div>
+            {program.campus && (
+              <div>
+                <span className="font-medium">Campus:</span> {program.campus}
+              </div>
+            )}
             <div>
               <span className="font-medium">Country:</span> {program.country}
             </div>
             <div>
               <span className="font-medium">Study Level:</span> {program.studyLevel}
             </div>
-            <div>
-              <span className="font-medium">Duration:</span> {program.duration} months
-            </div>
-            <div>
-              <span className="font-medium">IELTS:</span> {program.ieltsScore}
-            </div>
-            <div>
-              <span className="font-medium">Tuition:</span> £{program.yearlyTuitionFees.toLocaleString()}
-            </div>
-            <div>
-              <span className="font-medium">Application Fee:</span> £{program.applicationFee.toLocaleString()}
-            </div>
+            {program.duration && (
+              <div>
+                <span className="font-medium">Duration:</span> {program.duration} months
+              </div>
+            )}
+            {program.ieltsScore && (
+              <div>
+                <span className="font-medium">IELTS:</span> {program.ieltsScore}
+              </div>
+            )}
+            {program.yearlyTuitionFees && (
+              <div>
+                <span className="font-medium">Tuition:</span> £{program.yearlyTuitionFees.toLocaleString()}
+              </div>
+            )}
+            {program.applicationFee && (
+              <div>
+                <span className="font-medium">Application Fee:</span> £{program.applicationFee.toLocaleString()}
+              </div>
+            )}
             {program.websiteUrl && (
               <div>
                 <span className="font-medium">Website:</span>{' '}
