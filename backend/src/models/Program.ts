@@ -110,5 +110,11 @@ const programSchema = new Schema<IProgram>(
   { timestamps: true }
 );
 
+// Database indexes for performance
+programSchema.index({ studentId: 1, isSelectedByStudent: 1 });
+programSchema.index({ createdBy: 1, createdAt: -1 });
+programSchema.index({ country: 1, studyLevel: 1 });
+programSchema.index({ university: 1, programName: 1 });
+
 export default mongoose.model<IProgram>("Program", programSchema);
 

@@ -113,10 +113,10 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
 
     // ⏱️ Timer 1: Fetch student from MongoDB
     const studentQueryStart = performance.now();
-    const student = await Student.findById(studentId).populate(
-      'userId',
-      'name email role isVerified isActive createdAt'
-    );
+    const student = await Student.findById(studentId)
+      .populate('userId', 'name email role isVerified isActive createdAt')
+      .lean()
+      .exec();
     const studentQueryEnd = performance.now();
     timings.studentQuery = `${(studentQueryEnd - studentQueryStart).toFixed(2)}ms`;
 
@@ -133,10 +133,12 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
       studentId: student._id,
     })
       .populate('serviceId', 'name slug shortDescription icon')
-      .populate('primaryCounselorId')
-      .populate('secondaryCounselorId')
-      .populate('activeCounselorId')
-      .sort({ createdAt: -1 });
+      .populate('primaryCounselorId', 'userId email specializations')
+      .populate('secondaryCounselorId', 'userId email specializations')
+      .populate('activeCounselorId', 'userId email specializations')
+      .sort({ createdAt: -1 })
+      .lean()
+      .exec();
     const registrationsQueryEnd = performance.now();
     timings.registrationsQuery = `${(registrationsQueryEnd - registrationsQueryStart).toFixed(2)}ms`;
 

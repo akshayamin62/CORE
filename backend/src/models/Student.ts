@@ -32,5 +32,9 @@ const studentSchema = new Schema<IStudent>(
   { timestamps: true }
 );
 
+// Database indexes for performance
+studentSchema.index({ userId: 1 });
+studentSchema.index({ email: 1 });
+
 export default mongoose.model<IStudent>("Student", studentSchema);
 
