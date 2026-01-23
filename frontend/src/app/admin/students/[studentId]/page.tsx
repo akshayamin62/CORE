@@ -89,25 +89,63 @@ export default function StudentDetailPage() {
   };
 
   const fetchStudentDetails = async () => {
+    // ⏱️ Start frontend timer
+    const frontendStartTime = performance.now();
+    console.log('🔵 [FRONTEND] Starting fetchStudentDetails...');
+    
     try {
       const token = localStorage.getItem('token');
+      
+      // ⏱️ Timer 1: Network request to get student details
+      const studentApiStart = performance.now();
       const response = await axios.get(`${API_URL}/admin/students/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      const studentApiEnd = performance.now();
+      const studentApiTime = studentApiEnd - studentApiStart;
+      
+      console.log(`   └─ Student API Request: ${studentApiTime.toFixed(2)}ms`);
+      console.log(`   └─ Backend Processing (from response): ${response.data.performance?.totalServerTime || 'N/A'}`);
+      
+      // ⏱️ Timer 2: State updates
+      const stateUpdateStart = performance.now();
       setStudent(response.data.data.student);
       setRegistrations(response.data.data.registrations);
+      const stateUpdateEnd = performance.now();
+      const stateUpdateTime = stateUpdateEnd - stateUpdateStart;
       
-      // Fetch all counselors
+      console.log(`   └─ State Update: ${stateUpdateTime.toFixed(2)}ms`);
+      
+      // ⏱️ Timer 3: Fetch counselors (separate API call)
+      const counselorsApiStart = performance.now();
       try {
         const counselorsResponse = await axios.get(`${API_URL}/admin/counselors`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        const counselorsApiEnd = performance.now();
+        const counselorsApiTime = counselorsApiEnd - counselorsApiStart;
+        console.log(`   └─ Counselors API Request: ${counselorsApiTime.toFixed(2)}ms`);
+        
         setCounselors(counselorsResponse.data.data.counselors || []);
       } catch (err) {
         console.error('Failed to fetch counselors:', err);
         setCounselors([]);
       }
+      
+      // ⏱️ Calculate total frontend time
+      const frontendEndTime = performance.now();
+      const totalFrontendTime = frontendEndTime - frontendStartTime;
+      
+      console.log(`\n📊 [FRONTEND] Performance Summary:`);
+      console.log(`   └─ Total Frontend Time: ${totalFrontendTime.toFixed(2)}ms`);
+      console.log(`   └─ Network Latency: ${(studentApiTime + (performance.now() - counselorsApiStart)).toFixed(2)}ms`);
+      console.log(`   └─ User Experience: Click → Display = ~${totalFrontendTime.toFixed(0)}ms\n`);
+      
     } catch (error: any) {
+      const frontendEndTime = performance.now();
+      const totalFrontendTime = frontendEndTime - frontendStartTime;
+      console.log(`❌ [FRONTEND] Error after ${totalFrontendTime.toFixed(2)}ms`);
+      
       if (error.response?.status === 403) {
         toast.error('Access denied. You are not the active counselor for this student.');
         router.push('/counselor/students');
