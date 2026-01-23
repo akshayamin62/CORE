@@ -8,7 +8,7 @@ interface Program {
   _id: string;
   university: string;
   programName: string;
-  campus: string;
+  campus?: string;
   country: string;
   priority?: number;
   intake?: string;

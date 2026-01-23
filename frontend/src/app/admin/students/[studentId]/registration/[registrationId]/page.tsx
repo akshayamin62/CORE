@@ -368,8 +368,8 @@ export default function StudentFormEditPage() {
                   </div>
                   <ProgramSection
                     studentId={studentId}
-                    sectionTitle={currentSection.title}
-                    role="ADMIN"
+                    sectionType={currentSection.title === 'Apply to Program' ? 'available' : 'applied'}
+                    userRole="ADMIN"
                   />
                 </div>
               ) : (

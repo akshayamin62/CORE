@@ -11,13 +11,13 @@ interface Program {
   };
   programName: string;
   websiteUrl?: string;
-  campus: string;
+  campus?: string;
   country: string;
   studyLevel: string;
-  duration: number;
-  ieltsScore: number;
-  applicationFee: number;
-  yearlyTuitionFees: number;
+  duration?: number;
+  ieltsScore?: number;
+  applicationFee?: number;
+  yearlyTuitionFees?: number;
   priority?: number;
   intake?: string;
   year?: string;

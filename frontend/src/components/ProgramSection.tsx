@@ -21,18 +21,18 @@ interface Program {
   };
   programName: string;
   websiteUrl?: string;
-  campus: string;
+  campus?: string;
   country: string;
   studyLevel: string;
-  duration: number;
-  ieltsScore: number;
-  applicationFee: number;
-  yearlyTuitionFees: number;
+  duration?: number;
+  ieltsScore?: number;
+  applicationFee?: number;
+  yearlyTuitionFees?: number;
   priority?: number;
   intake?: string;
   year?: string;
-  selectedAt?: string;
   isSelectedByStudent?: boolean;
+  selectedAt?: string;
   createdBy?: {
     _id: string;
     name: string;
@@ -41,17 +41,20 @@ interface Program {
   };
 }
 
+type UserRole = 'STUDENT' | 'COUNSELOR' | 'ADMIN';
+type SectionType = 'available' | 'applied';
+
 interface ProgramSectionProps {
-  sectionTitle: string;
-  studentId?: string; // For counselor/admin viewing student programs, or student's own ID
-  role: 'STUDENT' | 'COUNSELOR' | 'ADMIN';
-  isReadOnly?: boolean; // For special cases where no actions should be available
+  userRole: UserRole;
+  sectionType: SectionType;
+  studentId?: string; // Required for COUNSELOR/ADMIN, optional for STUDENT
+  isReadOnly?: boolean;
 }
 
 export default function ProgramSection({
-  sectionTitle,
+  userRole,
+  sectionType,
   studentId,
-  role,
   isReadOnly = false,
 }: ProgramSectionProps) {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -62,12 +65,12 @@ export default function ProgramSection({
   // For chat feature
   const [selectedChatProgram, setSelectedChatProgram] = useState<Program | null>(null);
   
-  // For student selection of programs
-  const [selectingProgram, setSelectingProgram] = useState<string | null>(null);
+  // For student selecting programs
   const [expandedPrograms, setExpandedPrograms] = useState<Set<string>>(new Set());
   const [programFormData, setProgramFormData] = useState<{ [key: string]: { year: string; priority: number; intake: string } }>({});
+  const [selectingProgram, setSelectingProgram] = useState<string | null>(null);
   
-  // For admin editing applied programs
+  // For admin/counselor editing applied programs
   const [editingProgram, setEditingProgram] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState<{ [key: string]: { priority: number; intake: string; year: string } }>({});
   const [saving, setSaving] = useState<string | null>(null);
@@ -81,39 +84,35 @@ export default function ProgramSection({
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear + i);
 
+  const canAddPrograms = sectionType === 'available' && !isReadOnly;
+  const canEditApplied = sectionType === 'applied' && userRole === 'ADMIN';
+  const canSelectPrograms = sectionType === 'available' && userRole === 'STUDENT' && !isReadOnly;
+
   useEffect(() => {
     fetchPrograms();
-  }, [studentId, sectionTitle, role]);
+  }, [userRole, sectionType, studentId]);
 
   const fetchPrograms = async () => {
     try {
       setLoading(true);
-      
-      if (isReadOnly) {
-        setPrograms([]);
-        return;
-      }
-
       const token = localStorage.getItem('token');
-      const section = sectionTitle === 'Applied Program' ? 'applied' : 'all';
-      
       let response;
-      if (role === 'STUDENT') {
+
+      if (userRole === 'STUDENT') {
         response = await programAPI.getStudentPrograms();
-        // Student has separate available and applied programs
-        if (sectionTitle === 'Apply to Program') {
+        if (sectionType === 'available') {
           setPrograms(response.data.data.availablePrograms || []);
         } else {
           setPrograms(response.data.data.appliedPrograms || []);
         }
-      } else if (role === 'COUNSELOR') {
+      } else if (userRole === 'COUNSELOR' && studentId) {
         response = await axios.get(
-          `${API_URL}/programs/counselor/student/${studentId}/programs?section=${section}`,
+          `${API_URL}/programs/counselor/student/${studentId}/programs?section=${sectionType === 'applied' ? 'applied' : 'all'}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setPrograms(response.data.data.programs || []);
-      } else if (role === 'ADMIN') {
-        response = await programAPI.getAdminStudentPrograms(studentId!, section);
+      } else if (userRole === 'ADMIN' && studentId) {
+        response = await programAPI.getAdminStudentPrograms(studentId, sectionType === 'applied' ? 'applied' : 'all');
         setPrograms(response.data.data.programs || []);
       }
     } catch (error: any) {
@@ -133,7 +132,6 @@ export default function ProgramSection({
     try {
       const token = localStorage.getItem('token');
       const programData: any = {
-        studentId: studentId,
         university: formData.university,
         universityRanking: {
           webometricsWorld: formData.universityRanking.webometricsWorld ? parseInt(formData.universityRanking.webometricsWorld) : undefined,
@@ -147,7 +145,7 @@ export default function ProgramSection({
         studyLevel: formData.studyLevel,
       };
 
-      // Add optional fields only if they have values
+      if (studentId) programData.studentId = studentId;
       if (formData.campus) programData.campus = formData.campus;
       if (formData.duration) programData.duration = parseInt(formData.duration);
       if (formData.ieltsScore) programData.ieltsScore = parseFloat(formData.ieltsScore);
@@ -155,11 +153,11 @@ export default function ProgramSection({
       if (formData.yearlyTuitionFees) programData.yearlyTuitionFees = parseFloat(formData.yearlyTuitionFees);
 
       let endpoint = '';
-      if (role === 'STUDENT') {
+      if (userRole === 'STUDENT') {
         endpoint = `${API_URL}/programs/student/programs/create`;
-      } else if (role === 'COUNSELOR') {
+      } else if (userRole === 'COUNSELOR') {
         endpoint = `${API_URL}/programs/counselor/programs`;
-      } else if (role === 'ADMIN') {
+      } else if (userRole === 'ADMIN') {
         endpoint = `${API_URL}/programs/admin/programs/create`;
       }
 
@@ -169,7 +167,6 @@ export default function ProgramSection({
       fetchPrograms();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to create program');
-      console.error('Create program error:', error);
     } finally {
       setSubmitting(false);
     }
@@ -194,11 +191,14 @@ export default function ProgramSection({
       const token = localStorage.getItem('token');
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('studentId', studentId!);
+      if (studentId) formData.append('studentId', studentId);
 
-      const endpoint = role === 'COUNSELOR' 
-        ? `${API_URL}/programs/counselor/programs/upload-excel`
-        : `${API_URL}/programs/admin/programs/upload-excel`;
+      let endpoint = '';
+      if (userRole === 'COUNSELOR') {
+        endpoint = `${API_URL}/programs/counselor/programs/upload-excel`;
+      } else if (userRole === 'ADMIN') {
+        endpoint = `${API_URL}/programs/admin/programs/upload-excel`;
+      }
 
       const response = await axios.post(endpoint, formData, {
         headers: {
@@ -210,24 +210,19 @@ export default function ProgramSection({
       fetchPrograms();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to upload Excel file');
-      console.error('Excel upload error:', error);
     } finally {
       setSubmitting(false);
       e.target.value = '';
     }
   };
 
-  // Student-specific: Select program to apply
+  // Student program selection handlers
   const handleSelectProgram = (programId: string) => {
     setExpandedPrograms(prev => new Set([...prev, programId]));
     if (!programFormData[programId]) {
       setProgramFormData(prev => ({
         ...prev,
-        [programId]: {
-          year: String(currentYear),
-          priority: 1,
-          intake: '',
-        },
+        [programId]: { year: String(currentYear), priority: 1, intake: '' },
       }));
     }
   };
@@ -242,7 +237,7 @@ export default function ProgramSection({
     setSelectingProgram(programId);
     try {
       await programAPI.selectProgram({
-        programId: programId,
+        programId,
         priority: formData.priority,
         intake: formData.intake,
         year: formData.year,
@@ -279,7 +274,7 @@ export default function ProgramSection({
     });
   };
 
-  // Admin-specific: Edit applied program details
+  // Admin edit handlers
   const handleEdit = (programId: string, program: Program) => {
     setEditingProgram(programId);
     setEditFormData({
@@ -300,10 +295,10 @@ export default function ProgramSection({
     });
   };
 
-  const handleSaveEdit = async (programId: string) => {
+  const handleSave = async (programId: string) => {
     const formData = editFormData[programId];
-    if (!formData || !formData.year || !formData.intake || !formData.priority) {
-      toast.error('Please fill all fields');
+    if (!formData || !formData.intake || !formData.year || !formData.priority) {
+      toast.error('Please fill all fields: Year, Priority, and Intake');
       return;
     }
 
@@ -337,18 +332,16 @@ export default function ProgramSection({
     );
   }
 
-  // Render for "Apply to Program" section
-  if (sectionTitle === 'Apply to Program') {
+  // Render available programs
+  if (sectionType === 'available') {
     return (
       <div className="space-y-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {role === 'STUDENT' ? 'Available Programs' : 'All Programs'}
-            </h3>
-            {!isReadOnly && (
+            <h3 className="text-lg font-semibold text-gray-900">Available Programs</h3>
+            {canAddPrograms && (
               <div className="flex gap-3">
-                {(role === 'COUNSELOR' || role === 'ADMIN') && (
+                {(userRole === 'COUNSELOR' || userRole === 'ADMIN') && (
                   <>
                     <input
                       type="file"
@@ -360,7 +353,7 @@ export default function ProgramSection({
                     />
                     <label
                       htmlFor="excel-upload-input"
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm cursor-pointer disabled:opacity-50"
                     >
                       {submitting ? 'Uploading...' : 'Upload Excel'}
                     </label>
@@ -375,16 +368,12 @@ export default function ProgramSection({
               </div>
             )}
           </div>
-          
+
           {programs.length > 0 ? (
             <div className="space-y-4">
-              {role === 'STUDENT' ? (
-                // Student view with selection UI
-                programs.map((program) => (
-                  <div
-                    key={program._id}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                  >
+              {programs.map((program) => (
+                <div key={program._id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  {canSelectPrograms ? (
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h4 className="font-semibold text-gray-900 mb-1">{program.programName}</h4>
@@ -403,9 +392,10 @@ export default function ProgramSection({
                           {program.yearlyTuitionFees && <div><span className="font-medium">Tuition:</span> £{program.yearlyTuitionFees.toLocaleString()}</div>}
                           {program.applicationFee && <div><span className="font-medium">App Fee:</span> £{program.applicationFee.toLocaleString()}</div>}
                           {program.websiteUrl && (
-                            <div className="col-span-2">
-                              <a href={program.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
-                                View Program →
+                            <div>
+                              <span className="font-medium">Website:</span>{' '}
+                              <a href={program.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                View
                               </a>
                             </div>
                           )}
@@ -414,68 +404,61 @@ export default function ProgramSection({
                       {!expandedPrograms.has(program._id) ? (
                         <button
                           onClick={() => handleSelectProgram(program._id)}
-                          className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium whitespace-nowrap"
+                          className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                         >
-                          Select Program
+                          Select
                         </button>
                       ) : (
-                        <div className="ml-4 flex flex-col gap-3 min-w-50">
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Year *</label>
+                        <div className="ml-4 flex flex-col gap-2 min-w-[200px]">
+                          <div className="space-y-2">
                             <select
-                              value={programFormData[program._id]?.year || ''}
+                              value={programFormData[program._id]?.year || String(currentYear)}
                               onChange={(e) => setProgramFormData(prev => ({
                                 ...prev,
                                 [program._id]: { ...prev[program._id], year: e.target.value }
                               }))}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-gray-900"
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                             >
-                              <option value="">Select Year</option>
                               {yearOptions.map(year => (
-                                <option key={year} value={year}>{year}</option>
+                                <option key={year} value={String(year)}>{year}</option>
                               ))}
                             </select>
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Priority *</label>
                             <input
                               type="number"
                               min="1"
+                              placeholder="Priority"
                               value={programFormData[program._id]?.priority || ''}
                               onChange={(e) => setProgramFormData(prev => ({
                                 ...prev,
                                 [program._id]: { ...prev[program._id], priority: parseInt(e.target.value) || 1 }
                               }))}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-gray-900"
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                             />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Intake *</label>
                             <select
                               value={programFormData[program._id]?.intake || ''}
                               onChange={(e) => setProgramFormData(prev => ({
                                 ...prev,
                                 [program._id]: { ...prev[program._id], intake: e.target.value }
                               }))}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-gray-900"
+                              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                             >
                               <option value="">Select Intake</option>
-                              {intakeOptions.map(intake => (
-                                <option key={intake} value={intake}>{intake}</option>
+                              {intakeOptions.map((option) => (
+                                <option key={option} value={option}>{option}</option>
                               ))}
                             </select>
                           </div>
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleApplyProgram(program._id)}
-                              disabled={selectingProgram === program._id}
-                              className="flex-1 px-3 py-1.5 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700 disabled:opacity-50"
+                              disabled={selectingProgram === program._id || !programFormData[program._id]?.intake}
+                              className="flex-1 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs font-medium disabled:opacity-50"
                             >
                               {selectingProgram === program._id ? 'Applying...' : 'Apply'}
                             </button>
                             <button
                               onClick={() => handleCancelSelection(program._id)}
-                              className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded text-xs font-medium hover:bg-gray-300"
+                              className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium"
                             >
                               Cancel
                             </button>
@@ -483,24 +466,16 @@ export default function ProgramSection({
                         </div>
                       )}
                     </div>
-                  </div>
-                ))
-              ) : (
-                // Counselor/Admin view with ProgramCard
-                programs.map((program) => (
-                  <ProgramCard
-                    key={program._id}
-                    program={program}
-                    showPriority={false}
-                    showActions={false}
-                  />
-                ))
-              )}
+                  ) : (
+                    <ProgramCard program={program} showPriority={false} showActions={false} />
+                  )}
+                </div>
+              ))}
             </div>
           ) : (
             <div className="text-center py-12 text-gray-500">
               <p>
-                {role === 'STUDENT' 
+                {userRole === 'STUDENT'
                   ? 'No programs available. Your counselor will add programs for you.'
                   : 'No programs added yet. Click "Add Program" to get started.'}
               </p>
@@ -509,7 +484,7 @@ export default function ProgramSection({
         </div>
 
         <ProgramFormModal
-          isOpen={showAddModal && !isReadOnly}
+          isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
           onSubmit={handleSubmit}
           submitting={submitting}
@@ -518,93 +493,89 @@ export default function ProgramSection({
     );
   }
 
-  // Render for "Applied Program" section
-  if (sectionTitle === 'Applied Program') {
-    return (
-      <div className="space-y-4">
-        {programs.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
-            <p>
-              {role === 'STUDENT' 
-                ? 'No programs applied yet. Select programs from "Apply to Program" section.'
-                : 'No programs applied yet by the student.'}
-            </p>
-          </div>
-        ) : (
+  // Render applied programs
+  return (
+    <div className="space-y-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Applied Programs</h3>
+        {programs.length > 0 ? (
           <div className={`flex gap-4 ${selectedChatProgram ? '' : 'flex-col'}`}>
             {/* Programs List */}
             <div className={`space-y-4 ${selectedChatProgram ? 'w-1/2 overflow-y-auto max-h-[600px]' : 'w-full'}`}>
-            {role === 'ADMIN' ? (
-              // Admin view with edit functionality
-              programs.map((program) => (
+              {programs.map((program) => (
                 <div key={program._id} className={selectedChatProgram?._id === program._id ? 'bg-gray-200 rounded-lg p-2' : ''}>
-                  {editingProgram === program._id ? (
-                    <div className="border border-gray-300 rounded-lg p-4 bg-blue-50">
-                      <ProgramCard program={program} showPriority={false} showActions={false} />
-                      <div className="mt-4 grid grid-cols-3 gap-4">
+                  {canEditApplied && editingProgram === program._id ? (
+                    <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                      <div className="flex gap-2 items-center flex-wrap mb-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
-                          <select
-                            value={editFormData[program._id]?.year || ''}
-                            onChange={(e) => setEditFormData(prev => ({
-                              ...prev,
-                              [program._id]: { ...prev[program._id], year: e.target.value }
-                            }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                          >
-                            {yearOptions.map(year => (
-                              <option key={year} value={year}>{year}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Priority *</label>
                           <input
                             type="number"
                             min="1"
-                            value={editFormData[program._id]?.priority || ''}
+                            value={editFormData[program._id]?.priority || 1}
                             onChange={(e) => setEditFormData(prev => ({
                               ...prev,
                               [program._id]: { ...prev[program._id], priority: parseInt(e.target.value) || 1 }
                             }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className="w-24 px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Intake</label>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Intake *</label>
                           <select
                             value={editFormData[program._id]?.intake || ''}
                             onChange={(e) => setEditFormData(prev => ({
                               ...prev,
                               [program._id]: { ...prev[program._id], intake: e.target.value }
                             }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                            className="w-32 px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                           >
-                            {intakeOptions.map(intake => (
-                              <option key={intake} value={intake}>{intake}</option>
+                            <option value="">Select Intake</option>
+                            {intakeOptions.map((option) => (
+                              <option key={option} value={option}>{option}</option>
                             ))}
                           </select>
                         </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">Year *</label>
+                          <select
+                            value={editFormData[program._id]?.year || String(currentYear)}
+                            onChange={(e) => setEditFormData(prev => ({
+                              ...prev,
+                              [program._id]: { ...prev[program._id], year: e.target.value }
+                            }))}
+                            className="w-28 px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          >
+                            {yearOptions.map(year => (
+                              <option key={year} value={String(year)}>{year}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="flex gap-2 items-end">
+                          <button
+                            onClick={() => handleSave(program._id)}
+                            disabled={saving === program._id || !editFormData[program._id]?.intake}
+                            className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs font-medium disabled:opacity-50"
+                          >
+                            {saving === program._id ? 'Saving...' : 'Save'}
+                          </button>
+                          <button
+                            onClick={() => handleCancelEdit(program._id)}
+                            className="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-xs font-medium"
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       </div>
-                      <div className="mt-4 flex gap-3">
-                        <button
-                          onClick={() => handleSaveEdit(program._id)}
-                          disabled={saving === program._id}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                        >
-                          {saving === program._id ? 'Saving...' : 'Save Changes'}
-                        </button>
-                        <button
-                          onClick={() => handleCancelEdit(program._id)}
-                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                      <ProgramCard program={program} showPriority={true} showActions={false} />
                     </div>
                   ) : (
                     <div className="relative">
-                      <ProgramCard program={program} showPriority={true} showActions={false} />
+                      <ProgramCard
+                        program={program}
+                        showPriority={true}
+                        showActions={false}
+                      />
                       {!isReadOnly && (
                         <div className="absolute top-4 right-4 flex gap-2">
                           <button
@@ -616,60 +587,43 @@ export default function ProgramSection({
                             </svg>
                             <span>Chat</span>
                           </button>
-                          <button
-                            onClick={() => handleEdit(program._id, program)}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-md hover:shadow-lg"
-                          >
-                            Edit Details
-                          </button>
+                          {canEditApplied && (
+                            <button
+                              onClick={() => handleEdit(program._id, program)}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-md hover:shadow-lg"
+                            >
+                              Edit
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
                   )}
                 </div>
-              ))
-            ) : (
-              // Student/Counselor view
-              programs.map((program) => (
-                <div key={program._id} className={`${selectedChatProgram?._id === program._id ? 'bg-gray-200 rounded-lg p-2' : ''}`}>
-                  <div className="relative">
-                  <ProgramCard
-                    program={program}
-                    showPriority={true}
-                    showActions={false}
-                  />
-                  {!isReadOnly && (
-                    <button
-                      onClick={() => setSelectedChatProgram(program)}
-                      className="absolute top-4 right-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium shadow-md hover:shadow-lg flex items-center space-x-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                      <span>Chat</span>
-                    </button>
-                  )}
-                  </div>
-                </div>
-              ))
+              ))}
+            </div>
+
+            {/* Chat View */}
+            {selectedChatProgram && (
+              <div className="w-1/2">
+                <ProgramChatView
+                  program={selectedChatProgram}
+                  onClose={() => setSelectedChatProgram(null)}
+                  userRole={userRole}
+                />
+              </div>
             )}
           </div>
-
-          {/* Chat View */}
-          {selectedChatProgram && (
-            <div className="w-1/2">
-              <ProgramChatView
-                program={selectedChatProgram}
-                onClose={() => setSelectedChatProgram(null)}
-                userRole={role}
-              />
-            </div>
-          )}
-        </div>
+        ) : (
+          <div className="text-center py-12 text-gray-500">
+            <p>
+              {userRole === 'STUDENT'
+                ? 'No programs applied yet. Select programs from "Apply to Program" section.'
+                : 'No programs applied yet by the student.'}
+            </p>
+          </div>
         )}
       </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 }

@@ -420,9 +420,9 @@ function MyDetailsContent() {
                 {currentPart.part.key === 'APPLICATION' && 
                  (currentSection.title === 'Apply to Program' || currentSection.title === 'Applied Program') ? (
                   <ProgramSection
-                    sectionTitle={currentSection.title}
+                    sectionType={currentSection.title === 'Apply to Program' ? 'available' : 'applied'}
                     studentId={registrationId!}
-                    role="STUDENT"
+                    userRole="STUDENT"
                   />
                 ) : currentPart.part.key === 'DOCUMENT' ? (
                   // Document sections - no save button, auto-save on upload
