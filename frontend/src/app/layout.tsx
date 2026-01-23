@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "CORE - Powered by ADMITra",
   description: "Connect, Learn, and Grow Together",
+  icons: {
+    icon: '/logo3.png',
+  },
 };
 
 export default function RootLayout({

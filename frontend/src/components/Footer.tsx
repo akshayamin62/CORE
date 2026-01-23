@@ -19,15 +19,14 @@ export default function Footer() {
               <div className="relative">
                 {/* <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg blur opacity-30 group-hover:opacity-50 transition duration-300"></div> */}
                 <img 
-                  src="/logo.jpeg" 
+                  src="/logo2.png" 
                   alt="CORE Logo" 
                   className="relative h-16 w-auto object-contain"
                 />
               </div>
             </div>
             <p className="text-gray-400 mb-6 max-w-md leading-relaxed">
-              Connect, learn, and grow together in our vibrant community. 
-              A platform designed for students, counselors, alumni, and professionals.
+              <b>CORE</b> is a centralized technology ecosystem where students execute their education and global readiness plans, parents and teachers monitor progress, alumni mentor, and verified service providers deliver services -within a structured, readiness-focused operating system governed by ADMITra.
             </p>
             <div className="flex space-x-3">
               {/* Social Media Icons */}
