@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI, serviceAPI } from '@/lib/api';
-import { User, USER_ROLE, FormStructure, FormSection } from '@/types';
+import { User, USER_ROLE, FormStructure, FormSection, FormSubSection, FormField } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import FormSectionRenderer from '@/components/FormSectionRenderer';
 import FormPartsNavigation from '@/components/FormPartsNavigation';
@@ -53,12 +53,9 @@ export default function StudentFormEditPage() {
       }
 
       setUser(userData);
-      // First fetch student info to get serviceId
-      await fetchStudentInfo();
-      // Then fetch form structure first
-      const formStructureData = await fetchFormStructure();
-      // Finally fetch form answers with formStructure data
-      await fetchFormAnswers(formStructureData);
+      
+      // Fetch all data efficiently with parallel requests
+      await fetchAllData();
     } catch (error) {
       toast.error('Please login to continue');
       router.push('/login');
@@ -67,107 +64,58 @@ export default function StudentFormEditPage() {
     }
   };
 
-  const fetchStudentInfo = async () => {
+  const fetchAllData = async () => {
+    const token = localStorage.getItem('token');
+    
     try {
-      const token = localStorage.getItem('token');
-      // First get the full student details with populated userId
-      const studentResponse = await axios.get(
-        `${API_URL}/admin/students/${studentId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setStudentInfo(studentResponse.data.data.student);
+      // Make both independent API calls in PARALLEL
+      const [studentResponse, registrationResponse] = await Promise.all([
+        axios.get(`${API_URL}/admin/students/${studentId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`${API_URL}/admin/students/${studentId}/registrations/${registrationId}/answers`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
       
-      // Get registration details
-      const regResponse = await axios.get(
-        `${API_URL}/admin/students/${studentId}/registrations/${registrationId}/answers`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setServiceInfo(regResponse.data.data.registration.serviceId);
-    } catch (error: any) {
-      if (error.response?.status === 403) {
-        toast.error('Access denied. You are not assigned as the active counselor for this student.');
-        router.push('/counselor/students');
-        throw error; // Re-throw to stop checkAuth flow
-      }
-      console.error('Fetch student info error:', error);
-      toast.error('Failed to fetch student information');
-      throw error;
-    }
-  };
-
-  const fetchFormStructure = async (): Promise<FormStructure[]> => {
-    try {
-      // Get serviceId from registration response
-      const token = localStorage.getItem('token');
-      const regResponse = await axios.get(
-        `${API_URL}/admin/students/${studentId}/registrations/${registrationId}/answers`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const regServiceId = regResponse.data.data.registration.serviceId;
+      // Extract data from responses
+      const studentData = studentResponse.data.data.student;
+      const registrationData = registrationResponse.data.data;
+      const regServiceId = registrationData.registration.serviceId;
       const extractedServiceId = typeof regServiceId === 'object' ? regServiceId._id : regServiceId;
+      
+      setStudentInfo(studentData);
+      setServiceInfo(regServiceId);
       
       if (!extractedServiceId) {
         throw new Error('Service ID not found');
       }
       
-      // Fetch form structure using serviceId
-      const response = await serviceAPI.getServiceForm(extractedServiceId);
-      const structure = response.data.data.formStructure || [];
+      // ✅ Fetch form structure
+      const formResponse = await serviceAPI.getServiceForm(extractedServiceId);
+      const structure = formResponse.data.data.formStructure || [];
       setFormStructure(structure);
-      return structure;
-    } catch (error: any) {
-      if (error.response?.status === 403) {
-        toast.error('Access denied. You are not assigned as the active counselor for this student.');
-        router.push('/counselor/students');
-        return [];
-      }
-      console.error('Fetch form structure error:', error);
-      toast.error('Failed to fetch form structure');
-      return [];
-    }
-  };
-
-  const fetchFormAnswers = async (formStructureData?: FormStructure[]) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_URL}/admin/students/${studentId}/registrations/${registrationId}/answers`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
       
-      const answers = response.data.data.answers || [];
-      console.log('Raw answers from API:', answers); // Debug
-      console.log('Number of answers:', answers.length); // Debug
-      
+      // ✅ Process form answers (reuse already-fetched registration data)
+      const answers = registrationData.answers || [];
       const formattedAnswers: any = {};
       
-      // Format answers to match form structure: partKey -> sectionId -> subSectionId -> [instances]
       answers.forEach((answer: any) => {
         if (answer && answer.partKey) {
-          // Handle both cases: answer.answers exists or is null/undefined
           formattedAnswers[answer.partKey] = answer.answers || {};
         }
       });
       
-      console.log('Formatted answers before email:', formattedAnswers); // Debug
-      console.log('Formatted answers keys:', Object.keys(formattedAnswers)); // Debug
-      
-      // Use formStructureData if provided, otherwise use state
-      const structureToUse = formStructureData || formStructure;
-      
-      // Get student data from response if available
-      const studentData = response.data.data.student || {};
-      
       // Pre-fill phone and country defaults
-      if (structureToUse.length > 0) {
-        structureToUse.forEach((part) => {
+      if (structure.length > 0) {
+        structure.forEach((part: FormStructure) => {
           const partKey = part.part.key;
           if (!formattedAnswers[partKey]) formattedAnswers[partKey] = {};
           
-          part.sections?.forEach((section) => {
+          part.sections?.forEach((section: FormSection) => {
             if (!formattedAnswers[partKey][section._id]) formattedAnswers[partKey][section._id] = {};
             
-            section.subSections?.forEach((subSection) => {
+            section.subSections?.forEach((subSection: FormSubSection) => {
               if (!formattedAnswers[partKey][section._id][subSection._id]) {
                 formattedAnswers[partKey][section._id][subSection._id] = [{}];
               }
@@ -175,13 +123,11 @@ export default function StudentFormEditPage() {
               const instances = formattedAnswers[partKey][section._id][subSection._id];
               if (Array.isArray(instances)) {
                 instances.forEach((instance: any) => {
-                  // Set phone number from student table if available
                   const phoneField = subSection.fields?.find(f => f.key === 'phone' || f.key === 'phoneNumber' || f.key === 'mobileNumber');
                   if (phoneField && studentData.mobileNumber && !instance[phoneField.key]) {
                     instance[phoneField.key] = studentData.mobileNumber;
                   }
                   
-                  // Set India as default for country fields
                   subSection.fields?.forEach((field) => {
                     if ((field.key === 'mailingCountry' || field.key === 'permanentCountry') && !instance[field.key]) {
                       instance[field.key] = field.defaultValue || 'IN';
@@ -194,17 +140,34 @@ export default function StudentFormEditPage() {
         });
       }
       
-      // console.log('Final formatted answers:', formattedAnswers); // Debug
       setFormValues(formattedAnswers);
+      
     } catch (error: any) {
       if (error.response?.status === 403) {
         toast.error('Access denied. You are not assigned as the active counselor for this student.');
         router.push('/counselor/students');
-        return;
+        throw error;
       }
-      console.error('Fetch form answers error:', error);
-      toast.error('Failed to fetch form answers');
+      console.error('Fetch data error:', error);
+      toast.error('Failed to load form data');
+      throw error;
     }
+  };
+
+  // ⚠️ DEPRECATED: Old functions no longer used
+  const fetchStudentInfo = async () => {
+  // Old functions no longer used
+  const fetchStudentInfo = async () => {
+    // Replaced by fetchAllData
+  };
+
+  const fetchFormStructure = async (): Promise<FormStructure[]> => {
+    // Replaced by fetchAllData
+    return [];
+  };
+
+  const fetchFormAnswers = async (formStructureData?: FormStructure[]) => {
+    // Replaced by fetchAllData
   };
 
   const handleFieldChange = (
@@ -422,4 +385,4 @@ export default function StudentFormEditPage() {
     </>
   );
 }
-
+}
