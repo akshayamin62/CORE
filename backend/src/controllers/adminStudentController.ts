@@ -100,25 +100,15 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
  * For counselors: only show details if they are active counselor for at least one registration
  */
 export const getStudentDetails = async (req: AuthRequest, res: Response): Promise<Response> => {
-  // ⏱️ Start total server timer
-  const serverStartTime = performance.now();
-  const requestId = Math.random().toString(36).substring(7);
-  const timings: any = {};
-
   try {
     const { studentId } = req.params;
-    console.log(`🔵 [${requestId}] Request started for student: ${studentId}`);
     const userId = req.user?.userId;
     const user = await User.findById(userId);
 
-    // ⏱️ Timer 1: Fetch student from MongoDB
-    const studentQueryStart = performance.now();
     const student = await Student.findById(studentId)
       .populate('userId', 'name email role isVerified isActive createdAt')
       .lean()
       .exec();
-    const studentQueryEnd = performance.now();
-    timings.studentQuery = `${(studentQueryEnd - studentQueryStart).toFixed(2)}ms`;
 
     if (!student) {
       return res.status(404).json({
@@ -127,8 +117,6 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
       });
     }
 
-    // ⏱️ Timer 2: Fetch registrations from MongoDB
-    const registrationsQueryStart = performance.now();
     const registrations = await StudentServiceRegistration.find({
       studentId: student._id,
     })
@@ -139,15 +127,10 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
       .sort({ createdAt: -1 })
       .lean()
       .exec();
-    const registrationsQueryEnd = performance.now();
-    timings.registrationsQuery = `${(registrationsQueryEnd - registrationsQueryStart).toFixed(2)}ms`;
 
     // If user is counselor, verify they are active counselor for at least one registration
     if (user?.role === USER_ROLE.COUNSELOR) {
-      const counselorQueryStart = performance.now();
       const counselor = await Counselor.findOne({ userId });
-      const counselorQueryEnd = performance.now();
-      timings.counselorQuery = `${(counselorQueryEnd - counselorQueryStart).toFixed(2)}ms`;
 
       if (!counselor) {
         return res.status(404).json({
@@ -171,28 +154,6 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
       }
     }
 
-    // ⏱️ Calculate total times
-    const serverEndTime = performance.now();
-    const totalServerTime = serverEndTime - serverStartTime;
-    const totalDbTime = (studentQueryEnd - studentQueryStart) + 
-                        (registrationsQueryEnd - registrationsQueryStart) +
-                        (timings.counselorQuery ? parseFloat(timings.counselorQuery) : 0);
-
-    // ⏱️ Performance summary
-    timings.totalDatabaseTime = `${totalDbTime.toFixed(2)}ms`;
-    timings.totalServerTime = `${totalServerTime.toFixed(2)}ms`;
-    timings.dataProcessingTime = `${(totalServerTime - totalDbTime).toFixed(2)}ms`;
-
-    console.log(`📊 [${requestId}] Performance Metrics (getStudentDetails):`);
-    console.log(`   └─ Student Query: ${timings.studentQuery}`);
-    console.log(`   └─ Registrations Query: ${timings.registrationsQuery}`);
-    if (timings.counselorQuery) {
-      console.log(`   └─ Counselor Query: ${timings.counselorQuery}`);
-    }
-    console.log(`   └─ Total DB Time: ${timings.totalDatabaseTime}`);
-    console.log(`   └─ Data Processing: ${timings.dataProcessingTime}`);
-    console.log(`   └─ Total Server Time: ${timings.totalServerTime}`);
-
     return res.status(200).json({
       success: true,
       message: 'Student details fetched successfully',
@@ -200,7 +161,6 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
         student,
         registrations,
       },
-      performance: timings, // Include performance metrics in response
     });
   } catch (error: any) {
     console.error('Get student details error:', error);
