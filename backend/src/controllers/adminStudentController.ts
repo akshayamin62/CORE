@@ -227,7 +227,9 @@ export const getStudentFormAnswers = async (req: AuthRequest, res: Response): Pr
       studentId,
     })
       .populate('serviceId', 'name')
-      .populate('activeCounselorId');
+      .populate('activeCounselorId')
+      .lean()
+      .exec();
 
     if (!registration) {
       return res.status(404).json({
@@ -238,7 +240,7 @@ export const getStudentFormAnswers = async (req: AuthRequest, res: Response): Pr
 
     // If user is counselor, verify they are the active counselor for this registration
     if (user?.role === USER_ROLE.COUNSELOR) {
-      const counselor = await Counselor.findOne({ userId });
+      const counselor = await Counselor.findOne({ userId }).lean().exec();
       if (!counselor) {
         return res.status(404).json({
           success: false,
@@ -258,13 +260,16 @@ export const getStudentFormAnswers = async (req: AuthRequest, res: Response): Pr
       }
     }
 
-    // Get all form answers for this student
+    // Get all form answers for this student (optimized with lean)
     const answers = await StudentFormAnswer.find({
       studentId,
-    }).sort({ lastSavedAt: -1 });
+    })
+      .sort({ lastSavedAt: -1 })
+      .lean()
+      .exec();
 
-    // Get student record to include mobileNumber
-    const student = await Student.findById(studentId);
+    // Get student record to include mobileNumber (optimized with lean)
+    const student = await Student.findById(studentId).lean().exec();
 
     return res.status(200).json({
       success: true,

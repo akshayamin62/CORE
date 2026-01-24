@@ -33,7 +33,7 @@ const studentSchema = new Schema<IStudent>(
 );
 
 // Database indexes for performance
-studentSchema.index({ userId: 1 });
+// Note: userId already has unique index from schema definition
 studentSchema.index({ email: 1 });
 
 export default mongoose.model<IStudent>("Student", studentSchema);
