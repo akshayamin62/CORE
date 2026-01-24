@@ -144,23 +144,39 @@ export const sendDocumentRejectionEmail = async (
     : `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard`;
     
   const html = `
-Hi ${studentName},
-
-Your uploaded document "${documentName}" has been rejected by your ${rejectedBy}.
-
-Reason for rejection:
-${rejectionMessage}
-
-What you need to do:
-1. Review the rejection reason above
-2. Prepare a corrected version of the document
-3. Log in to your account and re-upload the document
-
-Upload Document Again: ${detailsUrl}
-
-If you have any questions, please contact your ${rejectedBy}.
-
-This is an automated message. Please do not reply to this email.
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Document Rejected</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; margin: 0; padding: 0;">
+      <div style="max-width: 600px; margin: 20px auto; background-color: white; padding: 30px; border: 1px solid #ddd;">
+        <h2>Document Rejected</h2>
+        <p>Hi ${studentName},</p>
+        <p>Your uploaded document "${documentName}" has been rejected by your ${rejectedBy}.</p>
+        
+        <p><strong>Reason for rejection:</strong></p>
+        <p>${rejectionMessage}</p>
+        
+        <p><strong>What you need to do:</strong></p>
+        <ol>
+          <li>Review the rejection reason above</li>
+          <li>Prepare a corrected version of the document</li>
+          <li>Log in to your account and re-upload the document</li>
+        </ol>
+        
+        <p><a href="${detailsUrl}">Upload Document Again</a></p>
+        
+        <p>If you have any questions, please contact your ${rejectedBy}.</p>
+        
+        <p style="color: #999; font-size: 12px; margin-top: 20px;">
+          This is an automated message. Please do not reply to this email.
+        </p>
+      </div>
+    </body>
+    </html>
   `;
 
   const text = `
