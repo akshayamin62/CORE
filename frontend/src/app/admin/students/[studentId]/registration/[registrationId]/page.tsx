@@ -44,7 +44,6 @@ export default function StudentFormEditPage() {
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
     
-    console.log('🔵 [REGISTRATION FORM] Page load started');
     checkAuth();
   }, []);
 
@@ -68,8 +67,6 @@ export default function StudentFormEditPage() {
       toast.error('Please login to continue');
       router.push('/login');
     } finally {
-      const totalTime = performance.now() - pageLoadStartRef.current;
-      console.log(`\n📊 [REGISTRATION FORM] Total Load Time: ${totalTime.toFixed(2)}ms (${(totalTime / 1000).toFixed(1)}s)\n`);
       setLoading(false);
     }
   };
@@ -79,9 +76,6 @@ export default function StudentFormEditPage() {
     
     try {
       // Make both independent API calls in PARALLEL (saves ~3-4 seconds)
-      const parallelStart = performance.now();
-      console.log('   🚀 Starting parallel API calls...');
-      
       const [studentResponse, registrationResponse] = await Promise.all([
         axios.get(`${API_URL}/admin/students/${studentId}`, {
           headers: { Authorization: `Bearer ${token}` }
@@ -90,9 +84,6 @@ export default function StudentFormEditPage() {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
-      
-      const parallelDuration = performance.now() - parallelStart;
-      console.log(`   ✅ Parallel API calls completed: ${parallelDuration.toFixed(2)}ms`);
       
       // Extract data from responses
       const studentData = studentResponse.data.data.student;
@@ -104,9 +95,6 @@ export default function StudentFormEditPage() {
       setServiceInfo(regServiceId);
       
       // ✅ Now fetch form structure (depends on serviceId from registration)
-      const formStructureStart = performance.now();
-      console.log('   🔄 Fetching form structure...');
-      
       if (!extractedServiceId) {
         throw new Error('Service ID not found');
       }
@@ -115,13 +103,7 @@ export default function StudentFormEditPage() {
       const structure = formResponse.data.data.formStructure || [];
       setFormStructure(structure);
       
-      const formStructureDuration = performance.now() - formStructureStart;
-      console.log(`   ✅ Form structure fetched: ${formStructureDuration.toFixed(2)}ms`);
-      
       // ✅ Process form answers (use already-fetched registration data)
-      const processingStart = performance.now();
-      console.log('   ⚙️ Processing form answers...');
-      
       const answers = registrationData.answers || [];
       const formattedAnswers: any = {};
       
@@ -168,11 +150,7 @@ export default function StudentFormEditPage() {
         });
       }
       
-      console.log('Final formatted answers:', formattedAnswers); // Debug
       setFormValues(formattedAnswers);
-      
-      const processingDuration = performance.now() - processingStart;
-      console.log(`   ✅ Form answers processed: ${processingDuration.toFixed(2)}ms`);
       
     } catch (error: any) {
       console.error('Fetch data error:', error);
