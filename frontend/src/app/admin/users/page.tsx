@@ -162,7 +162,7 @@ export default function UserManagementPage() {
   const getRoleBadgeColor = (role: string) => {
     const colors: Record<string, string> = {
       STUDENT: 'bg-blue-100 text-blue-800',
-      COUNSELOR: 'bg-green-100 text-green-800',
+      OPS: 'bg-green-100 text-green-800',
       ALUMNI: 'bg-purple-100 text-purple-800',
       SERVICE_PROVIDER: 'bg-orange-100 text-orange-800',
       ADMIN: 'bg-red-100 text-red-800',
@@ -255,7 +255,7 @@ export default function UserManagementPage() {
                   >
                     <option value="">All Roles</option>
                     <option value="STUDENT">Student</option>
-                    <option value="COUNSELOR">Counselor</option>
+                    <option value="OPS">OPS</option>
                     <option value="ALUMNI">Alumni</option>
                     <option value="SERVICE_PROVIDER">Service Provider</option>
                     <option value="ADMIN">Admin</option>
@@ -434,4 +434,5 @@ function StatCard({ title, value, color }: StatCardProps) {
     </div>
   );
 }
+
 

@@ -40,7 +40,7 @@ export const getKSDocumentFields = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Add new KS document field for a specific student (Admin/Counselor only)
+// Add new KS document field for a specific student (Admin/OPS only)
 export const addKSDocumentField = async (req: AuthRequest, res: Response) => {
   try {
     const { registrationId, documentName, category, required, helpText, allowMultiple } = req.body;
@@ -88,7 +88,7 @@ export const addKSDocumentField = async (req: AuthRequest, res: Response) => {
       order: nextOrder,
       isActive: true,
       createdBy: new mongoose.Types.ObjectId(req.user!.userId),
-      createdByRole: req.user!.role as "ADMIN" | "COUNSELOR",
+      createdByRole: req.user!.role as "ADMIN" | "OPS",
     });
 
     return res.status(201).json({
@@ -105,7 +105,7 @@ export const addKSDocumentField = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Delete KS document field (Admin/Counselor only)
+// Delete KS document field (Admin/OPS only)
 export const deleteKSDocumentField = async (req: AuthRequest, res: Response) => {
   try {
     const { fieldId } = req.params;
@@ -134,3 +134,4 @@ export const deleteKSDocumentField = async (req: AuthRequest, res: Response) => 
     });
   }
 };
+

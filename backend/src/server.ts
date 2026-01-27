@@ -16,7 +16,7 @@ import ksDocumentRoutes from "./routes/ksDocumentRoutes";
 // Import all models to register them with Mongoose
 import "./models/User";
 import "./models/Student";
-import "./models/Counselor";
+import "./models/Ops";
 import "./models/Service";
 import "./models/FormPart";
 import "./models/ServiceFormPart";
@@ -84,3 +84,4 @@ const startServer = async () => {
 startServer();
 
 export default app;
+

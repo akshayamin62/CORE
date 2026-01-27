@@ -61,7 +61,7 @@ Open [http://localhost:3000](http://localhost:3000)
 ## Available User Roles
 
 - `STUDENT` - Auto-verified after email confirmation
-- `COUNSELOR` - Requires email + admin verification
+- `OPS` - Requires email + admin verification
 - `ALUMNI` - Requires email + admin verification
 - `ADMIN` - Requires email + admin verification
 - `SERVICE_PROVIDER` - Requires email + admin verification
@@ -147,3 +147,4 @@ npm run start
 - User data is stored in localStorage after login
 - Email verification links expire after 24 hours
 - Password reset links expire after 1 hour
+

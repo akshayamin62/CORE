@@ -83,22 +83,22 @@ export const adminAPI = {
   
   deleteUser: (userId: string) => api.delete(`/admin/users/${userId}`),
   
-  createCounselor: (data: {
+  createOps: (data: {
     name: string;
     email: string;
     phoneNumber?: string;
     specializations?: string[];
-  }) => api.post('/admin/counselors', data),
+  }) => api.post('/admin/ops', data),
   
-  getCounselors: () => api.get('/admin/counselors'),
+  getOps: () => api.get('/admin/ops'),
   
-  assignCounselors: (registrationId: string, data: {
-    primaryCounselorId?: string;
-    secondaryCounselorId?: string;
-  }) => api.post(`/admin/students/registrations/${registrationId}/assign-counselors`, data),
+  assignOps: (registrationId: string, data: {
+    primaryOpsId?: string;
+    secondaryOpsId?: string;
+  }) => api.post(`/admin/students/registrations/${registrationId}/assign-ops`, data),
   
-  switchActiveCounselor: (registrationId: string, activeCounselorId: string) =>
-    api.post(`/admin/students/registrations/${registrationId}/switch-active-counselor`, { activeCounselorId }),
+  switchActiveOps: (registrationId: string, activeOpsId: string) =>
+    api.post(`/admin/students/registrations/${registrationId}/switch-active-ops`, { activeOpsId }),
 };
 
 // Service API
@@ -155,27 +155,27 @@ export const programAPI = {
     api.post('/programs/student/programs/select', data),
   removeProgram: (programId: string) => api.delete(`/programs/student/programs/${programId}`),
   createStudentProgram: (data: any) => api.post('/programs/student/programs/create', data),
-  getCounselorPrograms: () => api.get('/programs/counselor/programs'),
-  createProgram: (data: any) => api.post('/programs/counselor/programs', data),
+  getOpsPrograms: () => api.get('/programs/ops/programs'),
+  createProgram: (data: any) => api.post('/programs/ops/programs', data),
   uploadProgramsExcel: (file: File, studentId?: string) => {
     const formData = new FormData();
     formData.append('file', file);
     if (studentId) {
       formData.append('studentId', studentId);
     }
-    return api.post('/programs/counselor/programs/upload-excel', formData, {
+    return api.post('/programs/ops/programs/upload-excel', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
   },
-  getCounselorStudentPrograms: (studentId: string) => api.get(`/programs/counselor/student/${studentId}/programs`),
-  createCounselorStudentProgram: (studentId: string, data: any) => api.post(`/programs/counselor/student/${studentId}/programs`, data),
-  uploadCounselorStudentProgramsExcel: (studentId: string, file: File) => {
+  getOpsStudentPrograms: (studentId: string) => api.get(`/programs/ops/student/${studentId}/programs`),
+  createOpsStudentProgram: (studentId: string, data: any) => api.post(`/programs/ops/student/${studentId}/programs`, data),
+  uploadOpsStudentProgramsExcel: (studentId: string, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('studentId', studentId);
-    return api.post(`/programs/counselor/student/${studentId}/programs/upload-excel`, formData, {
+    return api.post(`/programs/ops/student/${studentId}/programs/upload-excel`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -218,4 +218,5 @@ export const chatAPI = {
 };
 
 export default api;
+
 

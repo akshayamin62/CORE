@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI, serviceAPI } from '@/lib/api';
 import { User, USER_ROLE, FormStructure, FormSection, FormSubSection, FormField } from '@/types';
@@ -14,7 +14,7 @@ import ProgramSection from '@/components/ProgramSection';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export default function StudentFormEditPage() {
   const router = useRouter();
@@ -36,7 +36,12 @@ export default function StudentFormEditPage() {
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [serviceInfo, setServiceInfo] = useState<any>(null);
 
+  // Prevent double fetch in React StrictMode
+  const hasFetchedRef = useRef(false);
+
   useEffect(() => {
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
     checkAuth();
   }, []);
 
@@ -46,7 +51,7 @@ export default function StudentFormEditPage() {
       const response = await authAPI.getProfile();
       const userData = response.data.data.user;
 
-      if (userData.role !== USER_ROLE.COUNSELOR) {
+      if (userData.role !== USER_ROLE.OPS) {
         toast.error('Access denied.');
         router.push('/');
         return;
@@ -55,7 +60,11 @@ export default function StudentFormEditPage() {
       setUser(userData);
       
       // Fetch all data efficiently with parallel requests
-      await fetchAllData();
+      try {
+        await fetchAllData();
+      } catch (fetchError) {
+        console.error('fetchAllData failed:', fetchError);
+      }
     } catch (error) {
       toast.error('Please login to continue');
       router.push('/login');
@@ -91,12 +100,12 @@ export default function StudentFormEditPage() {
         throw new Error('Service ID not found');
       }
       
-      // ✅ Fetch form structure
+      // Fetch form structure
       const formResponse = await serviceAPI.getServiceForm(extractedServiceId);
       const structure = formResponse.data.data.formStructure || [];
       setFormStructure(structure);
       
-      // ✅ Process form answers (reuse already-fetched registration data)
+      // Process form answers
       const answers = registrationData.answers || [];
       const formattedAnswers: any = {};
       
@@ -141,33 +150,16 @@ export default function StudentFormEditPage() {
       }
       
       setFormValues(formattedAnswers);
-      
     } catch (error: any) {
-      if (error.response?.status === 403) {
-        toast.error('Access denied. You are not assigned as the active counselor for this student.');
-        router.push('/counselor/students');
-        throw error;
-      }
       console.error('Fetch data error:', error);
+      
+      if (error.response?.status === 403) {
+        toast.error('Access denied. You are not assigned as the active OPS for this student.');
+        router.push('/ops/students');
+        return;
+      }
       toast.error('Failed to load form data');
-      throw error;
     }
-  };
-
-  // ⚠️ DEPRECATED: Old functions no longer used
-  const fetchStudentInfo = async () => {
-  // Old functions no longer used
-  const fetchStudentInfo = async () => {
-    // Replaced by fetchAllData
-  };
-
-  const fetchFormStructure = async (): Promise<FormStructure[]> => {
-    // Replaced by fetchAllData
-    return [];
-  };
-
-  const fetchFormAnswers = async (formStructureData?: FormStructure[]) => {
-    // Replaced by fetchAllData
   };
 
   const handleFieldChange = (
@@ -309,7 +301,7 @@ export default function StudentFormEditPage() {
             <StudentFormHeader
               studentName={studentInfo.userId?.name || 'Student'}
               serviceName={serviceInfo.name}
-              editMode="counselor"
+              editMode="OPS"
             />
           )}
 
@@ -348,7 +340,7 @@ export default function StudentFormEditPage() {
                   <ProgramSection
                     studentId={studentId}
                     sectionType={currentSection.title === 'Apply to Program' ? 'available' : 'applied'}
-                    userRole="COUNSELOR"
+                    userRole="OPS"
                   />
                 </div>
               ) : (
@@ -367,7 +359,7 @@ export default function StudentFormEditPage() {
                   isAdminEdit={true}
                   registrationId={registrationId}
                   studentId={studentId}
-                  userRole="COUNSELOR"
+                  userRole="OPS"
                 />
               )}
             </div>
@@ -384,5 +376,4 @@ export default function StudentFormEditPage() {
       </AdminLayout>
     </>
   );
-}
 }

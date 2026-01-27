@@ -6,7 +6,7 @@ const MONGO_URI = "mongodb://127.0.0.1:27017/test";
 const PASSWORD =
   "$2b$10$vFjfHRY5gXE2IGA7beUKmOyTPHAUeb7RvyUm3XsCjLqjkmQ5fgKnq";
 
-const ROLES = ["ALUMNI", "STUDENT", "COUNSELOR", "SERVICE_PROVIDER"] as const;
+const ROLES = ["ALUMNI", "STUDENT", "OPS", "SERVICE_PROVIDER"] as const;
 
 const TOTAL_USERS = 100;
 
@@ -40,3 +40,4 @@ const seedUsers = async () => {
 };
 
 seedUsers();
+

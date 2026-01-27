@@ -13,7 +13,7 @@ export interface IKSDocumentField extends Document {
   order: number;
   isActive: boolean;
   createdBy: mongoose.Types.ObjectId;
-  createdByRole: "ADMIN" | "COUNSELOR";
+  createdByRole: "ADMIN" | "OPS";
   createdAt: Date;
   updatedAt: Date;
 }
@@ -71,7 +71,7 @@ const ksDocumentFieldSchema = new Schema<IKSDocumentField>(
     },
     createdByRole: {
       type: String,
-      enum: ["ADMIN", "COUNSELOR"],
+      enum: ["ADMIN", "OPS"],
       required: true,
     },
   },
@@ -90,3 +90,4 @@ export default mongoose.model<IKSDocumentField>(
   "KSDocumentField",
   ksDocumentFieldSchema
 );
+

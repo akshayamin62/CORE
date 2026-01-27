@@ -37,7 +37,7 @@ export default function ProfilePage() {
   const getRoleBadgeColor = (role: string) => {
     const colors = {
       student: 'from-blue-500 to-cyan-500',
-      counselor: 'from-green-500 to-emerald-500',
+      OPS: 'from-green-500 to-emerald-500',
       alumni: 'from-purple-500 to-pink-500',
       service_provider: 'from-orange-500 to-red-500',
       admin: 'from-gray-700 to-gray-900',
@@ -198,4 +198,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
 

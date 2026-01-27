@@ -4,7 +4,7 @@ import { AuthRequest } from "../types/auth";
 import StudentDocument, { DocumentStatus } from "../models/StudentDocument";
 import StudentServiceRegistration from "../models/StudentServiceRegistration";
 import Student from "../models/Student";
-import Counselor from "../models/Counselor";
+import Ops from "../models/Ops";
 import User from "../models/User";
 import { sendDocumentRejectionEmail } from "../utils/email";
 import fs from "fs";
@@ -53,7 +53,7 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
 
     // Determine status based on uploader role
     const userRole = req.user!.role;
-    const documentStatus = (userRole === 'ADMIN' || userRole === 'COUNSELOR') 
+    const documentStatus = (userRole === 'ADMIN' || userRole === 'OPS') 
       ? DocumentStatus.APPROVED 
       : DocumentStatus.PENDING;
 
@@ -87,10 +87,10 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
         existingDoc.uploadedByRole = req.user!.role as any;
         existingDoc.status = documentStatus;
         existingDoc.version += 1;
-        existingDoc.approvedBy = (userRole === 'ADMIN' || userRole === 'COUNSELOR') 
+        existingDoc.approvedBy = (userRole === 'ADMIN' || userRole === 'OPS') 
           ? new mongoose.Types.ObjectId(req.user!.userId) 
           : undefined;
-        existingDoc.approvedAt = (userRole === 'ADMIN' || userRole === 'COUNSELOR') 
+        existingDoc.approvedAt = (userRole === 'ADMIN' || userRole === 'OPS') 
           ? new Date() 
           : undefined;
 
@@ -112,10 +112,10 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
           status: documentStatus,
           isCustomField: isCustomField === "true" || isCustomField === true,
           version: 1,
-          approvedBy: (userRole === 'ADMIN' || userRole === 'COUNSELOR') 
+          approvedBy: (userRole === 'ADMIN' || userRole === 'OPS') 
             ? new mongoose.Types.ObjectId(req.user!.userId) 
             : undefined,
-          approvedAt: (userRole === 'ADMIN' || userRole === 'COUNSELOR') 
+          approvedAt: (userRole === 'ADMIN' || userRole === 'OPS') 
             ? new Date() 
             : undefined,
         });
@@ -137,10 +137,10 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
         status: documentStatus,
         isCustomField: isCustomField === "true" || isCustomField === true,
         version: 1,
-        approvedBy: (userRole === 'ADMIN' || userRole === 'COUNSELOR') 
+        approvedBy: (userRole === 'ADMIN' || userRole === 'OPS') 
           ? new mongoose.Types.ObjectId(req.user!.userId) 
           : undefined,
-        approvedAt: (userRole === 'ADMIN' || userRole === 'COUNSELOR') 
+        approvedAt: (userRole === 'ADMIN' || userRole === 'OPS') 
           ? new Date() 
           : undefined,
       });
@@ -188,20 +188,20 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
           message: "Access denied",
         });
       }
-    } else if (userRole === "COUNSELOR") {
-      // Counselors can see documents of assigned students
+    } else if (userRole === "OPS") {
+      // Ops can see documents of assigned students
       let hasAccess = false;
       
-      if (registration.primaryCounselorId) {
-        const primaryCounselor = await Counselor.findById(registration.primaryCounselorId);
-        if (primaryCounselor && primaryCounselor.userId.toString() === userId) {
+      if (registration.primaryOpsId) {
+        const primaryOps = await Ops.findById(registration.primaryOpsId);
+        if (primaryOps && primaryOps.userId.toString() === userId) {
           hasAccess = true;
         }
       }
       
-      if (!hasAccess && registration.secondaryCounselorId) {
-        const secondaryCounselor = await Counselor.findById(registration.secondaryCounselorId);
-        if (secondaryCounselor && secondaryCounselor.userId.toString() === userId) {
+      if (!hasAccess && registration.secondaryOpsId) {
+        const secondaryOps = await Ops.findById(registration.secondaryOpsId);
+        if (secondaryOps && secondaryOps.userId.toString() === userId) {
           hasAccess = true;
         }
       }
@@ -277,19 +277,19 @@ export const downloadDocument = async (req: AuthRequest, res: Response) => {
           message: "Access denied",
         });
       }
-    } else if (userRole === "COUNSELOR") {
+    } else if (userRole === "OPS") {
       let hasAccess = false;
       
-      if (registration.primaryCounselorId) {
-        const primaryCounselor = await Counselor.findById(registration.primaryCounselorId);
-        if (primaryCounselor && primaryCounselor.userId.toString() === userId) {
+      if (registration.primaryOpsId) {
+        const primaryOps = await Ops.findById(registration.primaryOpsId);
+        if (primaryOps && primaryOps.userId.toString() === userId) {
           hasAccess = true;
         }
       }
       
-      if (!hasAccess && registration.secondaryCounselorId) {
-        const secondaryCounselor = await Counselor.findById(registration.secondaryCounselorId);
-        if (secondaryCounselor && secondaryCounselor.userId.toString() === userId) {
+      if (!hasAccess && registration.secondaryOpsId) {
+        const secondaryOps = await Ops.findById(registration.secondaryOpsId);
+        if (secondaryOps && secondaryOps.userId.toString() === userId) {
           hasAccess = true;
         }
       }
@@ -358,19 +358,19 @@ export const viewDocument = async (req: AuthRequest, res: Response): Promise<voi
         });
         return;
       }
-    } else if (userRole === "COUNSELOR") {
+    } else if (userRole === "OPS") {
       let hasAccess = false;
       
-      if (registration.primaryCounselorId) {
-        const primaryCounselor = await Counselor.findById(registration.primaryCounselorId);
-        if (primaryCounselor && primaryCounselor.userId.toString() === userId) {
+      if (registration.primaryOpsId) {
+        const primaryOps = await Ops.findById(registration.primaryOpsId);
+        if (primaryOps && primaryOps.userId.toString() === userId) {
           hasAccess = true;
         }
       }
       
-      if (!hasAccess && registration.secondaryCounselorId) {
-        const secondaryCounselor = await Counselor.findById(registration.secondaryCounselorId);
-        if (secondaryCounselor && secondaryCounselor.userId.toString() === userId) {
+      if (!hasAccess && registration.secondaryOpsId) {
+        const secondaryOps = await Ops.findById(registration.secondaryOpsId);
+        if (secondaryOps && secondaryOps.userId.toString() === userId) {
           hasAccess = true;
         }
       }
@@ -419,16 +419,16 @@ export const viewDocument = async (req: AuthRequest, res: Response): Promise<voi
   }
 };
 
-// Approve document (Counselor/Admin only)
+// Approve document (OPS/Admin only)
 export const approveDocument = async (req: AuthRequest, res: Response) => {
   try {
     const { documentId } = req.params;
     const userRole = req.user!.role;
 
-    if (userRole !== "COUNSELOR" && userRole !== "ADMIN") {
+    if (userRole !== "OPS" && userRole !== "ADMIN") {
       return res.status(403).json({
         success: false,
-        message: "Only counselors and admins can approve documents",
+        message: "Only ops and admins can approve documents",
       });
     }
 
@@ -440,8 +440,8 @@ export const approveDocument = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Verify counselor is assigned (for counselor role)
-    if (userRole === "COUNSELOR") {
+    // Verify OPS is assigned (for OPS role)
+    if (userRole === "OPS") {
       const registration = await StudentServiceRegistration.findById(document.registrationId);
       if (!registration) {
         return res.status(404).json({
@@ -452,16 +452,16 @@ export const approveDocument = async (req: AuthRequest, res: Response) => {
 
       let hasAccess = false;
       
-      if (registration.primaryCounselorId) {
-        const primaryCounselor = await Counselor.findById(registration.primaryCounselorId);
-        if (primaryCounselor && primaryCounselor.userId.toString() === req.user!.userId) {
+      if (registration.primaryOpsId) {
+        const primaryOps = await Ops.findById(registration.primaryOpsId);
+        if (primaryOps && primaryOps.userId.toString() === req.user!.userId) {
           hasAccess = true;
         }
       }
       
-      if (!hasAccess && registration.secondaryCounselorId) {
-        const secondaryCounselor = await Counselor.findById(registration.secondaryCounselorId);
-        if (secondaryCounselor && secondaryCounselor.userId.toString() === req.user!.userId) {
+      if (!hasAccess && registration.secondaryOpsId) {
+        const secondaryOps = await Ops.findById(registration.secondaryOpsId);
+        if (secondaryOps && secondaryOps.userId.toString() === req.user!.userId) {
           hasAccess = true;
         }
       }
@@ -497,17 +497,17 @@ export const approveDocument = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Reject document (Counselor/Admin only)
+// Reject document (OPS/Admin only)
 export const rejectDocument = async (req: AuthRequest, res: Response) => {
   try {
     const { documentId } = req.params;
     const { rejectionMessage } = req.body;
     const userRole = req.user!.role;
 
-    if (userRole !== "COUNSELOR" && userRole !== "ADMIN") {
+    if (userRole !== "OPS" && userRole !== "ADMIN") {
       return res.status(403).json({
         success: false,
-        message: "Only counselors and admins can reject documents",
+        message: "Only ops and admins can reject documents",
       });
     }
 
@@ -526,8 +526,8 @@ export const rejectDocument = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Verify counselor is assigned (for counselor role)
-    if (userRole === "COUNSELOR") {
+    // Verify OPS is assigned (for OPS role)
+    if (userRole === "OPS") {
       const registration = await StudentServiceRegistration.findById(document.registrationId);
       if (!registration) {
         return res.status(404).json({
@@ -538,16 +538,16 @@ export const rejectDocument = async (req: AuthRequest, res: Response) => {
 
       let hasAccess = false;
       
-      if (registration.primaryCounselorId) {
-        const primaryCounselor = await Counselor.findById(registration.primaryCounselorId);
-        if (primaryCounselor && primaryCounselor.userId.toString() === req.user!.userId) {
+      if (registration.primaryOpsId) {
+        const primaryOps = await Ops.findById(registration.primaryOpsId);
+        if (primaryOps && primaryOps.userId.toString() === req.user!.userId) {
           hasAccess = true;
         }
       }
       
-      if (!hasAccess && registration.secondaryCounselorId) {
-        const secondaryCounselor = await Counselor.findById(registration.secondaryCounselorId);
-        if (secondaryCounselor && secondaryCounselor.userId.toString() === req.user!.userId) {
+      if (!hasAccess && registration.secondaryOpsId) {
+        const secondaryOps = await Ops.findById(registration.secondaryOpsId);
+        if (secondaryOps && secondaryOps.userId.toString() === req.user!.userId) {
           hasAccess = true;
         }
       }
@@ -574,7 +574,7 @@ export const rejectDocument = async (req: AuthRequest, res: Response) => {
         if (student) {
           const user = await User.findById(student.userId);
           if (user && user.email) {
-            const rejectedByRole = userRole === 'ADMIN' ? 'admin' : 'counselor';
+            const rejectedByRole = userRole === 'ADMIN' ? 'admin' : 'OPS';
             await sendDocumentRejectionEmail(
               user.email,
               user.name,
@@ -642,19 +642,19 @@ export const addCustomField = async (req: AuthRequest, res: Response) => {
           message: "Access denied",
         });
       }
-    } else if (userRole === "COUNSELOR") {
+    } else if (userRole === "OPS") {
       let hasAccess = false;
       
-      if (registration.primaryCounselorId) {
-        const primaryCounselor = await Counselor.findById(registration.primaryCounselorId);
-        if (primaryCounselor && primaryCounselor.userId.toString() === userId) {
+      if (registration.primaryOpsId) {
+        const primaryOps = await Ops.findById(registration.primaryOpsId);
+        if (primaryOps && primaryOps.userId.toString() === userId) {
           hasAccess = true;
         }
       }
       
-      if (!hasAccess && registration.secondaryCounselorId) {
-        const secondaryCounselor = await Counselor.findById(registration.secondaryCounselorId);
-        if (secondaryCounselor && secondaryCounselor.userId.toString() === userId) {
+      if (!hasAccess && registration.secondaryOpsId) {
+        const secondaryOps = await Ops.findById(registration.secondaryOpsId);
+        if (secondaryOps && secondaryOps.userId.toString() === userId) {
           hasAccess = true;
         }
       }
@@ -732,3 +732,4 @@ export const deleteDocument = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+

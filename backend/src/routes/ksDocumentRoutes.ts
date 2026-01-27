@@ -16,10 +16,11 @@ router.use(authenticate);
 // Get KS document fields for a specific student
 router.get("/:registrationId", getKSDocumentFields);
 
-// Add new KS document field (Admin/Counselor only)
-router.post("/add", authorize(USER_ROLE.ADMIN, USER_ROLE.COUNSELOR), addKSDocumentField);
+// Add new KS document field (Admin/OPS only)
+router.post("/add", authorize(USER_ROLE.ADMIN, USER_ROLE.OPS), addKSDocumentField);
 
-// Delete KS document field (Admin/Counselor only)
-router.delete("/:fieldId", authorize(USER_ROLE.ADMIN, USER_ROLE.COUNSELOR), deleteKSDocumentField);
+// Delete KS document field (Admin/OPS only)
+router.delete("/:fieldId", authorize(USER_ROLE.ADMIN, USER_ROLE.OPS), deleteKSDocumentField);
 
 export default router;
+

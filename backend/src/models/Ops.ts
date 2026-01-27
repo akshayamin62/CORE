@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface ICounselor extends Document {
+export interface IOps extends Document {
   userId: mongoose.Types.ObjectId; // Reference to User model
   email: string;
   mobileNumber?: string;
@@ -9,7 +9,7 @@ export interface ICounselor extends Document {
   updatedAt?: Date;
 }
 
-const counselorSchema = new Schema<ICounselor>(
+const opsSchema = new Schema<IOps>(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -36,5 +36,6 @@ const counselorSchema = new Schema<ICounselor>(
   { timestamps: true }
 );
 
-export default mongoose.model<ICounselor>("Counselor", counselorSchema);
+export default mongoose.model<IOps>("Ops", opsSchema);
+
 

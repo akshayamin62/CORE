@@ -23,3 +23,4 @@ router.post("/verify-otp", verifyOTP); // Verify OTP and login
 router.get("/profile", authenticate, getProfile);
 
 export default router;
+

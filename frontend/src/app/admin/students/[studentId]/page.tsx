@@ -25,7 +25,7 @@ interface StudentDetails {
   createdAt: string;
 }
 
-interface Counselor {
+interface OPS {
   _id: string;
   userId: {
     _id: string;
@@ -45,9 +45,9 @@ interface Registration {
     slug: string;
     shortDescription: string;
   };
-  primaryCounselorId?: Counselor;
-  secondaryCounselorId?: Counselor;
-  activeCounselorId?: Counselor;
+  primaryOpsId?: OPS;
+  secondaryOpsId?: OPS;
+  activeOpsId?: OPS;
   status: string;
   createdAt: string;
 }
@@ -61,8 +61,8 @@ export default function StudentDetailPage() {
   const [student, setStudent] = useState<StudentDetails | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [counselors, setCounselors] = useState<Counselor[]>([]);
-  const [assigningCounselor, setAssigningCounselor] = useState<string | null>(null);
+  const [ops, setOps] = useState<OPS[]>([]);
+  const [assigningOps, setAssigningOps] = useState<string | null>(null);
   const [switchingActive, setSwitchingActive] = useState<string | null>(null);
 
   // Use ref to prevent double execution in React StrictMode
@@ -81,7 +81,7 @@ export default function StudentDetailPage() {
       const response = await authAPI.getProfile();
       const userData = response.data.data.user;
 
-      if (userData.role !== USER_ROLE.ADMIN && userData.role !== USER_ROLE.COUNSELOR) {
+      if (userData.role !== USER_ROLE.ADMIN && userData.role !== USER_ROLE.OPS) {
         toast.error('Access denied.');
         router.push('/');
         return;
@@ -98,26 +98,36 @@ export default function StudentDetailPage() {
   const fetchStudentDetails = async () => {
     try {
       const token = localStorage.getItem('token');
+      console.log('🔍 Fetching student details for ID:', studentId);
+      console.log('🔑 API URL:', `${API_URL}/admin/students/${studentId}`);
+      
       const response = await axios.get(`${API_URL}/admin/students/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      
+      console.log('✅ Student response:', response.data);
       setStudent(response.data.data.student);
       setRegistrations(response.data.data.registrations);
       
-      // Fetch counselors
+      // Fetch ops
       try {
-        const counselorsResponse = await axios.get(`${API_URL}/admin/counselors`, {
+        console.log('🔍 Fetching ops list...');
+        const opsResponse = await axios.get(`${API_URL}/admin/ops`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setCounselors(counselorsResponse.data.data.counselors || []);
+        console.log('✅ Ops response:', opsResponse.data);
+        setOps(opsResponse.data.data.ops || []);
       } catch (err) {
-        console.error('Failed to fetch counselors:', err);
-        setCounselors([]);
+        console.error('❌ Failed to fetch ops:', err);
+        setOps([]);
       }
     } catch (error: any) {
+      console.error('❌ Fetch student details error:', error);
+      console.error('❌ Error response:', error.response?.data);
+      
       if (error.response?.status === 403) {
-        toast.error('Access denied. You are not the active counselor for this student.');
-        router.push('/counselor/students');
+        toast.error('Access denied. You are not the active OPS for this student.');
+        router.push('/ops/students');
       } else {
         toast.error('Failed to fetch student details');
       }
@@ -127,40 +137,40 @@ export default function StudentDetailPage() {
     }
   };
 
-  const handleAssignCounselors = async (
+  const handleAssignOps = async (
     registrationId: string, 
     primaryId: string, 
     secondaryId: string
   ) => {
     if (!primaryId && !secondaryId) {
-      toast.error('Please select at least one counselor');
+      toast.error('Please select at least one OPS');
       return;
     }
 
-    setAssigningCounselor(registrationId);
+    setAssigningOps(registrationId);
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `${API_URL}/admin/students/registrations/${registrationId}/assign-counselors`,
+        `${API_URL}/admin/students/registrations/${registrationId}/assign-ops`,
         { 
-          primaryCounselorId: primaryId || undefined,
-          secondaryCounselorId: secondaryId || undefined
+          primaryOpsId: primaryId || undefined,
+          secondaryOpsId: secondaryId || undefined
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Counselors assigned successfully');
+      toast.success('Ops assigned successfully');
       fetchStudentDetails(); // Refresh data
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to assign counselors');
-      console.error('Assign counselors error:', error);
+      toast.error(error.response?.data?.message || 'Failed to assign ops');
+      console.error('Assign ops error:', error);
     } finally {
-      setAssigningCounselor(null);
+      setAssigningOps(null);
     }
   };
 
-  const handleSwitchActiveCounselor = async (registrationId: string, counselorId: string) => {
-    if (!counselorId) {
-      toast.error('Please select a counselor');
+  const handleSwitchActiveOps = async (registrationId: string, opsId: string) => {
+    if (!opsId) {
+      toast.error('Please select a OPS');
       return;
     }
 
@@ -168,15 +178,15 @@ export default function StudentDetailPage() {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `${API_URL}/admin/students/registrations/${registrationId}/switch-active-counselor`,
-        { activeCounselorId: counselorId },
+        `${API_URL}/admin/students/registrations/${registrationId}/switch-active-ops`,
+        { activeOpsId: opsId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Active counselor switched successfully');
+      toast.success('Active OPS switched successfully');
       fetchStudentDetails(); // Refresh data
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to switch active counselor');
-      console.error('Switch active counselor error:', error);
+      toast.error(error.response?.data?.message || 'Failed to switch active OPS');
+      console.error('Switch active OPS error:', error);
     } finally {
       setSwitchingActive(null);
     }
@@ -315,93 +325,93 @@ export default function StudentDetailPage() {
                         {user?.role === USER_ROLE.ADMIN && (
                           <div className="mt-4 space-y-4 border-t pt-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {/* Primary Counselor */}
+                              {/* Primary OPS */}
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Primary Counselor
+                                  Primary OPS
                                 </label>
                                 <select
                                   id={`primary-${registration._id}`}
-                                  value={registration.primaryCounselorId?._id || ''}
+                                  value={registration.primaryOpsId?._id || ''}
                                   onChange={(e) => {
                                     const secondarySelect = document.getElementById(`secondary-${registration._id}`) as HTMLSelectElement;
-                                    handleAssignCounselors(registration._id, e.target.value, secondarySelect?.value || '');
+                                    handleAssignOps(registration._id, e.target.value, secondarySelect?.value || '');
                                   }}
-                                  disabled={assigningCounselor === registration._id}
+                                  disabled={assigningOps === registration._id}
                                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
                                 >
-                                  <option value="">Select Primary Counselor</option>
-                                  {counselors.map((counselor) => (
-                                    <option key={counselor._id} value={counselor._id}>
-                                      {counselor.userId?.name || counselor.email}
-                                      {counselor.specializations && counselor.specializations.length > 0 && 
-                                        ` (${counselor.specializations.join(', ')})`
+                                  <option value="">Select Primary OPS</option>
+                                  {ops.map((OPS) => (
+                                    <option key={OPS._id} value={OPS._id}>
+                                      {OPS.userId?.name || OPS.email}
+                                      {OPS.specializations && OPS.specializations.length > 0 && 
+                                        ` (${OPS.specializations.join(', ')})`
                                       }
                                     </option>
                                   ))}
                                 </select>
-                                {registration.primaryCounselorId && (
+                                {registration.primaryOpsId && (
                                   <p className="mt-1 text-xs text-gray-600">
-                                    {registration.primaryCounselorId.userId?.name || registration.primaryCounselorId.email}
+                                    {registration.primaryOpsId.userId?.name || registration.primaryOpsId.email}
                                   </p>
                                 )}
                               </div>
 
-                              {/* Secondary Counselor */}
+                              {/* Secondary OPS */}
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Secondary Counselor
+                                  Secondary OPS
                                 </label>
                                 <select
                                   id={`secondary-${registration._id}`}
-                                  value={registration.secondaryCounselorId?._id || ''}
+                                  value={registration.secondaryOpsId?._id || ''}
                                   onChange={(e) => {
                                     const primarySelect = document.getElementById(`primary-${registration._id}`) as HTMLSelectElement;
-                                    handleAssignCounselors(registration._id, primarySelect?.value || '', e.target.value);
+                                    handleAssignOps(registration._id, primarySelect?.value || '', e.target.value);
                                   }}
-                                  disabled={assigningCounselor === registration._id}
+                                  disabled={assigningOps === registration._id}
                                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
                                 >
-                                  <option value="">Select Secondary Counselor</option>
-                                  {counselors.map((counselor) => (
-                                    <option key={counselor._id} value={counselor._id}>
-                                      {counselor.userId?.name || counselor.email}
-                                      {counselor.specializations && counselor.specializations.length > 0 && 
-                                        ` (${counselor.specializations.join(', ')})`
+                                  <option value="">Select Secondary OPS</option>
+                                  {ops.map((OPS) => (
+                                    <option key={OPS._id} value={OPS._id}>
+                                      {OPS.userId?.name || OPS.email}
+                                      {OPS.specializations && OPS.specializations.length > 0 && 
+                                        ` (${OPS.specializations.join(', ')})`
                                       }
                                     </option>
                                   ))}
                                 </select>
-                                {registration.secondaryCounselorId && (
+                                {registration.secondaryOpsId && (
                                   <p className="mt-1 text-xs text-gray-600">
-                                    {registration.secondaryCounselorId.userId?.name || registration.secondaryCounselorId.email}
+                                    {registration.secondaryOpsId.userId?.name || registration.secondaryOpsId.email}
                                   </p>
                                 )}
                               </div>
                             </div>
 
-                            {/* Active Counselor Switcher */}
-                            {(registration.primaryCounselorId || registration.secondaryCounselorId) && (
+                            {/* Active OPS Switcher */}
+                            {(registration.primaryOpsId || registration.secondaryOpsId) && (
                               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                 <label className="block text-sm font-semibold text-blue-900 mb-2">
-                                  🎯 Active Counselor (Has Access)
+                                  🎯 Active OPS (Has Access)
                                 </label>
                                 <div className="flex items-center gap-3">
                                   <select
-                                    value={registration.activeCounselorId?._id || ''}
-                                    onChange={(e) => handleSwitchActiveCounselor(registration._id, e.target.value)}
+                                    value={registration.activeOpsId?._id || ''}
+                                    onChange={(e) => handleSwitchActiveOps(registration._id, e.target.value)}
                                     disabled={switchingActive === registration._id}
                                     className="flex-1 px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 text-sm font-medium"
                                   >
-                                    <option value="">Select Active Counselor</option>
-                                    {registration.primaryCounselorId && (
-                                      <option value={registration.primaryCounselorId._id}>
-                                        Primary: {registration.primaryCounselorId.userId?.name || registration.primaryCounselorId.email}
+                                    <option value="">Select Active OPS</option>
+                                    {registration.primaryOpsId && (
+                                      <option value={registration.primaryOpsId._id}>
+                                        Primary: {registration.primaryOpsId.userId?.name || registration.primaryOpsId.email}
                                       </option>
                                     )}
-                                    {registration.secondaryCounselorId && (
-                                      <option value={registration.secondaryCounselorId._id}>
-                                        Secondary: {registration.secondaryCounselorId.userId?.name || registration.secondaryCounselorId.email}
+                                    {registration.secondaryOpsId && (
+                                      <option value={registration.secondaryOpsId._id}>
+                                        Secondary: {registration.secondaryOpsId.userId?.name || registration.secondaryOpsId.email}
                                       </option>
                                     )}
                                   </select>
@@ -409,42 +419,42 @@ export default function StudentDetailPage() {
                                     <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                                   )}
                                 </div>
-                                {registration.activeCounselorId && (
+                                {registration.activeOpsId && (
                                   <div className="mt-2 flex items-center text-sm">
                                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                       ✓ Active
                                     </span>
                                     <span className="ml-2 text-gray-700">
-                                      {registration.activeCounselorId.userId?.name || registration.activeCounselorId.email}
+                                      {registration.activeOpsId.userId?.name || registration.activeOpsId.email}
                                     </span>
                                   </div>
                                 )}
                               </div>
                             )}
 
-                            {assigningCounselor === registration._id && (
+                            {assigningOps === registration._id && (
                               <div className="flex items-center justify-center py-2">
                                 <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
-                                <span className="text-sm text-gray-600">Updating counselors...</span>
+                                <span className="text-sm text-gray-600">Updating ops...</span>
                               </div>
                             )}
                           </div>
                         )}
-                        {user?.role === USER_ROLE.COUNSELOR && (registration.primaryCounselorId || registration.secondaryCounselorId) && (
+                        {user?.role === USER_ROLE.OPS && (registration.primaryOpsId || registration.secondaryOpsId) && (
                           <div className="mt-3 space-y-2">
-                            {registration.primaryCounselorId && (
+                            {registration.primaryOpsId && (
                               <p className="text-xs text-gray-600">
-                                <span className="font-medium">Primary:</span> {registration.primaryCounselorId.userId?.name || registration.primaryCounselorId.email}
+                                <span className="font-medium">Primary:</span> {registration.primaryOpsId.userId?.name || registration.primaryOpsId.email}
                               </p>
                             )}
-                            {registration.secondaryCounselorId && (
+                            {registration.secondaryOpsId && (
                               <p className="text-xs text-gray-600">
-                                <span className="font-medium">Secondary:</span> {registration.secondaryCounselorId.userId?.name || registration.secondaryCounselorId.email}
+                                <span className="font-medium">Secondary:</span> {registration.secondaryOpsId.userId?.name || registration.secondaryOpsId.email}
                               </p>
                             )}
-                            {registration.activeCounselorId && (
+                            {registration.activeOpsId && (
                               <p className="text-xs font-medium text-green-600">
-                                ✓ Active: {registration.activeCounselorId.userId?.name || registration.activeCounselorId.email}
+                                ✓ Active: {registration.activeOpsId.userId?.name || registration.activeOpsId.email}
                               </p>
                             )}
                           </div>

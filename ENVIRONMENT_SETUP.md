@@ -172,3 +172,4 @@ The email service will:
 - `/reset-password?token=xxx` - Reset password
 - `/dashboard` - User dashboard (protected)
 
+

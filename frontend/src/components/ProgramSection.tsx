@@ -41,13 +41,13 @@ interface Program {
   };
 }
 
-type UserRole = 'STUDENT' | 'COUNSELOR' | 'ADMIN';
+type UserRole = 'STUDENT' | 'OPS' | 'ADMIN';
 type SectionType = 'available' | 'applied';
 
 interface ProgramSectionProps {
   userRole: UserRole;
   sectionType: SectionType;
-  studentId?: string; // Required for COUNSELOR/ADMIN, optional for STUDENT
+  studentId?: string; // Required for OPS/ADMIN, optional for STUDENT
   isReadOnly?: boolean;
 }
 
@@ -70,7 +70,7 @@ export default function ProgramSection({
   const [programFormData, setProgramFormData] = useState<{ [key: string]: { year: string; priority: number; intake: string } }>({});
   const [selectingProgram, setSelectingProgram] = useState<string | null>(null);
   
-  // For admin/counselor editing applied programs
+  // For admin/OPS editing applied programs
   const [editingProgram, setEditingProgram] = useState<string | null>(null);
   const [editFormData, setEditFormData] = useState<{ [key: string]: { priority: number; intake: string; year: string } }>({});
   const [saving, setSaving] = useState<string | null>(null);
@@ -105,9 +105,9 @@ export default function ProgramSection({
         } else {
           setPrograms(response.data.data.appliedPrograms || []);
         }
-      } else if (userRole === 'COUNSELOR' && studentId) {
+      } else if (userRole === 'OPS' && studentId) {
         response = await axios.get(
-          `${API_URL}/programs/counselor/student/${studentId}/programs?section=${sectionType === 'applied' ? 'applied' : 'all'}`,
+          `${API_URL}/programs/ops/student/${studentId}/programs?section=${sectionType === 'applied' ? 'applied' : 'all'}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setPrograms(response.data.data.programs || []);
@@ -155,8 +155,8 @@ export default function ProgramSection({
       let endpoint = '';
       if (userRole === 'STUDENT') {
         endpoint = `${API_URL}/programs/student/programs/create`;
-      } else if (userRole === 'COUNSELOR') {
-        endpoint = `${API_URL}/programs/counselor/programs`;
+      } else if (userRole === 'OPS') {
+        endpoint = `${API_URL}/programs/ops/programs`;
       } else if (userRole === 'ADMIN') {
         endpoint = `${API_URL}/programs/admin/programs/create`;
       }
@@ -194,8 +194,8 @@ export default function ProgramSection({
       if (studentId) formData.append('studentId', studentId);
 
       let endpoint = '';
-      if (userRole === 'COUNSELOR') {
-        endpoint = `${API_URL}/programs/counselor/programs/upload-excel`;
+      if (userRole === 'OPS') {
+        endpoint = `${API_URL}/programs/ops/programs/upload-excel`;
       } else if (userRole === 'ADMIN') {
         endpoint = `${API_URL}/programs/admin/programs/upload-excel`;
       }
@@ -341,7 +341,7 @@ export default function ProgramSection({
             <h3 className="text-lg font-semibold text-gray-900">Available Programs</h3>
             {canAddPrograms && (
               <div className="flex gap-3">
-                {(userRole === 'COUNSELOR' || userRole === 'ADMIN') && (
+                {(userRole === 'OPS' || userRole === 'ADMIN') && (
                   <>
                     <input
                       type="file"
@@ -476,7 +476,7 @@ export default function ProgramSection({
             <div className="text-center py-12 text-gray-500">
               <p>
                 {userRole === 'STUDENT'
-                  ? 'No programs available. Your counselor will add programs for you.'
+                  ? 'No programs available. Your OPS will add programs for you.'
                   : 'No programs added yet. Click "Add Program" to get started.'}
               </p>
             </div>
@@ -627,3 +627,4 @@ export default function ProgramSection({
     </div>
   );
 }
+

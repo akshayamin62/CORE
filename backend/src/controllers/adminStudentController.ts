@@ -2,41 +2,42 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import Student from '../models/Student';
 import User from '../models/User';
-import Counselor from '../models/Counselor';
+import Ops from '../models/Ops';
 import StudentServiceRegistration from '../models/StudentServiceRegistration';
 import StudentFormAnswer from '../models/StudentFormAnswer';
 import { USER_ROLE } from '../types/roles';
 
 /**
  * Get all students with their registrations
- * For counselors: only show students assigned to them
+ * For ops: only show students assigned to them
  * For admins: show all students
  */
 export const getAllStudents = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const userId = req.user?.userId;
     const user = await User.findById(userId);
+    const userRole = user?.role;
     
     let studentQuery: any = {};
     
-    // If user is a counselor, filter by active assignments only
-    if (user?.role === USER_ROLE.COUNSELOR) {
-      const counselor = await Counselor.findOne({ userId });
-      if (!counselor) {
+    // If user is an ops, filter by active assignments only
+    if (userRole === USER_ROLE.OPS) {
+      const ops = await Ops.findOne({ userId });
+      if (!ops) {
         return res.status(404).json({
           success: false,
-          message: 'Counselor record not found',
+          message: 'Ops record not found',
         });
       }
       
-      // Get all registrations where this counselor is ACTIVE
-      // Note: Only active counselors can see students
-      // Fallback to primaryCounselorId if activeCounselorId is not set (for backward compatibility)
+      // Get all registrations where this ops is ACTIVE
+      // Note: Only active ops can see students
+      // Fallback to primaryOpsId if activeOpsId is not set (for backward compatibility)
       const registrations = await StudentServiceRegistration.find({
         $or: [
-          { activeCounselorId: counselor._id },
-          { activeCounselorId: { $exists: false }, primaryCounselorId: counselor._id },
-          { activeCounselorId: null, primaryCounselorId: counselor._id }
+          { activeOpsId: ops._id },
+          { activeOpsId: { $exists: false }, primaryOpsId: ops._id },
+          { activeOpsId: null, primaryOpsId: ops._id }
         ]
       }).select('studentId');
       
@@ -97,7 +98,7 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
 
 /**
  * Get student details with all registrations
- * For counselors: only show details if they are active counselor for at least one registration
+ * For ops: only show details if they are active OPS for at least one registration
  */
 export const getStudentDetails = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
@@ -121,35 +122,35 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
       studentId: student._id,
     })
       .populate('serviceId', 'name slug shortDescription icon')
-      .populate('primaryCounselorId', 'userId email specializations')
-      .populate('secondaryCounselorId', 'userId email specializations')
-      .populate('activeCounselorId', 'userId email specializations')
+      .populate('primaryOpsId', 'userId email specializations')
+      .populate('secondaryOpsId', 'userId email specializations')
+      .populate('activeOpsId', 'userId email specializations')
       .sort({ createdAt: -1 })
       .lean()
       .exec();
 
-    // If user is counselor, verify they are active counselor for at least one registration
-    if (user?.role === USER_ROLE.COUNSELOR) {
-      const counselor = await Counselor.findOne({ userId });
+    // If user is OPS, verify they are active OPS for at least one registration
+    if (user?.role === USER_ROLE.OPS) {
+      const ops = await Ops.findOne({ userId });
 
-      if (!counselor) {
+      if (!ops) {
         return res.status(404).json({
           success: false,
-          message: 'Counselor record not found',
+          message: 'OPS record not found',
         });
       }
 
       const hasAccess = registrations.some(reg => {
-        // Handle both populated (document) and unpopulated (ObjectId) counselor references
-        const activeCounselorIdValue = reg.activeCounselorId || reg.primaryCounselorId;
-        const activeCounselorIdString = activeCounselorIdValue?._id?.toString() || activeCounselorIdValue?.toString();
-        return activeCounselorIdString === counselor._id.toString();
+        // Handle both populated (document) and unpopulated (ObjectId) OPS references
+        const activeOpsIdValue = reg.activeOpsId || reg.primaryOpsId;
+        const activeOpsIdString = activeOpsIdValue?._id?.toString() || activeOpsIdValue?.toString();
+        return activeOpsIdString === ops._id.toString();
       });
 
       if (!hasAccess) {
         return res.status(403).json({
           success: false,
-          message: 'Access denied. You are not the active counselor for this student.',
+          message: 'Access denied. You are not the active OPS for this student.',
         });
       }
     }
@@ -174,7 +175,7 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
 
 /**
  * Get student form answers for a specific registration
- * For counselors: only allow access if they are the active counselor
+ * For ops: only allow access if they are the active OPS
  */
 export const getStudentFormAnswers = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
@@ -187,7 +188,7 @@ export const getStudentFormAnswers = async (req: AuthRequest, res: Response): Pr
       studentId,
     })
       .populate('serviceId', 'name')
-      .populate('activeCounselorId')
+      .populate('activeOpsId')
       .lean()
       .exec();
 
@@ -198,24 +199,31 @@ export const getStudentFormAnswers = async (req: AuthRequest, res: Response): Pr
       });
     }
 
-    // If user is counselor, verify they are the active counselor for this registration
-    if (user?.role === USER_ROLE.COUNSELOR) {
-      const counselor = await Counselor.findOne({ userId }).lean().exec();
-      if (!counselor) {
+    // If user is OPS, verify they are the active OPS for this registration
+    if (user?.role === USER_ROLE.OPS) {
+      const ops = await Ops.findOne({ userId }).lean().exec();
+      if (!ops) {
         return res.status(404).json({
           success: false,
-          message: 'Counselor record not found',
+          message: 'OPS record not found',
         });
       }
 
-      // Handle both populated (document) and unpopulated (ObjectId) counselor references
-      const activeCounselorIdValue = registration.activeCounselorId || registration.primaryCounselorId;
-      const activeCounselorIdString = activeCounselorIdValue?._id?.toString() || activeCounselorIdValue?.toString();
+      // Get the full registration with populated fields to check access
+      const fullRegistration = await StudentServiceRegistration.findById(registrationId)
+        .populate('primaryOpsId')
+        .populate('activeOpsId')
+        .lean()
+        .exec();
       
-      if (activeCounselorIdString !== counselor._id.toString()) {
+      // Handle both populated (document) and unpopulated (ObjectId) OPS references
+      const activeOpsIdValue = fullRegistration?.activeOpsId || fullRegistration?.primaryOpsId;
+      const activeOpsIdString = activeOpsIdValue?._id?.toString() || activeOpsIdValue?.toString();
+      
+      if (activeOpsIdString !== ops._id.toString()) {
         return res.status(403).json({
           success: false,
-          message: 'Access denied. You are not the active counselor for this registration.',
+          message: 'Access denied. You are not the active OPS for this registration.',
         });
       }
     }
@@ -253,7 +261,7 @@ export const getStudentFormAnswers = async (req: AuthRequest, res: Response): Pr
 };
 
 /**
- * Update student form answers (admin/counselor can edit)
+ * Update student form answers (admin/OPS can edit)
  */
 export const updateStudentFormAnswers = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
@@ -329,17 +337,17 @@ export const getStudentsWithRegistrations = async (req: AuthRequest, res: Respon
 };
 
 /**
- * Assign primary and secondary counselors to a student service registration
+ * Assign primary and secondary ops to a student service registration
  */
-export const assignCounselors = async (req: AuthRequest, res: Response): Promise<Response> => {
+export const assignOps = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const { registrationId } = req.params;
-    const { primaryCounselorId, secondaryCounselorId } = req.body;
+    const { primaryOpsId, secondaryOpsId } = req.body;
 
-    if (!primaryCounselorId && !secondaryCounselorId) {
+    if (!primaryOpsId && !secondaryOpsId) {
       return res.status(400).json({
         success: false,
-        message: 'At least one counselor ID is required',
+        message: 'At least one OPS ID is required',
       });
     }
 
@@ -351,72 +359,72 @@ export const assignCounselors = async (req: AuthRequest, res: Response): Promise
       });
     }
 
-    // Verify primary counselor exists
-    if (primaryCounselorId) {
-      const primaryCounselor = await Counselor.findById(primaryCounselorId);
-      if (!primaryCounselor) {
+    // Verify primary OPS exists
+    if (primaryOpsId) {
+      const primaryOps = await Ops.findById(primaryOpsId);
+      if (!primaryOps) {
         return res.status(404).json({
           success: false,
-          message: 'Primary counselor not found',
+          message: 'Primary OPS not found',
         });
       }
-      registration.primaryCounselorId = primaryCounselorId;
+      registration.primaryOpsId = primaryOpsId;
       
-      // Set as active if no active counselor or if updating primary
-      if (!registration.activeCounselorId) {
-        registration.activeCounselorId = primaryCounselorId;
+      // Set as active if no active OPS or if updating primary
+      if (!registration.activeOpsId) {
+        registration.activeOpsId = primaryOpsId;
       }
     }
 
-    // Verify secondary counselor exists
-    if (secondaryCounselorId) {
-      const secondaryCounselor = await Counselor.findById(secondaryCounselorId);
-      if (!secondaryCounselor) {
+    // Verify secondary OPS exists
+    if (secondaryOpsId) {
+      const secondaryOps = await Ops.findById(secondaryOpsId);
+      if (!secondaryOps) {
         return res.status(404).json({
           success: false,
-          message: 'Secondary counselor not found',
+          message: 'Secondary OPS not found',
         });
       }
-      registration.secondaryCounselorId = secondaryCounselorId;
+      registration.secondaryOpsId = secondaryOpsId;
     }
 
     await registration.save();
 
     const updatedRegistration = await StudentServiceRegistration.findById(registrationId)
       .populate('serviceId', 'name slug shortDescription icon')
-      .populate('primaryCounselorId')
-      .populate('secondaryCounselorId')
-      .populate('activeCounselorId');
+      .populate('primaryOpsId')
+      .populate('secondaryOpsId')
+      .populate('activeOpsId');
 
     return res.status(200).json({
       success: true,
-      message: 'Counselors assigned successfully',
+      message: 'Ops assigned successfully',
       data: {
         registration: updatedRegistration,
       },
     });
   } catch (error: any) {
-    console.error('Assign counselors error:', error);
+    console.error('Assign ops error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to assign counselors',
+      message: 'Failed to assign ops',
       error: error.message,
     });
   }
 };
 
 /**
- * Switch active counselor between primary and secondary
+ * Switch active OPS between primary and secondary
  */
-export const switchActiveCounselor = async (req: AuthRequest, res: Response): Promise<Response> => {
+export const switchActiveOps = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const { registrationId } = req.params;
-    const { activeCounselorId } = req.body;
+    const { activeOpsId } = req.body;
 
-    if (!activeCounselorId) {
+    if (!activeOpsId) {
       return res.status(400).json({
         success: false,
-        message: 'Active counselor ID is required',
+        message: 'Active OPS ID is required',
       });
     }
 
@@ -428,40 +436,41 @@ export const switchActiveCounselor = async (req: AuthRequest, res: Response): Pr
       });
     }
 
-    // Verify the counselor is either primary or secondary
-    const isPrimary = registration.primaryCounselorId?.toString() === activeCounselorId;
-    const isSecondary = registration.secondaryCounselorId?.toString() === activeCounselorId;
+    // Verify the OPS is either primary or secondary
+    const isPrimary = registration.primaryOpsId?.toString() === activeOpsId;
+    const isSecondary = registration.secondaryOpsId?.toString() === activeOpsId;
 
     if (!isPrimary && !isSecondary) {
       return res.status(400).json({
         success: false,
-        message: 'Selected counselor must be either primary or secondary counselor',
+        message: 'Selected OPS must be either primary or secondary OPS',
       });
     }
 
-    registration.activeCounselorId = activeCounselorId;
+    registration.activeOpsId = activeOpsId;
     await registration.save();
 
     const updatedRegistration = await StudentServiceRegistration.findById(registrationId)
       .populate('serviceId', 'name slug shortDescription icon')
-      .populate('primaryCounselorId')
-      .populate('secondaryCounselorId')
-      .populate('activeCounselorId');
+      .populate('primaryOpsId')
+      .populate('secondaryOpsId')
+      .populate('activeOpsId');
 
     return res.status(200).json({
       success: true,
-      message: 'Active counselor switched successfully',
+      message: 'Active OPS switched successfully',
       data: {
         registration: updatedRegistration,
       },
     });
   } catch (error: any) {
-    console.error('Switch active counselor error:', error);
+    console.error('Switch active OPS error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to switch active counselor',
+      message: 'Failed to switch active OPS',
       error: error.message,
     });
   }
 };
+
 

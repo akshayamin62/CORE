@@ -8,15 +8,15 @@ import {
   getStudentFormAnswers,
   updateStudentFormAnswers,
   getStudentsWithRegistrations,
-  assignCounselors,
-  switchActiveCounselor,
+  assignOps,
+  switchActiveOps,
 } from '../controllers/adminStudentController';
 
 const router = express.Router();
 
-// All routes require authentication and admin/counselor role
+// All routes require authentication and admin/ops role
 router.use(authenticate);
-router.use(authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]));
+router.use(authorize([USER_ROLE.ADMIN, USER_ROLE.OPS]));
 
 // Get all students
 router.get('/', getAllStudents);
@@ -33,11 +33,12 @@ router.get('/:studentId/registrations/:registrationId/answers', getStudentFormAn
 // Update student form answers
 router.put('/:studentId/answers/:partKey', updateStudentFormAnswers);
 
-// Assign counselors to a registration (admin only)
-router.post('/registrations/:registrationId/assign-counselors', authorize([USER_ROLE.ADMIN]), assignCounselors);
+// Assign ops to a registration (admin only)
+router.post('/registrations/:registrationId/assign-ops', authorize([USER_ROLE.ADMIN]), assignOps);
 
-// Switch active counselor (admin only)
-router.post('/registrations/:registrationId/switch-active-counselor', authorize([USER_ROLE.ADMIN]), switchActiveCounselor);
+// Switch active ops (admin only)
+router.post('/registrations/:registrationId/switch-active-ops', authorize([USER_ROLE.ADMIN]), switchActiveOps);
 
 export default router;
+
 

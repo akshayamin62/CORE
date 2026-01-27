@@ -15,3 +15,4 @@ router.delete("/profile", authenticate, deleteStudentProfile);
 
 export default router;
 
+

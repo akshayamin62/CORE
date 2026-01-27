@@ -7,7 +7,7 @@
 4. [User Roles & Permissions](#user-roles--permissions)
 5. [Student Journey](#student-journey)
 6. [Admin Workflow](#admin-workflow)
-7. [Counselor Workflow](#counselor-workflow)
+7. [OPS Workflow](#OPS-workflow)
 8. [Service & Form System](#service--form-system)
 9. [API Routes](#api-routes)
 10. [Frontend Pages](#frontend-pages)
@@ -17,7 +17,7 @@
 ## 🎯 System Overview
 
 **Kareer Studio** is a comprehensive educational services management platform with:
-- Multi-role user system (Students, Counselors, Alumni, Admin, Service Providers)
+- Multi-role user system (Students, Ops, Alumni, Admin, Service Providers)
 - Dynamic form generation system
 - Service-based registration and tracking
 - OTP-based authentication without passwords
@@ -40,7 +40,7 @@
   _id: ObjectId,
   name: string,
   email: string (unique),
-  role: enum [STUDENT, COUNSELOR, ALUMNI, ADMIN, SERVICE_PROVIDER, PARENT],
+  role: enum [STUDENT, OPS, ALUMNI, ADMIN, SERVICE_PROVIDER, PARENT],
   isVerified: boolean,    // Email verified + Admin approved
   isActive: boolean,      // Account active status
   otp: string (hashed),   // Temporary OTP for login
@@ -71,7 +71,7 @@
 **Purpose**: Student-specific profile data
 **Relations**: One-to-one with Users (auto-created on student signup verification)
 
-#### 3. **Counselors Collection**
+#### 3. **Ops Collection**
 ```typescript
 {
   _id: ObjectId,
@@ -84,7 +84,7 @@
 }
 ```
 
-**Purpose**: Counselor profile and specialization data
+**Purpose**: OPS profile and specialization data
 **Relations**: One-to-one with Users (admin-created)
 
 #### 4. **Services Collection**
@@ -210,7 +210,7 @@
   _id: ObjectId,
   studentId: ObjectId (ref: Student),
   serviceId: ObjectId (ref: Service),
-  assignedCounselorId: ObjectId (ref: Counselor),
+  assignedOpsId: ObjectId (ref: OPS),
   status: enum [REGISTERED, IN_PROGRESS, COMPLETED, CANCELLED],
   registeredAt: Date,
   completedAt: Date,
@@ -346,7 +346,7 @@ Same as above, BUT:
 
 5. Frontend redirects based on role:
    ├─> ADMIN → /admin/dashboard
-   ├─> COUNSELOR → /counselor/dashboard
+   ├─> OPS → /OPS/dashboard
    └─> STUDENT → /dashboard
 ```
 
@@ -374,7 +374,7 @@ authenticate(req, res, next) {
 | Role | Auto-Verify | Needs Admin Approval | Dashboard |
 |------|-------------|---------------------|-----------|
 | **STUDENT** | ✅ Yes | ❌ No | /dashboard |
-| **COUNSELOR** | ❌ No | ✅ Yes | /counselor/dashboard |
+| **OPS** | ❌ No | ✅ Yes | /OPS/dashboard |
 | **ALUMNI** | ❌ No | ✅ Yes | /dashboard |
 | **ADMIN** | ✅ Manual | ✅ Manual | /admin/dashboard |
 | **SERVICE_PROVIDER** | ❌ No | ✅ Yes | /dashboard |
@@ -382,7 +382,7 @@ authenticate(req, res, next) {
 
 ### Permission Matrix
 
-| Feature | Student | Counselor | Admin |
+| Feature | Student | OPS | Admin |
 |---------|---------|-----------|-------|
 | Register for services | ✅ | ❌ | ✅ View |
 | Fill service forms | ✅ | ❌ | ✅ View |
@@ -390,7 +390,7 @@ authenticate(req, res, next) {
 | View all students | ❌ | ✅ Assigned | ✅ All |
 | Approve users | ❌ | ❌ | ✅ |
 | Manage services | ❌ | ❌ | ✅ |
-| Create counselors | ❌ | ❌ | ✅ |
+| Create ops | ❌ | ❌ | ✅ |
 
 ---
 
@@ -557,7 +557,7 @@ Example Scenario:
 │
 ├─> Pending Approvals Tab
 │   ├─> GET /api/admin/pending
-│   ├─> Shows unverified COUNSELOR, ALUMNI, SERVICE_PROVIDER
+│   ├─> Shows unverified OPS, ALUMNI, SERVICE_PROVIDER
 │   └─> Actions:
 │       ├─> Approve → POST /api/admin/users/:id/approve
 │       │   └─> Sets isVerified: true
@@ -586,50 +586,50 @@ Example Scenario:
 │   ├─> Student profile details
 │   ├─> Service registrations
 │   ├─> Form submission progress
-│   └─> Assigned counselor
+│   └─> Assigned OPS
 │
 └─> Actions:
     ├─> View student forms (read-only)
-    ├─> Assign counselor
+    ├─> Assign OPS
     └─> Update registration status
 
 ┌─────────────────────────────────────────────────────────────┐
-│                COUNSELOR MANAGEMENT                          │
+│                OPS MANAGEMENT                          │
 └─────────────────────────────────────────────────────────────┘
 
-/admin/counselors/add
-├─> Create new counselor
-│   ├─> POST /api/admin/counselors
+/admin/ops/add
+├─> Create new OPS
+│   ├─> POST /api/admin/ops
 │   ├─> Input: Name, Email, Phone, Specializations
-│   └─> Creates User + Counselor profile
+│   └─> Creates User + OPS profile
 │       └─> User.isVerified: true (admin-created)
 │
-└─> Counselor gets email with login instructions
+└─> OPS gets email with login instructions
 ```
 
 ---
 
-## 👨‍🏫 Counselor Workflow
+## 👨‍🏫 OPS Workflow
 
-### Counselor Dashboard
+### OPS Dashboard
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  COUNSELOR DASHBOARD                         │
+│                  OPS DASHBOARD                         │
 └─────────────────────────────────────────────────────────────┘
 
-/counselor/dashboard
+/OPS/dashboard
 ├─> My Assigned Students
-│   ├─> List of students assigned to counselor
+│   ├─> List of students assigned to OPS
 │   ├─> Quick stats per student
 │   └─> Click → View student details
 │
 ├─> Student Management
-│   └─> /counselor/students
+│   └─> /OPS/students
 │       ├─> View all assigned students
 │       ├─> Filter by service
 │       ├─> Filter by status
-│       └─> Click student → /counselor/students/:id
+│       └─> Click student → /OPS/students/:id
 │
 └─> View student forms (read-only)
     ├─> See all student form submissions
@@ -744,7 +744,7 @@ const handleFieldChange = (partKey, sectionId, subSectionId, index, key, value) 
 | POST | `/users/:id/reject` | ✅ Admin | Reject user |
 | PATCH | `/users/:id/toggle-status` | ✅ Admin | Toggle active status |
 | DELETE | `/users/:id` | ✅ Admin | Delete user |
-| POST | `/counselors` | ✅ Admin | Create counselor |
+| POST | `/ops` | ✅ Admin | Create OPS |
 
 ### Admin Student Routes (`/api/admin/students`)
 
@@ -816,16 +816,16 @@ const handleFieldChange = (partKey, sectionId, subSectionId, index, key, value) 
 | `/admin/users` | `app/admin/users/page.tsx` | User management |
 | `/admin/students` | `app/admin/students/page.tsx` | Student list |
 | `/admin/students/:id` | `app/admin/students/[studentId]/page.tsx` | Student details |
-| `/admin/counselors/add` | `app/admin/counselors/add/page.tsx` | Create counselor |
+| `/admin/ops/add` | `app/admin/ops/add/page.tsx` | Create OPS |
 | `/admin/services` | `app/admin/services/page.tsx` | Service management |
 
-### Counselor Pages (Counselor Only)
+### OPS Pages (OPS Only)
 
 | Route | Component | Purpose |
 |-------|-----------|---------|
-| `/counselor/dashboard` | `app/counselor/dashboard/page.tsx` | Counselor overview |
-| `/counselor/students` | `app/counselor/students/page.tsx` | Assigned students |
-| `/counselor/students/:id` | `app/counselor/students/[studentId]/page.tsx` | Student details |
+| `/OPS/dashboard` | `app/OPS/dashboard/page.tsx` | OPS overview |
+| `/OPS/students` | `app/OPS/students/page.tsx` | Assigned students |
+| `/OPS/students/:id` | `app/OPS/students/[studentId]/page.tsx` | Student details |
 
 ---
 
@@ -1095,7 +1095,7 @@ Frontend: User clicks "APPLICATION" tab
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 After all required fields filled:
 ├─> Registration status: IN_PROGRESS → COMPLETED
-├─> Admin/Counselor can now review submission
+├─> Admin/OPS can now review submission
 └─> Student can view/edit anytime from /my-details
 ```
 
@@ -1112,7 +1112,7 @@ After all required fields filled:
 ### 2. **Two-Level Verification**
 - **Students**: Email verification only → Auto-approved
 - **Others**: Email + Admin approval required
-- Prevents unauthorized access to counselor/admin features
+- Prevents unauthorized access to OPS/admin features
 
 ### 3. **Form Data Reusability**
 - StudentFormAnswer linked to student, not registration
@@ -1154,7 +1154,7 @@ After all required fields filled:
    - Multi-role support
    - Admin approval workflow
    - User activation/deactivation
-   - Counselor creation by admin
+   - OPS creation by admin
 
 3. **Service System**
    - Service creation and management
@@ -1177,7 +1177,7 @@ After all required fields filled:
 6. **Admin Dashboard**
    - User approval system
    - Student management
-   - Counselor creation
+   - OPS creation
    - System statistics
 
 ### 🔨 Future Enhancements
@@ -1187,10 +1187,10 @@ After all required fields filled:
    - Document verification
    - Version management
 
-2. **Counselor Assignment**
+2. **OPS Assignment**
    - Auto-assign based on specialization
    - Workload balancing
-   - Student-counselor chat
+   - Student-OPS chat
 
 3. **Payment Integration**
    - Payment gateway integration
@@ -1227,7 +1227,7 @@ Services
                                                           └─> 1:N ─> FormFields
 
 Users
-  └─> 1:1 ─> Counselors (Counselor Profile)
+  └─> 1:1 ─> Ops (OPS Profile)
               └─> 1:N ─> StudentServiceRegistrations (assigned)
 ```
 
@@ -1272,7 +1272,7 @@ Users
 ✅ **Dynamic form generation with 4-level hierarchy**  
 ✅ **Auto-save functionality for better UX**  
 ✅ **Form data reusability across services**  
-✅ **Comprehensive admin & counselor dashboards**  
+✅ **Comprehensive admin & OPS dashboards**  
 ✅ **Student-centric service registration flow**  
 ✅ **RESTful API architecture**  
 ✅ **Type-safe TypeScript implementation**  
@@ -1284,3 +1284,4 @@ The system is designed for **scalability**, **maintainability**, and **excellent
 **Last Updated**: January 20, 2026  
 **Version**: 1.0  
 **Status**: Production Ready ✅
+

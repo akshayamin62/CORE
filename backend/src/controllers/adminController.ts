@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import User from "../models/User";
 import { USER_ROLE } from "../types/roles";
-import Counselor from "../models/Counselor";
+import Ops from "../models/Ops";
 // import { sendEmail } from "../utils/email";
 
 /**
@@ -111,7 +111,7 @@ export const getUserStats = async (_req: Request, res: Response): Promise<Respon
 };
 
 /**
- * Approve user (for counselor, alumni, service provider)
+ * Approve user (for OPS, alumni, service provider)
  */
 export const approveUser = async (req: Request, res: Response): Promise<Response | void> => {
   try {
@@ -402,9 +402,9 @@ export const getPendingApprovals = async (_req: Request, res: Response): Promise
 };
 
 /**
- * Create a new counselor (admin only)
+ * Create a new ops (admin only)
  */
-export const createCounselor = async (req: Request, res: Response): Promise<Response> => {
+export const createOps = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { name, email, phoneNumber, specializations } = req.body;
 
@@ -457,19 +457,19 @@ export const createCounselor = async (req: Request, res: Response): Promise<Resp
       );
     }
 
-    // Create counselor user
-    const counselorUser = await User.create({
+    // Create ops user
+    const opsUser = await User.create({
       name: name.trim(),
       email: email.toLowerCase().trim(),
-      role: USER_ROLE.COUNSELOR,
-      isVerified: true, // Auto-verify counselors created by admin
+      role: USER_ROLE.OPS,
+      isVerified: true, // Auto-verify ops created by admin
       isActive: true,
     });
 
-    // Create counselor record
-    const Counselor = (await import("../models/Counselor")).default;
-    const counselor = await Counselor.create({
-      userId: counselorUser._id,
+    // Create ops record
+    const OpsModel = (await import("../models/Ops")).default;
+    const ops = await OpsModel.create({
+      userId: opsUser._id,
       email: email.toLowerCase().trim(),
       mobileNumber: phoneNumber?.trim() || undefined,
       specializations: validSpecializationsList,
@@ -477,22 +477,22 @@ export const createCounselor = async (req: Request, res: Response): Promise<Resp
 
     return res.status(201).json({
       success: true,
-      message: "Counselor created successfully",
+      message: "Ops created successfully",
       data: {
-        counselor: {
-          id: counselorUser._id,
-          name: counselorUser.name,
-          email: counselor.email,
-          mobileNumber: counselor.mobileNumber,
-          specializations: counselor.specializations,
-          role: counselorUser.role,
-          isVerified: counselorUser.isVerified,
-          isActive: counselorUser.isActive,
+        ops: {
+          id: opsUser._id,
+          name: opsUser.name,
+          email: ops.email,
+          mobileNumber: ops.mobileNumber,
+          specializations: ops.specializations,
+          role: opsUser.role,
+          isVerified: opsUser.isVerified,
+          isActive: opsUser.isActive,
         },
       },
     });
   } catch (error: any) {
-    console.error("Create counselor error:", error);
+    console.error("Create ops error:", error);
     
     // Handle duplicate email error
     if (error.code === 11000) {
@@ -504,16 +504,16 @@ export const createCounselor = async (req: Request, res: Response): Promise<Resp
 
     return res.status(500).json({
       success: false,
-      message: "Error creating counselor",
+      message: "Error creating ops",
       error: error.message,
     });
   }
 };
 
 /**
- * Get counselors by specialization or service name
+ * Get ops by specialization or service name
  */
-export const getCounselorsBySpecialization = async (req: Request, res: Response): Promise<Response> => {
+export const getOpsBySpecialization = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { specialization, serviceName } = req.query;
 
@@ -540,15 +540,15 @@ export const getCounselorsBySpecialization = async (req: Request, res: Response)
       query.specializations = { $in: [specialization] };
     }
 
-    const counselors = await Counselor.find(query)
-      .populate('userId', 'name email')
+    const ops = await Ops.find(query)
+      .populate('userId', 'name email isActive')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
-      message: 'Counselors fetched successfully',
+      message: 'Ops fetched successfully',
       data: {
-        counselors: counselors.map(c => ({
+        ops: ops.map((c: any) => ({
           _id: c._id,
           userId: c.userId,
           email: c.email,
@@ -558,12 +558,13 @@ export const getCounselorsBySpecialization = async (req: Request, res: Response)
       },
     });
   } catch (error: any) {
-    console.error('Get counselors by specialization error:', error);
+    console.error('Get ops by specialization error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch counselors',
+      message: 'Failed to fetch ops',
       error: error.message,
     });
   }
 };
+
 

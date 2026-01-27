@@ -7,7 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 
-export default function CounselorServicesPage() {
+export default function OpsServicesPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [services, setServices] = useState<any[]>([]);
@@ -22,7 +22,7 @@ export default function CounselorServicesPage() {
       const response = await authAPI.getProfile();
       const userData = response.data.data.user;
 
-      if (userData.role !== USER_ROLE.COUNSELOR) {
+      if (userData.role !== USER_ROLE.OPS) {
         toast.error('Access denied.');
         router.push('/');
         return;
@@ -108,4 +108,5 @@ export default function CounselorServicesPage() {
     </>
   );
 }
+
 

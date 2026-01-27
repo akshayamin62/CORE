@@ -65,3 +65,4 @@ export const handleMulterError = (err: any, _req: any, res: any, next: any) => {
   }
   next();
 };
+

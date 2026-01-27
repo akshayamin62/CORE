@@ -13,7 +13,7 @@ export enum DocumentStatus {
 
 export enum UploaderRole {
   STUDENT = "STUDENT",
-  COUNSELOR = "COUNSELOR",
+  OPS = "OPS",
   ADMIN = "ADMIN",
 }
 
@@ -145,3 +145,4 @@ const StudentDocument = mongoose.model<IStudentDocument>(
 );
 
 export default StudentDocument;
+

@@ -59,3 +59,4 @@ const createIndexes = async () => {
 };
 
 createIndexes();
+

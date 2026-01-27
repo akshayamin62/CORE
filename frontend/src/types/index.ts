@@ -1,7 +1,7 @@
 export enum USER_ROLE {
   STUDENT = 'STUDENT',
   PARENT = 'PARENT',
-  COUNSELOR = 'COUNSELOR',
+  OPS = 'OPS',
   ALUMNI = 'ALUMNI',
   ADMIN = 'ADMIN',
   SERVICE_PROVIDER = 'SERVICE_PROVIDER',
@@ -49,7 +49,7 @@ export interface Service {
   order: number;
 }
 
-export interface Counselor {
+export interface OPS {
   _id: string;
   userId: string;
   email: string;
@@ -61,9 +61,9 @@ export interface StudentServiceRegistration {
   _id: string;
   studentId: string;
   serviceId: Service | string;
-  primaryCounselorId?: Counselor | string;
-  secondaryCounselorId?: Counselor | string;
-  activeCounselorId?: Counselor | string;
+  primaryOpsId?: OPS | string;
+  secondaryOpsId?: OPS | string;
+  activeOpsId?: OPS | string;
   status: 'REGISTERED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
   registeredAt: string;
   completedAt?: string;
@@ -199,7 +199,7 @@ export interface StudentDocument {
     name: string;
     email: string;
   };
-  uploadedByRole: 'STUDENT' | 'COUNSELOR' | 'ADMIN';
+  uploadedByRole: 'STUDENT' | 'OPS' | 'ADMIN';
   status: DocumentStatus;
   approvedBy?: {
     _id: string;
@@ -228,4 +228,5 @@ export interface DocumentFieldConfig {
   required?: boolean;
   helpText?: string;
 }
+
 

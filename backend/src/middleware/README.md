@@ -46,25 +46,25 @@ import { authenticate } from "../middleware/auth";
 router.get("/admin-only", authenticate, authorize(USER_ROLE.ADMIN), controllerFunction);
 
 // Multiple roles
-router.get("/admin-or-counselor", 
+router.get("/admin-or-OPS", 
   authenticate, 
-  authorize(USER_ROLE.ADMIN, USER_ROLE.COUNSELOR), 
+  authorize(USER_ROLE.ADMIN, USER_ROLE.OPS), 
   controllerFunction
 );
 
 // Using convenience functions
-import { adminOnly, adminOrCounselor } from "../middleware/authorize";
+import { adminOnly, adminOrOps } from "../middleware/authorize";
 
 router.get("/admin-route", authenticate, adminOnly, controllerFunction);
-router.get("/staff-route", authenticate, adminOrCounselor, controllerFunction);
+router.get("/staff-route", authenticate, adminOrOps, controllerFunction);
 ```
 
 **Available Convenience Functions:**
 - `adminOnly` - Only admins
-- `counselorOnly` - Only counselors
+- `opsOnly` - Only ops
 - `studentOnly` - Only students
-- `adminOrCounselor` - Admins or counselors
-- `adminCounselorOrServiceProvider` - Admins, counselors, or service providers
+- `adminOrOps` - Admins or ops
+- `adminOpsOrServiceProvider` - Admins, ops, or service providers
 - `nonStudentOnly` - All roles except students
 
 **How it works:**
@@ -94,4 +94,5 @@ Input validation middleware for signup and login endpoints.
 - **Login:**
   - Email: valid email format
   - Password: required
+
 

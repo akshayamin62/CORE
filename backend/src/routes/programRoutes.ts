@@ -5,8 +5,8 @@ import { authorize } from '../middleware/authorize';
 import { USER_ROLE } from '../types/roles';
 import {
   getStudentPrograms,
-  getCounselorPrograms,
-  getCounselorStudentPrograms,
+  getOpsPrograms,
+  getOpsStudentPrograms,
   createProgram,
   selectProgram,
   removeProgram,
@@ -46,11 +46,13 @@ router.post('/student/programs/select', authorize([USER_ROLE.STUDENT]), selectPr
 router.post('/student/programs/create', authorize([USER_ROLE.STUDENT]), createProgram);
 router.delete('/student/programs/:programId', authorize([USER_ROLE.STUDENT]), removeProgram);
 
-// Counselor routes
-router.get('/counselor/programs', authorize([USER_ROLE.COUNSELOR]), getCounselorPrograms);
-router.get('/counselor/student/:studentId/programs', authorize([USER_ROLE.COUNSELOR]), getCounselorStudentPrograms);
-router.post('/counselor/programs', authorize([USER_ROLE.COUNSELOR]), createProgram);
-router.post('/counselor/programs/upload-excel', authorize([USER_ROLE.COUNSELOR]), upload.single('file'), uploadProgramsFromExcel);
+// OPS routes
+router.get('/ops/programs', authorize([USER_ROLE.OPS]), getOpsPrograms);
+router.get('/ops/student/:studentId/programs', authorize([USER_ROLE.OPS]), getOpsStudentPrograms);
+router.post('/ops/programs', authorize([USER_ROLE.OPS]), createProgram);
+router.post('/ops/student/:studentId/programs', authorize([USER_ROLE.OPS]), createProgram);
+router.post('/ops/programs/upload-excel', authorize([USER_ROLE.OPS]), upload.single('file'), uploadProgramsFromExcel);
+router.post('/ops/student/:studentId/programs/upload-excel', authorize([USER_ROLE.OPS]), upload.single('file'), uploadProgramsFromExcel);
 
 // Admin routes
 router.get('/admin/student/:studentId/programs', authorize([USER_ROLE.ADMIN]), getAdminStudentPrograms);
@@ -60,4 +62,5 @@ router.post('/admin/programs/upload-excel', authorize([USER_ROLE.ADMIN]), upload
 router.put('/admin/programs/:programId/selection', authorize([USER_ROLE.ADMIN]), updateProgramSelection);
 
 export default router;
+
 

@@ -46,21 +46,21 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
       if (studentUserId.toString() !== userId) {
         return res.status(403).json({ message: 'Access denied' });
       }
-    } else if (userRole === USER_ROLE.COUNSELOR) {
-      // Counselor must be active or primary counselor for the student
+    } else if (userRole === USER_ROLE.OPS) {
+      // OPS must be active or primary OPS for the student
       const registration = await StudentServiceRegistration.findOne({ studentId })
-        .populate('activeCounselorId', 'userId')
-        .populate('primaryCounselorId', 'userId');
+        .populate('activeOpsId', 'userId')
+        .populate('primaryOpsId', 'userId');
 
-      const activeCounselorUserId = (registration?.activeCounselorId as any)?.userId;
-      const primaryCounselorUserId = (registration?.primaryCounselorId as any)?.userId;
+      const activeOpsUserId = (registration?.activeOpsId as any)?.userId;
+      const primaryOpsUserId = (registration?.primaryOpsId as any)?.userId;
 
       const isAuthorized =
-        activeCounselorUserId?.toString() === userId ||
-        primaryCounselorUserId?.toString() === userId;
+        activeOpsUserId?.toString() === userId ||
+        primaryOpsUserId?.toString() === userId;
 
       if (!isAuthorized) {
-        return res.status(403).json({ message: 'You are not the counselor for this student' });
+        return res.status(403).json({ message: 'You are not the OPS for this student' });
       }
     }
     // Admin can access all chats (no check needed)
@@ -68,18 +68,18 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
     // Find or create chat
     let chat = await ProgramChat.findOne({ programId, studentId })
       .populate('participants.student', 'name email')
-      .populate('participants.counselor', 'name email')
+      .populate('participants.OPS', 'name email')
       .populate('participants.admin', 'name email');
 
     if (!chat) {
-      // Get counselor info
+      // Get OPS info
       const registration = await StudentServiceRegistration.findOne({ studentId })
-        .populate('activeCounselorId', 'userId')
-        .populate('primaryCounselorId', 'userId');
+        .populate('activeOpsId', 'userId')
+        .populate('primaryOpsId', 'userId');
 
-      const activeCounselor = registration?.activeCounselorId as any;
-      const primaryCounselor = registration?.primaryCounselorId as any;
-      const counselor = activeCounselor || primaryCounselor;
+      const activeOps = registration?.activeOpsId as any;
+      const primaryOps = registration?.primaryOpsId as any;
+      const ops = activeOps || primaryOps;
 
       // Create new chat
       chat = await ProgramChat.create({
@@ -87,14 +87,14 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
         studentId,
         participants: {
           student: studentUserId,
-          counselor: counselor?.userId || undefined,
+          ops: ops?.userId || undefined,
           admin: undefined, // Will be set when admin first joins
         },
       });
 
       chat = await ProgramChat.findById(chat._id)
         .populate('participants.student', 'name email')
-        .populate('participants.counselor', 'name email')
+        .populate('participants.OPS', 'name email')
         .populate('participants.admin', 'name email');
     } else {
       // Update admin participant if admin is accessing and not set
@@ -103,7 +103,7 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
         await chat.save();
         chat = await ProgramChat.findById(chat._id)
           .populate('participants.student', 'name email')
-          .populate('participants.counselor', 'name email')
+          .populate('participants.OPS', 'name email')
           .populate('participants.admin', 'name email');
       }
     }
@@ -149,20 +149,20 @@ export const getChatMessages = async (req: AuthRequest, res: Response) => {
       if (studentUserId.toString() !== userId) {
         return res.status(403).json({ message: 'Access denied' });
       }
-    } else if (userRole === USER_ROLE.COUNSELOR) {
+    } else if (userRole === USER_ROLE.OPS) {
       const registration = await StudentServiceRegistration.findOne({ studentId })
-        .populate('activeCounselorId', 'userId')
-        .populate('primaryCounselorId', 'userId');
+        .populate('activeOpsId', 'userId')
+        .populate('primaryOpsId', 'userId');
 
-      const activeCounselorUserId = (registration?.activeCounselorId as any)?.userId;
-      const primaryCounselorUserId = (registration?.primaryCounselorId as any)?.userId;
+      const activeOpsUserId = (registration?.activeOpsId as any)?.userId;
+      const primaryOpsUserId = (registration?.primaryOpsId as any)?.userId;
 
       const isAuthorized =
-        activeCounselorUserId?.toString() === userId ||
-        primaryCounselorUserId?.toString() === userId;
+        activeOpsUserId?.toString() === userId ||
+        primaryOpsUserId?.toString() === userId;
 
       if (!isAuthorized) {
-        return res.status(403).json({ message: 'You are not the counselor for this student' });
+        return res.status(403).json({ message: 'You are not the OPS for this student' });
       }
     }
 
@@ -175,11 +175,24 @@ export const getChatMessages = async (req: AuthRequest, res: Response) => {
     // Get messages sorted by timestamp
     const messages = await ChatMessage.find({ chatId: chat._id })
       .sort({ timestamp: 1 })
-      .limit(500); // Limit to last 500 messages
+      .limit(500) // Limit to last 500 messages
+      .populate('senderId', 'name'); // Populate sender info
+
+    // Map messages to include senderName from populated User
+    const messagesWithNames = messages.map(msg => {
+      const msgObj: any = msg.toObject();
+      // Get name from populated senderId
+      if (msgObj.senderId && typeof msgObj.senderId === 'object') {
+        msgObj.senderName = msgObj.senderId.name || 'Unknown';
+      } else {
+        msgObj.senderName = 'Unknown';
+      }
+      return msgObj;
+    });
 
     return res.status(200).json({
       success: true,
-      data: { messages },
+      data: { messages: messagesWithNames },
     });
   } catch (error: any) {
     console.error('Get chat messages error:', error);
@@ -230,60 +243,60 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
       if (studentUserId.toString() !== userId) {
         return res.status(403).json({ message: 'Access denied' });
       }
-    } else if (userRole === USER_ROLE.COUNSELOR) {
+    } else if (userRole === USER_ROLE.OPS) {
       const registration = await StudentServiceRegistration.findOne({ studentId })
-        .populate('activeCounselorId', 'userId')
-        .populate('primaryCounselorId', 'userId');
+        .populate('activeOpsId', 'userId')
+        .populate('primaryOpsId', 'userId');
 
-      const activeCounselorUserId = (registration?.activeCounselorId as any)?.userId;
-      const primaryCounselorUserId = (registration?.primaryCounselorId as any)?.userId;
+      const activeOpsUserId = (registration?.activeOpsId as any)?.userId;
+      const primaryOpsUserId = (registration?.primaryOpsId as any)?.userId;
 
       const isAuthorized =
-        activeCounselorUserId?.toString() === userId ||
-        primaryCounselorUserId?.toString() === userId;
+        activeOpsUserId?.toString() === userId ||
+        primaryOpsUserId?.toString() === userId;
 
       if (!isAuthorized) {
-        return res.status(403).json({ message: 'You are not the counselor for this student' });
+        return res.status(403).json({ message: 'You are not the OPS for this student' });
       }
     }
 
     // Find or create chat
     let chat = await ProgramChat.findOne({ programId, studentId });
     if (!chat) {
-      // Get counselor info
+      // Get OPS info
       const registration = await StudentServiceRegistration.findOne({ studentId })
-        .populate('activeCounselorId', 'userId')
-        .populate('primaryCounselorId', 'userId');
+        .populate('activeOpsId', 'userId')
+        .populate('primaryOpsId', 'userId');
 
-      const activeCounselor = registration?.activeCounselorId as any;
-      const primaryCounselor = registration?.primaryCounselorId as any;
-      const counselor = activeCounselor || primaryCounselor;
+      const activeOps = registration?.activeOpsId as any;
+      const primaryOps = registration?.primaryOpsId as any;
+      const ops = activeOps || primaryOps;
 
       chat = await ProgramChat.create({
         programId,
         studentId,
         participants: {
           student: studentUserId,
-          counselor: counselor?.userId || undefined,
+          ops: ops?.userId || undefined,
           admin: userRole === USER_ROLE.ADMIN ? userId : undefined,
         },
       });
     }
 
-    // Determine counselor type if user is a counselor
-    let counselorType: 'PRIMARY' | 'ACTIVE' | undefined = undefined;
-    if (userRole === USER_ROLE.COUNSELOR) {
+    // Determine OPS type if user is a OPS
+    let opsType: 'PRIMARY' | 'ACTIVE' | undefined = undefined;
+    if (userRole === USER_ROLE.OPS) {
       const registration = await StudentServiceRegistration.findOne({ studentId })
-        .populate('activeCounselorId', 'userId')
-        .populate('primaryCounselorId', 'userId');
+        .populate('activeOpsId', 'userId')
+        .populate('primaryOpsId', 'userId');
 
-      const activeCounselorUserId = (registration?.activeCounselorId as any)?.userId;
-      const primaryCounselorUserId = (registration?.primaryCounselorId as any)?.userId;
+      const activeOpsUserId = (registration?.activeOpsId as any)?.userId;
+      const primaryOpsUserId = (registration?.primaryOpsId as any)?.userId;
 
-      if (primaryCounselorUserId?.toString() === userId) {
-        counselorType = 'PRIMARY';
-      } else if (activeCounselorUserId?.toString() === userId) {
-        counselorType = 'ACTIVE';
+      if (primaryOpsUserId?.toString() === userId) {
+        opsType = 'PRIMARY';
+      } else if (activeOpsUserId?.toString() === userId) {
+        opsType = 'ACTIVE';
       }
     }
 
@@ -292,16 +305,20 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
       chatId: chat._id,
       senderId: userId,
       senderRole: userRole,
-      senderName: userName,
-      counselorType,
+      opsType,
       message: message.trim(),
       timestamp: new Date(),
       readBy: [userId],
     });
 
+    // Populate sender info for response
+    await newMessage.populate('senderId', 'name');
+    const messageResponse: any = newMessage.toObject();
+    messageResponse.senderName = (newMessage.senderId as any)?.name || userName;
+
     return res.status(201).json({
       success: true,
-      data: { message: newMessage },
+      data: { message: messageResponse },
     });
   } catch (error: any) {
     console.error('Send message error:', error);
@@ -325,18 +342,18 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
           select: 'university programName campus country priority intake year',
         })
         .populate('participants.student', 'name email')
-        .populate('participants.counselor', 'name email')
+        .populate('participants.OPS', 'name email')
         .populate('participants.admin', 'name email')
         .sort({ updatedAt: -1 });
-    } else if (userRole === USER_ROLE.COUNSELOR) {
-      // Get chats where user is the counselor
-      chats = await ProgramChat.find({ 'participants.counselor': userId })
+    } else if (userRole === USER_ROLE.OPS) {
+      // Get chats where user is the OPS
+      chats = await ProgramChat.find({ 'participants.OPS': userId })
         .populate({
           path: 'programId',
           select: 'university programName campus country priority intake year',
         })
         .populate('participants.student', 'name email')
-        .populate('participants.counselor', 'name email')
+        .populate('participants.OPS', 'name email')
         .populate('participants.admin', 'name email')
         .sort({ updatedAt: -1 });
     } else if (userRole === USER_ROLE.ADMIN) {
@@ -347,7 +364,7 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
           select: 'university programName campus country priority intake year',
         })
         .populate('participants.student', 'name email')
-        .populate('participants.counselor', 'name email')
+        .populate('participants.OPS', 'name email')
         .populate('participants.admin', 'name email')
         .sort({ updatedAt: -1 })
         .limit(100); // Limit for admins
@@ -362,3 +379,4 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+

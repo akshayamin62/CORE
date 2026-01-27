@@ -3,9 +3,8 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IChatMessage extends Document {
   chatId: mongoose.Types.ObjectId;
   senderId: mongoose.Types.ObjectId;
-  senderRole: 'STUDENT' | 'COUNSELOR' | 'ADMIN';
-  senderName: string;
-  counselorType?: 'PRIMARY' | 'ACTIVE'; // Only for counselor role
+  senderRole: 'STUDENT' | 'OPS' | 'ADMIN';
+  opsType?: 'PRIMARY' | 'ACTIVE'; // Only for OPS role
   message: string;
   timestamp: Date;
   readBy: mongoose.Types.ObjectId[];
@@ -26,14 +25,10 @@ const ChatMessageSchema = new Schema<IChatMessage>(
     },
     senderRole: {
       type: String,
-      enum: ['STUDENT', 'COUNSELOR', 'ADMIN'],
+      enum: ['STUDENT', 'OPS', 'ADMIN'],
       required: true,
     },
-    senderName: {
-      type: String,
-      required: true,
-    },
-    counselorType: {
+    opsType: {
       type: String,
       enum: ['PRIMARY', 'ACTIVE'],
       required: false,
@@ -64,3 +59,4 @@ const ChatMessageSchema = new Schema<IChatMessage>(
 ChatMessageSchema.index({ chatId: 1, timestamp: -1 });
 
 export default mongoose.model<IChatMessage>('ChatMessage', ChatMessageSchema);
+

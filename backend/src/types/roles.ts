@@ -1,9 +1,10 @@
 export enum USER_ROLE {
     STUDENT = "STUDENT",
     PARENT = "PARENT",
-    COUNSELOR = "COUNSELOR",
+    OPS = "OPS",
     ALUMNI = "ALUMNI",
     ADMIN = "ADMIN",
     SERVICE_PROVIDER = "SERVICE_PROVIDER",
   }
   
+

@@ -15,7 +15,7 @@ interface FormSectionRendererProps {
   isAdminEdit?: boolean;
   registrationId?: string;
   studentId?: string;
-  userRole?: 'STUDENT' | 'COUNSELOR' | 'ADMIN';
+  userRole?: 'STUDENT' | 'OPS' | 'ADMIN';
 }
 
 export default function FormSectionRenderer({
@@ -122,4 +122,5 @@ export default function FormSectionRenderer({
     </div>
   );
 }
+
 

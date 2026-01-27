@@ -27,8 +27,8 @@ router.use(authenticate);
 // Get document fields (all FILE type fields)
 router.get("/fields/list", getDocumentFields);
 
-// Add new document field (Admin/Counselor only)
-router.post("/fields/add", authorize(USER_ROLE.ADMIN, USER_ROLE.COUNSELOR), addDocumentField);
+// Add new document field (Admin/Ops only)
+router.post("/fields/add", authorize(USER_ROLE.ADMIN, USER_ROLE.OPS), addDocumentField);
 
 // Delete document field (Admin only)
 router.delete("/fields/:fieldId", authorize(USER_ROLE.ADMIN), deleteDocumentField);
@@ -50,10 +50,10 @@ router.get("/:documentId/view", viewDocument);
 // Download specific document
 router.get("/:documentId/download", downloadDocument);
 
-// Approve document (Counselor/Admin only)
+// Approve document (OPS/Admin only)
 router.put("/:documentId/approve", approveDocument);
 
-// Reject document (Counselor/Admin only)
+// Reject document (OPS/Admin only)
 router.put("/:documentId/reject", rejectDocument);
 
 // Add custom document field (DEPRECATED - use /fields/add instead)
@@ -63,3 +63,4 @@ router.post("/add-custom-field", addCustomField);
 router.delete("/:documentId", deleteDocument);
 
 export default router;
+

@@ -22,11 +22,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
-      // Redirect admin/counselor to their dashboard
+      // Redirect admin/OPS to their dashboard
       if (user.role === 'ADMIN') {
         router.push('/admin/dashboard');
-      } else if (user.role === 'COUNSELOR') {
-        router.push('/counselor/dashboard');
+      } else if (user.role === 'OPS') {
+        router.push('/ops/dashboard');
       } else {
         fetchMyServices();
       }
@@ -65,12 +65,12 @@ export default function DashboardPage() {
       fetchOtherServices(response.data.data.registrations);
     } catch (error: any) {
       console.error('Failed to fetch my services:', error);
-      // If 404 or unauthorized, user might be admin/counselor - redirect them
+      // If 404 or unauthorized, user might be admin/OPS - redirect them
       if (error.response?.status === 404 || error.response?.status === 401) {
         if (user?.role === 'ADMIN') {
           router.push('/admin/dashboard');
-        } else if (user?.role === 'COUNSELOR') {
-          router.push('/counselor/dashboard');
+        } else if (user?.role === 'OPS') {
+          router.push('/ops/dashboard');
         }
       }
     }
@@ -235,3 +235,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

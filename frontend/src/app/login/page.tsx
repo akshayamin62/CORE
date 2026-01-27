@@ -115,7 +115,7 @@ export default function LoginPage() {
       // Redirect based on role
       const redirectPath = 
         user.role === 'ADMIN' ? '/admin/dashboard' :
-        user.role === 'COUNSELOR' ? '/counselor/dashboard' :
+        user.role === 'OPS' ? '/ops/dashboard' :
         '/dashboard';
       
       setTimeout(() => {
@@ -417,3 +417,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

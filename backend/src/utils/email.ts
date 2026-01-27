@@ -136,7 +136,7 @@ export const sendDocumentRejectionEmail = async (
   studentName: string,
   documentName: string,
   rejectionMessage: string,
-  rejectedBy: string = 'counselor',
+  rejectedBy: string = 'OPS',
   registrationId?: string
 ): Promise<void> => {
   const detailsUrl = registrationId 
@@ -204,4 +204,5 @@ export const sendDocumentRejectionEmail = async (
     text,
   });
 };
+
 

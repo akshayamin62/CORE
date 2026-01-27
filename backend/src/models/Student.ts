@@ -38,3 +38,4 @@ studentSchema.index({ email: 1 });
 
 export default mongoose.model<IStudent>("Student", studentSchema);
 
+

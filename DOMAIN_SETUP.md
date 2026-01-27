@@ -152,3 +152,4 @@ Before deploying, ensure you've updated:
 **Your Deployment Guide** (`DEPLOYMENT_GUIDE_HOSTINGER.md`) has been updated with all these URLs.
 
 Follow the guide step-by-step, and your application will be live at `https://core.admitra.io`!
+

@@ -52,7 +52,7 @@ export const validateSignup = (
     return;
   }
 
-  // Check if parent or counselor is trying to sign up directly
+  // Check if parent or ops is trying to sign up directly
   if (role === USER_ROLE.PARENT) {
     res.status(403).json({
       success: false,
@@ -61,10 +61,10 @@ export const validateSignup = (
     return;
   }
 
-  if (role === USER_ROLE.COUNSELOR) {
+  if (role === USER_ROLE.OPS) {
     res.status(403).json({
       success: false,
-      message: "Counselor cannot sign up directly",
+      message: "Ops cannot sign up directly",
     });
     return;
   }
@@ -104,4 +104,5 @@ export const validateRequest = (requiredFields: string[]) => {
     next();
   };
 };
+
 

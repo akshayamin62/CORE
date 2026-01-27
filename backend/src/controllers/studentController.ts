@@ -107,3 +107,4 @@ export const deleteStudentProfile = async (req: AuthRequest, res: Response) => {
   }
 };
 
+

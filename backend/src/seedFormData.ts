@@ -1344,7 +1344,7 @@ const seedFormData = async () => {
     await FormSection.create({
       partId: applicationPart._id,
       title: "Apply to Program",
-      description: "Browse and select programs added by your counselor",
+      description: "Browse and select programs added by your OPS",
       order: 1,
       isActive: true,
     });
@@ -1448,4 +1448,5 @@ const seedFormData = async () => {
 };
 
 seedFormData();
+
 

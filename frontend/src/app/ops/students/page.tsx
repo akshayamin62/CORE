@@ -25,7 +25,7 @@ interface StudentData {
   createdAt: string;
 }
 
-export default function CounselorStudentsPage() {
+export default function OpsStudentsPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [students, setStudents] = useState<StudentData[]>([]);
@@ -41,7 +41,7 @@ export default function CounselorStudentsPage() {
       const response = await authAPI.getProfile();
       const userData = response.data.data.user;
 
-      if (userData.role !== USER_ROLE.COUNSELOR) {
+      if (userData.role !== USER_ROLE.OPS) {
         toast.error('Access denied.');
         router.push('/');
         return;
@@ -64,7 +64,7 @@ export default function CounselorStudentsPage() {
       setStudents(response.data.data.students);
     } catch (error: any) {
       if (error.response?.status === 403) {
-        toast.error('Access denied. You need to be assigned as an active counselor.');
+        toast.error('Access denied. You need to be assigned as an active OPS.');
       } else {
         toast.error('Failed to fetch students');
       }
@@ -84,7 +84,7 @@ export default function CounselorStudentsPage() {
   });
 
   const handleViewStudent = (studentId: string) => {
-    router.push(`/counselor/students/${studentId}`);
+    router.push(`/ops/students/${studentId}`);
   };
 
   if (loading || !user) {
@@ -261,4 +261,5 @@ export default function CounselorStudentsPage() {
     </>
   );
 }
+
 

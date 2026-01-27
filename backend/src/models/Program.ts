@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IProgram extends Document {
-  createdBy: mongoose.Types.ObjectId; // User who created this program (can be student, counselor, or admin)
+  createdBy: mongoose.Types.ObjectId; // User who created this program (can be student, OPS, or admin)
   studentId?: mongoose.Types.ObjectId; // Student who selected this program (if selected)
   university: string;
   universityRanking: {
@@ -117,4 +117,5 @@ programSchema.index({ country: 1, studyLevel: 1 });
 programSchema.index({ university: 1, programName: 1 });
 
 export default mongoose.model<IProgram>("Program", programSchema);
+
 

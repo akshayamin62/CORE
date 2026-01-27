@@ -55,7 +55,7 @@ POST /api/auth/signup
 
 **Available Roles:**
 - `STUDENT` - Requires email verification, then can login immediately
-- `COUNSELOR` - Requires email verification + additional verification
+- `OPS` - Requires email verification + additional verification
 - `ALUMNI` - Requires email verification + additional verification
 - `ADMIN` - Requires email verification + additional verification
 - `SERVICE_PROVIDER` - Requires email verification + additional verification
@@ -138,7 +138,7 @@ POST /api/auth/verify-email
       "id": "user_id",
       "name": "John Doe",
       "email": "john@example.com",
-      "role": "COUNSELOR",
+      "role": "OPS",
       "isVerified": false
     }
   }
@@ -373,7 +373,7 @@ export const yourController = (req: AuthRequest, res: Response) => {
 ```typescript
 import { Router } from "express";
 import { authenticate } from "../middleware/auth";
-import { authorize, adminOnly, adminOrCounselor } from "../middleware/authorize";
+import { authorize, adminOnly, adminOrOps } from "../middleware/authorize";
 import { USER_ROLE } from "../types/roles";
 import { yourController } from "../controllers/yourController";
 
@@ -382,16 +382,16 @@ const router = Router();
 // Single role - only admins
 router.get("/admin-only", authenticate, authorize(USER_ROLE.ADMIN), yourController);
 
-// Multiple roles - admins or counselors
+// Multiple roles - admins or ops
 router.get("/staff-only", 
   authenticate, 
-  authorize(USER_ROLE.ADMIN, USER_ROLE.COUNSELOR), 
+  authorize(USER_ROLE.ADMIN, USER_ROLE.OPS), 
   yourController
 );
 
 // Using convenience functions
 router.get("/admin-route", authenticate, adminOnly, yourController);
-router.get("/staff-route", authenticate, adminOrCounselor, yourController);
+router.get("/staff-route", authenticate, adminOrOps, yourController);
 
 // Students only
 router.get("/student-route", authenticate, authorize(USER_ROLE.STUDENT), yourController);
@@ -399,10 +399,10 @@ router.get("/student-route", authenticate, authorize(USER_ROLE.STUDENT), yourCon
 
 **Available Convenience Functions:**
 - `adminOnly` - Only admins can access
-- `counselorOnly` - Only counselors can access
+- `opsOnly` - Only ops can access
 - `studentOnly` - Only students can access
-- `adminOrCounselor` - Admins or counselors can access
-- `adminCounselorOrServiceProvider` - Admins, counselors, or service providers
+- `adminOrOps` - Admins or ops can access
+- `adminOpsOrServiceProvider` - Admins, ops, or service providers
 - `nonStudentOnly` - All roles except students
 
 **Important:** Always use `authenticate` middleware before `authorize` middleware.
@@ -583,4 +583,5 @@ Alternatively, integrate with services like:
 - [ ] Add rate limiting for auth endpoints
 - [ ] Add logging for security events
 - [ ] Integrate production email service
+
 

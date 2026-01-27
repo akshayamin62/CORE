@@ -7,7 +7,7 @@ export const ksDocumentAPI = {
     return api.get(`/ks-documents/${registrationId}`);
   },
 
-  // Add new KS document field (Admin/Counselor only)
+  // Add new KS document field (Admin/OPS only)
   addKSDocumentField: (
     registrationId: string,
     documentName: string,
@@ -26,8 +26,9 @@ export const ksDocumentAPI = {
     });
   },
 
-  // Delete KS document field (Admin/Counselor only)
+  // Delete KS document field (Admin/OPS only)
   deleteKSDocumentField: (fieldId: string) => {
     return api.delete(`/ks-documents/${fieldId}`);
   },
 };
+

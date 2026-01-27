@@ -56,7 +56,7 @@ export default function StudentDetailPage() {
       const response = await authAPI.getProfile();
       const userData = response.data.data.user;
 
-      if (userData.role !== USER_ROLE.COUNSELOR) {
+      if (userData.role !== USER_ROLE.OPS) {
         toast.error('Access denied.');
         router.push('/');
         return;
@@ -80,8 +80,8 @@ export default function StudentDetailPage() {
       setRegistrations(response.data.data.registrations);
     } catch (error: any) {
       if (error.response?.status === 403) {
-        toast.error('Access denied. You are not assigned as the active counselor for this student.');
-        router.push('/counselor/students');
+        toast.error('Access denied. You are not assigned as the active OPS for this student.');
+        router.push('/ops/students');
       } else {
         toast.error('Failed to fetch student details');
         console.error('Fetch student details error:', error);
@@ -92,7 +92,7 @@ export default function StudentDetailPage() {
   };
 
   const handleViewFormData = (registrationId: string) => {
-    router.push(`/counselor/students/${studentId}/registration/${registrationId}`);
+    router.push(`/ops/students/${studentId}/registration/${registrationId}`);
   };
 
   if (loading || !user) {

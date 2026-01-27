@@ -7,7 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 
-export default function CounselorDashboardPage() {
+export default function OpsDashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,8 +21,8 @@ export default function CounselorDashboardPage() {
       const response = await authAPI.getProfile();
       const userData = response.data.data.user;
 
-      if (userData.role !== USER_ROLE.COUNSELOR) {
-        toast.error('Access denied. Counselors only.');
+      if (userData.role !== USER_ROLE.OPS) {
+        toast.error('Access denied. Ops only.');
         router.push('/');
         return;
       }
@@ -56,7 +56,7 @@ export default function CounselorDashboardPage() {
         <div className="p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Counselor Dashboard</h1>
+            <h1 className="text-3xl font-bold text-gray-900">OPS Dashboard</h1>
             <p className="text-gray-600 mt-2">
               Manage and guide your students
             </p>
@@ -103,7 +103,7 @@ export default function CounselorDashboardPage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <ActionButton
-                onClick={() => router.push('/counselor/students')}
+                onClick={() => router.push('/ops/students')}
                 icon={
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -183,4 +183,5 @@ function ActionButton({ onClick, icon, title, description }: ActionButtonProps) 
     </button>
   );
 }
+
 

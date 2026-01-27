@@ -3,7 +3,7 @@
 interface StudentFormHeaderProps {
   studentName: string;
   serviceName: string;
-  editMode: 'admin' | 'counselor';
+  editMode: 'admin' | 'OPS';
 }
 
 export default function StudentFormHeader({
@@ -13,12 +13,12 @@ export default function StudentFormHeader({
 }: StudentFormHeaderProps) {
   const badgeStyles = {
     admin: 'bg-blue-50 text-blue-700',
-    counselor: 'bg-green-50 text-green-700',
+    OPS: 'bg-green-50 text-green-700',
   };
 
   const badgeText = {
     admin: 'Admin Edit Mode',
-    counselor: 'Counselor Edit Mode',
+    OPS: 'OPS Edit Mode',
   };
 
   return (
@@ -39,4 +39,5 @@ export default function StudentFormHeader({
     </div>
   );
 }
+
 

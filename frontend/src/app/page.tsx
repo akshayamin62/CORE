@@ -61,7 +61,7 @@ const stakeholderData = [
     icon: UserCheck,
     items: [
       'Monitor academic progress, readiness metrics, and service delivery in real time',
-      'Collaborate with counselors, teachers and mentors to support student success',
+      'Collaborate with ops, teachers and mentors to support student success',
       'Receive alerts, insights, and reports customized for your child\'s goals'
     ]
   },
@@ -971,3 +971,4 @@ export default function Home() {
     </div>
   );
 }
+

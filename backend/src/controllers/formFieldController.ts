@@ -71,7 +71,7 @@ export const getDocumentFields = async (_req: AuthRequest, res: Response) => {
   }
 };
 
-// Add new document field (Admin/Counselor only)
+// Add new document field (Admin/OPS only)
 export const addDocumentField = async (req: AuthRequest, res: Response) => {
   try {
     const { documentName, category, required, helpText } = req.body;
@@ -225,3 +225,4 @@ export const deleteDocumentField = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+

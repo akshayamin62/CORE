@@ -22,7 +22,7 @@ const SPECIALIZATIONS = [
   // 'Other'
 ];
 
-export default function AddCounselorPage() {
+export default function AddOpsPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -121,14 +121,14 @@ export default function AddCounselorPage() {
 
     setSubmitting(true);
     try {
-      await adminAPI.createCounselor({
+      await adminAPI.createOps({
         name: formData.name.trim(),
         email: formData.email.trim(),
         phoneNumber: formData.phoneNumber.trim() || undefined,
         specializations: formData.specializations.length > 0 ? formData.specializations : undefined,
       });
 
-      toast.success('Counselor created successfully!');
+      toast.success('OPS created successfully!');
       
       // Reset form
       setFormData({
@@ -138,13 +138,13 @@ export default function AddCounselorPage() {
         specializations: [],
       });
       
-      // Optionally redirect to counselors list or stay on page
+      // Optionally redirect to ops list or stay on page
       setTimeout(() => {
         router.push('/admin/users');
       }, 1500);
     } catch (error: any) {
-      console.error('Create counselor error:', error);
-      toast.error(error.response?.data?.message || 'Failed to create counselor');
+      console.error('Create OPS error:', error);
+      toast.error(error.response?.data?.message || 'Failed to create OPS');
     } finally {
       setSubmitting(false);
     }
@@ -179,8 +179,8 @@ export default function AddCounselorPage() {
 
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New Counselor</h1>
-            <p className="text-gray-600">Create a new counselor account with specializations</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Add New OPS</h1>
+            <p className="text-gray-600">Create a new OPS account with specializations</p>
           </div>
 
           {/* Form */}
@@ -200,7 +200,7 @@ export default function AddCounselorPage() {
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 ${
                     errors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
-                  placeholder="Enter counselor name"
+                  placeholder="Enter OPS name"
                 />
                 {errors.name && (
                   <p className="mt-1 text-sm text-red-600">{errors.name}</p>
@@ -221,7 +221,7 @@ export default function AddCounselorPage() {
                   className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 ${
                     errors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
-                  placeholder="counselor@example.com"
+                  placeholder="OPS@example.com"
                 />
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -304,7 +304,7 @@ export default function AddCounselorPage() {
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                       </svg>
-                      Create Counselor
+                      Create OPS
                     </>
                   )}
                 </button>
@@ -323,4 +323,5 @@ export default function AddCounselorPage() {
     </>
   );
 }
+
 

@@ -7,8 +7,8 @@ import {
   toggleUserStatus,
   // deleteUser,
   getPendingApprovals,
-  createCounselor,
-  getCounselorsBySpecialization,
+  createOps,
+  getOpsBySpecialization,
 } from "../controllers/adminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
@@ -72,20 +72,21 @@ router.patch("/users/:userId/toggle-status", toggleUserStatus);
 // router.delete("/users/:userId", deleteUser);
 
 /**
- * @route   POST /api/admin/counselors
- * @desc    Create a new counselor
+ * @route   POST /api/admin/ops
+ * @desc    Create a new OPS
  * @access  Admin only
  * @body    name, email, phoneNumber (optional), specializations (optional array)
  */
-router.post("/counselors", createCounselor);
+router.post("/ops", createOps);
 
 /**
- * @route   GET /api/admin/counselors
- * @desc    Get counselors by specialization
+ * @route   GET /api/admin/ops
+ * @desc    Get ops by specialization
  * @access  Admin only
  * @query   specialization (optional)
  */
-router.get("/counselors", getCounselorsBySpecialization);
+router.get("/ops", getOpsBySpecialization);
 
 export default router;
+
 

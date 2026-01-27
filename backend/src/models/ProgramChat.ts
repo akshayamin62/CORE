@@ -5,7 +5,7 @@ export interface IProgramChat extends Document {
   studentId: mongoose.Types.ObjectId;
   participants: {
     student: mongoose.Types.ObjectId;
-    counselor?: mongoose.Types.ObjectId;
+    OPS?: mongoose.Types.ObjectId;
     admin?: mongoose.Types.ObjectId;
   };
   createdAt: Date;
@@ -30,7 +30,7 @@ const ProgramChatSchema = new Schema<IProgramChat>(
         ref: 'User',
         required: true,
       },
-      counselor: {
+      OPS: {
         type: Schema.Types.ObjectId,
         ref: 'User',
       },
@@ -49,3 +49,4 @@ const ProgramChatSchema = new Schema<IProgramChat>(
 ProgramChatSchema.index({ programId: 1, studentId: 1 }, { unique: true });
 
 export default mongoose.model<IProgramChat>('ProgramChat', ProgramChatSchema);
+

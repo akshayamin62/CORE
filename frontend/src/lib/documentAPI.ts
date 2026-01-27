@@ -7,7 +7,7 @@ export const documentAPI = {
     return api.get('/documents/fields/list');
   },
 
-  // Add new document field (Admin/Counselor only)
+  // Add new document field (Admin/OPS only)
   addDocumentField: (
     documentName: string,
     category: DocumentCategory,
@@ -76,12 +76,12 @@ export const documentAPI = {
     return response;
   },
 
-  // Approve document (Counselor/Admin only)
+  // Approve document (OPS/Admin only)
   approveDocument: (documentId: string) => {
     return api.put(`/documents/${documentId}/approve`);
   },
 
-  // Reject document (Counselor/Admin only)
+  // Reject document (OPS/Admin only)
   rejectDocument: (documentId: string, rejectionMessage: string) => {
     return api.put(`/documents/${documentId}/reject`, { rejectionMessage });
   },
@@ -91,3 +91,4 @@ export const documentAPI = {
     return api.delete(`/documents/${documentId}`);
   },
 };
+

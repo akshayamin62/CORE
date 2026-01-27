@@ -1,14 +1,14 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import Program from '../models/Program';
-import Counselor from '../models/Counselor';
+import Ops from '../models/Ops';
 import Student from '../models/Student';
 import { USER_ROLE } from '../types/roles';
 import User from '../models/User';
 import * as XLSX from 'xlsx';
 
 /**
- * Get all programs for a student (added by their assigned counselor)
+ * Get all programs for a student (added by their assigned OPS)
  */
 export const getStudentPrograms = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
@@ -30,8 +30,8 @@ export const getStudentPrograms = async (req: AuthRequest, res: Response): Promi
       });
     }
 
-    // Get all programs made for this student by any counselor
-    // Show all programs where studentId matches, regardless of which counselor created them
+    // Get all programs made for this student by any OPS
+    // Show all programs where studentId matches, regardless of which OPS created them
     const allPrograms = await Program.find({
       $or: [
         { studentId: student._id }, // Programs specifically for this student
@@ -76,25 +76,25 @@ export const getStudentPrograms = async (req: AuthRequest, res: Response): Promi
 };
 
 /**
- * Get programs for a specific student (counselor view)
+ * Get programs for a specific student (Ops view)
  */
-export const getCounselorStudentPrograms = async (req: AuthRequest, res: Response): Promise<Response> => {
+export const getOpsStudentPrograms = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const userId = req.user?.userId;
     const user = await User.findById(userId);
     
-    if (user?.role !== USER_ROLE.COUNSELOR) {
+    if (user?.role !== USER_ROLE.OPS) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
       });
     }
 
-    const counselor = await Counselor.findOne({ userId });
-    if (!counselor) {
+    const ops = await Ops.findOne({ userId });
+    if (!ops) {
       return res.status(404).json({
         success: false,
-        message: 'Counselor record not found',
+        message: 'Ops record not found',
       });
     }
 
@@ -107,7 +107,7 @@ export const getCounselorStudentPrograms = async (req: AuthRequest, res: Respons
       });
     }
 
-    // Get all programs for this student from ANY counselor (not just this counselor)
+    // Get all programs for this student from ANY OPS (not just this OPS)
     // If section is "Applied Program", only return programs selected by the student
     // If section is "all" or not specified, only show programs NOT selected by student (for "Apply to Program")
     const { section } = req.query;
@@ -151,7 +151,7 @@ export const getCounselorStudentPrograms = async (req: AuthRequest, res: Respons
       });
     }
   } catch (error: any) {
-    console.error('Get counselor student programs error:', error);
+    console.error('Get OPS student programs error:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch programs',
@@ -161,29 +161,29 @@ export const getCounselorStudentPrograms = async (req: AuthRequest, res: Respons
 };
 
 /**
- * Get all programs for a counselor
+ * Get all programs for a OPS
  */
-export const getCounselorPrograms = async (req: AuthRequest, res: Response): Promise<Response> => {
+export const getOpsPrograms = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const userId = req.user?.userId;
     const user = await User.findById(userId);
     
-    if (user?.role !== USER_ROLE.COUNSELOR) {
+    if (user?.role !== USER_ROLE.OPS) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
       });
     }
 
-    const counselor = await Counselor.findOne({ userId });
-    if (!counselor) {
+    const ops = await Ops.findOne({ userId });
+    if (!ops) {
       return res.status(404).json({
         success: false,
-        message: 'Counselor record not found',
+        message: 'Ops record not found',
       });
     }
 
-    const programs = await Program.find({ counselorId: counselor._id })
+    const programs = await Program.find({ opsId: ops._id })
       .populate('studentId', 'userId')
       .sort({ createdAt: -1 });
 
@@ -193,7 +193,7 @@ export const getCounselorPrograms = async (req: AuthRequest, res: Response): Pro
       data: { programs },
     });
   } catch (error: any) {
-    console.error('Get counselor programs error:', error);
+    console.error('Get OPS programs error:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch programs',
@@ -203,14 +203,14 @@ export const getCounselorPrograms = async (req: AuthRequest, res: Response): Pro
 };
 
 /**
- * Create a new program (counselor)
+ * Create a new program (OPS)
  */
 export const createProgram = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const userId = req.user?.userId;
     const user = await User.findById(userId);
     
-    if (user?.role !== USER_ROLE.COUNSELOR && user?.role !== USER_ROLE.STUDENT && user?.role !== USER_ROLE.ADMIN) {
+    if (user?.role !== USER_ROLE.OPS && user?.role !== USER_ROLE.STUDENT && user?.role !== USER_ROLE.ADMIN) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
@@ -218,7 +218,7 @@ export const createProgram = async (req: AuthRequest, res: Response): Promise<Re
     }
 
     const {
-      studentId, // Optional for counselor/admin: if provided, link program to specific student
+      studentId, // Optional for OPS/admin: if provided, link program to specific student
       university,
       universityRanking,
       programName,
@@ -240,7 +240,7 @@ export const createProgram = async (req: AuthRequest, res: Response): Promise<Re
       });
     }
 
-    let counselorObjectId;
+    let opsObjectId;
     let studentObjectId;
 
     // Handle different user roles
@@ -254,18 +254,18 @@ export const createProgram = async (req: AuthRequest, res: Response): Promise<Re
         });
       }
       studentObjectId = student._id;
-      // No counselorId for student-created programs
-      counselorObjectId = null;
-    } else if (user.role === USER_ROLE.COUNSELOR) {
-      // Counselor creates program
-      const counselor = await Counselor.findOne({ userId });
-      if (!counselor) {
+      // No opsId for student-created programs
+      opsObjectId = null;
+    } else if (user.role === USER_ROLE.OPS) {
+      // Ops creates program
+      const ops = await Ops.findOne({ userId });
+      if (!ops) {
         return res.status(404).json({
           success: false,
-          message: 'Counselor record not found',
+          message: 'Ops record not found',
         });
       }
-      counselorObjectId = counselor._id;
+      opsObjectId = ops._id;
       
       // If studentId is provided, validate it exists
       if (studentId) {
@@ -294,13 +294,13 @@ export const createProgram = async (req: AuthRequest, res: Response): Promise<Re
         });
       }
       studentObjectId = student._id;
-      // No counselorId for admin-created programs
-      counselorObjectId = null;
+      // No opsId for admin-created programs
+      opsObjectId = null;
     }
 
     const program = await Program.create({
       createdBy: userId,
-      counselorId: counselorObjectId,
+      opsId: opsObjectId,
       studentId: studentObjectId, // Link to specific student if provided
       university,
       universityRanking: universityRanking || {},
@@ -511,7 +511,7 @@ export const updateProgramSelection = async (req: AuthRequest, res: Response): P
 };
 
 /**
- * Get programs for a specific student (admin view) - only filter by studentId, not counselorId
+ * Get programs for a specific student (admin view) - only filter by studentId, not opsId
  */
 export const getAdminStudentPrograms = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
@@ -534,7 +534,7 @@ export const getAdminStudentPrograms = async (req: AuthRequest, res: Response): 
       });
     }
 
-    // Get all programs for this student (only filter by studentId, not counselorId)
+    // Get all programs for this student (only filter by studentId, not opsId)
     // If section is "Applied Program", only return programs selected by the student
     // If section is "all" or not specified, only show programs NOT selected by student (for "Apply to Program")
     const { section } = req.query;
@@ -645,21 +645,21 @@ export const uploadProgramsFromExcel = async (req: AuthRequest & { file?: Expres
     const userId = req.user?.userId;
     const user = await User.findById(userId);
     
-    if (user?.role !== USER_ROLE.COUNSELOR && user?.role !== USER_ROLE.ADMIN) {
+    if (user?.role !== USER_ROLE.OPS && user?.role !== USER_ROLE.ADMIN) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
       });
     }
 
-    // Get counselor record if user is counselor
-    let counselor = null;
-    if (user.role === USER_ROLE.COUNSELOR) {
-      counselor = await Counselor.findOne({ userId });
-      if (!counselor) {
+    // Get OPS record if user is OPS
+    let ops = null;
+    if (user.role === USER_ROLE.OPS) {
+      ops = await Ops.findOne({ userId });
+      if (!ops) {
         return res.status(404).json({
           success: false,
-          message: 'Counselor record not found',
+          message: 'OPS record not found',
         });
       }
     }
@@ -792,4 +792,5 @@ export const uploadProgramsFromExcel = async (req: AuthRequest & { file?: Expres
     });
   }
 };
+
 

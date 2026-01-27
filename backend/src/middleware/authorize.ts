@@ -7,7 +7,7 @@ import { AuthRequest } from "./auth";
  * 
  * Usage:
  * - authorize(USER_ROLE.ADMIN) - Only admins can access
- * - authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]) - Admins or counselors can access
+ * - authorize([USER_ROLE.ADMIN, USER_ROLE.OPS]) - Admins or ops can access
  */
 
 export const authorize = (...allowedRoles: (USER_ROLE | USER_ROLE[])[]) => {
@@ -47,28 +47,29 @@ export const authorize = (...allowedRoles: (USER_ROLE | USER_ROLE[])[]) => {
 // Only admins can access
 export const adminOnly = authorize(USER_ROLE.ADMIN);
 
-// Only counselors can access
-export const counselorOnly = authorize(USER_ROLE.COUNSELOR);
+// Only ops can access
+export const opsOnly = authorize(USER_ROLE.OPS);
 
 // Only students can access
 export const studentOnly = authorize(USER_ROLE.STUDENT);
 
-// Admins or counselors can access
-export const adminOrCounselor = authorize(USER_ROLE.ADMIN, USER_ROLE.COUNSELOR);
+// Admins or ops can access
+export const adminOrOps = authorize(USER_ROLE.ADMIN, USER_ROLE.OPS);
 
-// Admins, counselors, or service providers can access
-export const adminCounselorOrServiceProvider = authorize(
+// Admins, ops, or service providers can access
+export const adminOpsOrServiceProvider = authorize(
   USER_ROLE.ADMIN,
-  USER_ROLE.COUNSELOR,
+  USER_ROLE.OPS,
   USER_ROLE.SERVICE_PROVIDER
 );
 
 // All verified users except students
 export const nonStudentOnly = authorize(
   USER_ROLE.ADMIN,
-  USER_ROLE.COUNSELOR,
+  USER_ROLE.OPS,
   USER_ROLE.ALUMNI,
   USER_ROLE.SERVICE_PROVIDER,
   USER_ROLE.PARENT
 );
+
 

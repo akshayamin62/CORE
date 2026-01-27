@@ -18,9 +18,9 @@ interface Program {
 interface ChatMessage {
   _id: string;
   senderId: string;
-  senderRole: 'STUDENT' | 'COUNSELOR' | 'ADMIN';
+  senderRole: 'STUDENT' | 'OPS' | 'ADMIN';
   senderName: string;
-  counselorType?: 'PRIMARY' | 'ACTIVE';
+  opsType?: 'PRIMARY' | 'ACTIVE';
   message: string;
   timestamp: string;
 }
@@ -35,7 +35,7 @@ interface ChatInfo {
   _id: string;
   participants: {
     student?: Participant;
-    counselor?: Participant;
+    OPS?: Participant;
     admin?: Participant;
   };
 }
@@ -43,7 +43,7 @@ interface ChatInfo {
 interface ProgramChatViewProps {
   program: Program;
   onClose: () => void;
-  userRole: 'STUDENT' | 'COUNSELOR' | 'ADMIN';
+  userRole: 'STUDENT' | 'OPS' | 'ADMIN';
 }
 
 export default function ProgramChatView({ program, onClose, userRole }: ProgramChatViewProps) {
@@ -147,7 +147,7 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
     switch (role) {
       case 'STUDENT':
         return 'bg-blue-100 text-blue-800';
-      case 'COUNSELOR':
+      case 'OPS':
         return 'bg-green-100 text-green-800';
       case 'ADMIN':
         return 'bg-purple-100 text-purple-800';
@@ -160,7 +160,7 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
     switch (role) {
       case 'STUDENT':
         return 'bg-blue-500 text-white';
-      case 'COUNSELOR':
+      case 'OPS':
         return 'bg-green-500 text-white';
       case 'ADMIN':
         return 'bg-purple-500 text-white';
@@ -231,8 +231,16 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
               </div>
             ) : (
               messages.map((msg, index) => {
-                const isConsecutive = index > 0 && messages[index - 1].senderId === msg.senderId;
-                const isCurrentUser = msg.senderId === currentUserId;
+                // Handle both populated and unpopulated senderId
+                const msgSenderId = typeof msg.senderId === 'object' ? (msg.senderId as any)?._id : msg.senderId;
+                const prevMsgSenderId = index > 0 
+                  ? (typeof messages[index - 1].senderId === 'object' 
+                    ? (messages[index - 1].senderId as any)?._id 
+                    : messages[index - 1].senderId)
+                  : null;
+                
+                const isConsecutive = index > 0 && prevMsgSenderId === msgSenderId;
+                const isCurrentUser = msgSenderId === currentUserId || msgSenderId?.toString() === currentUserId;
                 
                 return (
                   <div key={msg._id} className={`flex flex-col ${isConsecutive ? 'mt-1' : 'mt-4'} ${
@@ -242,16 +250,16 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
                       <div className="flex items-center space-x-2 mb-2">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm ${
                           msg.senderRole === 'STUDENT' ? 'bg-blue-500' :
-                          msg.senderRole === 'COUNSELOR' ? 'bg-green-500' :
+                          msg.senderRole === 'OPS' ? 'bg-green-500' :
                           'bg-purple-500'
                         }`}>
-                          {msg.senderName.charAt(0).toUpperCase()}
+                          {msg.senderName ? msg.senderName.charAt(0).toUpperCase() : '?'}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span className="text-sm font-semibold text-gray-900">{msg.senderName}</span>
-                          {msg.senderRole === 'COUNSELOR' && msg.counselorType && (
+                          <span className="text-sm font-semibold text-gray-900">{msg.senderName || 'Unknown'}</span>
+                          {msg.senderRole === 'OPS' && msg.opsType && (
                             <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-medium">
-                              {msg.counselorType === 'PRIMARY' ? 'Primary' : 'Active'}
+                              {msg.opsType === 'PRIMARY' ? 'Primary' : 'Active'}
                             </span>
                           )}
                           <span className={`text-xs px-2 py-0.5 rounded-full ${getRoleBadgeColor(msg.senderRole)}`}>
@@ -265,7 +273,7 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
                         isCurrentUser 
                           ? 'bg-blue-600 text-white' 
                           : msg.senderRole === 'STUDENT' ? 'bg-blue-100 text-gray-900' :
-                            msg.senderRole === 'COUNSELOR' ? 'bg-green-100 text-gray-900' :
+                            msg.senderRole === 'OPS' ? 'bg-green-100 text-gray-900' :
                             'bg-purple-100 text-gray-900'
                       }`}>
                         <p className="text-sm leading-relaxed break-words">{msg.message}</p>
@@ -323,3 +331,4 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
         </div>
     );
   }
+
