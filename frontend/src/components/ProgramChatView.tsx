@@ -259,7 +259,7 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
                           <span className="text-sm font-semibold text-gray-900">{msg.senderName || 'Unknown'}</span>
                           {msg.senderRole === 'OPS' && msg.opsType && (
                             <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-medium">
-                              {msg.opsType === 'PRIMARY' ? 'Primary' : 'Active'}
+                              {msg.opsType === 'PRIMARY' ? 'Primary' : 'Secondary'}
                             </span>
                           )}
                           <span className={`text-xs px-2 py-0.5 rounded-full ${getRoleBadgeColor(msg.senderRole)}`}>
