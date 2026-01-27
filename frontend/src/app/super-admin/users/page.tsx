@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { adminAPI, authAPI } from '@/lib/api';
+import { superAdminAPI, authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
-import AdminLayout from '@/components/AdminLayout';
+import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface UserStats {
@@ -72,10 +72,10 @@ export default function UserManagementPage() {
       if (searchQuery.trim()) params.search = searchQuery.trim();
       
       if (activeTab === 'pending') {
-        const response = await adminAPI.getPendingApprovals();
+        const response = await superAdminAPI.getPendingApprovals();
         setUsers(response.data.data.users || []);
       } else {
-        const response = await adminAPI.getUsers(params);
+        const response = await superAdminAPI.getUsers(params);
         setUsers(response.data.data.users || []);
       }
     } catch (error: any) {
@@ -89,7 +89,7 @@ export default function UserManagementPage() {
 
   const fetchStats = async () => {
     try {
-      const response = await adminAPI.getStats();
+      const response = await superAdminAPI.getStats();
       setStats(response.data.data);
     } catch (error: any) {
       console.error('Failed to fetch stats:', error);
@@ -101,7 +101,7 @@ export default function UserManagementPage() {
     
     try {
       setActionLoading(userId);
-      await adminAPI.approveUser(userId);
+      await superAdminAPI.approveUser(userId);
       toast.success('User approved successfully');
       await fetchUsers();
       await fetchStats();
@@ -118,7 +118,7 @@ export default function UserManagementPage() {
     
     try {
       setActionLoading(userId);
-      await adminAPI.rejectUser(userId, reason || undefined);
+      await superAdminAPI.rejectUser(userId, reason || undefined);
       toast.success('User rejected');
       await fetchUsers();
       await fetchStats();
@@ -132,7 +132,7 @@ export default function UserManagementPage() {
   const handleToggleStatus = async (userId: string) => {
     try {
       setActionLoading(userId);
-      await adminAPI.toggleUserStatus(userId);
+      await superAdminAPI.toggleUserStatus(userId);
       toast.success('User status updated');
       await fetchUsers();
       await fetchStats();
@@ -148,7 +148,7 @@ export default function UserManagementPage() {
     
     try {
       setActionLoading(userId);
-      await adminAPI.deleteUser(userId);
+      await superAdminAPI.deleteUser(userId);
       toast.success('User deleted successfully');
       await fetchUsers();
       await fetchStats();
@@ -186,7 +186,7 @@ export default function UserManagementPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <AdminLayout user={currentUser}>
+      <SuperAdminLayout user={currentUser}>
         <div className="p-8">
           {/* Header */}
           <div className="mb-6">
@@ -399,7 +399,7 @@ export default function UserManagementPage() {
             </div>
           </div>
         </div>
-      </AdminLayout>
+      </SuperAdminLayout>
     </>
   );
 }

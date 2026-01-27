@@ -98,7 +98,7 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
         .populate('participants.admin', 'name email');
     } else {
       // Update admin participant if admin is accessing and not set
-      if (userRole === USER_ROLE.ADMIN && !chat.participants.admin) {
+      if (userRole === USER_ROLE.SUPER_ADMIN && !chat.participants.admin) {
         chat.participants.admin = new mongoose.Types.ObjectId(userId) as any;
         await chat.save();
         chat = await ProgramChat.findById(chat._id)
@@ -278,7 +278,7 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         participants: {
           student: studentUserId,
           ops: ops?.userId || undefined,
-          admin: userRole === USER_ROLE.ADMIN ? userId : undefined,
+          admin: userRole === USER_ROLE.SUPER_ADMIN ? userId : undefined,
         },
       });
     }
@@ -356,7 +356,7 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
         .populate('participants.OPS', 'name email')
         .populate('participants.admin', 'name email')
         .sort({ updatedAt: -1 });
-    } else if (userRole === USER_ROLE.ADMIN) {
+    } else if (userRole === USER_ROLE.SUPER_ADMIN) {
       // Get all chats or chats where admin participated
       chats = await ProgramChat.find({})
         .populate({

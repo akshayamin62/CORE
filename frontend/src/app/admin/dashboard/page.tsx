@@ -21,7 +21,7 @@ export default function AdminDashboardPage() {
       const response = await authAPI.getProfile();
       const userData = response.data.data.user;
 
-      if (userData.role !== USER_ROLE.ADMIN) {
+      if (userData.role !== USER_ROLE.SUPER_ADMIN) {
         toast.error('Access denied. Admins only.');
         router.push('/');
         return;

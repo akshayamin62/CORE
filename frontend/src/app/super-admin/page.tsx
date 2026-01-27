@@ -3,13 +3,13 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Redirect page - this page is deprecated, use /admin/dashboard instead
-export default function AdminRedirectPage() {
+// Redirect page - this page is deprecated, use /super-admin/dashboard instead
+export default function SuperAdminRedirectPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to the new admin dashboard
-    router.replace('/admin/dashboard');
+    // Redirect to the new super admin dashboard
+    router.replace('/super-admin/dashboard');
   }, [router]);
 
   return (

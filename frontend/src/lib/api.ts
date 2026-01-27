@@ -61,44 +61,44 @@ export const authAPI = {
     api.get('/auth/profile'),
 };
 
-export const adminAPI = {
+export const superAdminAPI = {
   getUsers: (params?: {
     role?: string;
     isVerified?: boolean;
     isActive?: boolean;
     search?: string;
-  }) => api.get('/admin/users', { params }),
+  }) => api.get('/super-admin/users', { params }),
   
-  getStats: () => api.get('/admin/stats'),
+  getStats: () => api.get('/super-admin/stats'),
   
-  getPendingApprovals: () => api.get('/admin/pending'),
+  getPendingApprovals: () => api.get('/super-admin/pending'),
   
-  approveUser: (userId: string) => api.post(`/admin/users/${userId}/approve`),
+  approveUser: (userId: string) => api.post(`/super-admin/users/${userId}/approve`),
   
   rejectUser: (userId: string, reason?: string) => 
-    api.post(`/admin/users/${userId}/reject`, { reason }),
+    api.post(`/super-admin/users/${userId}/reject`, { reason }),
   
   toggleUserStatus: (userId: string) => 
-    api.patch(`/admin/users/${userId}/toggle-status`),
+    api.patch(`/super-admin/users/${userId}/toggle-status`),
   
-  deleteUser: (userId: string) => api.delete(`/admin/users/${userId}`),
+  deleteUser: (userId: string) => api.delete(`/super-admin/users/${userId}`),
   
   createOps: (data: {
     name: string;
     email: string;
     phoneNumber?: string;
     specializations?: string[];
-  }) => api.post('/admin/ops', data),
+  }) => api.post('/super-admin/ops', data),
   
-  getOps: () => api.get('/admin/ops'),
+  getOps: () => api.get('/super-admin/ops'),
   
   assignOps: (registrationId: string, data: {
     primaryOpsId?: string;
     secondaryOpsId?: string;
-  }) => api.post(`/admin/students/registrations/${registrationId}/assign-ops`, data),
+  }) => api.post(`/super-admin/students/registrations/${registrationId}/assign-ops`, data),
   
   switchActiveOps: (registrationId: string, activeOpsId: string) =>
-    api.post(`/admin/students/registrations/${registrationId}/switch-active-ops`, { activeOpsId }),
+    api.post(`/super-admin/students/registrations/${registrationId}/switch-active-ops`, { activeOpsId }),
 };
 
 // Service API
@@ -181,20 +181,20 @@ export const programAPI = {
       },
     });
   },
-  // Admin functions
-  getAdminStudentPrograms: (studentId: string, section?: string) => {
+  // Super Admin functions
+  getSuperAdminStudentPrograms: (studentId: string, section?: string) => {
     const params = section ? { section } : {};
-    return api.get(`/programs/admin/student/${studentId}/programs`, { params });
+    return api.get(`/programs/super-admin/student/${studentId}/programs`, { params });
   },
-  getStudentAppliedPrograms: (studentId: string) => api.get(`/programs/admin/student/${studentId}/applied-programs`),
+  getStudentAppliedPrograms: (studentId: string) => api.get(`/programs/super-admin/student/${studentId}/applied-programs`),
   updateProgramSelection: (programId: string, data: { priority: number; intake: string; year: string }) => 
-    api.put(`/programs/admin/programs/${programId}/selection`, data),
-  createAdminProgram: (studentId: string, data: any) => api.post('/programs/admin/programs/create', { ...data, studentId }),
-  uploadAdminProgramsExcel: (file: File, studentId: string) => {
+    api.put(`/programs/super-admin/programs/${programId}/selection`, data),
+  createSuperAdminProgram: (studentId: string, data: any) => api.post('/programs/super-admin/programs/create', { ...data, studentId }),
+  uploadSuperAdminProgramsExcel: (file: File, studentId: string) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('studentId', studentId);
-    return api.post('/programs/admin/programs/upload-excel', formData, {
+    return api.post('/programs/super-admin/programs/upload-excel', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

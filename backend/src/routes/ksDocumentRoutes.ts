@@ -17,10 +17,10 @@ router.use(authenticate);
 router.get("/:registrationId", getKSDocumentFields);
 
 // Add new KS document field (Admin/OPS only)
-router.post("/add", authorize(USER_ROLE.ADMIN, USER_ROLE.OPS), addKSDocumentField);
+router.post("/add", authorize(USER_ROLE.SUPER_ADMIN, USER_ROLE.OPS), addKSDocumentField);
 
 // Delete KS document field (Admin/OPS only)
-router.delete("/:fieldId", authorize(USER_ROLE.ADMIN, USER_ROLE.OPS), deleteKSDocumentField);
+router.delete("/:fieldId", authorize(USER_ROLE.SUPER_ADMIN, USER_ROLE.OPS), deleteKSDocumentField);
 
 export default router;
 

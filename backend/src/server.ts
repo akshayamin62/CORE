@@ -3,11 +3,11 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from "./routes/authRoutes";
-import adminRoutes from "./routes/adminRoutes";
+import superAdminRoutes from "./routes/superAdminRoutes";
 import serviceRoutes from "./routes/serviceRoutes";
 import formAnswerRoutes from "./routes/formAnswerRoutes";
 import studentRoutes from "./routes/studentRoutes";
-import adminStudentRoutes from "./routes/adminStudentRoutes";
+import superAdminStudentRoutes from "./routes/superAdminStudentRoutes";
 import programRoutes from "./routes/programRoutes";
 import chatRoutes from "./routes/chatRoutes";
 import documentRoutes from "./routes/documentRoutes";
@@ -41,8 +41,8 @@ app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
 app.use("/api/auth", authRoutes);
-app.use("/api/admin/students", adminStudentRoutes); // More specific route must come first
-app.use("/api/admin", adminRoutes);
+app.use("/api/super-admin/students", superAdminStudentRoutes); // More specific route must come first
+app.use("/api/super-admin", superAdminRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/forms", formAnswerRoutes);
 app.use("/api/student", studentRoutes);

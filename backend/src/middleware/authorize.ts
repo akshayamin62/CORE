@@ -6,8 +6,8 @@ import { AuthRequest } from "./auth";
  * Role-based authorization middleware
  * 
  * Usage:
- * - authorize(USER_ROLE.ADMIN) - Only admins can access
- * - authorize([USER_ROLE.ADMIN, USER_ROLE.OPS]) - Admins or ops can access
+ * - authorize(USER_ROLE.SUPER_ADMIN) - Only admins can access
+ * - authorize([USER_ROLE.SUPER_ADMIN, USER_ROLE.OPS]) - Admins or ops can access
  */
 
 export const authorize = (...allowedRoles: (USER_ROLE | USER_ROLE[])[]) => {
@@ -45,7 +45,7 @@ export const authorize = (...allowedRoles: (USER_ROLE | USER_ROLE[])[]) => {
  */
 
 // Only admins can access
-export const adminOnly = authorize(USER_ROLE.ADMIN);
+export const adminOnly = authorize(USER_ROLE.SUPER_ADMIN);
 
 // Only ops can access
 export const opsOnly = authorize(USER_ROLE.OPS);
@@ -54,18 +54,18 @@ export const opsOnly = authorize(USER_ROLE.OPS);
 export const studentOnly = authorize(USER_ROLE.STUDENT);
 
 // Admins or ops can access
-export const adminOrOps = authorize(USER_ROLE.ADMIN, USER_ROLE.OPS);
+export const adminOrOps = authorize(USER_ROLE.SUPER_ADMIN, USER_ROLE.OPS);
 
 // Admins, ops, or service providers can access
 export const adminOpsOrServiceProvider = authorize(
-  USER_ROLE.ADMIN,
+  USER_ROLE.SUPER_ADMIN,
   USER_ROLE.OPS,
   USER_ROLE.SERVICE_PROVIDER
 );
 
 // All verified users except students
 export const nonStudentOnly = authorize(
-  USER_ROLE.ADMIN,
+  USER_ROLE.SUPER_ADMIN,
   USER_ROLE.OPS,
   USER_ROLE.ALUMNI,
   USER_ROLE.SERVICE_PROVIDER,

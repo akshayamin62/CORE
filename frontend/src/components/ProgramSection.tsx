@@ -41,7 +41,7 @@ interface Program {
   };
 }
 
-type UserRole = 'STUDENT' | 'OPS' | 'ADMIN';
+type UserRole = 'STUDENT' | 'OPS' | 'SUPER_ADMIN';
 type SectionType = 'available' | 'applied';
 
 interface ProgramSectionProps {
@@ -85,7 +85,7 @@ export default function ProgramSection({
   const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear + i);
 
   const canAddPrograms = sectionType === 'available' && !isReadOnly;
-  const canEditApplied = sectionType === 'applied' && userRole === 'ADMIN';
+  const canEditApplied = sectionType === 'applied' && userRole === 'SUPER_ADMIN';
   const canSelectPrograms = sectionType === 'available' && userRole === 'STUDENT' && !isReadOnly;
 
   useEffect(() => {
@@ -111,8 +111,8 @@ export default function ProgramSection({
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setPrograms(response.data.data.programs || []);
-      } else if (userRole === 'ADMIN' && studentId) {
-        response = await programAPI.getAdminStudentPrograms(studentId, sectionType === 'applied' ? 'applied' : 'all');
+      } else if (userRole === 'SUPER_ADMIN' && studentId) {
+        response = await programAPI.getSuperAdminStudentPrograms(studentId, sectionType === 'applied' ? 'applied' : 'all');
         setPrograms(response.data.data.programs || []);
       }
     } catch (error: any) {
@@ -157,8 +157,8 @@ export default function ProgramSection({
         endpoint = `${API_URL}/programs/student/programs/create`;
       } else if (userRole === 'OPS') {
         endpoint = `${API_URL}/programs/ops/programs`;
-      } else if (userRole === 'ADMIN') {
-        endpoint = `${API_URL}/programs/admin/programs/create`;
+      } else if (userRole === 'SUPER_ADMIN') {
+        endpoint = `${API_URL}/programs/super-admin/programs/create`;
       }
 
       await axios.post(endpoint, programData, { headers: { Authorization: `Bearer ${token}` } });
@@ -196,8 +196,8 @@ export default function ProgramSection({
       let endpoint = '';
       if (userRole === 'OPS') {
         endpoint = `${API_URL}/programs/ops/programs/upload-excel`;
-      } else if (userRole === 'ADMIN') {
-        endpoint = `${API_URL}/programs/admin/programs/upload-excel`;
+      } else if (userRole === 'SUPER_ADMIN') {
+        endpoint = `${API_URL}/programs/super-admin/programs/upload-excel`;
       }
 
       const response = await axios.post(endpoint, formData, {
@@ -341,7 +341,7 @@ export default function ProgramSection({
             <h3 className="text-lg font-semibold text-gray-900">Available Programs</h3>
             {canAddPrograms && (
               <div className="flex gap-3">
-                {(userRole === 'OPS' || userRole === 'ADMIN') && (
+                {(userRole === 'OPS' || userRole === 'SUPER_ADMIN') && (
                   <>
                     <input
                       type="file"

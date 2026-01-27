@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { authAPI, adminAPI } from '@/lib/api';
+import { authAPI, superAdminAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
-import AdminLayout from '@/components/AdminLayout';
+import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 
 const SPECIALIZATIONS = [
@@ -121,7 +121,7 @@ export default function AddOpsPage() {
 
     setSubmitting(true);
     try {
-      await adminAPI.createOps({
+      await superAdminAPI.createOps({
         name: formData.name.trim(),
         email: formData.email.trim(),
         phoneNumber: formData.phoneNumber.trim() || undefined,
@@ -140,7 +140,7 @@ export default function AddOpsPage() {
       
       // Optionally redirect to ops list or stay on page
       setTimeout(() => {
-        router.push('/admin/users');
+        router.push('/super-admin/users');
       }, 1500);
     } catch (error: any) {
       console.error('Create OPS error:', error);
@@ -164,7 +164,7 @@ export default function AddOpsPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <AdminLayout user={user}>
+      <SuperAdminLayout user={user}>
         <div className="p-8">
           {/* Back Button */}
           <button
@@ -319,7 +319,7 @@ export default function AddOpsPage() {
             </form>
           </div>
         </div>
-      </AdminLayout>
+      </SuperAdminLayout>
     </>
   );
 }

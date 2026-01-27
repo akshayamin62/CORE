@@ -210,7 +210,7 @@ export const createProgram = async (req: AuthRequest, res: Response): Promise<Re
     const userId = req.user?.userId;
     const user = await User.findById(userId);
     
-    if (user?.role !== USER_ROLE.OPS && user?.role !== USER_ROLE.STUDENT && user?.role !== USER_ROLE.ADMIN) {
+    if (user?.role !== USER_ROLE.OPS && user?.role !== USER_ROLE.STUDENT && user?.role !== USER_ROLE.SUPER_ADMIN) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
@@ -278,7 +278,7 @@ export const createProgram = async (req: AuthRequest, res: Response): Promise<Re
         }
         studentObjectId = student._id;
       }
-    } else if (user.role === USER_ROLE.ADMIN) {
+    } else if (user.role === USER_ROLE.SUPER_ADMIN) {
       // Admin creates program - must provide studentId
       if (!studentId) {
         return res.status(400).json({
@@ -465,7 +465,7 @@ export const updateProgramSelection = async (req: AuthRequest, res: Response): P
     const userId = req.user?.userId;
     const user = await User.findById(userId);
     
-    if (user?.role !== USER_ROLE.ADMIN) {
+    if (user?.role !== USER_ROLE.SUPER_ADMIN) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
@@ -511,14 +511,14 @@ export const updateProgramSelection = async (req: AuthRequest, res: Response): P
 };
 
 /**
- * Get programs for a specific student (admin view) - only filter by studentId, not opsId
+ * Get programs for a specific student (super admin view) - only filter by studentId, not opsId
  */
-export const getAdminStudentPrograms = async (req: AuthRequest, res: Response): Promise<Response> => {
+export const getSuperAdminStudentPrograms = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const userId = req.user?.userId;
     const user = await User.findById(userId);
     
-    if (user?.role !== USER_ROLE.ADMIN) {
+    if (user?.role !== USER_ROLE.SUPER_ADMIN) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
@@ -595,7 +595,7 @@ export const getStudentAppliedPrograms = async (req: AuthRequest, res: Response)
     const userId = req.user?.userId;
     const user = await User.findById(userId);
     
-    if (user?.role !== USER_ROLE.ADMIN) {
+    if (user?.role !== USER_ROLE.SUPER_ADMIN) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
@@ -645,7 +645,7 @@ export const uploadProgramsFromExcel = async (req: AuthRequest & { file?: Expres
     const userId = req.user?.userId;
     const user = await User.findById(userId);
     
-    if (user?.role !== USER_ROLE.OPS && user?.role !== USER_ROLE.ADMIN) {
+    if (user?.role !== USER_ROLE.OPS && user?.role !== USER_ROLE.SUPER_ADMIN) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',

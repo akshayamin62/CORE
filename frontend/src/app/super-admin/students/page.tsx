@@ -25,7 +25,7 @@ interface StudentData {
   createdAt: string;
 }
 
-export default function OpsStudentsPage() {
+export default function SuperAdminStudentsPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [students, setStudents] = useState<StudentData[]>([]);
@@ -41,7 +41,7 @@ export default function OpsStudentsPage() {
       const response = await authAPI.getProfile();
       const userData = response.data.data.user;
 
-      if (userData.role !== USER_ROLE.OPS) {
+      if (userData.role !== USER_ROLE.SUPER_ADMIN && userData.role !== USER_ROLE.OPS) {
         toast.error('Access denied.');
         router.push('/');
         return;
@@ -63,11 +63,7 @@ export default function OpsStudentsPage() {
       });
       setStudents(response.data.data.students);
     } catch (error: any) {
-      if (error.response?.status === 403) {
-        toast.error('Access denied. You need to be assigned as an active OPS.');
-      } else {
-        toast.error('Failed to fetch students');
-      }
+      toast.error('Failed to fetch students');
       console.error('Fetch students error:', error);
     } finally {
       setLoading(false);
@@ -84,7 +80,7 @@ export default function OpsStudentsPage() {
   });
 
   const handleViewStudent = (studentId: string) => {
-    router.push(`/ops/students/${studentId}`);
+    router.push(`/super-admin/students/${studentId}`);
   };
 
   if (loading || !user) {
@@ -107,7 +103,7 @@ export default function OpsStudentsPage() {
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900">All Students</h1>
             <p className="text-gray-600 mt-2">
-              View and manage student data and their service registrations
+              Manage student data and view their service registrations
             </p>
           </div>
 
@@ -119,7 +115,7 @@ export default function OpsStudentsPage() {
                 placeholder="Search by name, email, or mobile..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
               />
               <svg
                 className="w-5 h-5 text-gray-400 absolute left-4 top-4"

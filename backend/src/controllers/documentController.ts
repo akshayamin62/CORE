@@ -53,7 +53,7 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
 
     // Determine status based on uploader role
     const userRole = req.user!.role;
-    const documentStatus = (userRole === 'ADMIN' || userRole === 'OPS') 
+    const documentStatus = (userRole === 'SUPER_ADMIN' || userRole === 'OPS') 
       ? DocumentStatus.APPROVED 
       : DocumentStatus.PENDING;
 
@@ -87,10 +87,10 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
         existingDoc.uploadedByRole = req.user!.role as any;
         existingDoc.status = documentStatus;
         existingDoc.version += 1;
-        existingDoc.approvedBy = (userRole === 'ADMIN' || userRole === 'OPS') 
+        existingDoc.approvedBy = (userRole === 'SUPER_ADMIN' || userRole === 'OPS') 
           ? new mongoose.Types.ObjectId(req.user!.userId) 
           : undefined;
-        existingDoc.approvedAt = (userRole === 'ADMIN' || userRole === 'OPS') 
+        existingDoc.approvedAt = (userRole === 'SUPER_ADMIN' || userRole === 'OPS') 
           ? new Date() 
           : undefined;
 
@@ -112,10 +112,10 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
           status: documentStatus,
           isCustomField: isCustomField === "true" || isCustomField === true,
           version: 1,
-          approvedBy: (userRole === 'ADMIN' || userRole === 'OPS') 
+          approvedBy: (userRole === 'SUPER_ADMIN' || userRole === 'OPS') 
             ? new mongoose.Types.ObjectId(req.user!.userId) 
             : undefined,
-          approvedAt: (userRole === 'ADMIN' || userRole === 'OPS') 
+          approvedAt: (userRole === 'SUPER_ADMIN' || userRole === 'OPS') 
             ? new Date() 
             : undefined,
         });
@@ -137,10 +137,10 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
         status: documentStatus,
         isCustomField: isCustomField === "true" || isCustomField === true,
         version: 1,
-        approvedBy: (userRole === 'ADMIN' || userRole === 'OPS') 
+        approvedBy: (userRole === 'SUPER_ADMIN' || userRole === 'OPS') 
           ? new mongoose.Types.ObjectId(req.user!.userId) 
           : undefined,
-        approvedAt: (userRole === 'ADMIN' || userRole === 'OPS') 
+        approvedAt: (userRole === 'SUPER_ADMIN' || userRole === 'OPS') 
           ? new Date() 
           : undefined,
       });
@@ -425,7 +425,7 @@ export const approveDocument = async (req: AuthRequest, res: Response) => {
     const { documentId } = req.params;
     const userRole = req.user!.role;
 
-    if (userRole !== "OPS" && userRole !== "ADMIN") {
+    if (userRole !== "OPS" && userRole !== "SUPER_ADMIN") {
       return res.status(403).json({
         success: false,
         message: "Only ops and admins can approve documents",
@@ -504,7 +504,7 @@ export const rejectDocument = async (req: AuthRequest, res: Response) => {
     const { rejectionMessage } = req.body;
     const userRole = req.user!.role;
 
-    if (userRole !== "OPS" && userRole !== "ADMIN") {
+    if (userRole !== "OPS" && userRole !== "SUPER_ADMIN") {
       return res.status(403).json({
         success: false,
         message: "Only ops and admins can reject documents",
@@ -574,7 +574,7 @@ export const rejectDocument = async (req: AuthRequest, res: Response) => {
         if (student) {
           const user = await User.findById(student.userId);
           if (user && user.email) {
-            const rejectedByRole = userRole === 'ADMIN' ? 'admin' : 'OPS';
+            const rejectedByRole = userRole === 'SUPER_ADMIN' ? 'super_admin' : 'OPS';
             await sendDocumentRejectionEmail(
               user.email,
               user.name,
@@ -704,7 +704,7 @@ export const deleteDocument = async (req: AuthRequest, res: Response) => {
     }
 
     // Only admin can delete documents
-    if (userRole !== "ADMIN") {
+    if (userRole !== "SUPER_ADMIN") {
       return res.status(403).json({
         success: false,
         message: "Only admins can delete documents",

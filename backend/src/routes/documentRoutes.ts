@@ -28,10 +28,10 @@ router.use(authenticate);
 router.get("/fields/list", getDocumentFields);
 
 // Add new document field (Admin/Ops only)
-router.post("/fields/add", authorize(USER_ROLE.ADMIN, USER_ROLE.OPS), addDocumentField);
+router.post("/fields/add", authorize(USER_ROLE.SUPER_ADMIN, USER_ROLE.OPS), addDocumentField);
 
 // Delete document field (Admin only)
-router.delete("/fields/:fieldId", authorize(USER_ROLE.ADMIN), deleteDocumentField);
+router.delete("/fields/:fieldId", authorize(USER_ROLE.SUPER_ADMIN), deleteDocumentField);
 
 // Upload document (auto-save)
 router.post(

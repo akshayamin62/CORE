@@ -14,7 +14,7 @@ export enum DocumentStatus {
 export enum UploaderRole {
   STUDENT = "STUDENT",
   OPS = "OPS",
-  ADMIN = "ADMIN",
+  SUPER_ADMIN = "SUPER_ADMIN",
 }
 
 export interface IStudentDocument extends Document {

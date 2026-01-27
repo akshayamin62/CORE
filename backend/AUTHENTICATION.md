@@ -380,12 +380,12 @@ import { yourController } from "../controllers/yourController";
 const router = Router();
 
 // Single role - only admins
-router.get("/admin-only", authenticate, authorize(USER_ROLE.ADMIN), yourController);
+router.get("/admin-only", authenticate, authorize(USER_ROLE.SUPER_ADMIN), yourController);
 
 // Multiple roles - admins or ops
 router.get("/staff-only", 
   authenticate, 
-  authorize(USER_ROLE.ADMIN, USER_ROLE.OPS), 
+  authorize(USER_ROLE.SUPER_ADMIN, USER_ROLE.OPS), 
   yourController
 );
 

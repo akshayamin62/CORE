@@ -10,11 +10,11 @@ import {
   getStudentsWithRegistrations,
   assignOps,
   switchActiveOps,
-} from '../controllers/adminStudentController';
+} from '../controllers/superAdminStudentController';
 
 const router = express.Router();
 
-// All routes require authentication and admin/ops role
+// All routes require authentication and super admin/ops role
 router.use(authenticate);
 router.use(authorize([USER_ROLE.SUPER_ADMIN, USER_ROLE.OPS]));
 
@@ -33,10 +33,10 @@ router.get('/:studentId/registrations/:registrationId/answers', getStudentFormAn
 // Update student form answers
 router.put('/:studentId/answers/:partKey', updateStudentFormAnswers);
 
-// Assign ops to a registration (admin only)
+// Assign ops to a registration (super admin only)
 router.post('/registrations/:registrationId/assign-ops', authorize([USER_ROLE.SUPER_ADMIN]), assignOps);
 
-// Switch active ops (admin only)
+// Switch active ops (super admin only)
 router.post('/registrations/:registrationId/switch-active-ops', authorize([USER_ROLE.SUPER_ADMIN]), switchActiveOps);
 
 export default router;

@@ -9,80 +9,80 @@ import {
   getPendingApprovals,
   createOps,
   getOpsBySpecialization,
-} from "../controllers/adminController";
+} from "../controllers/superAdminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
 import { USER_ROLE } from "../types/roles";
 
 const router = Router();
 
-// All routes require authentication and admin role
+// All routes require authentication and super admin role
 router.use(authenticate);
 router.use(authorize([USER_ROLE.SUPER_ADMIN]));
 
 /**
- * @route   GET /api/admin/users
+ * @route   GET /api/super-admin/users
  * @desc    Get all users with optional filters
- * @access  Admin only
- * @query   role, isVerified, adminApproved, isActive, search
+ * @access  Super Admin only
+ * @query   role, isVerified, superAdminApproved, isActive, search
  */
 router.get("/users", getAllUsers);
 
 /**
- * @route   GET /api/admin/stats
+ * @route   GET /api/super-admin/stats
  * @desc    Get user statistics
- * @access  Admin only
+ * @access  Super Admin only
  */
 router.get("/stats", getUserStats);
 
 /**
- * @route   GET /api/admin/pending
+ * @route   GET /api/super-admin/pending
  * @desc    Get users pending approval
- * @access  Admin only
+ * @access  Super Admin only
  */
 router.get("/pending", getPendingApprovals);
 
 /**
- * @route   POST /api/admin/users/:userId/approve
+ * @route   POST /api/super-admin/users/:userId/approve
  * @desc    Approve a user
- * @access  Admin only
+ * @access  Super Admin only
  */
 router.post("/users/:userId/approve", approveUser);
 
 /**
- * @route   POST /api/admin/users/:userId/reject
+ * @route   POST /api/super-admin/users/:userId/reject
  * @desc    Reject a user
- * @access  Admin only
+ * @access  Super Admin only
  * @body    reason (optional)
  */
 router.post("/users/:userId/reject", rejectUser);
 
 /**
- * @route   PATCH /api/admin/users/:userId/toggle-status
+ * @route   PATCH /api/super-admin/users/:userId/toggle-status
  * @desc    Toggle user active/inactive status
- * @access  Admin only
+ * @access  Super Admin only
  */
 router.patch("/users/:userId/toggle-status", toggleUserStatus);
 
 /**
- * @route   DELETE /api/admin/users/:userId
+ * @route   DELETE /api/super-admin/users/:userId
  * @desc    Delete a user
- * @access  Admin only
+ * @access  Super Admin only
  */
 // router.delete("/users/:userId", deleteUser);
 
 /**
- * @route   POST /api/admin/ops
+ * @route   POST /api/super-admin/ops
  * @desc    Create a new OPS
- * @access  Admin only
+ * @access  Super Admin only
  * @body    name, email, phoneNumber (optional), specializations (optional array)
  */
 router.post("/ops", createOps);
 
 /**
- * @route   GET /api/admin/ops
+ * @route   GET /api/super-admin/ops
  * @desc    Get ops by specialization
- * @access  Admin only
+ * @access  Super Admin only
  * @query   specialization (optional)
  */
 router.get("/ops", getOpsBySpecialization);

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI, serviceAPI } from '@/lib/api';
 import { User, USER_ROLE, FormStructure, FormSection, FormSubSection, FormField } from '@/types';
-import AdminLayout from '@/components/AdminLayout';
+import SuperAdminLayout from '@/components/SuperAdminLayout';
 import FormSectionRenderer from '@/components/FormSectionRenderer';
 import FormPartsNavigation from '@/components/FormPartsNavigation';
 import FormSectionsNavigation from '@/components/FormSectionsNavigation';
@@ -79,10 +79,10 @@ export default function StudentFormEditPage() {
     try {
       // Make both independent API calls in PARALLEL
       const [studentResponse, registrationResponse] = await Promise.all([
-        axios.get(`${API_URL}/admin/students/${studentId}`, {
+        axios.get(`${API_URL}/super-admin/students/${studentId}`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`${API_URL}/admin/students/${studentId}/registrations/${registrationId}/answers`, {
+        axios.get(`${API_URL}/super-admin/students/${studentId}/registrations/${registrationId}/answers`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
@@ -251,7 +251,7 @@ export default function StudentFormEditPage() {
       const answers = formValues[partKey] || {};
 
       await axios.put(
-        `${API_URL}/admin/students/${studentId}/answers/${partKey}`,
+        `${API_URL}/super-admin/students/${studentId}/answers/${partKey}`,
         { answers },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -283,7 +283,7 @@ export default function StudentFormEditPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <AdminLayout user={user}>
+      <SuperAdminLayout user={user}>
         <div className="p-8">
           {/* Back Button */}
           <button
@@ -373,7 +373,7 @@ export default function StudentFormEditPage() {
             />
           )}
         </div>
-      </AdminLayout>
+      </SuperAdminLayout>
     </>
   );
 }

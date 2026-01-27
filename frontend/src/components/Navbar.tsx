@@ -84,11 +84,11 @@ export default function Navbar() {
             {isLoggedIn ? (
               <>
                 {/* Dashboard link - routes based on user role */}
-                {(userRole?.toLowerCase() === 'admin' || userRole === 'ADMIN') ? (
+                {(userRole?.toLowerCase() === 'super_admin' || userRole === 'SUPER_ADMIN') ? (
                   <Link
-                    href="/admin/dashboard"
+                    href="/super-admin/dashboard"
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                      pathname.startsWith('/admin')
+                      pathname.startsWith('/super-admin')
                         ? 'text-blue-600 bg-blue-50 shadow-md'
                         : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-sm'
                     }`}
@@ -264,12 +264,12 @@ export default function Navbar() {
             {isLoggedIn ? (
               <>
                 {/* Dashboard link - routes based on user role */}
-                {(userRole?.toLowerCase() === 'admin' || userRole === 'ADMIN') ? (
+                {(userRole?.toLowerCase() === 'super_admin' || userRole === 'SUPER_ADMIN') ? (
                   <Link
-                    href="/admin/dashboard"
+                    href="/super-admin/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
                     className={`block px-3 py-2 rounded-md text-base font-medium ${
-                      pathname.startsWith('/admin')
+                      pathname.startsWith('/super-admin')
                         ? 'text-blue-600 bg-blue-50'
                         : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                     }`}

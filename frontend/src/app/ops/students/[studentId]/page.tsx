@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
-import AdminLayout from '@/components/AdminLayout';
+import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -73,7 +73,7 @@ export default function StudentDetailPage() {
   const fetchStudentDetails = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/admin/students/${studentId}`, {
+      const response = await axios.get(`${API_URL}/super-admin/students/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setStudent(response.data.data.student);
@@ -108,7 +108,7 @@ export default function StudentDetailPage() {
 
   if (!student) {
     return (
-      <AdminLayout user={user}>
+      <SuperAdminLayout user={user}>
         <div className="p-8 text-center">
           <p className="text-red-600">Student not found</p>
           <button
@@ -118,14 +118,14 @@ export default function StudentDetailPage() {
             Go Back
           </button>
         </div>
-      </AdminLayout>
+      </SuperAdminLayout>
     );
   }
 
   return (
     <>
       <Toaster position="top-right" />
-      <AdminLayout user={user}>
+      <SuperAdminLayout user={user}>
         <div className="p-8">
           {/* Back Button */}
           <button
@@ -252,7 +252,7 @@ export default function StudentDetailPage() {
             )}
           </div>
         </div>
-      </AdminLayout>
+      </SuperAdminLayout>
     </>
   );
 }

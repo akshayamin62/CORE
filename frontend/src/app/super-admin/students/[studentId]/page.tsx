@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI, serviceAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
-import AdminLayout from '@/components/AdminLayout';
+import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -99,9 +99,9 @@ export default function StudentDetailPage() {
     try {
       const token = localStorage.getItem('token');
       console.log('🔍 Fetching student details for ID:', studentId);
-      console.log('🔑 API URL:', `${API_URL}/admin/students/${studentId}`);
+      console.log('🔑 API URL:', `${API_URL}/super-admin/students/${studentId}`);
       
-      const response = await axios.get(`${API_URL}/admin/students/${studentId}`, {
+      const response = await axios.get(`${API_URL}/super-admin/students/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
@@ -112,7 +112,7 @@ export default function StudentDetailPage() {
       // Fetch ops
       try {
         console.log('🔍 Fetching ops list...');
-        const opsResponse = await axios.get(`${API_URL}/admin/ops`, {
+        const opsResponse = await axios.get(`${API_URL}/super-admin/ops`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log('✅ Ops response:', opsResponse.data);
@@ -151,7 +151,7 @@ export default function StudentDetailPage() {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `${API_URL}/admin/students/registrations/${registrationId}/assign-ops`,
+        `${API_URL}/super-admin/students/registrations/${registrationId}/assign-ops`,
         { 
           primaryOpsId: primaryId || undefined,
           secondaryOpsId: secondaryId || undefined
@@ -178,7 +178,7 @@ export default function StudentDetailPage() {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        `${API_URL}/admin/students/registrations/${registrationId}/switch-active-ops`,
+        `${API_URL}/super-admin/students/registrations/${registrationId}/switch-active-ops`,
         { activeOpsId: opsId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -193,7 +193,7 @@ export default function StudentDetailPage() {
   };
 
   const handleViewFormData = (registrationId: string) => {
-    router.push(`/admin/students/${studentId}/registration/${registrationId}`);
+    router.push(`/super-admin/students/${studentId}/registration/${registrationId}`);
   };
 
   if (loading || !user) {
@@ -209,7 +209,7 @@ export default function StudentDetailPage() {
 
   if (!student) {
     return (
-      <AdminLayout user={user}>
+      <SuperAdminLayout user={user}>
         <div className="p-8 text-center">
           <p className="text-red-600">Student not found</p>
           <button
@@ -219,14 +219,14 @@ export default function StudentDetailPage() {
             Go Back
           </button>
         </div>
-      </AdminLayout>
+      </SuperAdminLayout>
     );
   }
 
   return (
     <>
       <Toaster position="top-right" />
-      <AdminLayout user={user}>
+      <SuperAdminLayout user={user}>
         <div className="p-8">
           {/* Back Button */}
           <button
@@ -490,7 +490,7 @@ export default function StudentDetailPage() {
             )}
           </div>
         </div>
-      </AdminLayout>
+      </SuperAdminLayout>
     </>
   );
 }

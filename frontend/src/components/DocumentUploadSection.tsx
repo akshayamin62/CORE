@@ -11,7 +11,7 @@ import { Upload, Download, Check, X, Plus, FileText, AlertCircle, Trash2 } from 
 interface DocumentUploadSectionProps {
   registrationId: string;
   studentId: string;
-  userRole: 'STUDENT' | 'OPS' | 'ADMIN';
+  userRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN';
   sectionTitle: string;
 }
 
@@ -324,7 +324,7 @@ export default function DocumentUploadSection({
   ) => {
     const fieldDocuments = getDocumentsForField(documentKey);
     const isUploading = uploading === documentKey;
-    const canUpload = userRole === 'STUDENT' || userRole === 'OPS' || userRole === 'ADMIN';
+    const canUpload = userRole === 'STUDENT' || userRole === 'OPS' || userRole === 'SUPER_ADMIN';
     
     return (
       <div
@@ -422,7 +422,7 @@ export default function DocumentUploadSection({
                           Download
                         </button>
                         
-                        {userRole === 'ADMIN' && (
+                        {userRole === 'SUPER_ADMIN' && (
                           <label className="cursor-pointer">
                             <input
                               type="file"
@@ -442,7 +442,7 @@ export default function DocumentUploadSection({
                           </label>
                         )}
                         
-                        {(userRole === 'OPS' || userRole === 'ADMIN') && document.status === DocumentStatus.PENDING && (
+                        {(userRole === 'OPS' || userRole === 'SUPER_ADMIN') && document.status === DocumentStatus.PENDING && (
                           <>
                             <button
                               onClick={() => handleApprove(document)}
@@ -668,7 +668,7 @@ export default function DocumentUploadSection({
       <>
         <div className="space-y-6">
         {/* Add Document Button - Only for Admin/OPS */}
-        {(userRole === 'ADMIN' || userRole === 'OPS') && (
+        {(userRole === 'SUPER_ADMIN' || userRole === 'OPS') && (
           <div className="flex justify-end">
             <button
               onClick={() => setShowAddFieldModal(true)}
@@ -704,7 +704,7 @@ export default function DocumentUploadSection({
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No KS Document Fields</h3>
             <p className="text-gray-700">
-              {userRole === 'ADMIN' || userRole === 'OPS'
+              {userRole === 'SUPER_ADMIN' || userRole === 'OPS'
                 ? 'Click "Add Document Field" to create personalized document requirements for this student.'
                 : 'No KS document fields have been configured for you yet.'}
             </p>

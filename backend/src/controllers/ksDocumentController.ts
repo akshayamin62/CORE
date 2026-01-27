@@ -88,7 +88,7 @@ export const addKSDocumentField = async (req: AuthRequest, res: Response) => {
       order: nextOrder,
       isActive: true,
       createdBy: new mongoose.Types.ObjectId(req.user!.userId),
-      createdByRole: req.user!.role as "ADMIN" | "OPS",
+      createdByRole: req.user!.role as "SUPER_ADMIN" | "OPS",
     });
 
     return res.status(201).json({

@@ -13,7 +13,7 @@ import {
   uploadProgramsFromExcel,
   updateProgramSelection,
   getStudentAppliedPrograms,
-  getAdminStudentPrograms,
+  getSuperAdminStudentPrograms,
 } from '../controllers/programController';
 
 // Configure multer for file uploads
@@ -54,12 +54,12 @@ router.post('/ops/student/:studentId/programs', authorize([USER_ROLE.OPS]), crea
 router.post('/ops/programs/upload-excel', authorize([USER_ROLE.OPS]), upload.single('file'), uploadProgramsFromExcel);
 router.post('/ops/student/:studentId/programs/upload-excel', authorize([USER_ROLE.OPS]), upload.single('file'), uploadProgramsFromExcel);
 
-// Admin routes
-router.get('/admin/student/:studentId/programs', authorize([USER_ROLE.ADMIN]), getAdminStudentPrograms);
-router.get('/admin/student/:studentId/applied-programs', authorize([USER_ROLE.ADMIN]), getStudentAppliedPrograms);
-router.post('/admin/programs/create', authorize([USER_ROLE.ADMIN]), createProgram);
-router.post('/admin/programs/upload-excel', authorize([USER_ROLE.ADMIN]), upload.single('file'), uploadProgramsFromExcel);
-router.put('/admin/programs/:programId/selection', authorize([USER_ROLE.ADMIN]), updateProgramSelection);
+// Super Admin routes
+router.get('/super-admin/student/:studentId/programs', authorize([USER_ROLE.SUPER_ADMIN]), getSuperAdminStudentPrograms);
+router.get('/super-admin/student/:studentId/applied-programs', authorize([USER_ROLE.SUPER_ADMIN]), getStudentAppliedPrograms);
+router.post('/super-admin/programs/create', authorize([USER_ROLE.SUPER_ADMIN]), createProgram);
+router.post('/super-admin/programs/upload-excel', authorize([USER_ROLE.SUPER_ADMIN]), upload.single('file'), uploadProgramsFromExcel);
+router.put('/super-admin/programs/:programId/selection', authorize([USER_ROLE.SUPER_ADMIN]), updateProgramSelection);
 
 export default router;
 

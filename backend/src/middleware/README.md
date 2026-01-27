@@ -43,12 +43,12 @@ import { USER_ROLE } from "../types/roles";
 import { authenticate } from "../middleware/auth";
 
 // Single role
-router.get("/admin-only", authenticate, authorize(USER_ROLE.ADMIN), controllerFunction);
+router.get("/admin-only", authenticate, authorize(USER_ROLE.SUPER_ADMIN), controllerFunction);
 
 // Multiple roles
 router.get("/admin-or-OPS", 
   authenticate, 
-  authorize(USER_ROLE.ADMIN, USER_ROLE.OPS), 
+  authorize(USER_ROLE.SUPER_ADMIN, USER_ROLE.OPS), 
   controllerFunction
 );
 

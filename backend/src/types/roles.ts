@@ -3,7 +3,7 @@ export enum USER_ROLE {
     PARENT = "PARENT",
     OPS = "OPS",
     ALUMNI = "ALUMNI",
-    ADMIN = "ADMIN",
+    SUPER_ADMIN = "SUPER_ADMIN",
     SERVICE_PROVIDER = "SERVICE_PROVIDER",
   }
   

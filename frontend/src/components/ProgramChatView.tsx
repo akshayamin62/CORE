@@ -18,7 +18,7 @@ interface Program {
 interface ChatMessage {
   _id: string;
   senderId: string;
-  senderRole: 'STUDENT' | 'OPS' | 'ADMIN';
+  senderRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN';
   senderName: string;
   opsType?: 'PRIMARY' | 'ACTIVE';
   message: string;
@@ -43,7 +43,7 @@ interface ChatInfo {
 interface ProgramChatViewProps {
   program: Program;
   onClose: () => void;
-  userRole: 'STUDENT' | 'OPS' | 'ADMIN';
+  userRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN';
 }
 
 export default function ProgramChatView({ program, onClose, userRole }: ProgramChatViewProps) {
@@ -149,7 +149,7 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
         return 'bg-blue-100 text-blue-800';
       case 'OPS':
         return 'bg-green-100 text-green-800';
-      case 'ADMIN':
+      case 'SUPER_ADMIN':
         return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -162,7 +162,7 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
         return 'bg-blue-500 text-white';
       case 'OPS':
         return 'bg-green-500 text-white';
-      case 'ADMIN':
+      case 'SUPER_ADMIN':
         return 'bg-purple-500 text-white';
       default:
         return 'bg-gray-500 text-white';

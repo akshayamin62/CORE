@@ -3,7 +3,7 @@ export enum USER_ROLE {
   PARENT = 'PARENT',
   OPS = 'OPS',
   ALUMNI = 'ALUMNI',
-  ADMIN = 'ADMIN',
+  SUPER_ADMIN = 'SUPER_ADMIN',
   SERVICE_PROVIDER = 'SERVICE_PROVIDER',
 }
 
@@ -199,7 +199,7 @@ export interface StudentDocument {
     name: string;
     email: string;
   };
-  uploadedByRole: 'STUDENT' | 'OPS' | 'ADMIN';
+  uploadedByRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN';
   status: DocumentStatus;
   approvedBy?: {
     _id: string;
