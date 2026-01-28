@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import User from "../models/User";
 import { USER_ROLE } from "../types/roles";
 import Ops from "../models/Ops";
+import Admin from "../models/Admin";
 // import { sendEmail } from "../utils/email";
 
 /**
@@ -566,5 +567,80 @@ export const getOpsBySpecialization = async (req: Request, res: Response): Promi
     });
   }
 };
+
+/**
+ * Create a new Admin
+ */
+export const createAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { name, email, phoneNumber } = req.body;
+
+    // Validation
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name and email are required',
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this email already exists',
+      });
+    }
+
+    // Create user with ADMIN role (no password - will use OTP login)
+    const newUser = new User({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      role: USER_ROLE.ADMIN,
+      isVerified: true, // Auto-verify admins created by super admin
+      isActive: true,
+    });
+
+    await newUser.save();
+
+    // Create Admin profile
+    const newAdmin = new Admin({
+      userId: newUser._id,
+      email: email.toLowerCase().trim(),
+      mobileNumber: phoneNumber?.trim() || undefined,
+    });
+
+    await newAdmin.save();
+
+    // TODO: Send email with credentials
+    // await sendEmail({
+    //   to: email,
+    //   subject: 'Admin Account Created',
+    //   text: `Your admin account has been created. Email: ${email}, Password: ${defaultPassword}`,
+    // });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Admin created successfully',
+      data: {
+        admin: {
+          _id: newAdmin._id,
+          userId: newUser._id,
+          name: newUser.name,
+          email: newUser.email,
+          mobileNumber: newAdmin.mobileNumber,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Create admin error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create admin',
+      error: error.message,
+    });
+  }
+};
+
 
 

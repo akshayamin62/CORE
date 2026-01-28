@@ -115,6 +115,7 @@ export default function LoginPage() {
       // Redirect based on role
       const redirectPath = 
         user.role === 'SUPER_ADMIN' ? '/super-admin/dashboard' :
+        user.role === 'ADMIN' ? '/admin/dashboard' :
         user.role === 'OPS' ? '/ops/dashboard' :
         '/dashboard';
       

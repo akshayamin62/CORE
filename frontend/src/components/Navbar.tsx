@@ -95,7 +95,18 @@ export default function Navbar() {
                   >
                     Dashboard
                   </Link>
-                ) : (userRole?.toLowerCase() === 'OPS' || userRole === 'OPS') ? (
+                ) : (userRole?.toLowerCase() === 'admin' || userRole === 'ADMIN') ? (
+                  <Link
+                    href="/admin/dashboard"
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      pathname.startsWith('/admin')
+                        ? 'text-blue-600 bg-blue-50 shadow-md'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-sm'
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+                ) : (userRole?.toLowerCase() === 'ops' || userRole === 'OPS') ? (
                   <Link
                     href="/ops/dashboard"
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
@@ -276,7 +287,19 @@ export default function Navbar() {
                   >
                     Dashboard
                   </Link>
-                ) : (userRole?.toLowerCase() === 'OPS' || userRole === 'OPS') ? (
+                ) : (userRole?.toLowerCase() === 'admin' || userRole === 'ADMIN') ? (
+                  <Link
+                    href="/admin/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${
+                      pathname.startsWith('/admin')
+                        ? 'text-blue-600 bg-blue-50'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+                ) : (userRole?.toLowerCase() === 'ops' || userRole === 'OPS') ? (
                   <Link
                     href="/ops/dashboard"
                     onClick={() => setMobileMenuOpen(false)}

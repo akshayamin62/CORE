@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from "./routes/authRoutes";
 import superAdminRoutes from "./routes/superAdminRoutes";
+import adminRoutes from "./routes/adminRoutes";
 import serviceRoutes from "./routes/serviceRoutes";
 import formAnswerRoutes from "./routes/formAnswerRoutes";
 import studentRoutes from "./routes/studentRoutes";
@@ -17,6 +18,8 @@ import ksDocumentRoutes from "./routes/ksDocumentRoutes";
 import "./models/User";
 import "./models/Student";
 import "./models/Ops";
+import "./models/Admin";
+import "./models/Counselor";
 import "./models/Service";
 import "./models/FormPart";
 import "./models/ServiceFormPart";
@@ -43,6 +46,7 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use("/api/auth", authRoutes);
 app.use("/api/super-admin/students", superAdminStudentRoutes); // More specific route must come first
 app.use("/api/super-admin", superAdminRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/forms", formAnswerRoutes);
 app.use("/api/student", studentRoutes);

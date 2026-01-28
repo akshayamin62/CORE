@@ -1,26 +1,20 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-export interface ICounselor extends Document {
+export interface IAdmin extends Document {
   userId: mongoose.Types.ObjectId; // Reference to User model
-  adminId: mongoose.Types.ObjectId; // Reference to Admin who created this counselor
   email: string;
   mobileNumber?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
-const counselorSchema = new Schema<ICounselor>(
+const adminSchema = new Schema<IAdmin>(
   {
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
       unique: true,
-    },
-    adminId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
     },
     email: {
       type: String,
@@ -37,6 +31,4 @@ const counselorSchema = new Schema<ICounselor>(
   { timestamps: true }
 );
 
-export default mongoose.model<ICounselor>("Counselor", counselorSchema);
-
-
+export default mongoose.model<IAdmin>("Admin", adminSchema);

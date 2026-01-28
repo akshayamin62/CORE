@@ -25,6 +25,8 @@ export default function DashboardPage() {
       // Redirect admin/OPS to their dashboard
       if (user.role === 'SUPER_ADMIN') {
         router.push('/super-admin/dashboard');
+      } else if (user.role === 'ADMIN') {
+        router.push('/admin/dashboard');
       } else if (user.role === 'OPS') {
         router.push('/ops/dashboard');
       } else {
@@ -69,6 +71,8 @@ export default function DashboardPage() {
       if (error.response?.status === 404 || error.response?.status === 401) {
         if (user?.role === 'SUPER_ADMIN') {
           router.push('/super-admin/dashboard');
+        } else if (user?.role === 'ADMIN') {
+          router.push('/admin/dashboard');
         } else if (user?.role === 'OPS') {
           router.push('/ops/dashboard');
         }

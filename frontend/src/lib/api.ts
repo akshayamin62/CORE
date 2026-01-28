@@ -90,6 +90,12 @@ export const superAdminAPI = {
     specializations?: string[];
   }) => api.post('/super-admin/ops', data),
   
+  createAdmin: (data: {
+    name: string;
+    email: string;
+    phoneNumber?: string;
+  }) => api.post('/super-admin/admin', data),
+  
   getOps: () => api.get('/super-admin/ops'),
   
   assignOps: (registrationId: string, data: {
@@ -200,6 +206,17 @@ export const programAPI = {
       },
     });
   },
+};
+
+// Admin API (for ADMIN role)
+export const adminAPI = {
+  createCounselor: (data: {
+    name: string;
+    email: string;
+    phoneNumber?: string;
+  }) => api.post('/admin/counselor', data),
+  
+  getCounselors: () => api.get('/admin/counselors'),
 };
 
 export const chatAPI = {

@@ -9,6 +9,7 @@ import {
   getPendingApprovals,
   createOps,
   getOpsBySpecialization,
+  createAdmin,
 } from "../controllers/superAdminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
@@ -86,6 +87,14 @@ router.post("/ops", createOps);
  * @query   specialization (optional)
  */
 router.get("/ops", getOpsBySpecialization);
+
+/**
+ * @route   POST /api/super-admin/admin
+ * @desc    Create a new Admin
+ * @access  Super Admin only
+ * @body    name, email, phoneNumber (optional)
+ */
+router.post("/admin", createAdmin);
 
 export default router;
 
