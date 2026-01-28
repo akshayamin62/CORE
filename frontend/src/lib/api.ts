@@ -87,7 +87,6 @@ export const superAdminAPI = {
     name: string;
     email: string;
     phoneNumber?: string;
-    specializations?: string[];
   }) => api.post('/super-admin/ops', data),
   
   createAdmin: (data: {
@@ -96,7 +95,17 @@ export const superAdminAPI = {
     phoneNumber?: string;
   }) => api.post('/super-admin/admin', data),
   
+  createUserByRole: (data: {
+    name: string;
+    email: string;
+    phoneNumber?: string;
+    role: string;
+    adminId?: string;
+  }) => api.post('/super-admin/user', data),
+  
   getOps: () => api.get('/super-admin/ops'),
+  
+  getAdmins: () => api.get('/super-admin/admins'),
   
   assignOps: (registrationId: string, data: {
     primaryOpsId?: string;

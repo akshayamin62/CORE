@@ -2,19 +2,38 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { authAPI } from '@/lib/api';
+import { authAPI, superAdminAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
+
+interface RoleStats {
+  ADMIN?: number;
+  OPS?: number;
+  EDUPLAN_COACH?: number;
+  IVY_EXPERT?: number;
+  COUNSELOR?: number;
+  STUDENT?: number;
+  PARENT?: number;
+  ALUMNI?: number;
+  SERVICE_PROVIDER?: number;
+}
 
 export default function SuperAdminDashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleStats, setRoleStats] = useState<RoleStats>({});
 
   useEffect(() => {
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);
 
   const checkAuth = async () => {
     try {
@@ -36,6 +55,15 @@ export default function SuperAdminDashboardPage() {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const response = await superAdminAPI.getStats();
+      setRoleStats(response.data.data.byRole || {});
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -49,6 +77,19 @@ export default function SuperAdminDashboardPage() {
 
   if (!user) return null;
 
+  // Define role cards with their display info
+  const roleCards = [
+    { key: 'ADMIN', label: 'Admins', color: 'red', path: '/super-admin/roles/admin' },
+    { key: 'OPS', label: 'Ops', color: 'green', path: '/super-admin/roles/ops' },
+    { key: 'EDUPLAN_COACH', label: 'EduPlan Coaches', color: 'indigo', path: '/super-admin/roles/eduplan-coach' },
+    { key: 'IVY_EXPERT', label: 'Ivy Experts', color: 'purple', path: '/super-admin/roles/ivy-expert' },
+    { key: 'COUNSELOR', label: 'Counselors', color: 'teal', path: '/super-admin/roles/counselor' },
+    { key: 'STUDENT', label: 'Students', color: 'blue', path: '/super-admin/roles/student' },
+    { key: 'PARENT', label: 'Parents', color: 'amber', path: '/super-admin/roles/parent' },
+    { key: 'ALUMNI', label: 'Alumni', color: 'pink', path: '/super-admin/roles/alumni' },
+    { key: 'SERVICE_PROVIDER', label: 'Service Providers', color: 'orange', path: '/super-admin/roles/service-provider' },
+  ];
+
   return (
     <>
       <Toaster position="top-right" />
@@ -56,54 +97,23 @@ export default function SuperAdminDashboardPage() {
         <div className="p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Super Admin Dashboard</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Super Admin</h1>
             <p className="text-gray-600 mt-2">
-              Manage students, services, and system settings
+              Overview of all users and system management
             </p>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatCard
-              title="Total Students"
-              value="0"
-              icon={
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-              }
-              color="blue"
-            />
-            <StatCard
-              title="Active Services"
-              value="0"
-              icon={
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              }
-              color="green"
-            />
-            <StatCard
-              title="Total Registrations"
-              value="0"
-              icon={
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-              }
-              color="purple"
-            />
-            <StatCard
-              title="Pending Reviews"
-              value="0"
-              icon={
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              }
-              color="yellow"
-            />
+          {/* Role Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 mb-8">
+            {roleCards.map((card) => (
+              <RoleStatCard
+                key={card.key}
+                title={`Total ${card.label}`}
+                value={roleStats[card.key as keyof RoleStats] || 0}
+                color={card.color as any}
+                onClick={() => router.push(card.path)}
+              />
+            ))}
           </div>
 
           {/* Quick Actions */}
@@ -113,7 +123,7 @@ export default function SuperAdminDashboardPage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <ActionButton
-                onClick={() => router.push('/super-admin/students')}
+                onClick={() => router.push('/super-admin/roles/student')}
                 icon={
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -123,14 +133,14 @@ export default function SuperAdminDashboardPage() {
                 description="Manage student data and registrations"
               />
               <ActionButton
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/super-admin/roles/admin')}
                 icon={
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 }
-                title="View Services"
-                description="Browse all available services"
+                title="Manage Admins"
+                description="Add and manage admin accounts"
               />
               <ActionButton
                 onClick={() => router.push('/super-admin/users')}
@@ -141,7 +151,7 @@ export default function SuperAdminDashboardPage() {
                   </svg>
                 }
                 title="User Management"
-                description="Manage system users and roles"
+                description="Manage all system users"
               />
             </div>
           </div>
@@ -151,30 +161,43 @@ export default function SuperAdminDashboardPage() {
   );
 }
 
-interface StatCardProps {
+interface RoleStatCardProps {
   title: string;
-  value: string;
-  icon: React.ReactNode;
-  color: 'blue' | 'green' | 'purple' | 'yellow';
+  value: number;
+  color: 'blue' | 'green' | 'purple' | 'yellow' | 'red' | 'indigo' | 'teal' | 'amber' | 'pink' | 'orange';
+  onClick?: () => void;
 }
 
-function StatCard({ title, value, icon, color }: StatCardProps) {
-  const colorClasses = {
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-green-100 text-green-600',
-    purple: 'bg-purple-100 text-purple-600',
-    yellow: 'bg-yellow-100 text-yellow-600',
+function RoleStatCard({ title, value, color, onClick }: RoleStatCardProps) {
+  const colorClasses: Record<string, { bg: string; text: string }> = {
+    blue: { bg: 'bg-blue-100', text: 'text-blue-600' },
+    green: { bg: 'bg-green-100', text: 'text-green-600' },
+    purple: { bg: 'bg-purple-100', text: 'text-purple-600' },
+    yellow: { bg: 'bg-yellow-100', text: 'text-yellow-600' },
+    red: { bg: 'bg-red-100', text: 'text-red-600' },
+    indigo: { bg: 'bg-indigo-100', text: 'text-indigo-600' },
+    teal: { bg: 'bg-teal-100', text: 'text-teal-600' },
+    amber: { bg: 'bg-amber-100', text: 'text-amber-600' },
+    pink: { bg: 'bg-pink-100', text: 'text-pink-600' },
+    orange: { bg: 'bg-orange-100', text: 'text-orange-600' },
   };
 
+  const colorStyle = colorClasses[color] || colorClasses.blue;
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div 
+      onClick={onClick}
+      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer"
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-600 mb-1">{title}</p>
           <p className="text-3xl font-bold text-gray-900">{value}</p>
         </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
-          {icon}
+        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorStyle.bg} ${colorStyle.text}`}>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
         </div>
       </div>
     </div>

@@ -25,12 +25,44 @@ interface StudentData {
   createdAt: string;
 }
 
-export default function SuperAdminStudentsPage() {
+interface UserStats {
+  total: number;
+  active: number;
+}
+
+// Stat Card Component
+function StatCard({ title, value, color }: { title: string; value: string; color: string }) {
+  const colorClasses: Record<string, string> = {
+    blue: 'bg-blue-100 text-blue-600',
+    green: 'bg-green-100 text-green-600',
+    purple: 'bg-purple-100 text-purple-600',
+  };
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600 mb-1">{title}</p>
+          <p className="text-3xl font-bold text-gray-900">{value}</p>
+        </div>
+        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function StudentUsersPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [students, setStudents] = useState<StudentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [stats, setStats] = useState<UserStats>({ total: 0, active: 0 });
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -61,7 +93,14 @@ export default function SuperAdminStudentsPage() {
       const response = await axios.get(`${API_URL}/super-admin/students`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setStudents(response.data.data.students);
+      const fetchedStudents = response.data.data.students;
+      setStudents(fetchedStudents);
+      
+      // Calculate stats
+      setStats({
+        total: fetchedStudents.length,
+        active: fetchedStudents.filter((s: StudentData) => s.user.isActive).length,
+      });
     } catch (error: any) {
       toast.error('Failed to fetch students');
       console.error('Fetch students error:', error);
@@ -72,15 +111,38 @@ export default function SuperAdminStudentsPage() {
 
   const filteredStudents = students.filter((student) => {
     const query = searchQuery.toLowerCase();
-    return (
+    const matchesSearch = 
       student.user.name.toLowerCase().includes(query) ||
       student.user.email.toLowerCase().includes(query) ||
-      student.mobileNumber?.includes(query)
-    );
+      student.mobileNumber?.includes(query);
+    
+    const matchesStatus = !statusFilter || 
+      (statusFilter === 'active' && student.user.isActive) ||
+      (statusFilter === 'inactive' && !student.user.isActive);
+    
+    return matchesSearch && matchesStatus;
   });
 
   const handleViewStudent = (studentId: string) => {
-    router.push(`/super-admin/students/${studentId}`);
+    router.push(`/super-admin/roles/student/${studentId}`);
+  };
+
+  const handleToggleStatus = async (studentId: string) => {
+    try {
+      setActionLoading(studentId);
+      const token = localStorage.getItem('token');
+      await axios.patch(
+        `${API_URL}/super-admin/users/${studentId}/toggle-status`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Student status updated');
+      await fetchStudents();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update status');
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   if (loading || !user) {
@@ -101,40 +163,49 @@ export default function SuperAdminStudentsPage() {
         <div className="p-8">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">All Students</h1>
-            <p className="text-gray-600 mt-2">
-              Manage student data and view their service registrations
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">Students</h1>
+            <p className="text-gray-600 mt-1">Manage all student accounts</p>
           </div>
 
-          {/* Search Bar */}
-          <div className="mb-6">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search by name, email, or mobile..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-              />
-              <svg
-                className="w-5 h-5 text-gray-400 absolute left-4 top-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <StatCard title="Total Students" value={stats.total.toString()} color="blue" />
+            <StatCard title="Active Users" value={stats.active.toString()} color="green" />
+          </div>
+
+          {/* Search & Filters */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+            <div className="p-6 border-b border-gray-200 bg-gray-50">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input
+                  type="text"
+                  placeholder="Search by name, email, or mobile..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 />
-              </svg>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                >
+                  <option value="">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setStatusFilter('');
+                  }}
+                  className="px-4 py-2.5 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  Clear Filters
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Students Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            {/* Students Table */}
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
@@ -203,12 +274,25 @@ export default function SuperAdminStudentsPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <button
-                            onClick={() => handleViewStudent(student._id)}
-                            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-xs"
-                          >
-                            View Details
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleViewStudent(student._id)}
+                              className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-xs"
+                            >
+                              View Details
+                            </button>
+                            <button
+                              onClick={() => handleToggleStatus(student.user._id)}
+                              disabled={actionLoading === student.user._id}
+                              className={`px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 text-xs font-medium ${
+                                student.user.isActive
+                                  ? 'bg-yellow-600 text-white hover:bg-yellow-700'
+                                  : 'bg-green-600 text-white hover:bg-green-700'
+                              }`}
+                            >
+                              {student.user.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -246,7 +330,7 @@ export default function SuperAdminStudentsPage() {
             </div>
           </div>
 
-          {/* Stats */}
+          {/* Results count */}
           {students.length > 0 && (
             <div className="mt-6 text-sm text-gray-600">
               Showing {filteredStudents.length} of {students.length} total students
@@ -257,5 +341,3 @@ export default function SuperAdminStudentsPage() {
     </>
   );
 }
-
-

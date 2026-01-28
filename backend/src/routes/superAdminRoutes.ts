@@ -8,8 +8,10 @@ import {
   // deleteUser,
   getPendingApprovals,
   createOps,
-  getOpsBySpecialization,
+  getAllOps,
   createAdmin,
+  getAdmins,
+  createUserByRole,
 } from "../controllers/superAdminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
@@ -76,17 +78,16 @@ router.patch("/users/:userId/toggle-status", toggleUserStatus);
  * @route   POST /api/super-admin/ops
  * @desc    Create a new OPS
  * @access  Super Admin only
- * @body    name, email, phoneNumber (optional), specializations (optional array)
+ * @body    name, email, phoneNumber (optional)
  */
 router.post("/ops", createOps);
 
 /**
  * @route   GET /api/super-admin/ops
- * @desc    Get ops by specialization
+ * @desc    Get all ops
  * @access  Super Admin only
- * @query   specialization (optional)
  */
-router.get("/ops", getOpsBySpecialization);
+router.get("/ops", getAllOps);
 
 /**
  * @route   POST /api/super-admin/admin
@@ -95,6 +96,21 @@ router.get("/ops", getOpsBySpecialization);
  * @body    name, email, phoneNumber (optional)
  */
 router.post("/admin", createAdmin);
+
+/**
+ * @route   GET /api/super-admin/admins
+ * @desc    Get all admins for dropdown
+ * @access  Super Admin only
+ */
+router.get("/admins", getAdmins);
+
+/**
+ * @route   POST /api/super-admin/user
+ * @desc    Create a new User by Role
+ * @access  Super Admin only
+ * @body    name, email, phoneNumber (optional), role, adminId (for COUNSELOR)
+ */
+router.post("/user", createUserByRole);
 
 export default router;
 

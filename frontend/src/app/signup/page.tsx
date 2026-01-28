@@ -142,7 +142,6 @@ export default function SignupPage() {
   const roleOptions = [
     { value: USER_ROLE.STUDENT, label: 'Student', icon: '🎓', color: 'from-blue-500 to-cyan-500' },
     { value: USER_ROLE.ALUMNI, label: 'Alumni', icon: '🎖️', color: 'from-purple-500 to-pink-500' },
-    { value: USER_ROLE.SERVICE_PROVIDER, label: 'Service Provider', icon: '💼', color: 'from-orange-500 to-red-500' },
   ];
 
   return (

@@ -193,7 +193,7 @@ export default function StudentDetailPage() {
   };
 
   const handleViewFormData = (registrationId: string) => {
-    router.push(`/super-admin/students/${studentId}/registration/${registrationId}`);
+    router.push(`/super-admin/roles/student/${studentId}/registration/${registrationId}`);
   };
 
   if (loading || !user) {
@@ -494,4 +494,3 @@ export default function StudentDetailPage() {
     </>
   );
 }
-

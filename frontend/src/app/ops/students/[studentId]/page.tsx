@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
-import SuperAdminLayout from '@/components/SuperAdminLayout';
+import OpsLayout from '@/components/OpsLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -108,7 +108,7 @@ export default function StudentDetailPage() {
 
   if (!student) {
     return (
-      <SuperAdminLayout user={user}>
+      <OpsLayout user={user}>
         <div className="p-8 text-center">
           <p className="text-red-600">Student not found</p>
           <button
@@ -118,14 +118,14 @@ export default function StudentDetailPage() {
             Go Back
           </button>
         </div>
-      </SuperAdminLayout>
+      </OpsLayout>
     );
   }
 
   return (
     <>
       <Toaster position="top-right" />
-      <SuperAdminLayout user={user}>
+      <OpsLayout user={user}>
         <div className="p-8">
           {/* Back Button */}
           <button
@@ -252,7 +252,7 @@ export default function StudentDetailPage() {
             )}
           </div>
         </div>
-      </SuperAdminLayout>
+      </OpsLayout>
     </>
   );
 }

@@ -3,6 +3,7 @@ import User from "../models/User";
 import { USER_ROLE } from "../types/roles";
 import Ops from "../models/Ops";
 import Admin from "../models/Admin";
+import Counselor from "../models/Counselor";
 // import { sendEmail } from "../utils/email";
 
 /**
@@ -407,7 +408,7 @@ export const getPendingApprovals = async (_req: Request, res: Response): Promise
  */
 export const createOps = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { name, email, phoneNumber, specializations } = req.body;
+    const { name, email, phoneNumber } = req.body;
 
     // Validate required fields
     if (!name || !email) {
@@ -435,29 +436,6 @@ export const createOps = async (req: Request, res: Response): Promise<Response> 
       });
     }
 
-    // Validate specializations if provided
-    const validSpecializations = [
-      'Study Abroad',
-      'Ivy League',
-      'Education Planning',
-      'IELTS',
-      'GRE',
-      'GMAT',
-      'TOEFL',
-      'PTE',
-      'Duolingo',
-      'SAT',
-      'ACT',
-      'Other'
-    ];
-
-    let validSpecializationsList: string[] = [];
-    if (specializations && Array.isArray(specializations)) {
-      validSpecializationsList = specializations.filter((spec: string) =>
-        validSpecializations.includes(spec)
-      );
-    }
-
     // Create ops user
     const opsUser = await User.create({
       name: name.trim(),
@@ -473,7 +451,6 @@ export const createOps = async (req: Request, res: Response): Promise<Response> 
       userId: opsUser._id,
       email: email.toLowerCase().trim(),
       mobileNumber: phoneNumber?.trim() || undefined,
-      specializations: validSpecializationsList,
     });
 
     return res.status(201).json({
@@ -485,7 +462,6 @@ export const createOps = async (req: Request, res: Response): Promise<Response> 
           name: opsUser.name,
           email: ops.email,
           mobileNumber: ops.mobileNumber,
-          specializations: ops.specializations,
           role: opsUser.role,
           isVerified: opsUser.isVerified,
           isActive: opsUser.isActive,
@@ -512,36 +488,11 @@ export const createOps = async (req: Request, res: Response): Promise<Response> 
 };
 
 /**
- * Get ops by specialization or service name
+ * Get all ops
  */
-export const getOpsBySpecialization = async (req: Request, res: Response): Promise<Response> => {
+export const getAllOps = async (_req: Request, res: Response): Promise<Response> => {
   try {
-    const { specialization, serviceName } = req.query;
-
-    let query: any = {};
-    
-    // Map service names to specializations
-    const serviceToSpecializationMap: { [key: string]: string[] } = {
-      'Study Abroad': ['Study Abroad', 'Education Planning'],
-      'Ivy League': ['Ivy League', 'Study Abroad', 'Education Planning'],
-      'Education Planning': ['Education Planning', 'Study Abroad'],
-      'IELTS': ['IELTS'],
-      'GRE': ['GRE'],
-      'GMAT': ['GMAT'],
-      'TOEFL': ['TOEFL'],
-      'PTE': ['PTE'],
-      'Duolingo': ['Duolingo'],
-      'SAT': ['SAT'],
-    };
-
-    if (serviceName) {
-      const specializations = serviceToSpecializationMap[serviceName as string] || [serviceName as string];
-      query.specializations = { $in: specializations };
-    } else if (specialization) {
-      query.specializations = { $in: [specialization] };
-    }
-
-    const ops = await Ops.find(query)
+    const ops = await Ops.find()
       .populate('userId', 'name email isActive')
       .sort({ createdAt: -1 });
 
@@ -554,12 +505,11 @@ export const getOpsBySpecialization = async (req: Request, res: Response): Promi
           userId: c.userId,
           email: c.email,
           mobileNumber: c.mobileNumber,
-          specializations: c.specializations,
         })),
       },
     });
   } catch (error: any) {
-    console.error('Get ops by specialization error:', error);
+    console.error('Get ops error:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch ops',
@@ -637,6 +587,159 @@ export const createAdmin = async (req: Request, res: Response): Promise<Response
     return res.status(500).json({
       success: false,
       message: 'Failed to create admin',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get all admins for dropdown selection
+ */
+export const getAdmins = async (_req: Request, res: Response): Promise<Response> => {
+  try {
+    const admins = await User.find({ role: USER_ROLE.ADMIN, isActive: true })
+      .select('_id name email')
+      .sort({ name: 1 });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        admins: admins.map((admin: any) => ({
+          _id: admin._id,
+          name: admin.name,
+          email: admin.email,
+        })),
+      },
+    });
+  } catch (error: any) {
+    console.error('Get admins error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch admins',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Create a new User by Role (generic function for all roles)
+ * This allows Super Admin to create users with any role
+ */
+export const createUserByRole = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { name, email, phoneNumber, role, adminId } = req.body;
+
+    // Validation
+    if (!name || !email || !role) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name, email, and role are required',
+      });
+    }
+
+    // Validate role is allowed
+    const allowedRoles = [
+      USER_ROLE.ADMIN,
+      USER_ROLE.OPS,
+      USER_ROLE.EDUPLAN_COACH,
+      USER_ROLE.IVY_EXPERT,
+      USER_ROLE.COUNSELOR,
+    ];
+
+    if (!allowedRoles.includes(role as USER_ROLE)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid role or role does not allow direct creation',
+      });
+    }
+
+    // For COUNSELOR role, adminId is required
+    if (role === USER_ROLE.COUNSELOR && !adminId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Admin selection is required for creating a Counselor',
+      });
+    }
+
+    // Validate adminId if provided for COUNSELOR
+    if (role === USER_ROLE.COUNSELOR && adminId) {
+      const adminUser = await User.findOne({ _id: adminId, role: USER_ROLE.ADMIN });
+      if (!adminUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid admin selected',
+        });
+      }
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this email already exists',
+      });
+    }
+
+    // Create user with specified role (no password - will use OTP login)
+    const newUser = new User({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      role: role,
+      isVerified: true, // Auto-verify users created by super admin
+      isActive: true,
+    });
+
+    await newUser.save();
+
+    // If creating ADMIN role, also create Admin profile
+    if (role === USER_ROLE.ADMIN) {
+      const newAdmin = new Admin({
+        userId: newUser._id,
+        email: email.toLowerCase().trim(),
+        mobileNumber: phoneNumber?.trim() || undefined,
+      });
+      await newAdmin.save();
+    }
+
+    // If creating OPS role, also create Ops profile
+    if (role === USER_ROLE.OPS) {
+      const newOps = new Ops({
+        userId: newUser._id,
+        email: email.toLowerCase().trim(),
+        mobileNumber: phoneNumber?.trim() || undefined,
+      });
+      await newOps.save();
+    }
+
+    // If creating COUNSELOR role, also create Counselor profile with adminId
+    if (role === USER_ROLE.COUNSELOR) {
+      const newCounselor = new Counselor({
+        userId: newUser._id,
+        adminId: adminId,
+        email: email.toLowerCase().trim(),
+        mobileNumber: phoneNumber?.trim() || undefined,
+      });
+      await newCounselor.save();
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: `${role.replace(/_/g, ' ')} created successfully. They can log in using OTP.`,
+      data: {
+        user: {
+          _id: newUser._id,
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Create user by role error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create user',
       error: error.message,
     });
   }

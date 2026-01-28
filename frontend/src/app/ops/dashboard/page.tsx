@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
-import SuperAdminLayout from '@/components/SuperAdminLayout';
+import OpsLayout from '@/components/OpsLayout';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function OpsDashboardPage() {
@@ -52,7 +52,7 @@ export default function OpsDashboardPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <SuperAdminLayout user={user}>
+      <OpsLayout user={user}>
         <div className="p-8">
           {/* Header */}
           <div className="mb-8">
@@ -125,7 +125,7 @@ export default function OpsDashboardPage() {
             </div>
           </div>
         </div>
-      </SuperAdminLayout>
+      </OpsLayout>
     </>
   );
 }

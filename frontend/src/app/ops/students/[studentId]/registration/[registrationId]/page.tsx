@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI, serviceAPI } from '@/lib/api';
 import { User, USER_ROLE, FormStructure, FormSection, FormSubSection, FormField } from '@/types';
-import SuperAdminLayout from '@/components/SuperAdminLayout';
+import OpsLayout from '@/components/OpsLayout';
 import FormSectionRenderer from '@/components/FormSectionRenderer';
 import FormPartsNavigation from '@/components/FormPartsNavigation';
 import FormSectionsNavigation from '@/components/FormSectionsNavigation';
@@ -283,7 +283,7 @@ export default function StudentFormEditPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <SuperAdminLayout user={user}>
+      <OpsLayout user={user}>
         <div className="p-8">
           {/* Back Button */}
           <button
@@ -373,7 +373,7 @@ export default function StudentFormEditPage() {
             />
           )}
         </div>
-      </SuperAdminLayout>
+      </OpsLayout>
     </>
   );
 }

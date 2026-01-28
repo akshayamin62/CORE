@@ -3,6 +3,8 @@ export enum USER_ROLE {
   PARENT = 'PARENT',
   OPS = 'OPS',
   COUNSELOR = 'COUNSELOR',
+  EDUPLAN_COACH = 'EDUPLAN_COACH',
+  IVY_EXPERT = 'IVY_EXPERT',
   ADMIN = 'ADMIN',
   ALUMNI = 'ALUMNI',
   SUPER_ADMIN = 'SUPER_ADMIN',
@@ -56,7 +58,6 @@ export interface OPS {
   userId: string;
   email: string;
   mobileNumber?: string;
-  specializations?: string[];
 }
 
 export interface StudentServiceRegistration {

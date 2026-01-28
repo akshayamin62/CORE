@@ -4,7 +4,6 @@ export interface IOps extends Document {
   userId: mongoose.Types.ObjectId; // Reference to User model
   email: string;
   mobileNumber?: string;
-  specializations?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -27,10 +26,6 @@ const opsSchema = new Schema<IOps>(
       type: String,
       required: false,
       trim: true,
-    },
-    specializations: {
-      type: [String],
-      default: [],
     },
   },
   { timestamps: true }

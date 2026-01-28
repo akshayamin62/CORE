@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
-import SuperAdminLayout from '@/components/SuperAdminLayout';
+import OpsLayout from '@/components/OpsLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -101,7 +101,7 @@ export default function OpsStudentsPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <SuperAdminLayout user={user}>
+      <OpsLayout user={user}>
         <div className="p-8">
           {/* Header */}
           <div className="mb-6">
@@ -209,9 +209,9 @@ export default function OpsStudentsPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <button
                             onClick={() => handleViewStudent(student._id)}
-                            className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
+                            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-xs"
                           >
-                            View Details →
+                            View Details
                           </button>
                         </td>
                       </tr>
@@ -257,7 +257,7 @@ export default function OpsStudentsPage() {
             </div>
           )}
         </div>
-      </SuperAdminLayout>
+      </OpsLayout>
     </>
   );
 }
