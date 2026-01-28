@@ -101,6 +101,7 @@ export const superAdminAPI = {
     phoneNumber?: string;
     role: string;
     adminId?: string;
+    customSlug?: string;
   }) => api.post('/super-admin/user', data),
   
   getOps: () => api.get('/super-admin/ops'),
@@ -222,10 +223,65 @@ export const adminAPI = {
   createCounselor: (data: {
     name: string;
     email: string;
-    phoneNumber?: string;
+    mobileNumber?: string;
   }) => api.post('/admin/counselor', data),
   
   getCounselors: () => api.get('/admin/counselors'),
+  
+  toggleCounselorStatus: (counselorId: string) => 
+    api.patch(`/admin/counselor/${counselorId}/toggle-status`),
+};
+
+// Lead API
+export const leadAPI = {
+  // Public endpoints (no auth required)
+  getAdminInfoBySlug: (adminSlug: string) => 
+    api.get(`/public/inquiry/${adminSlug}/info`),
+  
+  submitInquiry: (adminSlug: string, data: {
+    name: string;
+    email: string;
+    phoneNumber: string;
+    serviceType: string;
+  }) => api.post(`/public/inquiry/${adminSlug}/submit`, data),
+  
+  // Admin endpoints
+  getAdminLeads: (params?: {
+    status?: string;
+    serviceType?: string;
+    assignedCounselorId?: string;
+  }) => api.get('/admin/leads', { params }),
+  
+  getInquiryFormUrl: () => api.get('/admin/inquiry-form-url'),
+  
+  getAdminCounselors: () => api.get('/admin/counselors'),
+  
+  assignLeadToCounselor: (leadId: string, counselorId: string | null) => 
+    api.post(`/admin/leads/${leadId}/assign`, { counselorId }),
+  
+  // Counselor endpoints
+  getCounselorLeads: (params?: {
+    status?: string;
+    serviceType?: string;
+  }) => api.get('/counselor/leads', { params }),
+  
+  getCounselorInquiryFormUrl: () => api.get('/counselor/inquiry-form-url'),
+  
+  // Shared endpoints (admin and counselor)
+  getLeadDetail: (leadId: string) => api.get(`/leads/${leadId}`),
+  
+  updateLeadStatus: (leadId: string, status: string) => 
+    api.patch(`/leads/${leadId}/status`, { status }),
+  
+  addLeadNote: (leadId: string, text: string) => 
+    api.post(`/leads/${leadId}/notes`, { text }),
+  
+  // Super Admin endpoints
+  getAllLeads: (params?: {
+    status?: string;
+    serviceType?: string;
+    adminId?: string;
+  }) => api.get('/super-admin/leads', { params }),
 };
 
 export const chatAPI = {

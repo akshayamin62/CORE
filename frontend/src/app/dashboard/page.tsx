@@ -29,6 +29,8 @@ export default function DashboardPage() {
         router.push('/admin/dashboard');
       } else if (user.role === 'OPS') {
         router.push('/ops/dashboard');
+      } else if (user.role === 'COUNSELOR') {
+        router.push('/counselor/leads');
       } else {
         fetchMyServices();
       }

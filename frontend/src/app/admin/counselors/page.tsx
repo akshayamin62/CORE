@@ -26,6 +26,15 @@ export default function CounselorsListPage() {
   const [user, setUser] = useState<User | null>(null);
   const [counselors, setCounselors] = useState<CounselorData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    mobileNumber: '',
+  });
 
   useEffect(() => {
     checkAuth();
@@ -59,6 +68,47 @@ export default function CounselorsListPage() {
       console.error('Fetch counselors error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      await adminAPI.createCounselor(formData);
+      toast.success('Counselor created successfully!');
+      setShowModal(false);
+      setFormData({ name: '', email: '', mobileNumber: '' });
+      fetchCounselors();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to create counselor');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const filteredCounselors = counselors.filter((counselor) => {
+    const matchesSearch = 
+      counselor.userId.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      counselor.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (counselor.mobileNumber && counselor.mobileNumber.includes(searchQuery));
+    
+    const matchesStatus = 
+      statusFilter === 'all' ||
+      (statusFilter === 'active' && counselor.userId.isActive) ||
+      (statusFilter === 'inactive' && !counselor.userId.isActive);
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleToggleStatus = async (counselorId: string, currentStatus: boolean) => {
+    try {
+      await adminAPI.toggleCounselorStatus(counselorId);
+      toast.success(`Counselor ${currentStatus ? 'deactivated' : 'activated'} successfully`);
+      fetchCounselors();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to toggle counselor status');
     }
   };
 
@@ -98,7 +148,7 @@ export default function CounselorsListPage() {
               </p>
             </div>
             <button
-              onClick={() => router.push('/admin/counselor/add')}
+              onClick={() => setShowModal(true)}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,6 +157,115 @@ export default function CounselorsListPage() {
               Add Counselor
             </button>
           </div>
+
+          {/* Search and Filter */}
+          <div className="mb-6 flex gap-4">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="Search by name, email, or phone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <svg 
+                className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+
+          {/* Add Counselor Modal */}
+          {showModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 m-4">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900">Add New Counselor</h3>
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter counselor name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter counselor email"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Mobile Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.mobileNumber}
+                      onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter mobile number"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowModal(false)}
+                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                      {submitting ? 'Creating...' : 'Create Counselor'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
 
           {/* Counselors Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -117,11 +276,19 @@ export default function CounselorsListPage() {
                 </svg>
                 <p className="text-gray-500 text-lg">No counselors yet</p>
                 <button
-                  onClick={() => router.push('/admin/counselor/add')}
+                  onClick={() => setShowModal(true)}
                   className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                 >
                   Create Your First Counselor
                 </button>
+              </div>
+            ) : filteredCounselors.length === 0 ? (
+              <div className="text-center py-12">
+                <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <p className="text-gray-500 text-lg">No counselors found</p>
+                <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filter</p>
               </div>
             ) : (
               <table className="w-full">
@@ -142,10 +309,13 @@ export default function CounselorsListPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Created
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {counselors.map((counselor) => (
+                  {filteredCounselors.map((counselor) => (
                     <tr key={counselor._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -177,6 +347,18 @@ export default function CounselorsListPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-gray-600 text-sm">
                         {new Date(counselor.createdAt).toLocaleDateString()}
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => handleToggleStatus(counselor._id, counselor.userId.isActive)}
+                          className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${
+                            counselor.userId.isActive
+                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                        >
+                          {counselor.userId.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -185,8 +367,21 @@ export default function CounselorsListPage() {
           </div>
 
           {counselors.length > 0 && (
-            <div className="mt-6 text-sm text-gray-600">
-              Showing {counselors.length} counselor{counselors.length !== 1 ? 's' : ''}
+            <div className="mt-6 flex justify-between items-center text-sm text-gray-600">
+              <span>
+                Showing {filteredCounselors.length} of {counselors.length} counselor{counselors.length !== 1 ? 's' : ''}
+              </span>
+              {(searchQuery || statusFilter !== 'all') && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setStatusFilter('all');
+                  }}
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
           )}
         </div>

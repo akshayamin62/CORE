@@ -232,4 +232,67 @@ export interface DocumentFieldConfig {
   helpText?: string;
 }
 
+// Lead Types
+export enum SERVICE_TYPE {
+  STUDY_ABROAD = 'Study Abroad',
+  IVY_LEAGUE = 'Ivy League',
+  EDUCATION_PLANNING = 'Education Planning',
+  IELTS_GRE_COACHING = 'IELTS/GRE Coaching',
+}
+
+export enum LEAD_STATUS {
+  NEW = 'New',
+  HOT = 'Hot',
+  WARM = 'Warm',
+  COLD = 'Cold',
+  CONVERTED = 'Converted to Student',
+  CLOSED = 'Closed',
+}
+
+export interface LeadNote {
+  _id: string;
+  note: string;
+  addedBy: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  addedByRole: string;
+  createdAt: string;
+}
+
+export interface Lead {
+  _id: string;
+  adminId: {
+    _id: string;
+    userId: {
+      _id: string;
+      name: string;
+      email: string;
+    };
+    inquiryFormSlug: string;
+  };
+  assignedCounselorId?: {
+    _id: string;
+    userId: {
+      _id: string;
+      name: string;
+      email: string;
+    };
+  };
+  name: string;
+  email: string;
+  phoneNumber: string;
+  serviceType: SERVICE_TYPE;
+  status: LEAD_STATUS;
+  notes: LeadNote[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminInfo {
+  adminName: string;
+  services: string[];
+}
+
 

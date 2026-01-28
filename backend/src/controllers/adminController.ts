@@ -9,7 +9,7 @@ import { AuthRequest } from "../types/auth";
  */
 export const createCounselor = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
-    const { name, email, phoneNumber } = req.body;
+    const { name, email, mobileNumber } = req.body;
     const adminUserId = req.user?.userId; // Admin's user ID from auth middleware
 
     // Validation
@@ -52,7 +52,7 @@ export const createCounselor = async (req: AuthRequest, res: Response): Promise<
       userId: newUser._id,
       adminId: adminUserId, // Link to the admin who created this counselor
       email: email.toLowerCase().trim(),
-      mobileNumber: phoneNumber?.trim() || undefined,
+      mobileNumber: mobileNumber?.trim() || undefined,
     });
 
     await newCounselor.save();
@@ -119,6 +119,63 @@ export const getCounselors = async (req: AuthRequest, res: Response): Promise<Re
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch counselors',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Toggle counselor active status (Admin only)
+ */
+export const toggleCounselorStatus = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { counselorId } = req.params;
+    const adminUserId = req.user?.userId;
+
+    if (!adminUserId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    // Find counselor and verify it belongs to this admin
+    const counselor = await Counselor.findOne({
+      _id: counselorId,
+      adminId: adminUserId,
+    });
+
+    if (!counselor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Counselor not found or unauthorized',
+      });
+    }
+
+    // Toggle the isActive status in User model
+    const user = await User.findById(counselor.userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    user.isActive = !user.isActive;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Counselor ${user.isActive ? 'activated' : 'deactivated'} successfully`,
+      data: {
+        isActive: user.isActive,
+      },
+    });
+  } catch (error: any) {
+    console.error('Toggle counselor status error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to toggle counselor status',
       error: error.message,
     });
   }

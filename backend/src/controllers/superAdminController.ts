@@ -4,6 +4,7 @@ import { USER_ROLE } from "../types/roles";
 import Ops from "../models/Ops";
 import Admin from "../models/Admin";
 import Counselor from "../models/Counselor";
+import { generateSlug, getUniqueSlug } from "./leadController";
 // import { sendEmail } from "../utils/email";
 
 /**
@@ -627,7 +628,7 @@ export const getAdmins = async (_req: Request, res: Response): Promise<Response>
  */
 export const createUserByRole = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { name, email, phoneNumber, role, adminId } = req.body;
+    const { name, email, phoneNumber, role, adminId, customSlug } = req.body;
 
     // Validation
     if (!name || !email || !role) {
@@ -692,12 +693,19 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
 
     await newUser.save();
 
-    // If creating ADMIN role, also create Admin profile
+    let inquiryFormSlug: string | undefined;
+
+    // If creating ADMIN role, also create Admin profile with slug
     if (role === USER_ROLE.ADMIN) {
+      // Generate slug from name or use custom slug
+      let baseSlug = customSlug ? generateSlug(customSlug) : generateSlug(name);
+      inquiryFormSlug = await getUniqueSlug(baseSlug);
+
       const newAdmin = new Admin({
         userId: newUser._id,
         email: email.toLowerCase().trim(),
         mobileNumber: phoneNumber?.trim() || undefined,
+        inquiryFormSlug: inquiryFormSlug,
       });
       await newAdmin.save();
     }
@@ -733,6 +741,7 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
           email: newUser.email,
           role: newUser.role,
         },
+        inquiryFormSlug: inquiryFormSlug, // Include slug for ADMIN role
       },
     });
   } catch (error: any) {

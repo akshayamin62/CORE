@@ -60,6 +60,40 @@ export default function RoleUserListPage({
   // Check if we need to show admin selection (for Counselor creation)
   const requiresAdminSelection = roleEnum === USER_ROLE.COUNSELOR;
 
+  // Check if this is Admin role (for slug editing)
+  const isAdminRole = roleEnum === USER_ROLE.ADMIN;
+
+  // Slug state for Admin creation
+  const [customSlug, setCustomSlug] = useState('');
+  const [slugPreview, setSlugPreview] = useState('');
+
+  // Generate slug preview from name
+  const generateSlugFromName = (name: string): string => {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .substring(0, 50);
+  };
+
+  // Update slug preview when name changes (for Admin)
+  useEffect(() => {
+    if (isAdminRole && formData.name && !customSlug) {
+      setSlugPreview(generateSlugFromName(formData.name));
+    }
+  }, [formData.name, isAdminRole, customSlug]);
+
+  // Update slug preview when custom slug changes
+  useEffect(() => {
+    if (customSlug) {
+      setSlugPreview(generateSlugFromName(customSlug));
+    } else if (formData.name) {
+      setSlugPreview(generateSlugFromName(formData.name));
+    }
+  }, [customSlug, formData.name]);
+
   useEffect(() => {
     checkAdminAccess();
   }, []);
@@ -157,16 +191,29 @@ export default function RoleUserListPage({
 
     setSubmitting(true);
     try {
-      await superAdminAPI.createUserByRole({
+      const response = await superAdminAPI.createUserByRole({
         name: formData.name.trim(),
         email: formData.email.trim(),
         phoneNumber: formData.phoneNumber.trim() || undefined,
         role: roleEnum,
         adminId: requiresAdminSelection ? selectedAdminId : undefined,
+        customSlug: isAdminRole && customSlug ? customSlug.trim() : undefined,
       });
-      toast.success(`${roleDisplayName} created successfully! They can log in using OTP.`);
+      
+      // Show success message with slug for Admin
+      if (isAdminRole && response.data.data.inquiryFormSlug) {
+        toast.success(
+          `${roleDisplayName} created successfully! Inquiry form slug: ${response.data.data.inquiryFormSlug}`,
+          { duration: 5000 }
+        );
+      } else {
+        toast.success(`${roleDisplayName} created successfully! They can log in using OTP.`);
+      }
+      
       setFormData({ name: '', email: '', phoneNumber: '' });
       setSelectedAdminId('');
+      setCustomSlug('');
+      setSlugPreview('');
       setShowAddModal(false);
       await fetchUsers();
     } catch (error: any) {
@@ -449,6 +496,34 @@ export default function RoleUserListPage({
                     </select>
                     <p className="text-xs text-gray-500 mt-1">
                       The counselor will be managed by this admin
+                    </p>
+                  </div>
+                )}
+
+                {/* Inquiry Form Slug for Admin */}
+                {isAdminRole && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Inquiry Form Slug
+                      <span className="text-gray-400 font-normal ml-1">(optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={customSlug}
+                      onChange={(e) => setCustomSlug(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      placeholder="custom-slug (auto-generated from name if empty)"
+                    />
+                    {slugPreview && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-xs text-gray-500 mb-1">Inquiry Form URL Preview:</p>
+                        <p className="text-sm text-blue-600 font-mono break-all">
+                          /inquiry/<span className="font-semibold">{slugPreview}</span>
+                        </p>
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">
+                      This will be the unique URL for the admin's inquiry form. If left empty, it will be auto-generated from the name.
                     </p>
                   </div>
                 )}

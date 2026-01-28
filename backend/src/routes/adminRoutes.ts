@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createCounselor, getCounselors } from "../controllers/adminController";
+import { createCounselor, getCounselors, toggleCounselorStatus } from "../controllers/adminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
 import { USER_ROLE } from "../types/roles";
@@ -24,6 +24,13 @@ router.post("/counselor", createCounselor);
  * @access  Admin only
  */
 router.get("/counselors", getCounselors);
+
+/**
+ * @route   PATCH /api/admin/counselor/:counselorId/toggle-status
+ * @desc    Toggle counselor active/inactive status
+ * @access  Admin only
+ */
+router.patch("/counselor/:counselorId/toggle-status", toggleCounselorStatus);
 
 export default router;
 
