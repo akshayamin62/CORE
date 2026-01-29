@@ -153,13 +153,13 @@ export default function CounselorLeadDetailPage() {
         {/* Back Button & Header */}
         <div className="mb-6">
           <button
-            onClick={() => router.push('/counselor/leads')}
+            onClick={() => router.push('/counselor/dashboard')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Back to Leads
+            Back to Dashboard
           </button>
           
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">

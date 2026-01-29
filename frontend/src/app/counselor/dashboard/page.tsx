@@ -22,6 +22,11 @@ export default function CounselorDashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [selectedStage, setSelectedStage] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [stageFilter, setStageFilter] = useState<string>('all');
+  const [serviceFilter, setServiceFilter] = useState<string>('all');
 
   useEffect(() => {
     checkAuth();
@@ -55,20 +60,21 @@ export default function CounselorDashboardPage() {
         leadAPI.getCounselorEnquiryFormUrl(),
       ]);
       
-      const leads = leadsResponse.data.data.leads;
+      const leadsData = leadsResponse.data.data.leads;
       const slug = urlResponse.data.data.slug;
       
       // Construct full URL from slug
       const enquiryUrl = slug ? `${window.location.origin}/inquiry/${slug}` : '';
 
+      setLeads(leadsData);
       setStats({
-        totalLeads: leads.length,
-        newLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.NEW).length,
-        hotLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.HOT).length,
-        warmLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.WARM).length,
-        coldLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.COLD).length,
-        convertedLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.CONVERTED).length,
-        closedLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.CLOSED).length,
+        totalLeads: leadsData.length,
+        newLeads: leadsData.filter((l: any) => l.stage === LEAD_STAGE.NEW).length,
+        hotLeads: leadsData.filter((l: any) => l.stage === LEAD_STAGE.HOT).length,
+        warmLeads: leadsData.filter((l: any) => l.stage === LEAD_STAGE.WARM).length,
+        coldLeads: leadsData.filter((l: any) => l.stage === LEAD_STAGE.COLD).length,
+        convertedLeads: leadsData.filter((l: any) => l.stage === LEAD_STAGE.CONVERTED).length,
+        closedLeads: leadsData.filter((l: any) => l.stage === LEAD_STAGE.CLOSED).length,
         adminEnquiryUrl: enquiryUrl,
       });
     } catch (error: any) {
@@ -85,6 +91,40 @@ export default function CounselorDashboardPage() {
       console.error('Failed to copy:', error);
       toast.error('Failed to copy URL');
     }
+  };
+
+  const getFilteredLeads = () => {
+    if (!selectedStage) return [];
+    
+    let filtered = leads;
+    
+    // Apply stage filter
+    if (selectedStage === 'all') {
+      // When showing all leads, apply the stageFilter dropdown
+      if (stageFilter !== 'all') {
+        filtered = filtered.filter((lead: any) => lead.stage === stageFilter);
+      }
+    } else {
+      // When clicking a specific stage card, filter by that stage
+      filtered = filtered.filter((lead: any) => lead.stage === selectedStage);
+    }
+    
+    // Apply service filter (for all views)
+    if (serviceFilter !== 'all') {
+      filtered = filtered.filter((lead: any) => lead.serviceType === serviceFilter);
+    }
+    
+    // Apply search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((lead: any) => 
+        lead.name?.toLowerCase().includes(query) ||
+        lead.email?.toLowerCase().includes(query) ||
+        lead.mobileNumber?.toLowerCase().includes(query)
+      );
+    }
+    
+    return filtered;
   };
 
   if (loading) {
@@ -106,11 +146,38 @@ export default function CounselorDashboardPage() {
       <div className="min-h-screen bg-gray-50">
         <div className="p-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Counselor Dashboard</h1>
-            <p className="text-gray-600 mt-2">
-              Welcome back, {user.name}! Here's your overview
-            </p>
+          <div className="mb-8 flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Counselor</h1>
+              <p className="text-gray-600 mt-2">
+                Welcome back, {user.name}! Here's your overview
+              </p>
+            </div>
+            {/* Copy Enquiry URL */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 max-w-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                <h3 className="font-semibold text-gray-900 text-sm">Enquiry Form</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-green-50 rounded-lg px-3 py-2">
+                  <code className="text-xs text-green-700 font-mono break-all">
+                    {stats?.adminEnquiryUrl || 'Loading...'}
+                  </code>
+                </div>
+                <button
+                  onClick={() => stats?.adminEnquiryUrl && copyToClipboard(stats.adminEnquiryUrl)}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy URL
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Stats Cards */}
@@ -124,6 +191,13 @@ export default function CounselorDashboardPage() {
                 </svg>
               }
               color="blue"
+              onClick={() => {
+                setSelectedStage('all');
+                setStageFilter('all');
+                setServiceFilter('all');
+                setSearchQuery('');
+              }}
+              isActive={selectedStage === 'all'}
             />
             <StatCard
               title="New"
@@ -134,6 +208,8 @@ export default function CounselorDashboardPage() {
                 </svg>
               }
               color="blue"
+              onClick={() => setSelectedStage(LEAD_STAGE.NEW)}
+              isActive={selectedStage === LEAD_STAGE.NEW}
             />
             <StatCard
               title="Hot"
@@ -144,6 +220,8 @@ export default function CounselorDashboardPage() {
                 </svg>
               }
               color="yellow"
+              onClick={() => setSelectedStage(LEAD_STAGE.HOT)}
+              isActive={selectedStage === LEAD_STAGE.HOT}
             />
             <StatCard
               title="Warm"
@@ -154,6 +232,8 @@ export default function CounselorDashboardPage() {
                 </svg>
               }
               color="purple"
+              onClick={() => setSelectedStage(LEAD_STAGE.WARM)}
+              isActive={selectedStage === LEAD_STAGE.WARM}
             />
             <StatCard
               title="Cold"
@@ -164,6 +244,8 @@ export default function CounselorDashboardPage() {
                 </svg>
               }
               color="blue"
+              onClick={() => setSelectedStage(LEAD_STAGE.COLD)}
+              isActive={selectedStage === LEAD_STAGE.COLD}
             />
             <StatCard
               title="Converted"
@@ -174,6 +256,8 @@ export default function CounselorDashboardPage() {
                 </svg>
               }
               color="green"
+              onClick={() => setSelectedStage(LEAD_STAGE.CONVERTED)}
+              isActive={selectedStage === LEAD_STAGE.CONVERTED}
             />
             <StatCard
               title="Closed"
@@ -184,56 +268,162 @@ export default function CounselorDashboardPage() {
                 </svg>
               }
               color="gray"
+              onClick={() => setSelectedStage(LEAD_STAGE.CLOSED)}
+              isActive={selectedStage === LEAD_STAGE.CLOSED}
             />
           </div>
 
-          {/* Quick Actions */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <ActionCard
-                title="View My Leads"
-                description="See all leads assigned to you"
-                icon={
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                }
-                buttonText="View Leads"
-                onClick={() => router.push('/counselor/leads')}
-                color="blue"
-              />
-              
-              {/* Enquiry Form URL Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 group hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-green-100 text-green-600">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          {/* Leads Table */}
+          {selectedStage && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {selectedStage === 'all' ? 'All Leads' : `${selectedStage} Leads`}
+                    </h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {getFilteredLeads().length} lead(s) found
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedStage(null);
+                      setStageFilter('all');
+                      setServiceFilter('all');
+                      setSearchQuery('');
+                    }}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium transition-colors flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
+                    Close
+                  </button>
+                </div>
+                
+                {/* Filters - Show for all views */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Search */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                    <input
+                      type="text"
+                      placeholder="Search by name, email, or mobile..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">Enquiry Form URL</h3>
-                    <p className="text-sm text-gray-500">Share to collect leads</p>
+                  
+                  {/* Stage Filter - Only show for 'all' leads view */}
+                  {selectedStage === 'all' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Stage</label>
+                      <select
+                        value={stageFilter}
+                        onChange={(e) => setStageFilter(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="all">All Stages</option>
+                        <option value={LEAD_STAGE.NEW}>New</option>
+                        <option value={LEAD_STAGE.HOT}>Hot</option>
+                        <option value={LEAD_STAGE.WARM}>Warm</option>
+                        <option value={LEAD_STAGE.COLD}>Cold</option>
+                        <option value={LEAD_STAGE.CONVERTED}>Converted</option>
+                        <option value={LEAD_STAGE.CLOSED}>Closed</option>
+                      </select>
+                    </div>
+                  )}
+                  
+                  {/* Service Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Service</label>
+                    <select
+                      value={serviceFilter}
+                      onChange={(e) => setServiceFilter(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Services</option>
+                      <option value="Education Planning">Education Planning</option>
+                      <option value="Carrer Focus Study Abroad ">Carrer Focus Study Abroad</option>
+                      <option value="Ivy League Admission">Ivy League Admission</option>
+                      <option value="IELTS/GRE/Language Coaching">IELTS/GRE/Language Coaching</option>
+                    </select>
                   </div>
                 </div>
-                <div className="bg-green-50 rounded-lg p-3 mb-3">
-                  <code className="text-xs text-green-700 font-mono break-all">
-                    {stats?.adminEnquiryUrl || 'Loading...'}
-                  </code>
-                </div>
-                <button
-                  onClick={() => stats?.adminEnquiryUrl && copyToClipboard(stats.adminEnquiryUrl)}
-                  className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Copy URL
-                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile Number</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stage</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {getFilteredLeads().length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                          <svg className="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                          </svg>
+                          <p className="text-lg font-medium">No leads found</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      getFilteredLeads().map((lead: any) => (
+                        <tr key={lead._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{lead.name}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{lead.mobileNumber}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{lead.email}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              lead.stage === LEAD_STAGE.NEW ? 'bg-blue-100 text-blue-800' :
+                              lead.stage === LEAD_STAGE.HOT ? 'bg-red-100 text-red-800' :
+                              lead.stage === LEAD_STAGE.WARM ? 'bg-yellow-100 text-yellow-800' :
+                              lead.stage === LEAD_STAGE.COLD ? 'bg-gray-100 text-gray-800' :
+                              lead.stage === LEAD_STAGE.CONVERTED ? 'bg-green-100 text-green-800' :
+                              'bg-purple-100 text-purple-800'
+                            }`}>
+                              {lead.stage}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{lead.serviceType || 'N/A'}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {new Date(lead.createdAt).toLocaleDateString()}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button
+                              onClick={() => router.push(`/counselor/leads/${lead._id}`)}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </>
@@ -246,9 +436,11 @@ interface StatCardProps {
   value: string;
   icon: React.ReactNode;
   color: 'blue' | 'green' | 'purple' | 'yellow' | 'gray';
+  onClick?: () => void;
+  isActive?: boolean;
 }
 
-function StatCard({ title, value, icon, color }: StatCardProps) {
+function StatCard({ title, value, icon, color, onClick, isActive }: StatCardProps) {
   const colorClasses = {
     blue: 'bg-blue-50 text-blue-600',
     green: 'bg-green-50 text-green-600',
@@ -258,7 +450,14 @@ function StatCard({ title, value, icon, color }: StatCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div 
+      className={`bg-white rounded-xl shadow-sm border-2 p-6 transition-all ${
+        onClick ? 'cursor-pointer hover:shadow-md' : ''
+      } ${
+        isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
+      }`}
+      onClick={onClick}
+    >
       <div className="flex items-center justify-between mb-4">
         <div className={`w-12 h-12 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
           {icon}
@@ -266,45 +465,6 @@ function StatCard({ title, value, icon, color }: StatCardProps) {
       </div>
       <h3 className="text-3xl font-bold text-gray-900 mb-1">{value}</h3>
       <p className="text-sm text-gray-600">{title}</p>
-    </div>
-  );
-}
-
-// Action Card Component
-interface ActionCardProps {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  buttonText: string;
-  onClick: () => void;
-  color: 'blue' | 'green' | 'purple' | 'yellow';
-}
-
-function ActionCard({ title, description, icon, buttonText, onClick, color }: ActionCardProps) {
-  const colorClasses = {
-    blue: 'bg-blue-600 hover:bg-blue-700',
-    green: 'bg-green-600 hover:bg-green-700',
-    purple: 'bg-purple-600 hover:bg-purple-700',
-    yellow: 'bg-yellow-600 hover:bg-yellow-700',
-  };
-
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-      <div className="flex items-start gap-4">
-        <div className="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center text-gray-600">
-          {icon}
-        </div>
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">{title}</h3>
-          <p className="text-sm text-gray-600 mb-4">{description}</p>
-          <button
-            onClick={onClick}
-            className={`px-4 py-2 ${colorClasses[color]} text-white rounded-lg font-medium transition-colors`}
-          >
-            {buttonText}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
