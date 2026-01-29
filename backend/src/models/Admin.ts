@@ -4,7 +4,7 @@ export interface IAdmin extends Document {
   userId: mongoose.Types.ObjectId; // Reference to User model
   email: string;
   mobileNumber?: string;
-  inquiryFormSlug: string; // Unique slug for inquiry form URL
+  enquiryFormSlug: string; // Unique slug for enquiry form URL
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -28,7 +28,7 @@ const adminSchema = new Schema<IAdmin>(
       required: false,
       trim: true,
     },
-    inquiryFormSlug: {
+    enquiryFormSlug: {
       type: String,
       required: true,
       unique: true,
@@ -40,6 +40,6 @@ const adminSchema = new Schema<IAdmin>(
 );
 
 // Index for faster slug lookup
-adminSchema.index({ inquiryFormSlug: 1 });
+adminSchema.index({ enquiryFormSlug: 1 });
 
 export default mongoose.model<IAdmin>("Admin", adminSchema);

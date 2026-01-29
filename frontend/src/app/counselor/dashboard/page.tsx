@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authAPI, leadAPI } from '@/lib/api';
-import { User, USER_ROLE, LEAD_STATUS } from '@/types';
+import { User, USER_ROLE, LEAD_STAGE } from '@/types';
 import CounselorLayout from '@/components/CounselorLayout';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -14,7 +14,7 @@ interface DashboardStats {
   warmLeads: number;
   coldLeads: number;
   convertedLeads: number;
-  adminInquiryUrl: string;
+  adminEnquiryUrl: string;
 }
 
 export default function CounselorDashboardPage() {
@@ -52,23 +52,23 @@ export default function CounselorDashboardPage() {
     try {
       const [leadsResponse, urlResponse] = await Promise.all([
         leadAPI.getCounselorLeads({}),
-        leadAPI.getCounselorInquiryFormUrl(),
+        leadAPI.getCounselorEnquiryFormUrl(),
       ]);
       
       const leads = leadsResponse.data.data.leads;
       const slug = urlResponse.data.data.slug;
       
       // Construct full URL from slug
-      const inquiryUrl = slug ? `${window.location.origin}/inquiry/${slug}` : '';
+      const enquiryUrl = slug ? `${window.location.origin}/inquiry/${slug}` : '';
 
       setStats({
         totalLeads: leads.length,
-        newLeads: leads.filter((l: any) => l.status === LEAD_STATUS.NEW).length,
-        hotLeads: leads.filter((l: any) => l.status === LEAD_STATUS.HOT).length,
-        warmLeads: leads.filter((l: any) => l.status === LEAD_STATUS.WARM).length,
-        coldLeads: leads.filter((l: any) => l.status === LEAD_STATUS.COLD).length,
-        convertedLeads: leads.filter((l: any) => l.status === LEAD_STATUS.CONVERTED).length,
-        adminInquiryUrl: inquiryUrl,
+        newLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.NEW).length,
+        hotLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.HOT).length,
+        warmLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.WARM).length,
+        coldLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.COLD).length,
+        convertedLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.CONVERTED).length,
+        adminEnquiryUrl: enquiryUrl,
       });
     } catch (error: any) {
       console.error('Error fetching stats:', error);
@@ -193,7 +193,7 @@ export default function CounselorDashboardPage() {
                 color="blue"
               />
               
-              {/* Inquiry Form URL Card */}
+              {/* Enquiry Form URL Card */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 group hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-green-100 text-green-600">
@@ -202,17 +202,17 @@ export default function CounselorDashboardPage() {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">Inquiry Form URL</h3>
+                    <h3 className="font-semibold text-gray-900">Enquiry Form URL</h3>
                     <p className="text-sm text-gray-500">Share to collect leads</p>
                   </div>
                 </div>
                 <div className="bg-green-50 rounded-lg p-3 mb-3">
                   <code className="text-xs text-green-700 font-mono break-all">
-                    {stats?.adminInquiryUrl || 'Loading...'}
+                    {stats?.adminEnquiryUrl || 'Loading...'}
                   </code>
                 </div>
                 <button
-                  onClick={() => stats?.adminInquiryUrl && copyToClipboard(stats.adminInquiryUrl)}
+                  onClick={() => stats?.adminEnquiryUrl && copyToClipboard(stats.adminEnquiryUrl)}
                   className="w-full py-2 px-4 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

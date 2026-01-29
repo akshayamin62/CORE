@@ -240,7 +240,7 @@ export enum SERVICE_TYPE {
   IELTS_GRE_COACHING = 'IELTS/GRE Coaching',
 }
 
-export enum LEAD_STATUS {
+export enum LEAD_STAGE {
   NEW = 'New',
   HOT = 'Hot',
   WARM = 'Warm',
@@ -270,7 +270,7 @@ export interface Lead {
       name: string;
       email: string;
     };
-    inquiryFormSlug: string;
+    enquiryFormSlug: string;
   };
   assignedCounselorId?: {
     _id: string;
@@ -282,9 +282,9 @@ export interface Lead {
   };
   name: string;
   email: string;
-  phoneNumber: string;
+  mobileNumber: string;
   serviceType: SERVICE_TYPE;
-  status: LEAD_STATUS;
+  stage: LEAD_STAGE;
   notes: LeadNote[];
   createdAt: string;
   updatedAt: string;

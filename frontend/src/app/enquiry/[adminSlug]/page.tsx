@@ -21,7 +21,7 @@ export default function PublicInquiryFormPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phoneNumber: '',
+    mobileNumber: '',
     serviceType: '',
   });
 
@@ -38,9 +38,9 @@ export default function PublicInquiryFormPage() {
     } catch (error: any) {
       console.error('Error fetching admin info:', error);
       if (error.response?.status === 404) {
-        setError('This inquiry form does not exist or has been removed.');
+        setError('This enquiry form does not exist or has been removed.');
       } else {
-        setError('Unable to load the inquiry form. Please try again later.');
+        setError('Unable to load the enquiry form. Please try again later.');
       }
     } finally {
       setLoading(false);
@@ -64,8 +64,8 @@ export default function PublicInquiryFormPage() {
       toast.error('Please enter your email');
       return;
     }
-    if (!formData.phoneNumber.trim()) {
-      toast.error('Please enter your phone number');
+    if (!formData.mobileNumber.trim()) {
+      toast.error('Please enter your mobile number');
       return;
     }
     if (!formData.serviceType) {
@@ -81,25 +81,25 @@ export default function PublicInquiryFormPage() {
     }
 
     // Phone validation (at least 10 digits)
-    const phoneDigits = formData.phoneNumber.replace(/\D/g, '');
+    const phoneDigits = formData.mobileNumber.replace(/\D/g, '');
     if (phoneDigits.length < 10) {
-      toast.error('Please enter a valid phone number (at least 10 digits)');
+      toast.error('Please enter a valid mobile number (at least 10 digits)');
       return;
     }
 
     try {
       setSubmitting(true);
-      await leadAPI.submitInquiry(adminSlug, {
+      await leadAPI.submitEnquiry(adminSlug, {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
-        phoneNumber: formData.phoneNumber.trim(),
+        mobileNumber: formData.mobileNumber.trim(),
         serviceType: formData.serviceType,
       });
       setSubmitted(true);
-      toast.success('Your inquiry has been submitted successfully!');
+      toast.success('Your enquiry has been submitted successfully!');
     } catch (error: any) {
-      console.error('Error submitting inquiry:', error);
-      toast.error(error.response?.data?.message || 'Failed to submit inquiry. Please try again.');
+      console.error('Error submitting enquiry:', error);
+      toast.error(error.response?.data?.message || 'Failed to submit enquiry. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -150,16 +150,16 @@ export default function PublicInquiryFormPage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h1>
           <p className="text-gray-600 mb-6">
-            Your inquiry has been submitted successfully. Our team will contact you shortly.
+            Your enquiry has been submitted successfully. Our team will contact you shortly.
           </p>
           <button
             onClick={() => {
               setSubmitted(false);
-              setFormData({ name: '', email: '', phoneNumber: '', serviceType: '' });
+              setFormData({ name: '', email: '', mobileNumber: '', serviceType: '' });
             }}
             className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
-            Submit Another Inquiry
+            Submit Another Enquiry
           </button>
         </div>
       </div>
@@ -225,16 +225,16 @@ export default function PublicInquiryFormPage() {
 
             {/* Phone */}
             <div>
-              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number <span className="text-red-500">*</span>
+              <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                Mobile Number <span className="text-red-500">*</span>
               </label>
               <input
                 type="tel"
-                id="phoneNumber"
-                name="phoneNumber"
-                value={formData.phoneNumber}
+                id="mobileNumber"
+                name="mobileNumber"
+                value={formData.mobileNumber}
                 onChange={handleInputChange}
-                placeholder="Enter your phone number"
+                placeholder="Enter your mobile number"
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
                 required
               />
@@ -278,7 +278,7 @@ export default function PublicInquiryFormPage() {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
-                  <span>Submit Inquiry</span>
+                  <span>Submit Enquiry</span>
                 </>
               )}
             </button>

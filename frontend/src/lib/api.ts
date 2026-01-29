@@ -236,23 +236,23 @@ export const adminAPI = {
 export const leadAPI = {
   // Public endpoints (no auth required)
   getAdminInfoBySlug: (adminSlug: string) => 
-    api.get(`/public/inquiry/${adminSlug}/info`),
+    api.get(`/public/enquiry/${adminSlug}/info`),
   
-  submitInquiry: (adminSlug: string, data: {
+  submitEnquiry: (adminSlug: string, data: {
     name: string;
     email: string;
-    phoneNumber: string;
+    mobileNumber: string;
     serviceType: string;
-  }) => api.post(`/public/inquiry/${adminSlug}/submit`, data),
+  }) => api.post(`/public/enquiry/${adminSlug}/submit`, data),
   
   // Admin endpoints
   getAdminLeads: (params?: {
-    status?: string;
+    stage?: string;
     serviceType?: string;
     assignedCounselorId?: string;
   }) => api.get('/admin/leads', { params }),
   
-  getInquiryFormUrl: () => api.get('/admin/inquiry-form-url'),
+  getEnquiryFormUrl: () => api.get('/admin/enquiry-form-url'),
   
   getAdminCounselors: () => api.get('/admin/counselors'),
   
@@ -261,17 +261,17 @@ export const leadAPI = {
   
   // Counselor endpoints
   getCounselorLeads: (params?: {
-    status?: string;
+    stage?: string;
     serviceType?: string;
   }) => api.get('/counselor/leads', { params }),
   
-  getCounselorInquiryFormUrl: () => api.get('/counselor/inquiry-form-url'),
+  getCounselorEnquiryFormUrl: () => api.get('/counselor/enquiry-form-url'),
   
   // Shared endpoints (admin and counselor)
   getLeadDetail: (leadId: string) => api.get(`/leads/${leadId}`),
   
-  updateLeadStatus: (leadId: string, status: string) => 
-    api.patch(`/leads/${leadId}/status`, { status }),
+  updateLeadStage: (leadId: string, stage: string) => 
+    api.patch(`/leads/${leadId}/stage`, { stage }),
   
   addLeadNote: (leadId: string, text: string) => 
     api.post(`/leads/${leadId}/notes`, { text }),

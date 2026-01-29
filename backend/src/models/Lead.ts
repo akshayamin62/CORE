@@ -7,7 +7,7 @@ export enum SERVICE_TYPE {
   IELTS_GRE_COACHING = "IELTS/GRE Coaching",
 }
 
-export enum LEAD_STATUS {
+export enum LEAD_STAGE {
   NEW = "New",
   HOT = "Hot",
   WARM = "Warm",
@@ -26,11 +26,11 @@ export interface ILeadNote {
 export interface ILead extends Document {
   name: string;
   email: string;
-  phoneNumber: string;
+  mobileNumber: string;
   serviceType: SERVICE_TYPE;
   adminId: mongoose.Types.ObjectId; // Reference to Admin's userId
   assignedCounselorId?: mongoose.Types.ObjectId; // Reference to Counselor document
-  status: LEAD_STATUS;
+  stage: LEAD_STAGE;
   notes: ILeadNote[];
   source: string;
   createdAt?: Date;
@@ -73,7 +73,7 @@ const leadSchema = new Schema<ILead>(
       lowercase: true,
       trim: true,
     },
-    phoneNumber: {
+    mobileNumber: {
       type: String,
       required: true,
       trim: true,
@@ -93,10 +93,10 @@ const leadSchema = new Schema<ILead>(
       ref: "Counselor",
       default: null,
     },
-    status: {
+    stage: {
       type: String,
-      enum: Object.values(LEAD_STATUS),
-      default: LEAD_STATUS.NEW,
+      enum: Object.values(LEAD_STAGE),
+      default: LEAD_STAGE.NEW,
     },
     notes: {
       type: [leadNoteSchema],
@@ -104,15 +104,15 @@ const leadSchema = new Schema<ILead>(
     },
     source: {
       type: String,
-      default: "Inquiry Form",
+      default: "Enquiry Form",
     },
   },
   { timestamps: true }
 );
 
 // Index for faster queries
-leadSchema.index({ adminId: 1, status: 1 });
-leadSchema.index({ assignedCounselorId: 1, status: 1 });
+leadSchema.index({ adminId: 1, stage: 1 });
+leadSchema.index({ assignedCounselorId: 1, stage: 1 });
 leadSchema.index({ email: 1, adminId: 1 });
 
 export default mongoose.model<ILead>("Lead", leadSchema);

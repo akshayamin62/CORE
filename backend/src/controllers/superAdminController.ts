@@ -693,19 +693,19 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
 
     await newUser.save();
 
-    let inquiryFormSlug: string | undefined;
+    let enquiryFormSlug: string | undefined;
 
     // If creating ADMIN role, also create Admin profile with slug
     if (role === USER_ROLE.ADMIN) {
       // Generate slug from name or use custom slug
       let baseSlug = customSlug ? generateSlug(customSlug) : generateSlug(name);
-      inquiryFormSlug = await getUniqueSlug(baseSlug);
+      enquiryFormSlug = await getUniqueSlug(baseSlug);
 
       const newAdmin = new Admin({
         userId: newUser._id,
         email: email.toLowerCase().trim(),
         mobileNumber: phoneNumber?.trim() || undefined,
-        inquiryFormSlug: inquiryFormSlug,
+        enquiryFormSlug: enquiryFormSlug,
       });
       await newAdmin.save();
     }
@@ -741,7 +741,7 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
           email: newUser.email,
           role: newUser.role,
         },
-        inquiryFormSlug: inquiryFormSlug, // Include slug for ADMIN role
+        enquiryFormSlug: enquiryFormSlug, // Include slug for ADMIN role
       },
     });
   } catch (error: any) {

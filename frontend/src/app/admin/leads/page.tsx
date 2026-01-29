@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authAPI, leadAPI } from '@/lib/api';
-import { User, USER_ROLE, Lead, LEAD_STATUS, SERVICE_TYPE } from '@/types';
+import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -13,11 +13,11 @@ export default function AdminLeadsPage() {
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [counselors, setCounselors] = useState<any[]>([]);
-  const [inquiryFormUrl, setInquiryFormUrl] = useState<string>('');
+  const [enquiryFormUrl, setEnquiryFormUrl] = useState<string>('');
   const [copySuccess, setCopySuccess] = useState(false);
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [stageFilter, setStageFilter] = useState<string>('');
   const [serviceFilter, setServiceFilter] = useState<string>('');
   const [counselorFilter, setCounselorFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -36,9 +36,9 @@ export default function AdminLeadsPage() {
     if (user) {
       fetchLeads();
       fetchCounselors();
-      fetchInquiryFormUrl();
+      fetchEnquiryFormUrl();
     }
-  }, [user, statusFilter, serviceFilter, counselorFilter]);
+  }, [user, stageFilter, serviceFilter, counselorFilter]);
 
   const checkAuth = async () => {
     try {
@@ -63,7 +63,7 @@ export default function AdminLeadsPage() {
   const fetchLeads = async () => {
     try {
       const params: any = {};
-      if (statusFilter) params.status = statusFilter;
+      if (stageFilter) params.stage = stageFilter;
       if (serviceFilter) params.serviceType = serviceFilter;
       if (counselorFilter) params.assignedCounselorId = counselorFilter;
 
@@ -84,18 +84,18 @@ export default function AdminLeadsPage() {
     }
   };
 
-  const fetchInquiryFormUrl = async () => {
+  const fetchEnquiryFormUrl = async () => {
     try {
-      const response = await leadAPI.getInquiryFormUrl();
-      setInquiryFormUrl(response.data.data.url);
+      const response = await leadAPI.getEnquiryFormUrl();
+      setEnquiryFormUrl(response.data.data.url);
     } catch (error) {
-      console.error('Error fetching inquiry form URL:', error);
+      console.error('Error fetching enquiry form URL:', error);
     }
   };
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(inquiryFormUrl);
+      await navigator.clipboard.writeText(enquiryFormUrl);
       setCopySuccess(true);
       toast.success('URL copied to clipboard!');
       setTimeout(() => setCopySuccess(false), 2000);
@@ -133,19 +133,19 @@ export default function AdminLeadsPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case LEAD_STATUS.NEW:
+  const getStageColor = (stage: string) => {
+    switch (stage) {
+      case LEAD_STAGE.NEW:
         return 'bg-blue-100 text-blue-800';
-      case LEAD_STATUS.HOT:
+      case LEAD_STAGE.HOT:
         return 'bg-red-100 text-red-800';
-      case LEAD_STATUS.WARM:
+      case LEAD_STAGE.WARM:
         return 'bg-orange-100 text-orange-800';
-      case LEAD_STATUS.COLD:
+      case LEAD_STAGE.COLD:
         return 'bg-cyan-100 text-cyan-800';
-      case LEAD_STATUS.CONVERTED:
+      case LEAD_STAGE.CONVERTED:
         return 'bg-green-100 text-green-800';
-      case LEAD_STATUS.CLOSED:
+      case LEAD_STAGE.CLOSED:
         return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -169,12 +169,12 @@ export default function AdminLeadsPage() {
 
   // Stats calculations
   const totalLeads = leads.length;
-  const newLeads = leads.filter(l => l.status === LEAD_STATUS.NEW).length;
-  const hotLeads = leads.filter(l => l.status === LEAD_STATUS.HOT).length;
-  const warmLeads = leads.filter(l => l.status === LEAD_STATUS.WARM).length;
-  const coldLeads = leads.filter(l => l.status === LEAD_STATUS.COLD).length;
-  const convertedLeads = leads.filter(l => l.status === LEAD_STATUS.CONVERTED).length;
-  const closedLeads = leads.filter(l => l.status === LEAD_STATUS.CLOSED).length;
+  const newLeads = leads.filter(l => l.stage === LEAD_STAGE.NEW).length;
+  const hotLeads = leads.filter(l => l.stage === LEAD_STAGE.HOT).length;
+  const warmLeads = leads.filter(l => l.stage === LEAD_STAGE.WARM).length;
+  const coldLeads = leads.filter(l => l.stage === LEAD_STAGE.COLD).length;
+  const convertedLeads = leads.filter(l => l.stage === LEAD_STAGE.CONVERTED).length;
+  const closedLeads = leads.filter(l => l.stage === LEAD_STAGE.CLOSED).length;
 
   // Filter leads by search query
   const filteredLeads = leads.filter(lead => {
@@ -205,15 +205,15 @@ export default function AdminLeadsPage() {
           <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Lead Management</h1>
-              <p className="text-gray-600 mt-1">Manage and track your inquiry leads</p>
+              <p className="text-gray-600 mt-1">Manage and track your enquiry leads</p>
             </div>
 
-            {/* Inquiry Form URL */}
-            {inquiryFormUrl && (
+            {/* Enquiry Form URL */}
+            {enquiryFormUrl && (
               <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500 mb-1">Your Inquiry Form URL</p>
-                  <p className="text-sm text-gray-700 truncate max-w-xs">{inquiryFormUrl}</p>
+                  <p className="text-xs text-gray-500 mb-1">Your Enquiry Form URL</p>
+                  <p className="text-sm text-gray-700 truncate max-w-xs">{enquiryFormUrl}</p>
                 </div>
                 <button
                   onClick={copyToClipboard}
@@ -326,15 +326,15 @@ export default function AdminLeadsPage() {
               </div>
 
               <div className="flex-1 min-w-[150px]">
-                <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Stage</label>
                 <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  value={stageFilter}
+                  onChange={(e) => setStageFilter(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 >
-                  <option value="">All Status</option>
-                  {Object.values(LEAD_STATUS).map((status) => (
-                    <option key={status} value={status}>{status}</option>
+                  <option value="">All Stages</option>
+                  {Object.values(LEAD_STAGE).map((stage) => (
+                    <option key={stage} value={stage}>{stage}</option>
                   ))}
                 </select>
               </div>
@@ -373,7 +373,7 @@ export default function AdminLeadsPage() {
               <div className="flex items-end">
                 <button
                   onClick={() => {
-                    setStatusFilter('');
+                    setStageFilter('');
                     setServiceFilter('');
                     setCounselorFilter('');
                     setSearchQuery('');
@@ -395,9 +395,9 @@ export default function AdminLeadsPage() {
                 </svg>
                 <h3 className="text-lg font-medium text-gray-900 mb-1">No leads found</h3>
                 <p className="text-gray-500">
-                  {statusFilter || serviceFilter || counselorFilter
+                  {stageFilter || serviceFilter || counselorFilter
                     ? 'Try adjusting your filters'
-                    : 'Share your inquiry form URL to start receiving leads'}
+                    : 'Share your enquiry form URL to start receiving leads'}
                 </p>
               </div>
             ) : (
@@ -407,7 +407,7 @@ export default function AdminLeadsPage() {
                     <tr>
                       <th className="w-1/6 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Lead</th>
                       <th className="w-1/6 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Service</th>
-                      <th className="w-1/6 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                      <th className="w-1/6 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Stage</th>
                       <th className="w-1/6 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Assigned To</th>
                       <th className="w-1/6 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
                       <th className="w-1/6 px-4 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
@@ -420,7 +420,7 @@ export default function AdminLeadsPage() {
                           <div className="truncate">
                             <p className="font-medium text-gray-900 truncate">{lead.name}</p>
                             <p className="text-sm text-gray-500 truncate">{lead.email}</p>
-                            <p className="text-sm text-gray-500">{lead.phoneNumber}</p>
+                            <p className="text-sm text-gray-500">{lead.mobileNumber}</p>
                           </div>
                         </td>
                         <td className="px-4 py-4">
@@ -429,8 +429,8 @@ export default function AdminLeadsPage() {
                           </span>
                         </td>
                         <td className="px-4 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(lead.status)}`}>
-                            {lead.status}
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStageColor(lead.stage)}`}>
+                            {lead.stage}
                           </span>
                         </td>
                         <td className="px-4 py-4">

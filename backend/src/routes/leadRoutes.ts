@@ -1,16 +1,16 @@
 import express from "express";
 import {
-  submitInquiry,
+  submitEnquiry,
   getAdminInfoBySlug,
   getAdminLeads,
   getLeadDetail,
   assignLeadToCounselor,
-  updateLeadStatus,
+  updateLeadStage,
   addLeadNote,
   getAdminCounselors,
   getCounselorLeads,
-  getInquiryFormUrl,
-  getCounselorInquiryFormUrl,
+  getEnquiryFormUrl,
+  getCounselorEnquiryFormUrl,
   getAllLeads,
 } from "../controllers/leadController";
 import { authenticate } from "../middleware/auth";
@@ -21,11 +21,11 @@ const router = express.Router();
 
 // ============= PUBLIC ROUTES (No Auth Required) =============
 
-// Get admin info for inquiry form
-router.get("/public/inquiry/:adminSlug/info", getAdminInfoBySlug);
+// Get admin info for enquiry form
+router.get("/public/enquiry/:adminSlug/info", getAdminInfoBySlug);
 
-// Submit inquiry form
-router.post("/public/inquiry/:adminSlug/submit", submitInquiry);
+// Submit enquiry form
+router.post("/public/enquiry/:adminSlug/submit", submitEnquiry);
 
 // ============= ADMIN ROUTES =============
 
@@ -37,12 +37,12 @@ router.get(
   getAdminLeads
 );
 
-// Get admin's inquiry form URL
+// Get admin's enquiry form URL
 router.get(
-  "/admin/inquiry-form-url",
+  "/admin/enquiry-form-url",
   authenticate,
   authorize([USER_ROLE.ADMIN]),
-  getInquiryFormUrl
+  getEnquiryFormUrl
 );
 
 // Get counselors for assignment dropdown
@@ -71,12 +71,12 @@ router.get(
   getCounselorLeads
 );
 
-// Get counselor's inquiry form URL (their admin's URL)
+// Get counselor's enquiry form URL (their admin's URL)
 router.get(
-  "/counselor/inquiry-form-url",
+  "/counselor/enquiry-form-url",
   authenticate,
   authorize([USER_ROLE.COUNSELOR]),
-  getCounselorInquiryFormUrl
+  getCounselorEnquiryFormUrl
 );
 
 // ============= SHARED ROUTES (Admin & Counselor) =============
@@ -89,12 +89,12 @@ router.get(
   getLeadDetail
 );
 
-// Update lead status
+// Update lead stage
 router.patch(
-  "/leads/:leadId/status",
+  "/leads/:leadId/stage",
   authenticate,
   authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]),
-  updateLeadStatus
+  updateLeadStage
 );
 
 // Add note to lead

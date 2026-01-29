@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI, leadAPI } from '@/lib/api';
-import { User, USER_ROLE, Lead, LEAD_STATUS, SERVICE_TYPE } from '@/types';
+import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -17,8 +17,8 @@ export default function AdminLeadDetailPage() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [counselors, setCounselors] = useState<any[]>([]);
   
-  // Status update
-  const [updatingStatus, setUpdatingStatus] = useState(false);
+  // Stage update
+  const [updatingStage, setUpdatingStage] = useState(false);
   
   // Note
   const [newNote, setNewNote] = useState('');
@@ -84,18 +84,18 @@ export default function AdminLeadDetailPage() {
     }
   };
 
-  const handleStatusChange = async (newStatus: string) => {
-    if (!lead || lead.status === newStatus) return;
+  const handleStageChange = async (newStage: string) => {
+    if (!lead || lead.stage === newStage) return;
 
     try {
-      setUpdatingStatus(true);
-      await leadAPI.updateLeadStatus(lead._id, newStatus);
-      toast.success('Status updated successfully');
+      setUpdatingStage(true);
+      await leadAPI.updateLeadStage(lead._id, newStage);
+      toast.success('Stage updated successfully');
       fetchLead();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update status');
+      toast.error(error.response?.data?.message || 'Failed to update stage');
     } finally {
-      setUpdatingStatus(false);
+      setUpdatingStage(false);
     }
   };
 
@@ -140,19 +140,19 @@ export default function AdminLeadDetailPage() {
     setAssignModalOpen(true);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case LEAD_STATUS.NEW:
+  const getStageColor = (stage: string) => {
+    switch (stage) {
+      case LEAD_STAGE.NEW:
         return 'bg-blue-100 text-blue-800 border-blue-200';
-      case LEAD_STATUS.HOT:
+      case LEAD_STAGE.HOT:
         return 'bg-red-100 text-red-800 border-red-200';
-      case LEAD_STATUS.WARM:
+      case LEAD_STAGE.WARM:
         return 'bg-orange-100 text-orange-800 border-orange-200';
-      case LEAD_STATUS.COLD:
+      case LEAD_STAGE.COLD:
         return 'bg-cyan-100 text-cyan-800 border-cyan-200';
-      case LEAD_STATUS.CONVERTED:
+      case LEAD_STAGE.CONVERTED:
         return 'bg-green-100 text-green-800 border-green-200';
-      case LEAD_STATUS.CLOSED:
+      case LEAD_STAGE.CLOSED:
         return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -236,9 +236,9 @@ export default function AdminLeadDetailPage() {
                     </a>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Phone Number</label>
-                    <a href={`tel:${lead.phoneNumber}`} className="text-blue-600 hover:underline">
-                      {lead.phoneNumber}
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Mobile Number</label>
+                    <a href={`tel:${lead.mobileNumber}`} className="text-blue-600 hover:underline">
+                      {lead.mobileNumber}
                     </a>
                   </div>
                   <div>
@@ -314,24 +314,24 @@ export default function AdminLeadDetailPage() {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              {/* Status Card */}
+              {/* Stage Card */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Status</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Stage</h2>
                 <div className="space-y-2">
-                  {Object.values(LEAD_STATUS).map((status) => (
+                  {Object.values(LEAD_STAGE).map((stage) => (
                     <button
-                      key={status}
-                      onClick={() => handleStatusChange(status)}
-                      disabled={updatingStatus}
+                      key={stage}
+                      onClick={() => handleStageChange(stage)}
+                      disabled={updatingStage}
                       className={`w-full px-4 py-3 rounded-lg border-2 text-left transition-all ${
-                        lead.status === status
-                          ? getStatusColor(status) + ' border-2'
+                        lead.stage === stage
+                          ? getStageColor(stage) + ' border-2'
                           : 'bg-white border-gray-200 hover:border-gray-300 text-gray-700'
-                      } ${updatingStatus ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      } ${updatingStage ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">{status}</span>
-                        {lead.status === status && (
+                        <span className="font-medium">{stage}</span>
+                        {lead.stage === stage && (
                           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
@@ -384,7 +384,7 @@ export default function AdminLeadDetailPage() {
                     Send Email
                   </a>
                   <a
-                    href={`tel:${lead.phoneNumber}`}
+                    href={`tel:${lead.mobileNumber}`}
                     className="w-full px-4 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors flex items-center justify-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

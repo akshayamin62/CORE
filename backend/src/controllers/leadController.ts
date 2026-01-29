@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthRequest } from "../types/auth";
-import Lead, { LEAD_STATUS, SERVICE_TYPE } from "../models/Lead";
+import Lead, { LEAD_STAGE, SERVICE_TYPE } from "../models/Lead";
 import Admin from "../models/Admin";
 import Counselor from "../models/Counselor";
 import User from "../models/User";
@@ -28,7 +28,7 @@ export const getUniqueSlug = async (baseSlug: string): Promise<string> => {
   let slug = baseSlug;
   let counter = 1;
   
-  while (await Admin.findOne({ inquiryFormSlug: slug })) {
+  while (await Admin.findOne({ enquiryFormSlug: slug })) {
     slug = `${baseSlug}-${counter}`;
     counter++;
   }
@@ -37,18 +37,18 @@ export const getUniqueSlug = async (baseSlug: string): Promise<string> => {
 };
 
 /**
- * PUBLIC: Submit inquiry form (no auth required)
+ * PUBLIC: Submit enquiry form (no auth required)
  */
-export const submitInquiry = async (req: Request, res: Response): Promise<Response> => {
+export const submitEnquiry = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { adminSlug } = req.params;
-    const { name, email, phoneNumber, serviceType } = req.body;
+    const { name, email, mobileNumber, serviceType } = req.body;
 
     // Validation
-    if (!name || !email || !phoneNumber || !serviceType) {
+    if (!name || !email || !mobileNumber || !serviceType) {
       return res.status(400).json({
         success: false,
-        message: "All fields are required: name, email, phoneNumber, serviceType",
+        message: "All fields are required: name, email, mobileNumber, serviceType",
       });
     }
 
@@ -61,11 +61,11 @@ export const submitInquiry = async (req: Request, res: Response): Promise<Respon
     }
 
     // Find admin by slug
-    const admin = await Admin.findOne({ inquiryFormSlug: adminSlug.toLowerCase() });
+    const admin = await Admin.findOne({ enquiryFormSlug: adminSlug.toLowerCase() });
     if (!admin) {
       return res.status(404).json({
         success: false,
-        message: "Invalid inquiry form link",
+        message: "Invalid enquiry form link",
       });
     }
 
@@ -79,7 +79,7 @@ export const submitInquiry = async (req: Request, res: Response): Promise<Respon
     if (existingLead) {
       return res.status(400).json({
         success: false,
-        message: "You have already submitted an inquiry recently. Please wait 24 hours before submitting again.",
+        message: "You have already submitted an enquiry recently. Please wait 24 hours before submitting again.",
       });
     }
 
@@ -87,42 +87,42 @@ export const submitInquiry = async (req: Request, res: Response): Promise<Respon
     const newLead = new Lead({
       name: name.trim(),
       email: email.toLowerCase().trim(),
-      phoneNumber: phoneNumber.trim(),
+      mobileNumber: mobileNumber.trim(),
       serviceType,
       adminId: admin.userId,
-      status: LEAD_STATUS.NEW,
-      source: "Inquiry Form",
+      stage: LEAD_STAGE.NEW,
+      source: "Enquiry Form",
     });
 
     await newLead.save();
 
     return res.status(201).json({
       success: true,
-      message: "Thank you for your inquiry! We will contact you soon.",
+      message: "Thank you for your enquiry! We will contact you soon.",
     });
   } catch (error: any) {
-    console.error("Submit inquiry error:", error);
+    console.error("Submit enquiry error:", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to submit inquiry. Please try again later.",
+      message: "Failed to submit enquiry. Please try again later.",
     });
   }
 };
 
 /**
- * PUBLIC: Get admin info for inquiry form
+ * PUBLIC: Get admin info for enquiry form
  */
 export const getAdminInfoBySlug = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { adminSlug } = req.params;
 
-    const admin = await Admin.findOne({ inquiryFormSlug: adminSlug.toLowerCase() })
+    const admin = await Admin.findOne({ enquiryFormSlug: adminSlug.toLowerCase() })
       .populate("userId", "name");
 
     if (!admin) {
       return res.status(404).json({
         success: false,
-        message: "Invalid inquiry form link",
+        message: "Invalid enquiry form link",
       });
     }
 
@@ -148,13 +148,13 @@ export const getAdminInfoBySlug = async (req: Request, res: Response): Promise<R
 export const getAdminLeads = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const adminUserId = req.user?.userId;
-    const { status, serviceType, assigned, search } = req.query;
+    const { stage, serviceType, assigned, search } = req.query;
 
     // Build filter
     const filter: any = { adminId: adminUserId };
 
-    if (status) {
-      filter.status = status;
+    if (stage) {
+      filter.stage = stage;
     }
 
     if (serviceType) {
@@ -171,7 +171,7 @@ export const getAdminLeads = async (req: AuthRequest, res: Response): Promise<Re
       filter.$or = [
         { name: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
-        { phoneNumber: { $regex: search, $options: "i" } },
+        { mobileNumber: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -186,12 +186,12 @@ export const getAdminLeads = async (req: AuthRequest, res: Response): Promise<Re
     const allLeads = await Lead.find({ adminId: adminUserId });
     const stats = {
       total: allLeads.length,
-      new: allLeads.filter((l) => l.status === LEAD_STATUS.NEW).length,
-      hot: allLeads.filter((l) => l.status === LEAD_STATUS.HOT).length,
-      warm: allLeads.filter((l) => l.status === LEAD_STATUS.WARM).length,
-      cold: allLeads.filter((l) => l.status === LEAD_STATUS.COLD).length,
-      converted: allLeads.filter((l) => l.status === LEAD_STATUS.CONVERTED).length,
-      closed: allLeads.filter((l) => l.status === LEAD_STATUS.CLOSED).length,
+      new: allLeads.filter((l) => l.stage === LEAD_STAGE.NEW).length,
+      hot: allLeads.filter((l) => l.stage === LEAD_STAGE.HOT).length,
+      warm: allLeads.filter((l) => l.stage === LEAD_STAGE.WARM).length,
+      cold: allLeads.filter((l) => l.stage === LEAD_STAGE.COLD).length,
+      converted: allLeads.filter((l) => l.stage === LEAD_STAGE.CONVERTED).length,
+      closed: allLeads.filter((l) => l.stage === LEAD_STAGE.CLOSED).length,
       unassigned: allLeads.filter((l) => !l.assignedCounselorId).length,
     };
 
@@ -337,19 +337,19 @@ export const assignLeadToCounselor = async (req: AuthRequest, res: Response): Pr
 };
 
 /**
- * ADMIN/COUNSELOR: Update lead status
+ * ADMIN/COUNSELOR: Update lead stage
  */
-export const updateLeadStatus = async (req: AuthRequest, res: Response): Promise<Response> => {
+export const updateLeadStage = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const { leadId } = req.params;
-    const { status } = req.body;
+    const { stage } = req.body;
     const userId = req.user?.userId;
     const userRole = req.user?.role;
 
-    if (!Object.values(LEAD_STATUS).includes(status as LEAD_STATUS)) {
+    if (!Object.values(LEAD_STAGE).includes(stage as LEAD_STAGE)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid status",
+        message: "Invalid stage",
       });
     }
 
@@ -380,19 +380,19 @@ export const updateLeadStatus = async (req: AuthRequest, res: Response): Promise
       }
     }
 
-    lead.status = status as LEAD_STATUS;
+    lead.stage = stage as LEAD_STAGE;
     await lead.save();
 
     return res.json({
       success: true,
-      message: "Lead status updated",
+      message: "Lead stage updated",
       data: { lead },
     });
   } catch (error: any) {
-    console.error("Update lead status error:", error);
+    console.error("Update lead stage error:", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to update lead status",
+      message: "Failed to update lead stage",
     });
   }
 };
@@ -513,7 +513,7 @@ export const getAdminCounselors = async (req: AuthRequest, res: Response): Promi
 export const getCounselorLeads = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const counselorUserId = req.user?.userId;
-    const { status, serviceType, search } = req.query;
+    const { stage, serviceType, search } = req.query;
 
     // Find counselor document
     const counselor = await Counselor.findOne({ userId: counselorUserId });
@@ -527,8 +527,8 @@ export const getCounselorLeads = async (req: AuthRequest, res: Response): Promis
     // Build filter
     const filter: any = { assignedCounselorId: counselor._id };
 
-    if (status) {
-      filter.status = status;
+    if (stage) {
+      filter.stage = stage;
     }
 
     if (serviceType) {
@@ -539,7 +539,7 @@ export const getCounselorLeads = async (req: AuthRequest, res: Response): Promis
       filter.$or = [
         { name: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
-        { phoneNumber: { $regex: search, $options: "i" } },
+        { mobileNumber: { $regex: search, $options: "i" } },
       ];
     }
 
@@ -551,12 +551,12 @@ export const getCounselorLeads = async (req: AuthRequest, res: Response): Promis
     const allAssignedLeads = await Lead.find({ assignedCounselorId: counselor._id });
     const stats = {
       total: allAssignedLeads.length,
-      new: allAssignedLeads.filter((l) => l.status === LEAD_STATUS.NEW).length,
-      hot: allAssignedLeads.filter((l) => l.status === LEAD_STATUS.HOT).length,
-      warm: allAssignedLeads.filter((l) => l.status === LEAD_STATUS.WARM).length,
-      cold: allAssignedLeads.filter((l) => l.status === LEAD_STATUS.COLD).length,
-      converted: allAssignedLeads.filter((l) => l.status === LEAD_STATUS.CONVERTED).length,
-      closed: allAssignedLeads.filter((l) => l.status === LEAD_STATUS.CLOSED).length,
+      new: allAssignedLeads.filter((l) => l.stage === LEAD_STAGE.NEW).length,
+      hot: allAssignedLeads.filter((l) => l.stage === LEAD_STAGE.HOT).length,
+      warm: allAssignedLeads.filter((l) => l.stage === LEAD_STAGE.WARM).length,
+      cold: allAssignedLeads.filter((l) => l.stage === LEAD_STAGE.COLD).length,
+      converted: allAssignedLeads.filter((l) => l.stage === LEAD_STAGE.CONVERTED).length,
+      closed: allAssignedLeads.filter((l) => l.stage === LEAD_STAGE.CLOSED).length,
     };
 
     return res.json({
@@ -576,9 +576,9 @@ export const getCounselorLeads = async (req: AuthRequest, res: Response): Promis
 };
 
 /**
- * ADMIN: Get inquiry form URL
+ * ADMIN: Get enquiry form URL
  */
-export const getInquiryFormUrl = async (req: AuthRequest, res: Response): Promise<Response> => {
+export const getEnquiryFormUrl = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const adminUserId = req.user?.userId;
 
@@ -593,22 +593,22 @@ export const getInquiryFormUrl = async (req: AuthRequest, res: Response): Promis
     return res.json({
       success: true,
       data: {
-        slug: admin.inquiryFormSlug,
+        slug: admin.enquiryFormSlug,
       },
     });
   } catch (error: any) {
-    console.error("Get inquiry form URL error:", error);
+    console.error("Get enquiry form URL error:", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to get inquiry form URL",
+      message: "Failed to get enquiry form URL",
     });
   }
 };
 
 /**
- * COUNSELOR: Get inquiry form URL (their admin's URL)
+ * COUNSELOR: Get enquiry form URL (their admin's URL)
  */
-export const getCounselorInquiryFormUrl = async (req: AuthRequest, res: Response): Promise<Response> => {
+export const getCounselorEnquiryFormUrl = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const counselorUserId = req.user?.userId;
 
@@ -633,14 +633,14 @@ export const getCounselorInquiryFormUrl = async (req: AuthRequest, res: Response
     return res.json({
       success: true,
       data: {
-        slug: admin.inquiryFormSlug,
+        slug: admin.enquiryFormSlug,
       },
     });
   } catch (error: any) {
-    console.error("Get counselor inquiry form URL error:", error);
+    console.error("Get counselor enquiry form URL error:", error);
     return res.status(500).json({
       success: false,
-      message: "Failed to get inquiry form URL",
+      message: "Failed to get enquiry form URL",
     });
   }
 };
@@ -650,7 +650,7 @@ export const getCounselorInquiryFormUrl = async (req: AuthRequest, res: Response
  */
 export const getAllLeads = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { adminId, status, serviceType } = req.query;
+    const { adminId, stage, serviceType } = req.query;
 
     const filter: any = {};
 
@@ -658,8 +658,8 @@ export const getAllLeads = async (req: Request, res: Response): Promise<Response
       filter.adminId = adminId;
     }
 
-    if (status) {
-      filter.status = status;
+    if (stage) {
+      filter.stage = stage;
     }
 
     if (serviceType) {
@@ -673,8 +673,8 @@ export const getAllLeads = async (req: Request, res: Response): Promise<Response
 
     // Get overall stats
     const totalLeads = await Lead.countDocuments();
-    const leadsByStatus = await Lead.aggregate([
-      { $group: { _id: "$status", count: { $sum: 1 } } },
+    const leadsByStage = await Lead.aggregate([
+      { $group: { _id: "$stage", count: { $sum: 1 } } },
     ]);
     const leadsByService = await Lead.aggregate([
       { $group: { _id: "$serviceType", count: { $sum: 1 } } },
@@ -689,7 +689,7 @@ export const getAllLeads = async (req: Request, res: Response): Promise<Response
         leads,
         stats: {
           total: totalLeads,
-          byStatus: leadsByStatus,
+          byStage: leadsByStage,
           byService: leadsByService,
           byAdmin: leadsByAdmin,
         },

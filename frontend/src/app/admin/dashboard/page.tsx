@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authAPI, adminAPI, leadAPI } from '@/lib/api';
-import { User, USER_ROLE, LEAD_STATUS } from '@/types';
+import { User, USER_ROLE, LEAD_STAGE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -11,7 +11,7 @@ interface DashboardStats {
   totalCounselors: number;
   totalLeads: number;
   newLeads: number;
-  inquiryFormUrl: string;
+  enquiryFormUrl: string;
 }
 
 export default function AdminDashboardPage() {
@@ -50,7 +50,7 @@ export default function AdminDashboardPage() {
       const [counselorsRes, leadsRes, urlRes] = await Promise.all([
         adminAPI.getCounselors(),
         leadAPI.getAdminLeads({}),
-        leadAPI.getInquiryFormUrl(),
+        leadAPI.getEnquiryFormUrl(),
       ]);
 
       const counselors = counselorsRes.data.data.counselors;
@@ -58,13 +58,13 @@ export default function AdminDashboardPage() {
       const slug = urlRes.data.data.slug;
       
       // Construct full URL from slug
-      const inquiryFormUrl = slug ? `${window.location.origin}/inquiry/${slug}` : '';
+      const enquiryFormUrl = slug ? `${window.location.origin}/inquiry/${slug}` : '';
 
       setStats({
         totalCounselors: counselors.length,
         totalLeads: leads.length,
-        newLeads: leads.filter((l: any) => l.status === LEAD_STATUS.NEW).length,
-        inquiryFormUrl,
+        newLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.NEW).length,
+        enquiryFormUrl,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -160,7 +160,7 @@ export default function AdminDashboardPage() {
               />
               <ActionCard
                 title="View Leads"
-                description="Check all leads from your inquiry form"
+                description="Check all leads from your enquiry form"
                 icon={
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -171,7 +171,7 @@ export default function AdminDashboardPage() {
                 color="blue"
               />
               
-              {/* Inquiry Form URL Card */}
+              {/* Enquiry Form URL Card */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 group hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-purple-100 text-purple-600">
@@ -180,17 +180,17 @@ export default function AdminDashboardPage() {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">Inquiry Form URL</h3>
+                    <h3 className="font-semibold text-gray-900">Enquiry Form URL</h3>
                     <p className="text-sm text-gray-500">Share to collect leads</p>
                   </div>
                 </div>
                 <div className="bg-purple-50 rounded-lg p-3 mb-3">
                   <code className="text-xs text-purple-700 font-mono break-all">
-                    {stats?.inquiryFormUrl || 'Loading...'}
+                    {stats?.enquiryFormUrl || 'Loading...'}
                   </code>
                 </div>
                 <button
-                  onClick={() => stats?.inquiryFormUrl && copyToClipboard(stats.inquiryFormUrl)}
+                  onClick={() => stats?.enquiryFormUrl && copyToClipboard(stats.enquiryFormUrl)}
                   className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

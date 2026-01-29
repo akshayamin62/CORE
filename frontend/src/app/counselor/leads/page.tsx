@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authAPI, leadAPI } from '@/lib/api';
-import { User, USER_ROLE, Lead, LEAD_STATUS, SERVICE_TYPE } from '@/types';
+import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import Link from 'next/link';
 import CounselorLayout from '@/components/CounselorLayout';
@@ -15,7 +15,7 @@ export default function CounselorLeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [stageFilter, setStageFilter] = useState<string>('');
   const [serviceFilter, setServiceFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -27,7 +27,7 @@ export default function CounselorLeadsPage() {
     if (user) {
       fetchLeads();
     }
-  }, [user, statusFilter, serviceFilter]);
+  }, [user, stageFilter, serviceFilter]);
 
   const checkAuth = async () => {
     try {
@@ -52,7 +52,7 @@ export default function CounselorLeadsPage() {
   const fetchLeads = async () => {
     try {
       const params: any = {};
-      if (statusFilter) params.status = statusFilter;
+      if (stageFilter) params.stage = stageFilter;
       if (serviceFilter) params.serviceType = serviceFilter;
 
       const response = await leadAPI.getCounselorLeads(params);
@@ -63,19 +63,19 @@ export default function CounselorLeadsPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case LEAD_STATUS.NEW:
+  const getStageColor = (stage: string) => {
+    switch (stage) {
+      case LEAD_STAGE.NEW:
         return 'bg-blue-100 text-blue-800';
-      case LEAD_STATUS.HOT:
+      case LEAD_STAGE.HOT:
         return 'bg-red-100 text-red-800';
-      case LEAD_STATUS.WARM:
+      case LEAD_STAGE.WARM:
         return 'bg-orange-100 text-orange-800';
-      case LEAD_STATUS.COLD:
+      case LEAD_STAGE.COLD:
         return 'bg-cyan-100 text-cyan-800';
-      case LEAD_STATUS.CONVERTED:
+      case LEAD_STAGE.CONVERTED:
         return 'bg-green-100 text-green-800';
-      case LEAD_STATUS.CLOSED:
+      case LEAD_STAGE.CLOSED:
         return 'bg-gray-100 text-gray-600';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -154,15 +154,15 @@ export default function CounselorLeadsPage() {
             </div>
 
             <div className="flex-1 min-w-[150px]">
-              <label className="block text-xs font-medium text-gray-500 mb-1">Status</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Stage</label>
               <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                value={stageFilter}
+                onChange={(e) => setStageFilter(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               >
-                <option value="">All Status</option>
-                {Object.values(LEAD_STATUS).map((status) => (
-                  <option key={status} value={status}>{status}</option>
+                <option value="">All Stages</option>
+                {Object.values(LEAD_STAGE).map((stage) => (
+                  <option key={stage} value={stage}>{stage}</option>
                 ))}
               </select>
             </div>
@@ -184,7 +184,7 @@ export default function CounselorLeadsPage() {
             <div className="flex items-end">
               <button
                 onClick={() => {
-                  setStatusFilter('');
+                  setStageFilter('');
                   setServiceFilter('');
                   setSearchQuery('');
                 }}
@@ -205,7 +205,7 @@ export default function CounselorLeadsPage() {
               </svg>
               <h3 className="text-lg font-medium text-gray-900 mb-1">No leads assigned</h3>
               <p className="text-gray-500">
-                {statusFilter || serviceFilter
+                {stageFilter || serviceFilter
                   ? 'Try adjusting your filters'
                   : 'Your admin will assign leads to you'}
               </p>
@@ -217,7 +217,7 @@ export default function CounselorLeadsPage() {
                   <tr>
                     <th className="w-1/5 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Lead</th>
                     <th className="w-1/5 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Service</th>
-                    <th className="w-1/5 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                    <th className="w-1/5 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Stage</th>
                     <th className="w-1/5 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
                     <th className="w-1/5 px-4 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -229,7 +229,7 @@ export default function CounselorLeadsPage() {
                         <div className="truncate">
                           <p className="font-medium text-gray-900 truncate">{lead.name}</p>
                           <p className="text-sm text-gray-500 truncate">{lead.email}</p>
-                          <p className="text-sm text-gray-500">{lead.phoneNumber}</p>
+                          <p className="text-sm text-gray-500">{lead.mobileNumber}</p>
                         </div>
                       </td>
                       <td className="px-4 py-4">
@@ -238,8 +238,8 @@ export default function CounselorLeadsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(lead.status)}`}>
-                          {lead.status}
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStageColor(lead.stage)}`}>
+                          {lead.stage}
                         </span>
                       </td>
                       <td className="px-4 py-4">
