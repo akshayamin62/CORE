@@ -284,6 +284,54 @@ export const leadAPI = {
   }) => api.get('/super-admin/leads', { params }),
 };
 
+// Follow-Up API
+export const followUpAPI = {
+  // Create a new follow-up
+  createFollowUp: (data: {
+    leadId: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    duration: number;
+    notes?: string;
+  }) => api.post('/follow-ups', data),
+
+  // Get all follow-ups (for calendar)
+  getFollowUps: (params?: {
+    startDate?: string;
+    endDate?: string;
+    status?: string;
+  }) => api.get('/follow-ups', { params }),
+
+  // Get follow-up summary (today, missed, upcoming)
+  getFollowUpSummary: () => api.get('/follow-ups/summary'),
+
+  // Get single follow-up by ID
+  getFollowUpById: (followUpId: string) => api.get(`/follow-ups/${followUpId}`),
+
+  // Update follow-up (complete/reschedule)
+  updateFollowUp: (followUpId: string, data: {
+    status?: string;
+    stageChangedTo?: string;
+    notes?: string;
+    nextFollowUp?: {
+      scheduledDate: string;
+      scheduledTime: string;
+      duration: number;
+    };
+  }) => api.patch(`/follow-ups/${followUpId}`, data),
+
+  // Get follow-up history for a lead
+  getLeadFollowUpHistory: (leadId: string) => api.get(`/follow-ups/lead/${leadId}/history`),
+
+  // Check time slot availability
+  checkTimeSlotAvailability: (params: {
+    date: string;
+    time: string;
+    duration: number;
+    excludeFollowUpId?: string;
+  }) => api.get('/follow-ups/check-availability', { params }),
+};
+
 export const chatAPI = {
   // Get or create chat for a program
   getOrCreateChat: (programId: string) => api.get(`/chat/program/${programId}/chat`),

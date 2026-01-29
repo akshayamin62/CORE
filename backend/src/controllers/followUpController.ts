@@ -1,0 +1,614 @@
+import { Response } from "express";
+import { AuthRequest } from "../types/auth";
+import FollowUp, { FOLLOWUP_STATUS } from "../models/FollowUp";
+import Lead from "../models/Lead";
+import Counselor from "../models/Counselor";
+import mongoose from "mongoose";
+
+/**
+ * Helper: Get start and end of a day
+ */
+const getDayBounds = (date: Date) => {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+};
+
+/**
+ * Helper: Convert time string to minutes for comparison
+ */
+const timeToMinutes = (time: string): number => {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+};
+
+/**
+ * Helper: Check if two time slots overlap
+ */
+const doTimeSlotsOverlap = (
+  time1: string,
+  duration1: number,
+  time2: string,
+  duration2: number
+): boolean => {
+  const start1 = timeToMinutes(time1);
+  const end1 = start1 + duration1;
+  const start2 = timeToMinutes(time2);
+  const end2 = start2 + duration2;
+
+  return start1 < end2 && start2 < end1;
+};
+
+/**
+ * COUNSELOR: Create a new follow-up
+ */
+export const createFollowUp = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const counselorUserId = req.user?.userId;
+    const { leadId, scheduledDate, scheduledTime, duration, notes } = req.body;
+
+    // Validate required fields
+    if (!leadId || !scheduledDate || !scheduledTime || !duration) {
+      return res.status(400).json({
+        success: false,
+        message: "Lead ID, scheduled date, time, and duration are required",
+      });
+    }
+
+    // Find counselor
+    const counselor = await Counselor.findOne({ userId: counselorUserId });
+    if (!counselor) {
+      return res.status(404).json({
+        success: false,
+        message: "Counselor profile not found",
+      });
+    }
+
+    // Validate lead exists and is assigned to this counselor
+    const lead = await Lead.findOne({
+      _id: leadId,
+      assignedCounselorId: counselor._id,
+    });
+
+    if (!lead) {
+      return res.status(404).json({
+        success: false,
+        message: "Lead not found or not assigned to you",
+      });
+    }
+
+    const scheduleDate = new Date(scheduledDate);
+    const { start: dayStart, end: dayEnd } = getDayBounds(scheduleDate);
+
+    // Check if lead already has a future/scheduled follow-up
+    const existingFutureFollowUp = await FollowUp.findOne({
+      leadId,
+      status: FOLLOWUP_STATUS.SCHEDULED,
+      $or: [
+        { scheduledDate: { $gt: new Date() } },
+        {
+          scheduledDate: { $gte: dayStart, $lte: dayEnd },
+          scheduledTime: { $gt: new Date().toTimeString().slice(0, 5) },
+        },
+      ],
+    });
+
+    if (existingFutureFollowUp) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This lead already has a scheduled follow-up. Only one future follow-up per lead is allowed.",
+      });
+    }
+
+    // Check for time slot conflicts for this counselor on this date
+    const existingFollowUps = await FollowUp.find({
+      counselorId: counselor._id,
+      scheduledDate: { $gte: dayStart, $lte: dayEnd },
+      status: FOLLOWUP_STATUS.SCHEDULED,
+    });
+
+    for (const existing of existingFollowUps) {
+      if (
+        doTimeSlotsOverlap(
+          scheduledTime,
+          duration,
+          existing.scheduledTime,
+          existing.duration
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: `Time slot conflicts with another follow-up scheduled at ${existing.scheduledTime}`,
+        });
+      }
+    }
+
+    // Create the follow-up
+    const followUp = new FollowUp({
+      leadId,
+      counselorId: counselor._id,
+      scheduledDate: scheduleDate,
+      scheduledTime,
+      duration,
+      status: FOLLOWUP_STATUS.SCHEDULED,
+      stageAtFollowUp: lead.stage,
+      notes: notes || "",
+      createdBy: counselorUserId,
+    });
+
+    await followUp.save();
+
+    // Populate lead info for response
+    await followUp.populate("leadId", "name email mobileNumber serviceType stage");
+
+    return res.status(201).json({
+      success: true,
+      message: "Follow-up scheduled successfully",
+      data: { followUp },
+    });
+  } catch (error) {
+    console.error("Error creating follow-up:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error creating follow-up",
+    });
+  }
+};
+
+/**
+ * COUNSELOR: Get all follow-ups for counselor (calendar data)
+ */
+export const getCounselorFollowUps = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const counselorUserId = req.user?.userId;
+    const { startDate, endDate, status } = req.query;
+
+    const counselor = await Counselor.findOne({ userId: counselorUserId });
+    if (!counselor) {
+      return res.status(404).json({
+        success: false,
+        message: "Counselor profile not found",
+      });
+    }
+
+    // Build filter
+    const filter: any = { counselorId: counselor._id };
+
+    if (startDate && endDate) {
+      filter.scheduledDate = {
+        $gte: new Date(startDate as string),
+        $lte: new Date(endDate as string),
+      };
+    }
+
+    if (status) {
+      filter.status = status;
+    }
+
+    const followUps = await FollowUp.find(filter)
+      .populate("leadId", "name email mobileNumber serviceType stage")
+      .sort({ scheduledDate: 1, scheduledTime: 1 });
+
+    return res.status(200).json({
+      success: true,
+      data: { followUps },
+    });
+  } catch (error) {
+    console.error("Error fetching follow-ups:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching follow-ups",
+    });
+  }
+};
+
+/**
+ * COUNSELOR: Get follow-up summary (Today, Missed, Upcoming)
+ */
+export const getFollowUpSummary = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const counselorUserId = req.user?.userId;
+
+    const counselor = await Counselor.findOne({ userId: counselorUserId });
+    if (!counselor) {
+      return res.status(404).json({
+        success: false,
+        message: "Counselor profile not found",
+      });
+    }
+
+    const today = new Date();
+    const { start: todayStart, end: todayEnd } = getDayBounds(today);
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const { start: tomorrowStart, end: tomorrowEnd } = getDayBounds(tomorrow);
+
+    // Today's follow-ups
+    const todayFollowUps = await FollowUp.find({
+      counselorId: counselor._id,
+      scheduledDate: { $gte: todayStart, $lte: todayEnd },
+    })
+      .populate("leadId", "name email mobileNumber serviceType stage")
+      .sort({ scheduledTime: 1 });
+
+    // Missed follow-ups (past date + status still SCHEDULED)
+    const missedFollowUps = await FollowUp.find({
+      counselorId: counselor._id,
+      scheduledDate: { $lt: todayStart },
+      status: FOLLOWUP_STATUS.SCHEDULED,
+    })
+      .populate("leadId", "name email mobileNumber serviceType stage")
+      .sort({ scheduledDate: -1 });
+
+    // Upcoming (tomorrow only)
+    const upcomingFollowUps = await FollowUp.find({
+      counselorId: counselor._id,
+      scheduledDate: { $gte: tomorrowStart, $lte: tomorrowEnd },
+      status: FOLLOWUP_STATUS.SCHEDULED,
+    })
+      .populate("leadId", "name email mobileNumber serviceType stage")
+      .sort({ scheduledTime: 1 });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        today: todayFollowUps,
+        missed: missedFollowUps,
+        upcoming: upcomingFollowUps,
+        counts: {
+          today: todayFollowUps.length,
+          missed: missedFollowUps.length,
+          upcoming: upcomingFollowUps.length,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching follow-up summary:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching follow-up summary",
+    });
+  }
+};
+
+/**
+ * COUNSELOR: Get follow-up by ID
+ */
+export const getFollowUpById = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const counselorUserId = req.user?.userId;
+    const { followUpId } = req.params;
+
+    const counselor = await Counselor.findOne({ userId: counselorUserId });
+    if (!counselor) {
+      return res.status(404).json({
+        success: false,
+        message: "Counselor profile not found",
+      });
+    }
+
+    const followUp = await FollowUp.findOne({
+      _id: followUpId,
+      counselorId: counselor._id,
+    }).populate("leadId", "name email mobileNumber serviceType stage");
+
+    if (!followUp) {
+      return res.status(404).json({
+        success: false,
+        message: "Follow-up not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: { followUp },
+    });
+  } catch (error) {
+    console.error("Error fetching follow-up:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching follow-up",
+    });
+  }
+};
+
+/**
+ * COUNSELOR: Update follow-up (complete/reschedule)
+ */
+export const updateFollowUp = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const counselorUserId = req.user?.userId;
+    const { followUpId } = req.params;
+    const {
+      status,
+      stageChangedTo,
+      notes,
+      nextFollowUp, // { scheduledDate, scheduledTime, duration }
+    } = req.body;
+
+    const counselor = await Counselor.findOne({ userId: counselorUserId });
+    if (!counselor) {
+      return res.status(404).json({
+        success: false,
+        message: "Counselor profile not found",
+      });
+    }
+
+    const followUp = await FollowUp.findOne({
+      _id: followUpId,
+      counselorId: counselor._id,
+    });
+
+    if (!followUp) {
+      return res.status(404).json({
+        success: false,
+        message: "Follow-up not found",
+      });
+    }
+
+    // Update follow-up fields
+    if (status) {
+      followUp.status = status;
+      if (
+        status !== FOLLOWUP_STATUS.SCHEDULED &&
+        status !== FOLLOWUP_STATUS.MISSED
+      ) {
+        followUp.completedAt = new Date();
+      }
+    }
+
+    if (notes !== undefined) {
+      followUp.notes = notes;
+    }
+
+    followUp.updatedBy = new mongoose.Types.ObjectId(counselorUserId);
+
+    // If stage is changed, update both follow-up and lead
+    if (stageChangedTo) {
+      followUp.stageChangedTo = stageChangedTo;
+
+      // Update the lead's stage
+      await Lead.findByIdAndUpdate(followUp.leadId, {
+        stage: stageChangedTo,
+      });
+    }
+
+    await followUp.save();
+
+    // If next follow-up is scheduled, create it
+    let newFollowUp = null;
+    if (nextFollowUp && nextFollowUp.scheduledDate && nextFollowUp.scheduledTime) {
+      const nextDate = new Date(nextFollowUp.scheduledDate);
+      const { start: dayStart, end: dayEnd } = getDayBounds(nextDate);
+
+      // Check for existing future follow-up for this lead
+      const existingFuture = await FollowUp.findOne({
+        leadId: followUp.leadId,
+        status: FOLLOWUP_STATUS.SCHEDULED,
+        _id: { $ne: followUpId },
+      });
+
+      if (existingFuture) {
+        return res.status(400).json({
+          success: false,
+          message: "Lead already has a scheduled follow-up",
+        });
+      }
+
+      // Check for time conflicts
+      const conflictingFollowUps = await FollowUp.find({
+        counselorId: counselor._id,
+        scheduledDate: { $gte: dayStart, $lte: dayEnd },
+        status: FOLLOWUP_STATUS.SCHEDULED,
+        _id: { $ne: followUpId },
+      });
+
+      for (const existing of conflictingFollowUps) {
+        if (
+          doTimeSlotsOverlap(
+            nextFollowUp.scheduledTime,
+            nextFollowUp.duration || 30,
+            existing.scheduledTime,
+            existing.duration
+          )
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: `Next follow-up time conflicts with another follow-up at ${existing.scheduledTime}`,
+          });
+        }
+      }
+
+      // Get current lead stage
+      const lead = await Lead.findById(followUp.leadId);
+
+      newFollowUp = new FollowUp({
+        leadId: followUp.leadId,
+        counselorId: counselor._id,
+        scheduledDate: nextDate,
+        scheduledTime: nextFollowUp.scheduledTime,
+        duration: nextFollowUp.duration || 30,
+        status: FOLLOWUP_STATUS.SCHEDULED,
+        stageAtFollowUp: stageChangedTo || lead?.stage || followUp.stageAtFollowUp,
+        notes: "",
+        createdBy: counselorUserId,
+      });
+
+      await newFollowUp.save();
+      await newFollowUp.populate("leadId", "name email mobileNumber serviceType stage");
+    }
+
+    // Populate and return updated follow-up
+    await followUp.populate("leadId", "name email mobileNumber serviceType stage");
+
+    return res.status(200).json({
+      success: true,
+      message: "Follow-up updated successfully",
+      data: {
+        followUp,
+        newFollowUp,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating follow-up:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error updating follow-up",
+    });
+  }
+};
+
+/**
+ * COUNSELOR: Get follow-up history for a lead
+ */
+export const getLeadFollowUpHistory = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const counselorUserId = req.user?.userId;
+    const { leadId } = req.params;
+
+    const counselor = await Counselor.findOne({ userId: counselorUserId });
+    if (!counselor) {
+      return res.status(404).json({
+        success: false,
+        message: "Counselor profile not found",
+      });
+    }
+
+    // Verify lead is assigned to this counselor
+    const lead = await Lead.findOne({
+      _id: leadId,
+      assignedCounselorId: counselor._id,
+    });
+
+    if (!lead) {
+      return res.status(404).json({
+        success: false,
+        message: "Lead not found or not assigned to you",
+      });
+    }
+
+    // Get all follow-ups for this lead (newest first)
+    const followUps = await FollowUp.find({ leadId })
+      .populate("createdBy", "name")
+      .populate("updatedBy", "name")
+      .sort({ createdAt: -1 });
+
+    // Check if lead has an active/future follow-up
+    const activeFollowUp = followUps.find(
+      (f) => f.status === FOLLOWUP_STATUS.SCHEDULED
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        lead,
+        followUps,
+        hasActiveFollowUp: !!activeFollowUp,
+        activeFollowUp: activeFollowUp || null,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching lead follow-up history:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching follow-up history",
+    });
+  }
+};
+
+/**
+ * COUNSELOR: Check time slot availability
+ */
+export const checkTimeSlotAvailability = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const counselorUserId = req.user?.userId;
+    const { date, time, duration, excludeFollowUpId } = req.query;
+
+    if (!date || !time || !duration) {
+      return res.status(400).json({
+        success: false,
+        message: "Date, time, and duration are required",
+      });
+    }
+
+    const counselor = await Counselor.findOne({ userId: counselorUserId });
+    if (!counselor) {
+      return res.status(404).json({
+        success: false,
+        message: "Counselor profile not found",
+      });
+    }
+
+    const checkDate = new Date(date as string);
+    const { start: dayStart, end: dayEnd } = getDayBounds(checkDate);
+
+    const filter: any = {
+      counselorId: counselor._id,
+      scheduledDate: { $gte: dayStart, $lte: dayEnd },
+      status: FOLLOWUP_STATUS.SCHEDULED,
+    };
+
+    if (excludeFollowUpId) {
+      filter._id = { $ne: excludeFollowUpId };
+    }
+
+    const existingFollowUps = await FollowUp.find(filter);
+
+    let isAvailable = true;
+    let conflictingTime = null;
+
+    for (const existing of existingFollowUps) {
+      if (
+        doTimeSlotsOverlap(
+          time as string,
+          parseInt(duration as string),
+          existing.scheduledTime,
+          existing.duration
+        )
+      ) {
+        isAvailable = false;
+        conflictingTime = existing.scheduledTime;
+        break;
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        isAvailable,
+        conflictingTime,
+      },
+    });
+  } catch (error) {
+    console.error("Error checking time slot:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error checking time slot availability",
+    });
+  }
+};

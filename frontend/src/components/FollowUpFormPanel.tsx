@@ -1,0 +1,381 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { FollowUp, FOLLOWUP_STATUS, Lead, LEAD_STAGE } from '@/types';
+import { followUpAPI } from '@/lib/api';
+import toast from 'react-hot-toast';
+import { format } from 'date-fns';
+
+interface FollowUpFormPanelProps {
+  followUp: FollowUp | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: () => void;
+}
+
+export default function FollowUpFormPanel({
+  followUp,
+  isOpen,
+  onClose,
+  onSave,
+}: FollowUpFormPanelProps) {
+  const [status, setStatus] = useState<FOLLOWUP_STATUS>(FOLLOWUP_STATUS.SCHEDULED);
+  const [stageChangedTo, setStageChangedTo] = useState<string>('');
+  const [notes, setNotes] = useState('');
+  const [scheduleNext, setScheduleNext] = useState(false);
+  const [nextDate, setNextDate] = useState('');
+  const [nextTime, setNextTime] = useState('');
+  const [nextDuration, setNextDuration] = useState(30);
+  const [saving, setSaving] = useState(false);
+  const [checkingSlot, setCheckingSlot] = useState(false);
+  const [slotAvailable, setSlotAvailable] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [followUpData, setFollowUpData] = useState<FollowUp | null>(null);
+
+  // Fetch full follow-up data when followUp changes
+  useEffect(() => {
+    if (followUp && isOpen) {
+      fetchFollowUpDetails();
+    } else if (!isOpen) {
+      // Reset state when panel closes
+      setFollowUpData(null);
+      setLoading(false);
+    }
+  }, [followUp, isOpen]);
+
+  const fetchFollowUpDetails = async () => {
+    if (!followUp) return;
+    
+    setLoading(true);
+    try {
+      const response = await followUpAPI.getFollowUpById(followUp._id);
+      const data = response.data.data.followUp;
+      setFollowUpData(data);
+      
+      // Reset form with fetched data
+      setStatus(data.status as FOLLOWUP_STATUS);
+      setStageChangedTo(data.stageChangedTo || '');
+      setNotes(data.notes || '');
+      setScheduleNext(false);
+      setNextDate('');
+      setNextTime('');
+      setNextDuration(30);
+      setSlotAvailable(null);
+    } catch (error: any) {
+      console.error('Error fetching follow-up:', error);
+      toast.error('Failed to load follow-up details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Check slot availability when next date/time changes
+  useEffect(() => {
+    if (scheduleNext && nextDate && nextTime && nextDuration) {
+      checkSlotAvailability();
+    } else {
+      setSlotAvailable(null);
+    }
+  }, [nextDate, nextTime, nextDuration, scheduleNext]);
+
+  const checkSlotAvailability = async () => {
+    if (!nextDate || !nextTime) return;
+    
+    setCheckingSlot(true);
+    try {
+      const response = await followUpAPI.checkTimeSlotAvailability({
+        date: nextDate,
+        time: nextTime,
+        duration: nextDuration,
+        excludeFollowUpId: followUpData?._id,
+      });
+      setSlotAvailable(response.data.data.isAvailable);
+    } catch (error) {
+      console.error('Error checking slot:', error);
+    } finally {
+      setCheckingSlot(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!followUpData) return;
+
+    // Validate next follow-up if scheduling one
+    if (scheduleNext) {
+      if (!nextDate || !nextTime) {
+        toast.error('Please select date and time for next follow-up');
+        return;
+      }
+      if (slotAvailable === false) {
+        toast.error('Selected time slot is not available');
+        return;
+      }
+    }
+
+    setSaving(true);
+    try {
+      const updateData: any = {
+        status,
+        notes,
+      };
+
+      if (stageChangedTo) {
+        updateData.stageChangedTo = stageChangedTo;
+      }
+
+      if (scheduleNext && nextDate && nextTime) {
+        updateData.nextFollowUp = {
+          scheduledDate: nextDate,
+          scheduledTime: nextTime,
+          duration: nextDuration,
+        };
+      }
+
+      await followUpAPI.updateFollowUp(followUpData._id, updateData);
+      toast.success('Follow-up updated successfully');
+      onSave();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update follow-up');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const lead = followUpData?.leadId as Lead | undefined;
+  const currentStage = lead?.stage || followUpData?.stageAtFollowUp;
+  const isPastFollowUp = followUpData && new Date(followUpData.scheduledDate) < new Date() && 
+    new Date(followUpData.scheduledDate).toDateString() !== new Date().toDateString();
+
+  return (
+    <>
+      {/* Slide-in Panel from Left - compact, no full height */}
+      <div 
+        className={`fixed top-[180px] left-4 z-40 w-[380px] bg-white shadow-2xl rounded-xl border border-gray-200 transform transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
+        }`}
+        style={{ maxHeight: 'calc(100vh - 220px)' }}
+      >
+        {/* Compact Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 rounded-t-xl flex items-center justify-between">
+          <span className="text-white font-medium text-sm">
+            {isPastFollowUp ? '⚠️ Past Follow-Up' : '📅 Follow-Up'}
+          </span>
+          <button
+            onClick={onClose}
+            className="text-white hover:text-blue-200 transition-colors p-1 hover:bg-white/10 rounded"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content - Scrollable */}
+        <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 320px)' }}>
+          {loading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                <p className="text-gray-600 text-xs">Loading...</p>
+              </div>
+            </div>
+          ) : followUpData ? (
+            <div className="px-4 py-3 space-y-4">
+              {/* Compact Follow-Up Info - Only date, time, name, service */}
+              <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-xs text-gray-500">Date & Time</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {format(new Date(followUpData.scheduledDate), 'MMM d, yyyy')} at {followUpData.scheduledTime}
+                    </p>
+                  </div>
+                  <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                    {followUpData.duration} min
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-200">
+                  <div>
+                    <p className="text-xs text-gray-500">Name</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{lead?.name || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Service</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{lead?.serviceType || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status - Compact */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as FOLLOWUP_STATUS)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                >
+                  <option value={FOLLOWUP_STATUS.SCHEDULED}>Scheduled</option>
+                  <option value={FOLLOWUP_STATUS.COMPLETED}>Completed</option>
+                  <option value={FOLLOWUP_STATUS.PHONE_NOT_PICKED}>Phone not picked up</option>
+                  <option value={FOLLOWUP_STATUS.CALL_DISCONNECTED}>Call disconnected</option>
+                  <option value={FOLLOWUP_STATUS.NO_RESPONSE}>No response</option>
+                  <option value={FOLLOWUP_STATUS.RESCHEDULED}>Rescheduled</option>
+                </select>
+              </div>
+
+              {/* Stage Change - Compact */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Change Stage (Optional)</label>
+                <select
+                  value={stageChangedTo}
+                  onChange={(e) => setStageChangedTo(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                >
+                  <option value="">Keep current ({currentStage})</option>
+                  <option value={LEAD_STAGE.NEW}>New</option>
+                  <option value={LEAD_STAGE.HOT}>Hot</option>
+                  <option value={LEAD_STAGE.WARM}>Warm</option>
+                  <option value={LEAD_STAGE.COLD}>Cold</option>
+                  <option value={LEAD_STAGE.CONVERTED}>Converted to Student</option>
+                  <option value={LEAD_STAGE.CLOSED}>Closed</option>
+                </select>
+              </div>
+
+              {/* Notes - Compact */}
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Notes</label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={2}
+                  placeholder="Add notes..."
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              {/* Schedule Next Follow-Up - Compact */}
+              <div className="border-t border-gray-200 pt-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="checkbox"
+                    id="scheduleNext"
+                    checked={scheduleNext}
+                    onChange={(e) => setScheduleNext(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="scheduleNext" className="text-xs font-medium text-gray-700">
+                    Schedule Next Follow-Up
+                  </label>
+                </div>
+
+                {scheduleNext && (
+                  <div className="bg-blue-50 rounded-lg p-3 space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Date</label>
+                        <input
+                          type="date"
+                          value={nextDate}
+                          onChange={(e) => setNextDate(e.target.value)}
+                          min={format(new Date(), 'yyyy-MM-dd')}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Time</label>
+                        <input
+                          type="time"
+                          value={nextTime}
+                          onChange={(e) => setNextTime(e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Duration</label>
+                      <select
+                        value={nextDuration}
+                        onChange={(e) => setNextDuration(parseInt(e.target.value))}
+                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value={15}>15 min</option>
+                        <option value={30}>30 min</option>
+                        <option value={45}>45 min</option>
+                        <option value={60}>60 min</option>
+                      </select>
+                    </div>
+                    
+                    {/* Slot Availability Status - Compact */}
+                    {checkingSlot && (
+                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                        <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Checking...
+                      </p>
+                    )}
+                    {!checkingSlot && slotAvailable === true && (
+                      <p className="text-xs text-green-600 flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Available
+                      </p>
+                    )}
+                    {!checkingSlot && slotAvailable === false && (
+                      <p className="text-xs text-red-600 flex items-center gap-1">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Conflict
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-32">
+              <div className="text-center">
+                <svg className="w-10 h-10 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-gray-600 text-xs">No data</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer - Compact */}
+        {followUpData && !loading && (
+          <div className="bg-gray-50 px-4 py-3 border-t border-gray-200 rounded-b-xl flex justify-end gap-2">
+            <button
+              onClick={onClose}
+              className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving || (scheduleNext && slotAvailable === false)}
+              className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+            >
+              {saving ? (
+                <>
+                  <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Saving...
+                </>
+              ) : (
+                'Save'
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}

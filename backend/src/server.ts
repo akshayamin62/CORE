@@ -14,6 +14,7 @@ import chatRoutes from "./routes/chatRoutes";
 import documentRoutes from "./routes/documentRoutes";
 import ksDocumentRoutes from "./routes/ksDocumentRoutes";
 import leadRoutes from "./routes/leadRoutes";
+import followUpRoutes from "./routes/followUpRoutes";
 
 // Import all models to register them with Mongoose
 import "./models/User";
@@ -35,6 +36,7 @@ import "./models/ChatMessage";
 import "./models/StudentDocument";
 import "./models/KSDocumentField";
 import "./models/Lead";
+import "./models/FollowUp";
 
 dotenv.config();
 
@@ -56,6 +58,7 @@ app.use("/api/programs", programRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/ks-documents", ksDocumentRoutes);
+app.use("/api/follow-ups", followUpRoutes); // Follow-up routes
 app.use("/api", leadRoutes); // Lead routes (includes public, admin, counselor endpoints)
 
 // Basic test route

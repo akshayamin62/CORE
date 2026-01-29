@@ -295,4 +295,67 @@ export interface AdminInfo {
   services: string[];
 }
 
+// Follow-Up Types
+export enum FOLLOWUP_STATUS {
+  SCHEDULED = 'Scheduled',
+  PHONE_NOT_PICKED = 'Phone not picked up',
+  CALL_DISCONNECTED = 'Call disconnected',
+  COMPLETED = 'Completed',
+  RESCHEDULED = 'Rescheduled',
+  NO_RESPONSE = 'No response',
+  MISSED = 'Missed',
+}
 
+export interface FollowUp {
+  _id: string;
+  leadId: Lead | string;
+  counselorId: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  duration: number;
+  status: FOLLOWUP_STATUS;
+  stageAtFollowUp: LEAD_STAGE;
+  stageChangedTo?: LEAD_STAGE;
+  notes?: string;
+  createdBy: {
+    _id: string;
+    name: string;
+  };
+  updatedBy?: {
+    _id: string;
+    name: string;
+  };
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FollowUpSummary {
+  today: FollowUp[];
+  missed: FollowUp[];
+  upcoming: FollowUp[];
+  counts: {
+    today: number;
+    missed: number;
+    upcoming: number;
+  };
+}
+
+export interface CreateFollowUpData {
+  leadId: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  duration: number;
+  notes?: string;
+}
+
+export interface UpdateFollowUpData {
+  status?: FOLLOWUP_STATUS;
+  stageChangedTo?: LEAD_STAGE;
+  notes?: string;
+  nextFollowUp?: {
+    scheduledDate: string;
+    scheduledTime: string;
+    duration: number;
+  };
+}
