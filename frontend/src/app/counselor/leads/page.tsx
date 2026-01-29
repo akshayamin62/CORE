@@ -6,7 +6,6 @@ import { authAPI, leadAPI } from '@/lib/api';
 import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import Link from 'next/link';
-import CounselorLayout from '@/components/CounselorLayout';
 
 export default function CounselorLeadsPage() {
   const router = useRouter();
@@ -84,13 +83,13 @@ export default function CounselorLeadsPage() {
 
   const getServiceColor = (service: string) => {
     switch (service) {
-      case SERVICE_TYPE.STUDY_ABROAD:
+      case SERVICE_TYPE.CARRER_FOCUS_STUDY_ABROAD:
         return 'bg-indigo-100 text-indigo-800';
-      case SERVICE_TYPE.IVY_LEAGUE:
+      case SERVICE_TYPE.IVY_LEAGUE_ADMISSION:
         return 'bg-amber-100 text-amber-800';
       case SERVICE_TYPE.EDUCATION_PLANNING:
         return 'bg-teal-100 text-teal-800';
-      case SERVICE_TYPE.IELTS_GRE_COACHING:
+      case SERVICE_TYPE.IELTS_GRE_LANGUAGE_COACHING:
         return 'bg-rose-100 text-rose-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -125,7 +124,7 @@ export default function CounselorLeadsPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <CounselorLayout user={user}>
+      <div className="min-h-screen bg-gray-50">
         <div className="p-8">
           {/* Page Header */}
           <div className="mb-6">
@@ -263,7 +262,7 @@ export default function CounselorLeadsPage() {
           )}
         </div>
         </div>
-      </CounselorLayout>
+      </div>
     </>
   );
 }

@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authAPI, leadAPI } from '@/lib/api';
 import { User, USER_ROLE, LEAD_STAGE } from '@/types';
-import CounselorLayout from '@/components/CounselorLayout';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface DashboardStats {
@@ -14,6 +13,7 @@ interface DashboardStats {
   warmLeads: number;
   coldLeads: number;
   convertedLeads: number;
+  closedLeads: number;
   adminEnquiryUrl: string;
 }
 
@@ -68,6 +68,7 @@ export default function CounselorDashboardPage() {
         warmLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.WARM).length,
         coldLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.COLD).length,
         convertedLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.CONVERTED).length,
+        closedLeads: leads.filter((l: any) => l.stage === LEAD_STAGE.CLOSED).length,
         adminEnquiryUrl: enquiryUrl,
       });
     } catch (error: any) {
@@ -102,7 +103,7 @@ export default function CounselorDashboardPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <CounselorLayout user={user}>
+      <div className="min-h-screen bg-gray-50">
         <div className="p-8">
           {/* Header */}
           <div className="mb-8">
@@ -113,7 +114,7 @@ export default function CounselorDashboardPage() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 mb-8">
             <StatCard
               title="Total Leads"
               value={stats?.totalLeads.toString() || '0'}
@@ -174,6 +175,16 @@ export default function CounselorDashboardPage() {
               }
               color="green"
             />
+            <StatCard
+              title="Closed"
+              value={stats?.closedLeads.toString() || '0'}
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              }
+              color="gray"
+            />
           </div>
 
           {/* Quick Actions */}
@@ -224,7 +235,7 @@ export default function CounselorDashboardPage() {
             </div>
           </div>
         </div>
-      </CounselorLayout>
+      </div>
     </>
   );
 }
@@ -234,7 +245,7 @@ interface StatCardProps {
   title: string;
   value: string;
   icon: React.ReactNode;
-  color: 'blue' | 'green' | 'purple' | 'yellow';
+  color: 'blue' | 'green' | 'purple' | 'yellow' | 'gray';
 }
 
 function StatCard({ title, value, icon, color }: StatCardProps) {
@@ -243,6 +254,7 @@ function StatCard({ title, value, icon, color }: StatCardProps) {
     green: 'bg-green-50 text-green-600',
     purple: 'bg-purple-50 text-purple-600',
     yellow: 'bg-yellow-50 text-yellow-600',
+    gray: 'bg-gray-50 text-gray-600',
   };
 
   return (

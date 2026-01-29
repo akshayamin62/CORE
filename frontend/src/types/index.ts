@@ -234,10 +234,10 @@ export interface DocumentFieldConfig {
 
 // Lead Types
 export enum SERVICE_TYPE {
-  STUDY_ABROAD = 'Study Abroad',
-  IVY_LEAGUE = 'Ivy League',
-  EDUCATION_PLANNING = 'Education Planning',
-  IELTS_GRE_COACHING = 'IELTS/GRE Coaching',
+  EDUCATION_PLANNING = "Education Planning",
+  CARRER_FOCUS_STUDY_ABROAD = "Carrer Focus Study Abroad ",
+  IVY_LEAGUE_ADMISSION = "Ivy League Admission",
+  IELTS_GRE_LANGUAGE_COACHING = "IELTS/GRE/Language Coaching",
 }
 
 export enum LEAD_STAGE {
