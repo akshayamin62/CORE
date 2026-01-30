@@ -221,11 +221,33 @@ export default function FollowUpFormPanel({
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                 >
                   <option value={FOLLOWUP_STATUS.SCHEDULED}>Scheduled</option>
-                  <option value={FOLLOWUP_STATUS.COMPLETED}>Completed</option>
-                  <option value={FOLLOWUP_STATUS.PHONE_NOT_PICKED}>Phone not picked up</option>
-                  <option value={FOLLOWUP_STATUS.CALL_DISCONNECTED}>Call disconnected</option>
-                  <option value={FOLLOWUP_STATUS.NO_RESPONSE}>No response</option>
-                  <option value={FOLLOWUP_STATUS.RESCHEDULED}>Rescheduled</option>
+                  <optgroup label="Call Issues">
+                    <option value={FOLLOWUP_STATUS.CALL_NOT_ANSWERED}>Call Not Answered</option>
+                    <option value={FOLLOWUP_STATUS.PHONE_SWITCHED_OFF}>Phone Switched Off</option>
+                    <option value={FOLLOWUP_STATUS.OUT_OF_COVERAGE}>Out of Coverage Area</option>
+                    <option value={FOLLOWUP_STATUS.NUMBER_BUSY}>Number Busy</option>
+                    <option value={FOLLOWUP_STATUS.CALL_DISCONNECTED}>Call Disconnected</option>
+                    <option value={FOLLOWUP_STATUS.INVALID_NUMBER}>Invalid / Wrong Number</option>
+                    <option value={FOLLOWUP_STATUS.INCOMING_BARRED}>Incoming Calls Barred</option>
+                    <option value={FOLLOWUP_STATUS.CALL_REJECTED}>Call Rejected / Declined</option>
+                  </optgroup>
+                  <optgroup label="Reschedule">
+                    <option value={FOLLOWUP_STATUS.CALL_BACK_LATER}>Asked to Call Back Later</option>
+                    <option value={FOLLOWUP_STATUS.BUSY_RESCHEDULE}>Busy - Requested Reschedule</option>
+                  </optgroup>
+                  <optgroup label="Interested">
+                    <option value={FOLLOWUP_STATUS.DISCUSS_WITH_PARENTS}>Need time to discuss with parents</option>
+                    <option value={FOLLOWUP_STATUS.RESPONDING_VAGUELY}>Responding Vaguely / Non-committal</option>
+                    <option value={FOLLOWUP_STATUS.INTERESTED_NEED_TIME}>Interested - Need Time</option>
+                    <option value={FOLLOWUP_STATUS.INTERESTED_DISCUSSING}>Interested - Discussing with Family</option>
+                  </optgroup>
+                  <optgroup label="Closed">
+                    <option value={FOLLOWUP_STATUS.NOT_INTERESTED}>Not Interested (Explicit)</option>
+                    <option value={FOLLOWUP_STATUS.NOT_REQUIRED}>Not Required Anymore</option>
+                    <option value={FOLLOWUP_STATUS.REPEATEDLY_NOT_RESPONDING}>Repeatedly Not Responding</option>
+                    <option value={FOLLOWUP_STATUS.FAKE_ENQUIRY}>Fake / Test Enquiry</option>
+                    <option value={FOLLOWUP_STATUS.DUPLICATE_ENQUIRY}>Duplicate Enquiry</option>
+                  </optgroup>
                 </select>
               </div>
 

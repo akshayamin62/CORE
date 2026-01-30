@@ -58,7 +58,7 @@ export default function AdminDashboardPage() {
       const slug = urlRes.data.data.slug;
       
       // Construct full URL from slug
-      const enquiryFormUrl = slug ? `${window.location.origin}/inquiry/${slug}` : '';
+      const enquiryFormUrl = slug ? `${window.location.origin}/enquiry/${slug}` : '';
 
       setStats({
         totalCounselors: counselors.length,

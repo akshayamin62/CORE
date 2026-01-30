@@ -274,18 +274,37 @@ export default function CounselorLeadDetailPage() {
 
   const getFollowUpStatusColor = (status: FOLLOWUP_STATUS | string) => {
     switch (status) {
-      case FOLLOWUP_STATUS.COMPLETED:
-        return 'bg-green-100 text-green-800';
       case FOLLOWUP_STATUS.SCHEDULED:
         return 'bg-blue-100 text-blue-800';
-      case FOLLOWUP_STATUS.PHONE_NOT_PICKED:
+      // Call Issues - Yellow/Orange
+      case FOLLOWUP_STATUS.CALL_NOT_ANSWERED:
+      case FOLLOWUP_STATUS.PHONE_SWITCHED_OFF:
+      case FOLLOWUP_STATUS.OUT_OF_COVERAGE:
+      case FOLLOWUP_STATUS.NUMBER_BUSY:
       case FOLLOWUP_STATUS.CALL_DISCONNECTED:
-      case FOLLOWUP_STATUS.NO_RESPONSE:
+      case FOLLOWUP_STATUS.INCOMING_BARRED:
+      case FOLLOWUP_STATUS.CALL_REJECTED:
         return 'bg-yellow-100 text-yellow-800';
-      case FOLLOWUP_STATUS.RESCHEDULED:
+      // Invalid - Red
+      case FOLLOWUP_STATUS.INVALID_NUMBER:
+      case FOLLOWUP_STATUS.FAKE_ENQUIRY:
+      case FOLLOWUP_STATUS.DUPLICATE_ENQUIRY:
+        return 'bg-red-100 text-red-800';
+      // Reschedule - Orange
+      case FOLLOWUP_STATUS.CALL_BACK_LATER:
+      case FOLLOWUP_STATUS.BUSY_RESCHEDULE:
         return 'bg-orange-100 text-orange-800';
-      case FOLLOWUP_STATUS.MISSED:
-        return 'bg-purple-100 text-purple-800';
+      // Interested - Green shades
+      case FOLLOWUP_STATUS.DISCUSS_WITH_PARENTS:
+      case FOLLOWUP_STATUS.RESPONDING_VAGUELY:
+      case FOLLOWUP_STATUS.INTERESTED_NEED_TIME:
+      case FOLLOWUP_STATUS.INTERESTED_DISCUSSING:
+        return 'bg-green-100 text-green-800';
+      // Not Interested - Gray
+      case FOLLOWUP_STATUS.NOT_INTERESTED:
+      case FOLLOWUP_STATUS.NOT_REQUIRED:
+      case FOLLOWUP_STATUS.REPEATEDLY_NOT_RESPONDING:
+        return 'bg-gray-200 text-gray-700';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -583,8 +602,11 @@ export default function CounselorLeadDetailPage() {
                       className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 hover:shadow-sm transition-all"
                     >
                       <div className={`w-2 h-2 mt-2 rounded-full ${
-                        followUp.status === FOLLOWUP_STATUS.COMPLETED ? 'bg-green-500' :
                         followUp.status === FOLLOWUP_STATUS.SCHEDULED ? 'bg-blue-500' :
+                        followUp.status === FOLLOWUP_STATUS.INTERESTED_NEED_TIME || 
+                        followUp.status === FOLLOWUP_STATUS.INTERESTED_DISCUSSING ? 'bg-green-500' :
+                        followUp.status === FOLLOWUP_STATUS.NOT_INTERESTED ||
+                        followUp.status === FOLLOWUP_STATUS.NOT_REQUIRED ? 'bg-gray-500' :
                         'bg-yellow-500'
                       }`}></div>
                       <div className="flex-1 min-w-0">

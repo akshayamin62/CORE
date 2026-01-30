@@ -7,7 +7,7 @@ import { SERVICE_TYPE, AdminInfo } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import Link from 'next/link';
 
-export default function PublicInquiryFormPage() {
+export default function PublicEnquiryFormPage() {
   const params = useParams();
   const router = useRouter();
   const adminSlug = params.adminSlug as string;
@@ -287,7 +287,7 @@ export default function PublicInquiryFormPage() {
           {/* Footer */}
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
             <p className="text-sm text-gray-500">
-              By submitting this form, you agree to be contacted by our team regarding your inquiry.
+              By submitting this form, you agree to be contacted by our team regarding your enquiry.
             </p>
           </div>
         </div>

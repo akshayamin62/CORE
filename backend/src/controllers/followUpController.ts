@@ -356,10 +356,8 @@ export const updateFollowUp = async (
     // Update follow-up fields
     if (status) {
       followUp.status = status;
-      if (
-        status !== FOLLOWUP_STATUS.SCHEDULED &&
-        status !== FOLLOWUP_STATUS.MISSED
-      ) {
+      // Set completedAt if status is not SCHEDULED
+      if (status !== FOLLOWUP_STATUS.SCHEDULED) {
         followUp.completedAt = new Date();
       }
     }

@@ -91,7 +91,7 @@ export default function CounselorDashboardPage() {
       const slug = urlResponse.data.data.slug;
       
       // Construct full URL from slug
-      const enquiryUrl = slug ? `${window.location.origin}/inquiry/${slug}` : '';
+      const enquiryUrl = slug ? `${window.location.origin}/enquiry/${slug}` : '';
 
       setLeads(leadsData);
       setStats({
@@ -608,11 +608,11 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon, color, onClick, isActive }: StatCardProps) {
   const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    purple: 'bg-purple-50 text-purple-600',
-    yellow: 'bg-yellow-50 text-yellow-600',
-    gray: 'bg-gray-50 text-gray-600',
+    blue: 'bg-blue-100 text-blue-700',
+    green: 'bg-green-100 text-green-700',
+    purple: 'bg-purple-100 text-purple-700',
+    yellow: 'bg-amber-100 text-amber-700',
+    gray: 'bg-gray-100 text-gray-700',
   };
 
   return (
@@ -629,8 +629,8 @@ function StatCard({ title, value, icon, color, onClick, isActive }: StatCardProp
           {icon}
         </div>
       </div>
-      <h3 className="text-3xl font-bold text-gray-900 mb-1">{value}</h3>
-      <p className="text-sm text-gray-600">{title}</p>
+      <h3 className="text-3xl font-extrabold text-gray-900 mb-1">{value}</h3>
+      <p className="text-sm font-semibold text-gray-700">{title}</p>
     </div>
   );
 }

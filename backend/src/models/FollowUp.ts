@@ -3,12 +3,25 @@ import { LEAD_STAGE } from "./Lead";
 
 export enum FOLLOWUP_STATUS {
   SCHEDULED = "Scheduled",
-  PHONE_NOT_PICKED = "Phone not picked up",
-  CALL_DISCONNECTED = "Call disconnected",
-  COMPLETED = "Completed",
-  RESCHEDULED = "Rescheduled",
-  NO_RESPONSE = "No response",
-  MISSED = "Missed",
+  CALL_NOT_ANSWERED = "Call Not Answered",
+  PHONE_SWITCHED_OFF = "Phone Switched Off",
+  OUT_OF_COVERAGE = "Out of Coverage Area",
+  NUMBER_BUSY = "Number Busy",
+  CALL_DISCONNECTED = "Call Disconnected",
+  INVALID_NUMBER = "Invalid / Wrong Number",
+  INCOMING_BARRED = "Incoming Calls Barred",
+  CALL_REJECTED = "Call Rejected / Declined",
+  CALL_BACK_LATER = "Asked to Call Back Later",
+  BUSY_RESCHEDULE = "Busy - Requested Reschedule",
+  DISCUSS_WITH_PARENTS = "Need time to discuss with parents",
+  RESPONDING_VAGUELY = "Responding Vaguely / Non-committal",
+  INTERESTED_NEED_TIME = "Interested - Need Time",
+  INTERESTED_DISCUSSING = "Interested - Discussing with Family",
+  NOT_INTERESTED = "Not Interested (Explicit)",
+  NOT_REQUIRED = "Not Required Anymore",
+  REPEATEDLY_NOT_RESPONDING = "Repeatedly Not Responding",
+  FAKE_ENQUIRY = "Fake / Test Enquiry",
+  DUPLICATE_ENQUIRY = "Duplicate Enquiry",
 }
 
 export interface IFollowUp extends Document {

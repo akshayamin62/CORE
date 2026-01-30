@@ -201,9 +201,9 @@ export default function RoleUserListPage({
       });
       
       // Show success message with slug for Admin
-      if (isAdminRole && response.data.data.inquiryFormSlug) {
+      if (isAdminRole && response.data.data.enquiryFormSlug) {
         toast.success(
-          `${roleDisplayName} created successfully! Inquiry form slug: ${response.data.data.inquiryFormSlug}`,
+          `${roleDisplayName} created successfully! Enquiry form slug: ${response.data.data.enquiryFormSlug}`,
           { duration: 5000 }
         );
       } else {
@@ -500,11 +500,11 @@ export default function RoleUserListPage({
                   </div>
                 )}
 
-                {/* Inquiry Form Slug for Admin */}
+                {/* Enquiry Form Slug for Admin */}
                 {isAdminRole && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Inquiry Form Slug
+                      Enquiry Form Slug
                       <span className="text-gray-400 font-normal ml-1">(optional)</span>
                     </label>
                     <input
@@ -516,14 +516,14 @@ export default function RoleUserListPage({
                     />
                     {slugPreview && (
                       <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
-                        <p className="text-xs text-gray-500 mb-1">Inquiry Form URL Preview:</p>
+                        <p className="text-xs text-gray-500 mb-1">Enquiry Form URL Preview:</p>
                         <p className="text-sm text-blue-600 font-mono break-all">
-                          /inquiry/<span className="font-semibold">{slugPreview}</span>
+                          /enquiry/<span className="font-semibold">{slugPreview}</span>
                         </p>
                       </div>
                     )}
                     <p className="text-xs text-gray-500 mt-1">
-                      This will be the unique URL for the admin's inquiry form. If left empty, it will be auto-generated from the name.
+                      This will be the unique URL for the admin's enquiry form. If left empty, it will be auto-generated from the name.
                     </p>
                   </div>
                 )}
