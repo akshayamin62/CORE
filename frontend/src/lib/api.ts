@@ -328,7 +328,6 @@ export const followUpAPI = {
     date: string;
     time: string;
     duration: number;
-    excludeFollowUpId?: string;
   }) => api.get('/follow-ups/check-availability', { params }),
 };
 

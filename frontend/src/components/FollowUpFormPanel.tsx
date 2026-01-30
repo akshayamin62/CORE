@@ -87,9 +87,13 @@ export default function FollowUpFormPanel({
         date: nextDate,
         time: nextTime,
         duration: nextDuration,
-        excludeFollowUpId: followUpData?._id,
       });
-      setSlotAvailable(response.data.data.isAvailable);
+      const { isAvailable, conflictingTime, conflictingLead } = response.data.data;
+      setSlotAvailable(isAvailable);
+      
+      if (!isAvailable) {
+        toast.error(`Time conflicts with follow-up at ${conflictingTime}${conflictingLead ? ` for ${conflictingLead}` : ''}`);
+      }
     } catch (error) {
       console.error('Error checking slot:', error);
     } finally {

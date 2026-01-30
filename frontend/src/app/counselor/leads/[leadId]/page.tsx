@@ -6,6 +6,9 @@ import { authAPI, leadAPI, followUpAPI } from '@/lib/api';
 import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE, FollowUp, FOLLOWUP_STATUS } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import { format } from 'date-fns';
+import FollowUpCalendar from '@/components/FollowUpCalendar';
+import FollowUpSidebar from '@/components/FollowUpSidebar';
+import FollowUpFormPanel from '@/components/FollowUpFormPanel';
 
 export default function CounselorLeadDetailPage() {
   const router = useRouter();
@@ -29,6 +32,21 @@ export default function CounselorLeadDetailPage() {
     duration: 30,
   });
   const [scheduling, setScheduling] = useState(false);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+  const [availabilityStatus, setAvailabilityStatus] = useState<{
+    checked: boolean;
+    available: boolean;
+    message: string;
+  } | null>(null);
+  
+  // Follow-up panel for editing
+  const [selectedFollowUp, setSelectedFollowUp] = useState<FollowUp | null>(null);
+  const [showFollowUpPanel, setShowFollowUpPanel] = useState(false);
+  
+  // For sidebar summary (today/missed/upcoming for this lead only)
+  const [todayFollowUps, setTodayFollowUps] = useState<FollowUp[]>([]);
+  const [missedFollowUps, setMissedFollowUps] = useState<FollowUp[]>([]);
+  const [upcomingFollowUps, setUpcomingFollowUps] = useState<FollowUp[]>([]);
 
   useEffect(() => {
     checkAuth();
@@ -80,7 +98,39 @@ export default function CounselorLeadDetailPage() {
     try {
       setLoadingFollowUps(true);
       const response = await followUpAPI.getLeadFollowUpHistory(leadId);
-      setFollowUps(response.data.data.followUps || []);
+      const allFollowUps = response.data.data.followUps || [];
+      setFollowUps(allFollowUps);
+      
+      // Categorize follow-ups for sidebar
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const dayAfterTomorrow = new Date(tomorrow);
+      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+      
+      const todayList: FollowUp[] = [];
+      const missedList: FollowUp[] = [];
+      const upcomingList: FollowUp[] = [];
+      
+      allFollowUps.forEach((fu: FollowUp) => {
+        const fuDate = new Date(fu.scheduledDate);
+        fuDate.setHours(0, 0, 0, 0);
+        
+        if (fu.status === FOLLOWUP_STATUS.SCHEDULED) {
+          if (fuDate.getTime() === today.getTime()) {
+            todayList.push(fu);
+          } else if (fuDate < today) {
+            missedList.push(fu);
+          } else if (fuDate.getTime() === tomorrow.getTime()) {
+            upcomingList.push(fu);
+          }
+        }
+      });
+      
+      setTodayFollowUps(todayList);
+      setMissedFollowUps(missedList);
+      setUpcomingFollowUps(upcomingList);
     } catch (error) {
       console.error('Error fetching follow-ups:', error);
     } finally {
@@ -103,6 +153,48 @@ export default function CounselorLeadDetailPage() {
     }
   };
 
+  const checkAvailability = async () => {
+    if (!newFollowUp.date || !newFollowUp.time) {
+      toast.error('Please select date and time first');
+      return;
+    }
+
+    try {
+      setCheckingAvailability(true);
+      const response = await followUpAPI.checkTimeSlotAvailability({
+        date: newFollowUp.date,
+        time: newFollowUp.time,
+        duration: newFollowUp.duration,
+      });
+      
+      const { isAvailable, conflictingTime, conflictingLead } = response.data.data;
+      
+      let message = '';
+      if (!isAvailable) {
+        message = `✗ Conflict with follow-up at ${conflictingTime}${conflictingLead ? ` for ${conflictingLead}` : ''}`;
+      } else {
+        message = '✓ Time slot is available!';
+      }
+      
+      setAvailabilityStatus({
+        checked: true,
+        available: isAvailable,
+        message,
+      });
+      
+      if (isAvailable) {
+        toast.success('Time slot is available!');
+      } else {
+        toast.error(`Time slot conflicts with follow-up at ${conflictingTime}${conflictingLead ? ` for ${conflictingLead}` : ''}`);
+      }
+    } catch (error: any) {
+      toast.error('Failed to check availability');
+      setAvailabilityStatus(null);
+    } finally {
+      setCheckingAvailability(false);
+    }
+  };
+
   const handleScheduleFollowUp = async () => {
     if (!newFollowUp.date || !newFollowUp.time) {
       toast.error('Please select date and time');
@@ -120,12 +212,30 @@ export default function CounselorLeadDetailPage() {
       toast.success('Follow-up scheduled successfully');
       setShowScheduleForm(false);
       setNewFollowUp({ date: '', time: '', duration: 30 });
+      setAvailabilityStatus(null);
       fetchFollowUps();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to schedule follow-up');
     } finally {
       setScheduling(false);
     }
+  };
+
+  const handleFollowUpClick = (followUp: FollowUp) => {
+    setSelectedFollowUp(followUp);
+    setShowFollowUpPanel(true);
+  };
+
+  const handleFollowUpPanelClose = () => {
+    setShowFollowUpPanel(false);
+    setSelectedFollowUp(null);
+  };
+
+  const handleFollowUpSave = () => {
+    setShowFollowUpPanel(false);
+    setSelectedFollowUp(null);
+    fetchFollowUps();
+    fetchLead(); // Refresh lead in case stage changed
   };
 
   const getStageColor = (stage: string) => {
@@ -162,18 +272,20 @@ export default function CounselorLeadDetailPage() {
     }
   };
 
-  const getFollowUpStatusColor = (status: string) => {
+  const getFollowUpStatusColor = (status: FOLLOWUP_STATUS | string) => {
     switch (status) {
-      case 'COMPLETED':
+      case FOLLOWUP_STATUS.COMPLETED:
         return 'bg-green-100 text-green-800';
-      case 'SCHEDULED':
+      case FOLLOWUP_STATUS.SCHEDULED:
         return 'bg-blue-100 text-blue-800';
-      case 'PHONE_NOT_PICKED':
-      case 'CALL_DISCONNECTED':
-      case 'NO_RESPONSE':
+      case FOLLOWUP_STATUS.PHONE_NOT_PICKED:
+      case FOLLOWUP_STATUS.CALL_DISCONNECTED:
+      case FOLLOWUP_STATUS.NO_RESPONSE:
         return 'bg-yellow-100 text-yellow-800';
-      case 'RESCHEDULED':
+      case FOLLOWUP_STATUS.RESCHEDULED:
         return 'bg-orange-100 text-orange-800';
+      case FOLLOWUP_STATUS.MISSED:
+        return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -241,7 +353,7 @@ export default function CounselorLeadDetailPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Main Info */}
           <div className="lg:col-span-2 space-y-6">
             {/* Contact Info Card - Updated layout */}
@@ -280,11 +392,69 @@ export default function CounselorLeadDetailPage() {
                 </div>
               </div>
             </div>
+          </div>
 
-            {/* Follow-Ups Section - Always visible */}
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Stage Card - Single dropdown with color */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Stage</h3>
+              <div className="relative">
+                <select
+                  value={lead.stage}
+                  onChange={(e) => handleStageChange(e.target.value)}
+                  disabled={updatingStage}
+                  className={`w-full px-4 py-3 rounded-lg border-2 font-medium appearance-none cursor-pointer focus:ring-2 focus:ring-teal-500 focus:outline-none disabled:opacity-50 ${getStageColor(lead.stage)}`}
+                  style={{ backgroundImage: 'none' }}
+                >
+                  {Object.values(LEAD_STAGE).map((stage) => (
+                    <option key={stage} value={stage} className="bg-white text-gray-900">{stage}</option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  {updatingStage ? (
+                    <svg className="w-5 h-5 animate-spin text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Follow-Up Calendar and Overview - Separate sections like dashboard */}
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Calendar Section */}
+          <div className="lg:col-span-3">
+            <FollowUpCalendar
+              followUps={followUps}
+              onFollowUpSelect={handleFollowUpClick}
+              leadName={lead.name}
+            />
+          </div>
+
+          {/* Sidebar Section */}
+          <div className="lg:col-span-1">
+            <FollowUpSidebar
+              today={todayFollowUps}
+              missed={missedFollowUps}
+              upcoming={upcomingFollowUps}
+              onFollowUpClick={handleFollowUpClick}
+              leadName={lead.name}
+            />
+          </div>
+        </div>
+
+        {/* Follow-Ups History Section - Full Width */}
+        <div className="mt-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Follow-Ups</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Follow-Up History</h3>
                 <button
                   onClick={() => setShowScheduleForm(!showScheduleForm)}
                   className="px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium flex items-center gap-1"
@@ -305,7 +475,10 @@ export default function CounselorLeadDetailPage() {
                       <input
                         type="date"
                         value={newFollowUp.date}
-                        onChange={(e) => setNewFollowUp({ ...newFollowUp, date: e.target.value })}
+                        onChange={(e) => {
+                          setNewFollowUp({ ...newFollowUp, date: e.target.value });
+                          setAvailabilityStatus(null);
+                        }}
                         min={format(new Date(), 'yyyy-MM-dd')}
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                       />
@@ -315,7 +488,10 @@ export default function CounselorLeadDetailPage() {
                       <input
                         type="time"
                         value={newFollowUp.time}
-                        onChange={(e) => setNewFollowUp({ ...newFollowUp, time: e.target.value })}
+                        onChange={(e) => {
+                          setNewFollowUp({ ...newFollowUp, time: e.target.value });
+                          setAvailabilityStatus(null);
+                        }}
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                       />
                     </div>
@@ -323,7 +499,10 @@ export default function CounselorLeadDetailPage() {
                       <label className="block text-xs font-medium text-gray-600 mb-1">Duration</label>
                       <select
                         value={newFollowUp.duration}
-                        onChange={(e) => setNewFollowUp({ ...newFollowUp, duration: parseInt(e.target.value) })}
+                        onChange={(e) => {
+                          setNewFollowUp({ ...newFollowUp, duration: parseInt(e.target.value) });
+                          setAvailabilityStatus(null);
+                        }}
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                       >
                         <option value={15}>15 min</option>
@@ -333,25 +512,64 @@ export default function CounselorLeadDetailPage() {
                       </select>
                     </div>
                   </div>
-                  <div className="flex justify-end gap-2">
+                  
+                  {/* Availability Status */}
+                  {availabilityStatus && (
+                    <div className={`mb-3 p-2 rounded-lg text-sm font-medium ${
+                      availabilityStatus.available 
+                        ? 'bg-green-100 text-green-800 border border-green-200'
+                        : 'bg-red-100 text-red-800 border border-red-200'
+                    }`}>
+                      {availabilityStatus.message}
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between items-center gap-2">
                     <button
-                      onClick={() => setShowScheduleForm(false)}
-                      className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                      onClick={checkAvailability}
+                      disabled={checkingAvailability || !newFollowUp.date || !newFollowUp.time}
+                      className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                     >
-                      Cancel
+                      {checkingAvailability ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Checking...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Check Availability
+                        </>
+                      )}
                     </button>
-                    <button
-                      onClick={handleScheduleFollowUp}
-                      disabled={scheduling}
-                      className="px-3 py-1.5 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 flex items-center gap-1"
-                    >
-                      {scheduling ? 'Scheduling...' : 'Schedule'}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setShowScheduleForm(false);
+                          setAvailabilityStatus(null);
+                        }}
+                        className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleScheduleFollowUp}
+                        disabled={scheduling}
+                        className="px-3 py-1.5 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 flex items-center gap-1"
+                      >
+                        {scheduling ? 'Scheduling...' : 'Schedule'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Follow-Up History */}
+              {/* Follow-Up History List */}
               <div className="space-y-3">
                 {loadingFollowUps ? (
                   <div className="flex items-center justify-center py-8">
@@ -359,7 +577,11 @@ export default function CounselorLeadDetailPage() {
                   </div>
                 ) : followUps.length > 0 ? (
                   followUps.map((followUp) => (
-                    <div key={followUp._id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div 
+                      key={followUp._id} 
+                      onClick={() => handleFollowUpClick(followUp)}
+                      className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 hover:shadow-sm transition-all"
+                    >
                       <div className={`w-2 h-2 mt-2 rounded-full ${
                         followUp.status === FOLLOWUP_STATUS.COMPLETED ? 'bg-green-500' :
                         followUp.status === FOLLOWUP_STATUS.SCHEDULED ? 'bg-blue-500' :
@@ -371,11 +593,11 @@ export default function CounselorLeadDetailPage() {
                             {format(new Date(followUp.scheduledDate), 'MMM d, yyyy')} at {followUp.scheduledTime}
                           </span>
                           <span className={`px-2 py-0.5 text-xs rounded-full ${getFollowUpStatusColor(followUp.status)}`}>
-                            {followUp.status.replace(/_/g, ' ')}
+                            {followUp.status}
                           </span>
                         </div>
                         {followUp.notes && (
-                          <p className="text-sm text-gray-600 mt-1 truncate">{followUp.notes}</p>
+                          <p className="text-sm text-gray-600 mt-2 whitespace-pre-wrap">{followUp.notes}</p>
                         )}
                         {followUp.stageChangedTo && (
                           <p className="text-xs text-gray-500 mt-1">
@@ -383,7 +605,12 @@ export default function CounselorLeadDetailPage() {
                           </p>
                         )}
                       </div>
-                      <span className="text-xs text-gray-500">{followUp.duration} min</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">{followUp.duration} min</span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -392,40 +619,16 @@ export default function CounselorLeadDetailPage() {
               </div>
             </div>
           </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Stage Card - Dropdown instead of buttons */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Stage</h3>
-              <div className="space-y-3">
-                <div className={`px-4 py-3 rounded-lg border-2 ${getStageColor(lead.stage)}`}>
-                  <span className="font-medium">{lead.stage}</span>
-                </div>
-                <select
-                  value={lead.stage}
-                  onChange={(e) => handleStageChange(e.target.value)}
-                  disabled={updatingStage}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white disabled:opacity-50"
-                >
-                  {Object.values(LEAD_STAGE).map((stage) => (
-                    <option key={stage} value={stage}>{stage}</option>
-                  ))}
-                </select>
-                {updatingStage && (
-                  <p className="text-xs text-gray-500 flex items-center gap-1">
-                    <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Updating...
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
         </div>
       </div>
+
+      {/* Follow-up Edit Panel */}
+      <FollowUpFormPanel
+        followUp={selectedFollowUp}
+        isOpen={showFollowUpPanel}
+        onClose={handleFollowUpPanelClose}
+        onSave={handleFollowUpSave}
+      />
     </>
   );
 }

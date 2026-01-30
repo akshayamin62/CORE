@@ -1,7 +1,7 @@
 'use client';
 
 import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay } from 'date-fns';
+import { format, parse, startOfWeek, getDay, setMonth, setYear, getMonth, getYear, addMonths, addWeeks, addDays } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { FollowUp, LEAD_STAGE, Lead } from '@/types';
@@ -33,6 +33,9 @@ interface FollowUpCalendarProps {
   onLeadSelect?: (leadId: string) => void;
   minimized?: boolean;
   onToggleMinimize?: () => void;
+  hideHeader?: boolean;
+  compact?: boolean;
+  leadName?: string; // Override lead name for single-lead views
 }
 
 // Stage colors for calendar events - matching the standard color mapping
@@ -61,6 +64,9 @@ export default function FollowUpCalendar({
   onLeadSelect,
   minimized = false,
   onToggleMinimize,
+  hideHeader = false,
+  compact = false,
+  leadName,
 }: FollowUpCalendarProps) {
   const [view, setView] = useState<View>('month');
   const [date, setDate] = useState(new Date());
@@ -69,6 +75,7 @@ export default function FollowUpCalendar({
   const events: CalendarEvent[] = useMemo(() => {
     return followUps.map((followUp) => {
       const lead = followUp.leadId as Lead;
+      const displayName = leadName || lead?.name || 'Unknown';
       const [hours, minutes] = followUp.scheduledTime.split(':').map(Number);
       const startDate = new Date(followUp.scheduledDate);
       startDate.setHours(hours, minutes, 0, 0);
@@ -78,13 +85,13 @@ export default function FollowUpCalendar({
 
       return {
         id: followUp._id,
-        title: `${lead?.name || 'Unknown'} - ${followUp.scheduledTime}`,
+        title: `${displayName} - ${followUp.scheduledTime}`,
         start: startDate,
         end: endDate,
         resource: followUp,
       };
     });
-  }, [followUps]);
+  }, [followUps, leadName]);
 
   // Custom event styling based on lead stage
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
@@ -97,9 +104,9 @@ export default function FollowUpCalendar({
     
     return {
       style: {
-        backgroundColor: isPast ? '#FEE2E2' : colors.bg,
-        borderLeft: `4px solid ${isPast ? '#EF4444' : colors.border}`,
-        color: isPast ? '#991B1B' : colors.text,
+        backgroundColor: isPast ? '#F3E8FF' : colors.bg, // Purple for missed
+        borderLeft: `4px solid ${isPast ? '#9333EA' : colors.border}`,
+        color: isPast ? '#6B21A8' : colors.text,
         borderRadius: '4px',
         padding: '2px 6px',
         fontSize: '12px',
@@ -120,6 +127,49 @@ export default function FollowUpCalendar({
   const handleViewChange = useCallback((newView: View) => {
     setView(newView);
   }, []);
+
+  const handleMonthChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newMonth = parseInt(e.target.value);
+    setDate(setMonth(date, newMonth));
+  }, [date]);
+
+  const handleYearChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newYear = parseInt(e.target.value);
+    setDate(setYear(date, newYear));
+  }, [date]);
+
+  // Navigate Previous based on current view
+  const handlePrevious = useCallback(() => {
+    if (view === 'month') {
+      setDate(addMonths(date, -1));
+    } else if (view === 'week') {
+      setDate(addWeeks(date, -1));
+    } else if (view === 'day') {
+      setDate(addDays(date, -1));
+    }
+  }, [date, view]);
+
+  // Navigate Next based on current view
+  const handleNext = useCallback(() => {
+    if (view === 'month') {
+      setDate(addMonths(date, 1));
+    } else if (view === 'week') {
+      setDate(addWeeks(date, 1));
+    } else if (view === 'day') {
+      setDate(addDays(date, 1));
+    }
+  }, [date, view]);
+
+  const currentMonth = getMonth(date);
+  const currentYear = getYear(date);
+
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  // Generate years from 2020 to 2030 for scrollable dropdown
+  const years = Array.from({ length: 11 }, (_, i) => 2020 + i);
 
   if (minimized) {
     return (
@@ -148,8 +198,9 @@ export default function FollowUpCalendar({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      {/* Calendar Header */}
+    <div className={`bg-white ${hideHeader ? '' : 'rounded-xl shadow-sm border border-gray-200'} overflow-hidden`}>
+      {/* Calendar Header - conditionally shown */}
+      {!hideHeader && (
       <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -186,7 +237,7 @@ export default function FollowUpCalendar({
             <span className="text-gray-600">Converted</span>
           </div>
           <div className="flex items-center gap-2 text-xs">
-            <span className="w-3 h-3 rounded-sm bg-red-100 border border-red-400"></span>
+            <span className="w-3 h-3 rounded-sm bg-purple-200 border border-purple-500"></span>
             <span className="text-gray-600">Missed</span>
           </div>
           
@@ -203,9 +254,93 @@ export default function FollowUpCalendar({
           )}
         </div>
       </div>
+      )}
+
+      {/* Custom Navigation Bar */}
+      <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={handlePrevious}
+            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            ← Previous
+          </button>
+          
+          <div className="flex items-center gap-3">
+            {/* View Switcher Buttons */}
+            <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-lg p-1">
+              <button
+                onClick={() => handleViewChange('month')}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  view === 'month'
+                    ? 'bg-teal-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Month
+              </button>
+              <button
+                onClick={() => handleViewChange('week')}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  view === 'week'
+                    ? 'bg-teal-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Week
+              </button>
+              <button
+                onClick={() => handleViewChange('day')}
+                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                  view === 'day'
+                    ? 'bg-teal-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Day
+              </button>
+            </div>
+            
+            {/* Month/Year Dropdowns */}
+            <select
+              value={currentMonth}
+              onChange={handleMonthChange}
+              className="px-3 py-1.5 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            >
+              {months.map((month, index) => (
+                <option key={month} value={index}>{month}</option>
+              ))}
+            </select>
+            
+            <select
+              value={currentYear}
+              onChange={handleYearChange}
+              className="px-3 py-1.5 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            
+            <button
+              onClick={() => handleNavigate(new Date())}
+              className="px-3 py-1.5 text-sm font-medium text-teal-600 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
+            >
+              Today
+            </button>
+          </div>
+          
+          <button
+            onClick={handleNext}
+            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Next →
+          </button>
+        </div>
+      </div>
 
       {/* Calendar */}
-      <div className="p-4" style={{ height: '600px' }}>
+      <div className={compact ? 'p-2' : 'p-4'} style={{ height: compact ? '350px' : '600px' }}>
         <Calendar
           localizer={localizer}
           events={events}
@@ -222,6 +357,7 @@ export default function FollowUpCalendar({
           defaultView="month"
           popup
           style={{ height: '100%' }}
+          toolbar={false}
           formats={{
             timeGutterFormat: 'HH:mm',
             eventTimeRangeFormat: ({ start, end }) =>

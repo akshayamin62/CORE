@@ -2,12 +2,17 @@
 
 import { FollowUp, FOLLOWUP_STATUS, Lead, LEAD_STAGE } from '@/types';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 interface FollowUpSidebarProps {
   today: FollowUp[];
   missed: FollowUp[];
   upcoming: FollowUp[];
   onFollowUpClick: (followUp: FollowUp) => void;
+  hideHeader?: boolean;
+  leadName?: string; // Override lead name for single-lead views
+  onLeadClick?: (leadId: string) => void;
+  showLeadLink?: boolean; // Explicitly control whether to show links
 }
 
 // Helper to get stage badge color - matching the standard color mapping
@@ -35,28 +40,47 @@ interface FollowUpItemProps {
   onClick: () => void;
   showDate?: boolean;
   isMissed?: boolean;
+  leadName?: string;
+  showLeadLink?: boolean;
 }
 
-function FollowUpItem({ followUp, onClick, showDate = false, isMissed = false }: FollowUpItemProps) {
+function FollowUpItem({ followUp, onClick, showDate = false, isMissed = false, leadName, showLeadLink = true }: FollowUpItemProps) {
   const lead = followUp.leadId as Lead;
   const stage = lead?.stage || followUp.stageAtFollowUp;
+  const displayName = leadName || lead?.name || 'Unknown Lead';
+  const leadId = typeof followUp.leadId === 'string' ? followUp.leadId : lead?._id;
+
+  const handleNameClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Let the Link handle navigation
+  };
 
   return (
     <div
       onClick={onClick}
       className={`p-3 rounded-lg cursor-pointer transition-all hover:shadow-md ${
         isMissed 
-          ? 'bg-red-50 border border-red-200 hover:bg-red-100' 
+          ? 'bg-purple-50 border border-purple-200 hover:bg-purple-100' 
           : 'bg-white border border-gray-200 hover:border-blue-300'
       }`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <p className={`font-medium truncate ${isMissed ? 'text-red-900' : 'text-gray-900'}`}>
-            {lead?.name || 'Unknown Lead'}
-          </p>
+          {showLeadLink && leadId ? (
+            <Link 
+              href={`/counselor/leads/${leadId}`}
+              onClick={handleNameClick}
+              className={`font-medium truncate block hover:underline ${isMissed ? 'text-purple-900' : 'text-gray-900'}`}
+            >
+              {displayName}
+            </Link>
+          ) : (
+            <p className={`font-medium truncate ${isMissed ? 'text-purple-900' : 'text-gray-900'}`}>
+              {displayName}
+            </p>
+          )}
           <div className="flex items-center gap-2 mt-1">
-            <span className={`text-xs font-medium ${isMissed ? 'text-red-700' : 'text-gray-600'}`}>
+            <span className={`text-xs font-medium ${isMissed ? 'text-purple-700' : 'text-gray-600'}`}>
               {followUp.scheduledTime}
             </span>
             {showDate && (
@@ -71,7 +95,7 @@ function FollowUpItem({ followUp, onClick, showDate = false, isMissed = false }:
         </div>
         <div className={`text-xs px-2 py-1 rounded ${
           isMissed 
-            ? 'bg-red-200 text-red-800' 
+            ? 'bg-purple-200 text-purple-800' 
             : 'bg-gray-100 text-gray-600'
         }`}>
           {followUp.duration}m
@@ -86,13 +110,22 @@ export default function FollowUpSidebar({
   missed,
   upcoming,
   onFollowUpClick,
+  hideHeader = false,
+  leadName,
+  onLeadClick,
+  showLeadLink: showLeadLinkProp,
 }: FollowUpSidebarProps) {
+  // Show links by default unless leadName is provided (single-lead view)
+  const showLeadLink = showLeadLinkProp !== undefined ? showLeadLinkProp : !leadName;
+  
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-fit">
-      {/* Header */}
+    <div className={`bg-white overflow-hidden h-fit ${hideHeader ? '' : 'rounded-xl shadow-sm border border-gray-200'}`}>
+      {/* Header - conditionally shown */}
+      {!hideHeader && (
       <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
         <h3 className="font-semibold text-gray-900">Follow-Up Overview</h3>
       </div>
+      )}
 
       <div className="divide-y divide-gray-100">
         {/* Today Section */}
@@ -114,6 +147,8 @@ export default function FollowUpSidebar({
                   key={followUp._id}
                   followUp={followUp}
                   onClick={() => onFollowUpClick(followUp)}
+                  leadName={leadName}
+                  showLeadLink={showLeadLink}
                 />
               ))}
             </div>
@@ -123,9 +158,9 @@ export default function FollowUpSidebar({
         {/* Missed Section */}
         <div className="p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-2 rounded-full bg-red-500"></div>
+            <div className="w-2 h-2 rounded-full bg-purple-500"></div>
             <h4 className="text-sm font-semibold text-gray-700">Missed</h4>
-            <span className="ml-auto bg-red-100 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full">
+            <span className="ml-auto bg-purple-100 text-purple-700 text-xs font-medium px-2 py-0.5 rounded-full">
               {missed.length}
             </span>
           </div>
@@ -141,6 +176,8 @@ export default function FollowUpSidebar({
                   onClick={() => onFollowUpClick(followUp)}
                   showDate
                   isMissed
+                  leadName={leadName}
+                  showLeadLink={showLeadLink}
                 />
               ))}
             </div>
@@ -166,6 +203,8 @@ export default function FollowUpSidebar({
                   key={followUp._id}
                   followUp={followUp}
                   onClick={() => onFollowUpClick(followUp)}
+                  leadName={leadName}
+                  showLeadLink={showLeadLink}
                 />
               ))}
             </div>

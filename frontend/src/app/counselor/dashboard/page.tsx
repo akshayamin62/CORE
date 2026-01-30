@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { authAPI, leadAPI, followUpAPI } from '@/lib/api';
 import { User, USER_ROLE, LEAD_STAGE, FollowUp, FollowUpSummary, FOLLOWUP_STATUS } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
@@ -422,6 +423,7 @@ export default function CounselorDashboardPage() {
                       missed={followUpSummary?.missed || []}
                       upcoming={followUpSummary?.upcoming || []}
                       onFollowUpClick={handleSidebarFollowUpClick}
+                      showLeadLink={true}
                     />
                   </div>
                 </div>
@@ -531,7 +533,12 @@ export default function CounselorDashboardPage() {
                       getFilteredLeads().map((lead: any) => (
                         <tr key={lead._id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">{lead.name}</div>
+                            <Link 
+                              href={`/counselor/leads/${lead._id}`}
+                              className="text-sm font-medium text-teal-600 hover:text-teal-800 hover:underline"
+                            >
+                              {lead.name}
+                            </Link>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-900">{lead.mobileNumber}</div>

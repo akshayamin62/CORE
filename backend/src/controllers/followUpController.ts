@@ -85,35 +85,20 @@ export const createFollowUp = async (
     const scheduleDate = new Date(scheduledDate);
     const { start: dayStart, end: dayEnd } = getDayBounds(scheduleDate);
 
-    // Check if lead already has a future/scheduled follow-up
-    const existingFutureFollowUp = await FollowUp.findOne({
-      leadId,
-      status: FOLLOWUP_STATUS.SCHEDULED,
-      $or: [
-        { scheduledDate: { $gt: new Date() } },
-        {
-          scheduledDate: { $gte: dayStart, $lte: dayEnd },
-          scheduledTime: { $gt: new Date().toTimeString().slice(0, 5) },
-        },
-      ],
-    });
-
-    if (existingFutureFollowUp) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "This lead already has a scheduled follow-up. Only one future follow-up per lead is allowed.",
-      });
-    }
-
     // Check for time slot conflicts for this counselor on this date
+    // Check ALL scheduled follow-ups for the counselor on this day
     const existingFollowUps = await FollowUp.find({
       counselorId: counselor._id,
       scheduledDate: { $gte: dayStart, $lte: dayEnd },
       status: FOLLOWUP_STATUS.SCHEDULED,
-    });
+    }).populate('leadId', 'name');
+
+    console.log(`Checking ${existingFollowUps.length} existing follow-ups for counselor on ${scheduledDate}`);
 
     for (const existing of existingFollowUps) {
+      const existingLeadName = (existing.leadId as any)?.name || 'Unknown Lead';
+      console.log(`Checking against: ${existing.scheduledTime} (${existing.duration}min) for lead: ${existingLeadName}`);
+      
       if (
         doTimeSlotsOverlap(
           scheduledTime,
@@ -122,12 +107,15 @@ export const createFollowUp = async (
           existing.duration
         )
       ) {
+        console.log('CONFLICT DETECTED!');
         return res.status(400).json({
           success: false,
-          message: `Time slot conflicts with another follow-up scheduled at ${existing.scheduledTime}`,
+          message: `Time slot conflicts with another follow-up scheduled at ${existing.scheduledTime} for ${existingLeadName}`,
         });
       }
     }
+    
+    console.log('No conflicts found - time slot is available');
 
     // Create the follow-up
     const followUp = new FollowUp({
@@ -400,29 +388,19 @@ export const updateFollowUp = async (
       const nextDate = new Date(nextFollowUp.scheduledDate);
       const { start: dayStart, end: dayEnd } = getDayBounds(nextDate);
 
-      // Check for existing future follow-up for this lead
-      const existingFuture = await FollowUp.findOne({
-        leadId: followUp.leadId,
-        status: FOLLOWUP_STATUS.SCHEDULED,
-        _id: { $ne: followUpId },
-      });
-
-      if (existingFuture) {
-        return res.status(400).json({
-          success: false,
-          message: "Lead already has a scheduled follow-up",
-        });
-      }
-
-      // Check for time conflicts
+      // Check for time conflicts - check ALL scheduled follow-ups for the counselor on this day
       const conflictingFollowUps = await FollowUp.find({
         counselorId: counselor._id,
         scheduledDate: { $gte: dayStart, $lte: dayEnd },
         status: FOLLOWUP_STATUS.SCHEDULED,
-        _id: { $ne: followUpId },
-      });
+      }).populate('leadId', 'name');
+
+      console.log(`Checking ${conflictingFollowUps.length} existing follow-ups for next follow-up on ${nextFollowUp.scheduledDate}`);
 
       for (const existing of conflictingFollowUps) {
+        const existingLeadName = (existing.leadId as any)?.name || 'Unknown Lead';
+        console.log(`Checking against: ${existing.scheduledTime} (${existing.duration}min) for lead: ${existingLeadName}`);
+        
         if (
           doTimeSlotsOverlap(
             nextFollowUp.scheduledTime,
@@ -431,12 +409,15 @@ export const updateFollowUp = async (
             existing.duration
           )
         ) {
+          console.log('CONFLICT DETECTED for next follow-up!');
           return res.status(400).json({
             success: false,
-            message: `Next follow-up time conflicts with another follow-up at ${existing.scheduledTime}`,
+            message: `Next follow-up time conflicts with another follow-up at ${existing.scheduledTime} for ${existingLeadName}`,
           });
         }
       }
+      
+      console.log('No conflicts found for next follow-up - time slot is available');
 
       // Get current lead stage
       const lead = await Lead.findById(followUp.leadId);
@@ -547,7 +528,7 @@ export const checkTimeSlotAvailability = async (
 ): Promise<Response> => {
   try {
     const counselorUserId = req.user?.userId;
-    const { date, time, duration, excludeFollowUpId } = req.query;
+    const { date, time, duration } = req.query;
 
     if (!date || !time || !duration) {
       return res.status(400).json({
@@ -567,22 +548,23 @@ export const checkTimeSlotAvailability = async (
     const checkDate = new Date(date as string);
     const { start: dayStart, end: dayEnd } = getDayBounds(checkDate);
 
-    const filter: any = {
+    // Check ALL scheduled follow-ups for this counselor on this day
+    const existingFollowUps = await FollowUp.find({
       counselorId: counselor._id,
       scheduledDate: { $gte: dayStart, $lte: dayEnd },
       status: FOLLOWUP_STATUS.SCHEDULED,
-    };
+    }).populate('leadId', 'name');
 
-    if (excludeFollowUpId) {
-      filter._id = { $ne: excludeFollowUpId };
-    }
-
-    const existingFollowUps = await FollowUp.find(filter);
+    console.log(`Check availability: Found ${existingFollowUps.length} scheduled follow-ups on ${date}`);
 
     let isAvailable = true;
     let conflictingTime = null;
+    let conflictingLead = null;
 
     for (const existing of existingFollowUps) {
+      const existingLeadName = (existing.leadId as any)?.name || 'Unknown Lead';
+      console.log(`Checking slot ${time} (${duration}min) against existing: ${existing.scheduledTime} (${existing.duration}min) for ${existingLeadName}`);
+      
       if (
         doTimeSlotsOverlap(
           time as string,
@@ -591,17 +573,22 @@ export const checkTimeSlotAvailability = async (
           existing.duration
         )
       ) {
+        console.log('CONFLICT FOUND!');
         isAvailable = false;
         conflictingTime = existing.scheduledTime;
+        conflictingLead = existingLeadName;
         break;
       }
     }
+
+    console.log(isAvailable ? 'Time slot is AVAILABLE' : `Time slot CONFLICTS with ${conflictingTime} (${conflictingLead})`);
 
     return res.status(200).json({
       success: true,
       data: {
         isAvailable,
         conflictingTime,
+        conflictingLead,
       },
     });
   } catch (error) {
