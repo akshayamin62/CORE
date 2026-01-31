@@ -3,6 +3,7 @@ import { AuthRequest } from "../types/auth";
 import FollowUp, { FOLLOWUP_STATUS } from "../models/FollowUp";
 import Lead from "../models/Lead";
 import Counselor from "../models/Counselor";
+import TeamMeet, { TEAMMEET_STATUS } from "../models/TeamMeet";
 import mongoose from "mongoose";
 import { USER_ROLE } from "../types/roles";
 
@@ -111,11 +112,11 @@ export const createFollowUp = async (
     const { start: dayStart, end: dayEnd } = getDayBounds(scheduleDate);
 
     // Check for time slot conflicts for the counselor on this date
-    // Check ALL scheduled follow-ups for the counselor on this day
+    // Check ALL follow-ups regardless of status to prevent double-booking
     const existingFollowUps = await FollowUp.find({
       counselorId,
       scheduledDate: { $gte: dayStart, $lte: dayEnd },
-      status: FOLLOWUP_STATUS.SCHEDULED,
+      // Removed status filter - check ALL statuses
     }).populate('leadId', 'name');
 
     console.log(`Checking ${existingFollowUps.length} existing follow-ups for counselor on ${scheduledDate}`);
@@ -137,6 +138,29 @@ export const createFollowUp = async (
           success: false,
           message: `Time slot conflicts with another follow-up scheduled at ${existing.scheduledTime} for ${existingLeadName}`,
         });
+      }
+    }
+    
+    // Also check TeamMeet conflicts for the counselor
+    const counselor = await Counselor.findById(counselorId);
+    if (counselor) {
+      const existingTeamMeets = await TeamMeet.find({
+        $or: [{ requestedBy: counselor.userId }, { requestedTo: counselor.userId }],
+        scheduledDate: { $gte: dayStart, $lte: dayEnd },
+        status: { $in: [TEAMMEET_STATUS.PENDING_CONFIRMATION, TEAMMEET_STATUS.CONFIRMED, TEAMMEET_STATUS.COMPLETED] },
+      }).populate("requestedBy", "name").populate("requestedTo", "name");
+
+      for (const meet of existingTeamMeets) {
+        if (doTimeSlotsOverlap(scheduledTime, duration, meet.scheduledTime, meet.duration)) {
+          const otherParty = meet.requestedBy._id.toString() === counselor.userId?.toString()
+            ? (meet.requestedTo as any)?.name
+            : (meet.requestedBy as any)?.name;
+          console.log('CONFLICT DETECTED with TeamMeet!');
+          return res.status(400).json({
+            success: false,
+            message: `Time slot conflicts with a TeamMeet at ${meet.scheduledTime} with ${otherParty || 'Unknown'}`,
+          });
+        }
       }
     }
     
@@ -481,11 +505,11 @@ export const updateFollowUp = async (
       const nextDate = new Date(nextFollowUp.scheduledDate);
       const { start: dayStart, end: dayEnd } = getDayBounds(nextDate);
 
-      // Check for time conflicts - check ALL scheduled follow-ups for the counselor on this day
+      // Check for time conflicts - check ALL follow-ups regardless of status
       const conflictingFollowUps = await FollowUp.find({
         counselorId,
         scheduledDate: { $gte: dayStart, $lte: dayEnd },
-        status: FOLLOWUP_STATUS.SCHEDULED,
+        // Removed status filter - check ALL statuses
       }).populate('leadId', 'name');
 
       console.log(`Checking ${conflictingFollowUps.length} existing follow-ups for next follow-up on ${nextFollowUp.scheduledDate}`);
@@ -507,6 +531,29 @@ export const updateFollowUp = async (
             success: false,
             message: `Next follow-up time conflicts with another follow-up at ${existing.scheduledTime} for ${existingLeadName}`,
           });
+        }
+      }
+      
+      // Also check TeamMeet conflicts for the counselor
+      const counselorDoc = await Counselor.findById(counselorId);
+      if (counselorDoc) {
+        const existingTeamMeets = await TeamMeet.find({
+          $or: [{ requestedBy: counselorDoc.userId }, { requestedTo: counselorDoc.userId }],
+          scheduledDate: { $gte: dayStart, $lte: dayEnd },
+          status: { $in: [TEAMMEET_STATUS.PENDING_CONFIRMATION, TEAMMEET_STATUS.CONFIRMED, TEAMMEET_STATUS.COMPLETED] },
+        }).populate("requestedBy", "name").populate("requestedTo", "name");
+
+        for (const meet of existingTeamMeets) {
+          if (doTimeSlotsOverlap(nextFollowUp.scheduledTime, nextFollowUp.duration || 30, meet.scheduledTime, meet.duration)) {
+            const otherParty = meet.requestedBy._id.toString() === counselorDoc.userId?.toString()
+              ? (meet.requestedTo as any)?.name
+              : (meet.requestedBy as any)?.name;
+            console.log('CONFLICT DETECTED with TeamMeet for next follow-up!');
+            return res.status(400).json({
+              success: false,
+              message: `Next follow-up conflicts with a TeamMeet at ${meet.scheduledTime} with ${otherParty || 'Unknown'}`,
+            });
+          }
         }
       }
       
@@ -689,18 +736,19 @@ export const checkTimeSlotAvailability = async (
     const checkDate = new Date(date as string);
     const { start: dayStart, end: dayEnd } = getDayBounds(checkDate);
 
-    // Check ALL scheduled follow-ups for this counselor on this day
+    // Check ALL follow-ups regardless of status for this counselor on this day
     const existingFollowUps = await FollowUp.find({
       counselorId,
       scheduledDate: { $gte: dayStart, $lte: dayEnd },
-      status: FOLLOWUP_STATUS.SCHEDULED,
+      // Removed status filter - check ALL statuses
     }).populate('leadId', 'name');
 
-    console.log(`Check availability: Found ${existingFollowUps.length} scheduled follow-ups on ${date}`);
+    console.log(`Check availability: Found ${existingFollowUps.length} follow-ups on ${date}`);
 
     let isAvailable = true;
     let conflictingTime = null;
     let conflictingLead = null;
+    let conflictType = 'FollowUp';
 
     for (const existing of existingFollowUps) {
       const existingLeadName = (existing.leadId as any)?.name || 'Unknown Lead';
@@ -714,15 +762,42 @@ export const checkTimeSlotAvailability = async (
           existing.duration
         )
       ) {
-        console.log('CONFLICT FOUND!');
+        console.log('CONFLICT FOUND with FollowUp!');
         isAvailable = false;
         conflictingTime = existing.scheduledTime;
         conflictingLead = existingLeadName;
+        conflictType = 'FollowUp';
         break;
       }
     }
 
-    console.log(isAvailable ? 'Time slot is AVAILABLE' : `Time slot CONFLICTS with ${conflictingTime} (${conflictingLead})`);
+    // Also check TeamMeet conflicts if no FollowUp conflict found
+    if (isAvailable) {
+      const counselorDoc = await Counselor.findById(counselorId);
+      if (counselorDoc) {
+        const existingTeamMeets = await TeamMeet.find({
+          $or: [{ requestedBy: counselorDoc.userId }, { requestedTo: counselorDoc.userId }],
+          scheduledDate: { $gte: dayStart, $lte: dayEnd },
+          status: { $in: [TEAMMEET_STATUS.PENDING_CONFIRMATION, TEAMMEET_STATUS.CONFIRMED, TEAMMEET_STATUS.COMPLETED] },
+        }).populate("requestedBy", "name").populate("requestedTo", "name");
+
+        for (const meet of existingTeamMeets) {
+          if (doTimeSlotsOverlap(time as string, parseInt(duration as string), meet.scheduledTime, meet.duration)) {
+            const otherParty = meet.requestedBy._id.toString() === counselorDoc.userId?.toString()
+              ? (meet.requestedTo as any)?.name
+              : (meet.requestedBy as any)?.name;
+            console.log('CONFLICT FOUND with TeamMeet!');
+            isAvailable = false;
+            conflictingTime = meet.scheduledTime;
+            conflictingLead = otherParty || 'Unknown';
+            conflictType = 'TeamMeet';
+            break;
+          }
+        }
+      }
+    }
+
+    console.log(isAvailable ? 'Time slot is AVAILABLE' : `Time slot CONFLICTS with ${conflictType} at ${conflictingTime} (${conflictingLead})`);
 
     return res.status(200).json({
       success: true,
@@ -730,6 +805,7 @@ export const checkTimeSlotAvailability = async (
         isAvailable,
         conflictingTime,
         conflictingLead,
+        conflictType,
       },
     });
   } catch (error) {

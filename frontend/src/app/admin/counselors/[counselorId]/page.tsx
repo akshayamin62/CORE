@@ -3,14 +3,17 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { authAPI, adminAPI, followUpAPI } from '@/lib/api';
-import { User, USER_ROLE, LEAD_STAGE, FollowUp, FollowUpSummary, FOLLOWUP_STATUS } from '@/types';
+import { authAPI, adminAPI, followUpAPI, teamMeetAPI } from '@/lib/api';
+import { User, USER_ROLE, LEAD_STAGE, FollowUp, FollowUpSummary, FOLLOWUP_STATUS, TeamMeet, TEAMMEET_STATUS } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import FollowUpCalendar from '@/components/FollowUpCalendar';
 import FollowUpSidebar from '@/components/FollowUpSidebar';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
 import LeadDetailPanel from '@/components/LeadDetailPanel';
+import TeamMeetCalendar from '@/components/TeamMeetCalendar';
+import TeamMeetSidebar from '@/components/TeamMeetSidebar';
+import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 
 interface CounselorDetail {
   _id: string;
@@ -60,6 +63,12 @@ export default function AdminCounselorDetailPage() {
   const [calendarCollapsed, setCalendarCollapsed] = useState(false);
   const [showFollowUpPanel, setShowFollowUpPanel] = useState(false);
 
+  // TeamMeet state (read-only for admin)
+  const [teamMeets, setTeamMeets] = useState<TeamMeet[]>([]);
+  const [selectedTeamMeet, setSelectedTeamMeet] = useState<TeamMeet | null>(null);
+  const [showTeamMeetPanel, setShowTeamMeetPanel] = useState(false);
+  const [activeCalendarTab, setActiveCalendarTab] = useState<'followups' | 'teammeets'>('followups');
+
   useEffect(() => {
     checkAuth();
   }, []);
@@ -74,6 +83,15 @@ export default function AdminCounselorDetailPage() {
       setFollowUpSummary(summaryResponse.data.data);
     } catch (error: any) {
       console.error('Error fetching follow-ups:', error);
+    }
+  }, [counselorId]);
+
+  const fetchTeamMeets = useCallback(async () => {
+    try {
+      const response = await teamMeetAPI.getCounselorTeamMeets(counselorId);
+      setTeamMeets(response.data.data.teamMeets || []);
+    } catch (error: any) {
+      console.error('Error fetching counselor TeamMeets:', error);
     }
   }, [counselorId]);
 
@@ -123,8 +141,9 @@ export default function AdminCounselorDetailPage() {
         adminEnquiryUrl: enquiryUrl,
       });
       
-      // Fetch follow-ups after getting counselor detail
+      // Fetch follow-ups and TeamMeets after getting counselor detail
       fetchFollowUps();
+      fetchTeamMeets();
     } catch (error: any) {
       console.error('Error fetching counselor detail:', error);
       toast.error(error.response?.data?.message || 'Failed to fetch counselor details');
@@ -212,6 +231,17 @@ export default function AdminCounselorDetailPage() {
   const handleFollowUpPanelClose = () => {
     setShowFollowUpPanel(false);
     setSelectedFollowUp(null);
+  };
+
+  // TeamMeet handlers (read-only for admin)
+  const handleTeamMeetSelect = (teamMeet: TeamMeet) => {
+    setSelectedTeamMeet(teamMeet);
+    setShowTeamMeetPanel(true);
+  };
+
+  const handleTeamMeetPanelClose = () => {
+    setShowTeamMeetPanel(false);
+    setSelectedTeamMeet(null);
   };
 
   // Handle stat card click - collapse calendar/sidebar
@@ -444,7 +474,7 @@ export default function AdminCounselorDetailPage() {
             </div>
           )}
 
-          {/* Follow-up Calendar and Sidebar Section */}
+          {/* Calendar and Sidebar Section */}
           {!calendarCollapsed && (
             <div className="mb-8">
               {selectedLeadId ? (
@@ -455,31 +485,99 @@ export default function AdminCounselorDetailPage() {
                   onFollowUpScheduled={handleFollowUpScheduled}
                 />
               ) : (
-                // Calendar + Sidebar View
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                  {/* Calendar Section */}
-                  <div className="lg:col-span-3">
-                    <FollowUpCalendar
-                      followUps={followUps}
-                      onFollowUpSelect={handleFollowUpSelect}
-                      onLeadSelect={handleLeadDetailOpen}
-                      minimized={false}
-                      onToggleMinimize={() => setCalendarCollapsed(true)}
-                    />
+                <>
+                  {/* Tab Switcher */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <button
+                      onClick={() => setActiveCalendarTab('followups')}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        activeCalendarTab === 'followups'
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Follow-Ups
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setActiveCalendarTab('teammeets')}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        activeCalendarTab === 'teammeets'
+                          ? 'bg-violet-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        TeamMeets
+                        {teamMeets.length > 0 && (
+                          <span className="bg-violet-200 text-violet-800 text-xs px-2 py-0.5 rounded-full">
+                            {teamMeets.length}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                    <span className="text-xs text-gray-500 ml-2 italic">(Read-only view)</span>
                   </div>
 
-                  {/* Sidebar Section */}
-                  <div className="lg:col-span-1">
-                    <FollowUpSidebar
-                      today={followUpSummary?.today || []}
-                      missed={followUpSummary?.missed || []}
-                      upcoming={followUpSummary?.upcoming || []}
-                      onFollowUpClick={handleSidebarFollowUpClick}
-                      showLeadLink={true}
-                      basePath="/admin/leads"
-                    />
-                  </div>
-                </div>
+                  {/* Follow-Ups Calendar + Sidebar */}
+                  {activeCalendarTab === 'followups' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                      {/* Calendar Section */}
+                      <div className="lg:col-span-3">
+                        <FollowUpCalendar
+                          followUps={followUps}
+                          onFollowUpSelect={handleFollowUpSelect}
+                          onLeadSelect={handleLeadDetailOpen}
+                          minimized={false}
+                          onToggleMinimize={() => setCalendarCollapsed(true)}
+                        />
+                      </div>
+
+                      {/* Sidebar Section */}
+                      <div className="lg:col-span-1">
+                        <FollowUpSidebar
+                          today={followUpSummary?.today || []}
+                          missed={followUpSummary?.missed || []}
+                          upcoming={followUpSummary?.upcoming || []}
+                          onFollowUpClick={handleSidebarFollowUpClick}
+                          showLeadLink={true}
+                          basePath="/admin/leads"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TeamMeets Calendar + Sidebar (Read-only) */}
+                  {activeCalendarTab === 'teammeets' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                      {/* Calendar Section */}
+                      <div className="lg:col-span-3">
+                        <TeamMeetCalendar
+                          teamMeets={teamMeets}
+                          onTeamMeetSelect={handleTeamMeetSelect}
+                          currentUserId={counselor?.userId?._id}
+                        />
+                      </div>
+
+                      {/* Sidebar Section */}
+                      <div className="lg:col-span-1">
+                        <TeamMeetSidebar
+                          teamMeets={teamMeets}
+                          onTeamMeetClick={handleTeamMeetSelect}
+                          currentUserId={counselor?.userId?._id}
+                          hideHeader={false}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -644,6 +742,17 @@ export default function AdminCounselorDetailPage() {
         isOpen={showFollowUpPanel}
         onClose={handleFollowUpPanelClose}
         onSave={handleFollowUpSave}
+      />
+
+      {/* TeamMeet Slide-in Panel (Read-only for admin) */}
+      <TeamMeetFormPanel
+        teamMeet={selectedTeamMeet}
+        isOpen={showTeamMeetPanel}
+        onClose={handleTeamMeetPanelClose}
+        onSave={handleTeamMeetPanelClose}
+        mode="view"
+        currentUserId={user?.id || user?._id}
+        readOnly={true}
       />
     </>
   );

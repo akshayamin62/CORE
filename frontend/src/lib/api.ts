@@ -355,6 +355,72 @@ export const chatAPI = {
   getMyChatsList: () => api.get('/chat/my-chats'),
 };
 
+// TeamMeet API
+export const teamMeetAPI = {
+  // Create a new team meeting request
+  createTeamMeet: (data: {
+    subject: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    duration: number;
+    meetingType: string;
+    description?: string;
+    requestedTo: string;
+  }) => api.post('/team-meets', data),
+
+  // Get all team meetings for current user
+  getTeamMeets: (params?: {
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+  }) => api.get('/team-meets', { params }),
+
+  // Get team meetings for calendar display
+  getTeamMeetsForCalendar: (params?: {
+    month?: number;
+    year?: number;
+  }) => api.get('/team-meets/calendar', { params }),
+
+  // Get single team meeting details
+  getTeamMeetById: (teamMeetId: string) => api.get(`/team-meets/${teamMeetId}`),
+
+  // Accept a team meeting invitation
+  acceptTeamMeet: (teamMeetId: string) => api.patch(`/team-meets/${teamMeetId}/accept`),
+
+  // Reject a team meeting invitation with a message
+  rejectTeamMeet: (teamMeetId: string, rejectionMessage: string) => 
+    api.patch(`/team-meets/${teamMeetId}/reject`, { rejectionMessage }),
+
+  // Cancel a team meeting
+  cancelTeamMeet: (teamMeetId: string) => api.patch(`/team-meets/${teamMeetId}/cancel`),
+
+  // Reschedule a team meeting
+  rescheduleTeamMeet: (teamMeetId: string, data: {
+    scheduledDate: string;
+    scheduledTime: string;
+    duration: number;
+    subject?: string;
+    description?: string;
+  }) => api.patch(`/team-meets/${teamMeetId}/reschedule`, data),
+
+  // Mark meeting as completed
+  completeTeamMeet: (teamMeetId: string) => api.patch(`/team-meets/${teamMeetId}/complete`),
+
+  // Check availability for a time slot
+  checkAvailability: (params: {
+    date: string;
+    time: string;
+    duration: number;
+    participantId: string;
+  }) => api.get('/team-meets/check-availability', { params }),
+
+  // Get list of participants available for meetings
+  getParticipants: () => api.get('/team-meets/participants'),
+
+  // Admin-only: Get counselor's TeamMeets (read-only)
+  getCounselorTeamMeets: (counselorId: string) => api.get(`/team-meets/counselor/${counselorId}`),
+};
+
 export default api;
 
 

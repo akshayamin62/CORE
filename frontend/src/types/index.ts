@@ -361,3 +361,85 @@ export interface UpdateFollowUpData {
     duration: number;
   };
 }
+
+// TeamMeet Types
+export enum TEAMMEET_STATUS {
+  PENDING_CONFIRMATION = 'PENDING_CONFIRMATION',
+  CONFIRMED = 'CONFIRMED',
+  REJECTED = 'REJECTED',
+  CANCELLED = 'CANCELLED',
+  COMPLETED = 'COMPLETED',
+}
+
+export enum TEAMMEET_TYPE {
+  ONLINE = 'ONLINE',
+  FACE_TO_FACE = 'FACE_TO_FACE',
+}
+
+export interface TeamMeet {
+  _id: string;
+  subject: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  duration: number;
+  meetingType: TEAMMEET_TYPE;
+  description?: string;
+  requestedBy: {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  requestedTo: {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  status: TEAMMEET_STATUS;
+  rejectionMessage?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeamMeetParticipant {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export interface CreateTeamMeetData {
+  subject: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  duration: number;
+  meetingType: TEAMMEET_TYPE;
+  description?: string;
+  requestedTo: string;
+}
+
+export interface RescheduleTeamMeetData {
+  scheduledDate: string;
+  scheduledTime: string;
+  duration: number;
+  subject?: string;
+  description?: string;
+}
+
+export interface TeamMeetAvailability {
+  isAvailable: boolean;
+  senderAvailable: boolean;
+  senderConflict?: {
+    type: string;
+    time: string;
+    with: string;
+  };
+  recipientAvailable: boolean;
+  recipientConflict?: {
+    type: string;
+    time: string;
+    with: string;
+  };
+}

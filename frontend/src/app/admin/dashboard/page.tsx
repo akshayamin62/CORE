@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { authAPI, adminAPI, leadAPI } from '@/lib/api';
-import { User, USER_ROLE, LEAD_STAGE } from '@/types';
+import { authAPI, adminAPI, leadAPI, teamMeetAPI } from '@/lib/api';
+import { User, USER_ROLE, LEAD_STAGE, TeamMeet, TEAMMEET_STATUS } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import TeamMeetCalendar from '@/components/TeamMeetCalendar';
+import TeamMeetSidebar from '@/components/TeamMeetSidebar';
+import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 
 interface DashboardStats {
   totalCounselors: number;
@@ -20,8 +23,25 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
 
+  // TeamMeet state
+  const [teamMeets, setTeamMeets] = useState<TeamMeet[]>([]);
+  const [selectedTeamMeet, setSelectedTeamMeet] = useState<TeamMeet | null>(null);
+  const [showTeamMeetPanel, setShowTeamMeetPanel] = useState(false);
+  const [teamMeetPanelMode, setTeamMeetPanelMode] = useState<'create' | 'view' | 'respond'>('create');
+  const [selectedTeamMeetDate, setSelectedTeamMeetDate] = useState<Date | undefined>(undefined);
+  const [showTeamMeetSection, setShowTeamMeetSection] = useState(true);
+
   useEffect(() => {
     checkAuth();
+  }, []);
+
+  const fetchTeamMeets = useCallback(async () => {
+    try {
+      const response = await teamMeetAPI.getTeamMeetsForCalendar();
+      setTeamMeets(response.data.data.teamMeets);
+    } catch (error: any) {
+      console.error('Error fetching team meets:', error);
+    }
   }, []);
 
   const checkAuth = async () => {
@@ -37,6 +57,7 @@ export default function AdminDashboardPage() {
 
       setUser(userData);
       fetchStats();
+      fetchTeamMeets();
     } catch (error) {
       toast.error('Please login to continue');
       router.push('/login');
@@ -80,6 +101,46 @@ export default function AdminDashboardPage() {
       console.error('Failed to copy:', error);
       toast.error('Failed to copy URL');
     }
+  };
+
+  // TeamMeet handlers
+  const handleTeamMeetSelect = (teamMeet: TeamMeet) => {
+    setSelectedTeamMeet(teamMeet);
+    // Determine mode based on whether current user is recipient with pending status
+    const currentUserId = user?.id || user?._id;
+    if (teamMeet.requestedTo._id === currentUserId && teamMeet.status === TEAMMEET_STATUS.PENDING_CONFIRMATION) {
+      setTeamMeetPanelMode('respond');
+    } else {
+      setTeamMeetPanelMode('view');
+    }
+    setShowTeamMeetPanel(true);
+  };
+
+  const handleTeamMeetDateSelect = (date: Date) => {
+    setSelectedTeamMeetDate(date);
+    setSelectedTeamMeet(null);
+    setTeamMeetPanelMode('create');
+    setShowTeamMeetPanel(true);
+  };
+
+  const handleScheduleTeamMeet = () => {
+    setSelectedTeamMeet(null);
+    setSelectedTeamMeetDate(undefined);
+    setTeamMeetPanelMode('create');
+    setShowTeamMeetPanel(true);
+  };
+
+  const handleTeamMeetSave = async () => {
+    setShowTeamMeetPanel(false);
+    setSelectedTeamMeet(null);
+    setSelectedTeamMeetDate(undefined);
+    await fetchTeamMeets();
+  };
+
+  const handleTeamMeetPanelClose = () => {
+    setShowTeamMeetPanel(false);
+    setSelectedTeamMeet(null);
+    setSelectedTeamMeetDate(undefined);
   };
 
   if (loading) {
@@ -201,8 +262,75 @@ export default function AdminDashboardPage() {
               </div>
             </div>
           </div>
+
+          {/* TeamMeet Section */}
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">TeamMeet</h2>
+                  <p className="text-sm text-gray-500">Schedule and manage meetings with counselors</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {teamMeets.filter(tm => tm.status === TEAMMEET_STATUS.PENDING_CONFIRMATION && tm.requestedTo._id === (user?.id || user?._id)).length > 0 && (
+                  <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-sm font-medium animate-pulse">
+                    {teamMeets.filter(tm => tm.status === TEAMMEET_STATUS.PENDING_CONFIRMATION && tm.requestedTo._id === (user?.id || user?._id)).length} pending
+                  </span>
+                )}
+                <button
+                  onClick={() => setShowTeamMeetSection(!showTeamMeetSection)}
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <svg className={`w-5 h-5 transition-transform ${showTeamMeetSection ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {showTeamMeetSection && (
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                {/* Calendar Section */}
+                <div className="lg:col-span-3">
+                  <TeamMeetCalendar
+                    teamMeets={teamMeets}
+                    onTeamMeetSelect={handleTeamMeetSelect}
+                    onDateSelect={handleTeamMeetDateSelect}
+                    currentUserId={user?.id || user?._id}
+                  />
+                </div>
+
+                {/* Sidebar Section */}
+                <div className="lg:col-span-1">
+                  <TeamMeetSidebar
+                    teamMeets={teamMeets}
+                    onTeamMeetClick={handleTeamMeetSelect}
+                    onScheduleClick={handleScheduleTeamMeet}
+                    currentUserId={user?.id || user?._id}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </AdminLayout>
+
+      {/* TeamMeet Slide-in Panel */}
+      <TeamMeetFormPanel
+        teamMeet={selectedTeamMeet}
+        isOpen={showTeamMeetPanel}
+        onClose={handleTeamMeetPanelClose}
+        onSave={handleTeamMeetSave}
+        selectedDate={selectedTeamMeetDate}
+        mode={teamMeetPanelMode}
+        currentUserId={user?.id || user?._id}
+      />
     </>
   );
 }
