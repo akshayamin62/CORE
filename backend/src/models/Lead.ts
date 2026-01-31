@@ -27,7 +27,8 @@ export interface ILead extends Document {
   name: string;
   email: string;
   mobileNumber: string;
-  serviceType: SERVICE_TYPE;
+  city?: string;
+  serviceTypes: SERVICE_TYPE[];
   adminId: mongoose.Types.ObjectId; // Reference to Admin's userId
   assignedCounselorId?: mongoose.Types.ObjectId; // Reference to Counselor document
   stage: LEAD_STAGE;
@@ -78,10 +79,21 @@ const leadSchema = new Schema<ILead>(
       required: true,
       trim: true,
     },
-    serviceType: {
+    city: {
       type: String,
+      trim: true,
+      required: true,
+    },
+    serviceTypes: {
+      type: [String],
       enum: Object.values(SERVICE_TYPE),
       required: true,
+      validate: {
+        validator: function(v: string[]) {
+          return v && v.length > 0;
+        },
+        message: "At least one service type is required",
+      },
     },
     adminId: {
       type: Schema.Types.ObjectId,

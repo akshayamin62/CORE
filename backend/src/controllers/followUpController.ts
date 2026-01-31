@@ -133,7 +133,7 @@ export const createFollowUp = async (
     await followUp.save();
 
     // Populate lead info for response
-    await followUp.populate("leadId", "name email mobileNumber serviceType stage");
+    await followUp.populate("leadId", "name email mobileNumber city serviceTypes stage");
 
     return res.status(201).json({
       success: true,
@@ -183,7 +183,7 @@ export const getCounselorFollowUps = async (
     }
 
     const followUps = await FollowUp.find(filter)
-      .populate("leadId", "name email mobileNumber serviceType stage")
+      .populate("leadId", "name email mobileNumber city serviceTypes stage")
       .sort({ scheduledDate: 1, scheduledTime: 1 });
 
     return res.status(200).json({
@@ -229,7 +229,7 @@ export const getFollowUpSummary = async (
       counselorId: counselor._id,
       scheduledDate: { $gte: todayStart, $lte: todayEnd },
     })
-      .populate("leadId", "name email mobileNumber serviceType stage")
+      .populate("leadId", "name email mobileNumber city serviceTypes stage")
       .sort({ scheduledTime: 1 });
 
     // Missed follow-ups (past date + status still SCHEDULED)
@@ -238,7 +238,7 @@ export const getFollowUpSummary = async (
       scheduledDate: { $lt: todayStart },
       status: FOLLOWUP_STATUS.SCHEDULED,
     })
-      .populate("leadId", "name email mobileNumber serviceType stage")
+      .populate("leadId", "name email mobileNumber city serviceTypes stage")
       .sort({ scheduledDate: -1 });
 
     // Upcoming (tomorrow only)
@@ -247,7 +247,7 @@ export const getFollowUpSummary = async (
       scheduledDate: { $gte: tomorrowStart, $lte: tomorrowEnd },
       status: FOLLOWUP_STATUS.SCHEDULED,
     })
-      .populate("leadId", "name email mobileNumber serviceType stage")
+      .populate("leadId", "name email mobileNumber city serviceTypes stage")
       .sort({ scheduledTime: 1 });
 
     return res.status(200).json({
@@ -294,7 +294,7 @@ export const getFollowUpById = async (
     const followUp = await FollowUp.findOne({
       _id: followUpId,
       counselorId: counselor._id,
-    }).populate("leadId", "name email mobileNumber serviceType stage");
+    }).populate("leadId", "name email mobileNumber city serviceTypes stage");
 
     if (!followUp) {
       return res.status(404).json({
@@ -433,11 +433,11 @@ export const updateFollowUp = async (
       });
 
       await newFollowUp.save();
-      await newFollowUp.populate("leadId", "name email mobileNumber serviceType stage");
+      await newFollowUp.populate("leadId", "name email mobileNumber city serviceTypes stage");
     }
 
     // Populate and return updated follow-up
-    await followUp.populate("leadId", "name email mobileNumber serviceType stage");
+    await followUp.populate("leadId", "name email mobileNumber city serviceTypes stage");
 
     return res.status(200).json({
       success: true,

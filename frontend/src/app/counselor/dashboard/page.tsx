@@ -138,7 +138,7 @@ export default function CounselorDashboardPage() {
     
     // Apply service filter (for all views)
     if (serviceFilter !== 'all') {
-      filtered = filtered.filter((lead: any) => lead.serviceType === serviceFilter);
+      filtered = filtered.filter((lead: any) => lead.serviceTypes?.includes(serviceFilter));
     }
     
     // Apply search
@@ -559,7 +559,7 @@ export default function CounselorDashboardPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{lead.serviceType || 'N/A'}</div>
+                            <div className="text-sm text-gray-900">{lead.serviceTypes?.join(', ') || 'N/A'}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-500">

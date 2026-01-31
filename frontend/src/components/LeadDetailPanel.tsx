@@ -218,8 +218,8 @@ export default function LeadDetailPanel({
             <p className="text-gray-900 font-medium mt-1">{lead.mobileNumber}</p>
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
-            <p className="text-xs font-medium text-gray-500 uppercase">Service</p>
-            <p className="text-gray-900 font-medium mt-1 text-sm">{lead.serviceType}</p>
+            <p className="text-xs font-medium text-gray-500 uppercase">Services</p>
+            <p className="text-gray-900 font-medium mt-1 text-sm">{lead.serviceTypes?.join(', ') || 'N/A'}</p>
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
             <p className="text-xs font-medium text-gray-500 uppercase">Stage</p>

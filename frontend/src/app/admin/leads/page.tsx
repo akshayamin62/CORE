@@ -64,7 +64,7 @@ export default function AdminLeadsPage() {
     try {
       const params: any = {};
       if (stageFilter) params.stage = stageFilter;
-      if (serviceFilter) params.serviceType = serviceFilter;
+      if (serviceFilter) params.serviceTypes = serviceFilter;
       if (counselorFilter) params.assignedCounselorId = counselorFilter;
 
       const response = await leadAPI.getAdminLeads(params);
@@ -424,9 +424,13 @@ export default function AdminLeadsPage() {
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getServiceColor(lead.serviceType)}`}>
-                            {lead.serviceType}
-                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {lead.serviceTypes?.map((service) => (
+                              <span key={service} className={`px-2 py-1 rounded-full text-xs font-medium ${getServiceColor(service)}`}>
+                                {service}
+                              </span>
+                            ))}
+                          </div>
                         </td>
                         <td className="px-4 py-4">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStageColor(lead.stage)}`}>

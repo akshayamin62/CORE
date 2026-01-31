@@ -283,7 +283,8 @@ export interface Lead {
   name: string;
   email: string;
   mobileNumber: string;
-  serviceType: SERVICE_TYPE;
+  city: string;
+  serviceTypes: SERVICE_TYPE[];
   stage: LEAD_STAGE;
   notes: LeadNote[];
   createdAt: string;

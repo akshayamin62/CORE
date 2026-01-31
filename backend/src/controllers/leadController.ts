@@ -42,22 +42,24 @@ export const getUniqueSlug = async (baseSlug: string): Promise<string> => {
 export const submitEnquiry = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { adminSlug } = req.params;
-    const { name, email, mobileNumber, serviceType } = req.body;
+    const { name, email, mobileNumber, city, serviceTypes } = req.body;
 
     // Validation
-    if (!name || !email || !mobileNumber || !serviceType) {
+    if (!name || !email || !mobileNumber || !city || !serviceTypes || !Array.isArray(serviceTypes) || serviceTypes.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "All fields are required: name, email, mobileNumber, serviceType",
+        message: "All fields are required: name, email, mobileNumber, city, serviceTypes (at least one)",
       });
     }
 
-    // Validate service type
-    if (!Object.values(SERVICE_TYPE).includes(serviceType as SERVICE_TYPE)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid service type",
-      });
+    // Validate service types
+    for (const service of serviceTypes) {
+      if (!Object.values(SERVICE_TYPE).includes(service as SERVICE_TYPE)) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid service type: ${service}`,
+        });
+      }
     }
 
     // Find admin by slug
@@ -88,7 +90,8 @@ export const submitEnquiry = async (req: Request, res: Response): Promise<Respon
       name: name.trim(),
       email: email.toLowerCase().trim(),
       mobileNumber: mobileNumber.trim(),
-      serviceType,
+      city: city.trim(),
+      serviceTypes,
       adminId: admin.userId,
       stage: LEAD_STAGE.NEW,
       source: "Enquiry Form",
@@ -148,7 +151,7 @@ export const getAdminInfoBySlug = async (req: Request, res: Response): Promise<R
 export const getAdminLeads = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const adminUserId = req.user?.userId;
-    const { stage, serviceType, assigned, search } = req.query;
+    const { stage, serviceTypes, assigned, search } = req.query;
 
     // Build filter
     const filter: any = { adminId: adminUserId };
@@ -157,8 +160,8 @@ export const getAdminLeads = async (req: AuthRequest, res: Response): Promise<Re
       filter.stage = stage;
     }
 
-    if (serviceType) {
-      filter.serviceType = serviceType;
+    if (serviceTypes) {
+      filter.serviceTypes = { $in: [serviceTypes] };
     }
 
     if (assigned === "true") {
@@ -513,7 +516,7 @@ export const getAdminCounselors = async (req: AuthRequest, res: Response): Promi
 export const getCounselorLeads = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const counselorUserId = req.user?.userId;
-    const { stage, serviceType, search } = req.query;
+    const { stage, serviceTypes, search } = req.query;
 
     // Find counselor document
     const counselor = await Counselor.findOne({ userId: counselorUserId });
@@ -531,8 +534,8 @@ export const getCounselorLeads = async (req: AuthRequest, res: Response): Promis
       filter.stage = stage;
     }
 
-    if (serviceType) {
-      filter.serviceType = serviceType;
+    if (serviceTypes) {
+      filter.serviceTypes = { $in: [serviceTypes] };
     }
 
     if (search) {
@@ -650,7 +653,7 @@ export const getCounselorEnquiryFormUrl = async (req: AuthRequest, res: Response
  */
 export const getAllLeads = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { adminId, stage, serviceType } = req.query;
+    const { adminId, stage, serviceTypes } = req.query;
 
     const filter: any = {};
 
@@ -662,8 +665,8 @@ export const getAllLeads = async (req: Request, res: Response): Promise<Response
       filter.stage = stage;
     }
 
-    if (serviceType) {
-      filter.serviceType = serviceType;
+    if (serviceTypes) {
+      filter.serviceTypes = { $in: [serviceTypes] };
     }
 
     const leads = await Lead.find(filter)
@@ -677,7 +680,8 @@ export const getAllLeads = async (req: Request, res: Response): Promise<Response
       { $group: { _id: "$stage", count: { $sum: 1 } } },
     ]);
     const leadsByService = await Lead.aggregate([
-      { $group: { _id: "$serviceType", count: { $sum: 1 } } },
+      { $unwind: "$serviceTypes" },
+      { $group: { _id: "$serviceTypes", count: { $sum: 1 } } },
     ]);
     const leadsByAdmin = await Lead.aggregate([
       { $group: { _id: "$adminId", count: { $sum: 1 } } },

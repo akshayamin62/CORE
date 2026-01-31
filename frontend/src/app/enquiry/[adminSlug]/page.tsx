@@ -22,7 +22,8 @@ export default function PublicEnquiryFormPage() {
     name: '',
     email: '',
     mobileNumber: '',
-    serviceType: '',
+    city: '',
+    serviceTypes: [] as string[],
   });
 
   useEffect(() => {
@@ -52,6 +53,17 @@ export default function PublicEnquiryFormPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleServiceToggle = (service: string) => {
+    setFormData(prev => {
+      const isSelected = prev.serviceTypes.includes(service);
+      if (isSelected) {
+        return { ...prev, serviceTypes: prev.serviceTypes.filter(s => s !== service) };
+      } else {
+        return { ...prev, serviceTypes: [...prev.serviceTypes, service] };
+      }
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -68,8 +80,12 @@ export default function PublicEnquiryFormPage() {
       toast.error('Please enter your mobile number');
       return;
     }
-    if (!formData.serviceType) {
-      toast.error('Please select a service');
+    if (!formData.city.trim()) {
+      toast.error('Please enter your city');
+      return;
+    }
+    if (formData.serviceTypes.length === 0) {
+      toast.error('Please select at least one service');
       return;
     }
 
@@ -93,7 +109,8 @@ export default function PublicEnquiryFormPage() {
         name: formData.name.trim(),
         email: formData.email.trim().toLowerCase(),
         mobileNumber: formData.mobileNumber.trim(),
-        serviceType: formData.serviceType,
+        city: formData.city.trim(),
+        serviceTypes: formData.serviceTypes,
       });
       setSubmitted(true);
       toast.success('Your enquiry has been submitted successfully!');
@@ -155,7 +172,7 @@ export default function PublicEnquiryFormPage() {
           <button
             onClick={() => {
               setSubmitted(false);
-              setFormData({ name: '', email: '', mobileNumber: '', serviceType: '' });
+              setFormData({ name: '', email: '', mobileNumber: '', city: '', serviceTypes: [] });
             }}
             className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
@@ -167,106 +184,136 @@ export default function PublicEnquiryFormPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-12 px-4">
       <Toaster position="top-right" />
       
-      <div className="max-w-lg mx-auto">
+      <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Get in Touch with {adminInfo?.adminName || 'Us'}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-500 text-lg">
             Fill out the form below and we'll get back to you as soon as possible.
           </p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white rounded-3xl shadow-2xl shadow-gray-200/50 p-10 border border-gray-100">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name */}
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="Enter your full name"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
-                required
-              />
+            {/* Row 1: Full Name + Email */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter your full name"
+                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 placeholder:text-gray-400"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email Address <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter your email address"
+                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 placeholder:text-gray-400"
+                  required
+                />
+              </div>
             </div>
 
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="Enter your email address"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
-                required
-              />
+            {/* Row 2: Mobile Number + City */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label htmlFor="mobileNumber" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Mobile Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  id="mobileNumber"
+                  name="mobileNumber"
+                  value={formData.mobileNumber}
+                  onChange={handleInputChange}
+                  placeholder="Enter your mobile number"
+                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 placeholder:text-gray-400"
+                  required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="city" className="block text-sm font-semibold text-gray-700 mb-2">
+                  City <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="city"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  placeholder="Enter your city"
+                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 placeholder:text-gray-400"
+                  required
+                />
+              </div>
             </div>
 
-            {/* Phone */}
+            {/* Service Types - Multiple Selection (2 per row) */}
             <div>
-              <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                Mobile Number <span className="text-red-500">*</span>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                Services Interested In <span className="text-red-500">*</span>
               </label>
-              <input
-                type="tel"
-                id="mobileNumber"
-                name="mobileNumber"
-                value={formData.mobileNumber}
-                onChange={handleInputChange}
-                placeholder="Enter your mobile number"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
-                required
-              />
-            </div>
-
-            {/* Service Type */}
-            <div>
-              <label htmlFor="serviceType" className="block text-sm font-medium text-gray-700 mb-2">
-                Service Interested In <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="serviceType"
-                name="serviceType"
-                value={formData.serviceType}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 bg-white"
-                required
-              >
-                <option value="">Select a service</option>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {adminInfo?.services?.map((service) => (
-                  <option key={service} value={service}>
-                    {service}
-                  </option>
+                  <label
+                    key={service}
+                    className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      formData.serviceTypes.includes(service)
+                        ? 'border-blue-500 bg-blue-50 shadow-sm shadow-blue-100'
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.serviceTypes.includes(service)}
+                      onChange={() => handleServiceToggle(service)}
+                      className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-gray-900 font-medium">{service}</span>
+                  </label>
                 ))}
-              </select>
+              </div>
+              {formData.serviceTypes.length > 0 && (
+                <p className="text-sm text-blue-600 mt-3 font-medium">
+                  {formData.serviceTypes.length} service{formData.serviceTypes.length > 1 ? 's' : ''} selected
+                </p>
+              )}
             </div>
 
             {/* Submit Button */}
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-4 px-6 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-4 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:ring-4 focus:ring-blue-200 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40"
             >
               {submitting ? (
                 <>
@@ -285,8 +332,8 @@ export default function PublicEnquiryFormPage() {
           </form>
 
           {/* Footer */}
-          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
-            <p className="text-sm text-gray-500">
+          <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+            <p className="text-sm text-gray-400">
               By submitting this form, you agree to be contacted by our team regarding your enquiry.
             </p>
           </div>

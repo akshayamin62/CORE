@@ -242,13 +242,14 @@ export const leadAPI = {
     name: string;
     email: string;
     mobileNumber: string;
-    serviceType: string;
+    city: string;
+    serviceTypes: string[];
   }) => api.post(`/public/enquiry/${adminSlug}/submit`, data),
   
   // Admin endpoints
   getAdminLeads: (params?: {
     stage?: string;
-    serviceType?: string;
+    serviceTypes?: string;
     assignedCounselorId?: string;
   }) => api.get('/admin/leads', { params }),
   
@@ -262,7 +263,7 @@ export const leadAPI = {
   // Counselor endpoints
   getCounselorLeads: (params?: {
     stage?: string;
-    serviceType?: string;
+    serviceTypes?: string;
   }) => api.get('/counselor/leads', { params }),
   
   getCounselorEnquiryFormUrl: () => api.get('/counselor/enquiry-form-url'),
@@ -279,7 +280,7 @@ export const leadAPI = {
   // Super Admin endpoints
   getAllLeads: (params?: {
     status?: string;
-    serviceType?: string;
+    serviceTypes?: string;
     adminId?: string;
   }) => api.get('/super-admin/leads', { params }),
 };

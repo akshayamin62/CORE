@@ -78,6 +78,13 @@ export default function FollowUpFormPanel({
     }
   }, [nextDate, nextTime, nextDuration, scheduleNext]);
 
+  // Reset scheduleNext when status changes to Scheduled
+  useEffect(() => {
+    if (status === FOLLOWUP_STATUS.SCHEDULED) {
+      setScheduleNext(false);
+    }
+  }, [status]);
+
   const checkSlotAvailability = async () => {
     if (!nextDate || !nextTime) return;
     
@@ -156,7 +163,7 @@ export default function FollowUpFormPanel({
     <>
       {/* Slide-in Panel from Left - compact, no full height */}
       <div 
-        className={`fixed top-[180px] left-4 z-40 w-[380px] bg-white shadow-2xl rounded-xl border border-gray-200 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-[140px] left-4 z-40 w-[380px] bg-white shadow-2xl rounded-xl border border-gray-200 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
         }`}
         style={{ maxHeight: 'calc(100vh - 220px)' }}
@@ -206,8 +213,8 @@ export default function FollowUpFormPanel({
                     <p className="text-sm font-medium text-gray-900 truncate">{lead?.name || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Service</p>
-                    <p className="text-sm font-medium text-gray-900 truncate">{lead?.serviceType || 'N/A'}</p>
+                    <p className="text-xs text-gray-500">Services</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{lead?.serviceTypes?.join(', ') || 'N/A'}</p>
                   </div>
                 </div>
               </div>
@@ -281,7 +288,8 @@ export default function FollowUpFormPanel({
                 />
               </div>
 
-              {/* Schedule Next Follow-Up - Compact */}
+              {/* Schedule Next Follow-Up - Only visible when status changed from Scheduled */}
+              {status !== FOLLOWUP_STATUS.SCHEDULED && (
               <div className="border-t border-gray-200 pt-3">
                 <div className="flex items-center gap-2 mb-2">
                   <input
@@ -361,6 +369,7 @@ export default function FollowUpFormPanel({
                   </div>
                 )}
               </div>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-center h-32">
@@ -385,7 +394,7 @@ export default function FollowUpFormPanel({
             </button>
             <button
               onClick={handleSave}
-              disabled={saving || (scheduleNext && slotAvailable === false)}
+              disabled={saving || status === FOLLOWUP_STATUS.SCHEDULED || (scheduleNext && slotAvailable === false)}
               className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
             >
               {saving ? (

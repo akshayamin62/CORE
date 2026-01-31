@@ -210,10 +210,12 @@ export default function AdminLeadDetailPage() {
                 <p className="text-gray-600 mt-1">Lead Details</p>
               </div>
               
-              <div className="flex items-center gap-3">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getServiceColor(lead.serviceType)}`}>
-                  {lead.serviceType}
-                </span>
+              <div className="flex flex-wrap items-center gap-2">
+                {lead.serviceTypes?.map((service) => (
+                  <span key={service} className={`px-3 py-1 rounded-full text-sm font-medium ${getServiceColor(service)}`}>
+                    {service}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
@@ -240,6 +242,20 @@ export default function AdminLeadDetailPage() {
                     <a href={`tel:${lead.mobileNumber}`} className="text-blue-600 hover:underline">
                       {lead.mobileNumber}
                     </a>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">City</label>
+                    <p className="text-gray-900">{lead.city || '-'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Services Interested</label>
+                    <div className="flex flex-wrap gap-1">
+                      {lead.serviceTypes?.map((service) => (
+                        <span key={service} className={`px-2 py-0.5 rounded-full text-xs font-medium ${getServiceColor(service)}`}>
+                          {service}
+                        </span>
+                      )) || '-'}
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Submitted On</label>
