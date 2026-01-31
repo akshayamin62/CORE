@@ -687,7 +687,7 @@ function StatCard({ title, value, icon, color, onClick, isActive, percentage, sh
         <div className="text-right">
           <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
           {showPercentage && percentage !== undefined && (
-            <p className="text-xs text-gray-500 mt-0.5">{percentage.toFixed(1)}%</p>
+            <p className="text-sm text-gray-500 mt-0.5">{percentage.toFixed(1)}%</p>
           )}
         </div>
       </div>
