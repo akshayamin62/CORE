@@ -1,5 +1,12 @@
 import { Router } from "express";
-import { createCounselor, getCounselors, toggleCounselorStatus } from "../controllers/adminController";
+import { 
+  createCounselor, 
+  getCounselors, 
+  toggleCounselorStatus,
+  getCounselorDetail,
+  getCounselorFollowUps,
+  getCounselorFollowUpSummary
+} from "../controllers/adminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
 import { USER_ROLE } from "../types/roles";
@@ -24,6 +31,27 @@ router.post("/counselor", createCounselor);
  * @access  Admin only
  */
 router.get("/counselors", getCounselors);
+
+/**
+ * @route   GET /api/admin/counselor/:counselorId
+ * @desc    Get counselor detail with dashboard data
+ * @access  Admin only
+ */
+router.get("/counselor/:counselorId", getCounselorDetail);
+
+/**
+ * @route   GET /api/admin/counselor/:counselorId/follow-ups
+ * @desc    Get counselor's follow-ups
+ * @access  Admin only
+ */
+router.get("/counselor/:counselorId/follow-ups", getCounselorFollowUps);
+
+/**
+ * @route   GET /api/admin/counselor/:counselorId/follow-up-summary
+ * @desc    Get counselor's follow-up summary (today, missed, upcoming)
+ * @access  Admin only
+ */
+router.get("/counselor/:counselorId/follow-up-summary", getCounselorFollowUpSummary);
 
 /**
  * @route   PATCH /api/admin/counselor/:counselorId/toggle-status

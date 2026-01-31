@@ -230,6 +230,16 @@ export const adminAPI = {
   
   toggleCounselorStatus: (counselorId: string) => 
     api.patch(`/admin/counselor/${counselorId}/toggle-status`),
+  
+  // Counselor detail endpoints
+  getCounselorDetail: (counselorId: string) => 
+    api.get(`/admin/counselor/${counselorId}`),
+  
+  getCounselorFollowUps: (counselorId: string) => 
+    api.get(`/admin/counselor/${counselorId}/follow-ups`),
+  
+  getCounselorFollowUpSummary: (counselorId: string) => 
+    api.get(`/admin/counselor/${counselorId}/follow-up-summary`),
 };
 
 // Lead API
@@ -273,9 +283,6 @@ export const leadAPI = {
   
   updateLeadStage: (leadId: string, stage: string) => 
     api.patch(`/leads/${leadId}/stage`, { stage }),
-  
-  addLeadNote: (leadId: string, text: string) => 
-    api.post(`/leads/${leadId}/notes`, { text }),
   
   // Super Admin endpoints
   getAllLeads: (params?: {
@@ -329,6 +336,7 @@ export const followUpAPI = {
     date: string;
     time: string;
     duration: number;
+    leadId?: string; // Required for admin to check assigned counselor's availability
   }) => api.get('/follow-ups/check-availability', { params }),
 };
 

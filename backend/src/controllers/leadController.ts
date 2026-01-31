@@ -3,7 +3,7 @@ import { AuthRequest } from "../types/auth";
 import Lead, { LEAD_STAGE, SERVICE_TYPE } from "../models/Lead";
 import Admin from "../models/Admin";
 import Counselor from "../models/Counselor";
-import User from "../models/User";
+// import User from "../models/User";
 import { USER_ROLE } from "../types/roles";
 import { Request } from "express";
 import mongoose from "mongoose";
@@ -396,83 +396,6 @@ export const updateLeadStage = async (req: AuthRequest, res: Response): Promise<
     return res.status(500).json({
       success: false,
       message: "Failed to update lead stage",
-    });
-  }
-};
-
-/**
- * ADMIN/COUNSELOR: Add note to lead
- */
-export const addLeadNote = async (req: AuthRequest, res: Response): Promise<Response> => {
-  try {
-    const { leadId } = req.params;
-    const { text } = req.body;
-    const userId = req.user?.userId;
-    const userRole = req.user?.role;
-
-    if (!text || !text.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Note text is required",
-      });
-    }
-
-    const lead = await Lead.findById(leadId);
-    if (!lead) {
-      return res.status(404).json({
-        success: false,
-        message: "Lead not found",
-      });
-    }
-
-    // Check access
-    if (userRole === USER_ROLE.ADMIN) {
-      if (lead.adminId.toString() !== userId) {
-        return res.status(403).json({
-          success: false,
-          message: "Access denied",
-        });
-      }
-    } else if (userRole === USER_ROLE.COUNSELOR) {
-      // Find counselor document by userId (same pattern as getLeadDetail)
-      const counselor = await Counselor.findOne({ userId: userId });
-      if (!counselor || !lead.assignedCounselorId || lead.assignedCounselorId.toString() !== counselor._id.toString()) {
-        return res.status(403).json({
-          success: false,
-          message: "Access denied",
-        });
-      }
-    }
-
-    // Get user name
-    const user = await User.findById(userId);
-    
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "User not authenticated",
-      });
-    }
-    
-    lead.notes.push({
-      text: text.trim(),
-      addedBy: new mongoose.Types.ObjectId(userId),
-      addedByName: user?.name || "Unknown",
-      createdAt: new Date(),
-    });
-
-    await lead.save();
-
-    return res.json({
-      success: true,
-      message: "Note added successfully",
-      data: { lead },
-    });
-  } catch (error: any) {
-    console.error("Add lead note error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Failed to add note",
     });
   }
 };

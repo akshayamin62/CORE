@@ -6,7 +6,6 @@ import {
   getLeadDetail,
   assignLeadToCounselor,
   updateLeadStage,
-  addLeadNote,
   getAdminCounselors,
   getCounselorLeads,
   getEnquiryFormUrl,
@@ -95,14 +94,6 @@ router.patch(
   authenticate,
   authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]),
   updateLeadStage
-);
-
-// Add note to lead
-router.post(
-  "/leads/:leadId/notes",
-  authenticate,
-  authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]),
-  addLeadNote
 );
 
 // ============= SUPER ADMIN ROUTES =============

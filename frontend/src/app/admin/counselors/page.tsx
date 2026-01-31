@@ -348,16 +348,24 @@ export default function CounselorsListPage() {
                         {new Date(counselor.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => handleToggleStatus(counselor._id, counselor.userId.isActive)}
-                          className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${
-                            counselor.userId.isActive
-                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                              : 'bg-green-100 text-green-700 hover:bg-green-200'
-                          }`}
-                        >
-                          {counselor.userId.isActive ? 'Deactivate' : 'Activate'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => router.push(`/admin/counselors/${counselor._id}`)}
+                            className="px-3 py-1 text-xs font-medium rounded-lg transition-colors bg-blue-100 text-blue-700 hover:bg-blue-200"
+                          >
+                            View Detail
+                          </button>
+                          <button
+                            onClick={() => handleToggleStatus(counselor._id, counselor.userId.isActive)}
+                            className={`px-3 py-1 text-xs font-medium rounded-lg transition-colors ${
+                              counselor.userId.isActive
+                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            }`}
+                          >
+                            {counselor.userId.isActive ? 'Deactivate' : 'Activate'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

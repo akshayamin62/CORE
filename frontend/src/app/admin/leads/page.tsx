@@ -18,6 +18,7 @@ export default function AdminLeadsPage() {
 
   // Filters
   const [stageFilter, setStageFilter] = useState<string>('');
+  const [selectedStageCard, setSelectedStageCard] = useState<string | null>(null); // For clickable cards
   const [serviceFilter, setServiceFilter] = useState<string>('');
   const [counselorFilter, setCounselorFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -133,6 +134,25 @@ export default function AdminLeadsPage() {
     }
   };
 
+  // Handle clicking a stage card - filter by that stage
+  const handleStageCardClick = (stage: string | null) => {
+    if (stage === null || stage === 'all') {
+      // Clicking "Total Leads" - show all, clear stage filter
+      setSelectedStageCard('all');
+      setStageFilter('');
+    } else {
+      // Clicking a specific stage
+      setSelectedStageCard(stage);
+      setStageFilter(stage);
+    }
+  };
+
+  // Clear the stage card filter
+  const clearStageCardFilter = () => {
+    setSelectedStageCard(null);
+    setStageFilter('');
+  };
+
   const getStageColor = (stage: string) => {
     switch (stage) {
       case LEAD_STAGE.NEW:
@@ -238,71 +258,92 @@ export default function AdminLeadsPage() {
             )}
           </div>
 
-          {/* Stats Cards */}
+          {/* Stats Cards - Clickable */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-3">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <StatCard
+              title="Total Leads"
+              value={totalLeads}
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">{totalLeads}</h3>
-              <p className="text-sm text-gray-600">Total Leads</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center mb-3">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              }
+              color="blue"
+              onClick={() => handleStageCardClick('all')}
+              isActive={selectedStageCard === 'all'}
+            />
+            <StatCard
+              title="New"
+              value={newLeads}
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">{newLeads}</h3>
-              <p className="text-sm text-gray-600">New</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="w-10 h-10 bg-red-50 text-red-600 rounded-lg flex items-center justify-center mb-3">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              }
+              color="blue"
+              onClick={() => handleStageCardClick(LEAD_STAGE.NEW)}
+              isActive={selectedStageCard === LEAD_STAGE.NEW}
+            />
+            <StatCard
+              title="Hot"
+              value={hotLeads}
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
                 </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">{hotLeads}</h3>
-              <p className="text-sm text-gray-600">Hot</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center mb-3">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              }
+              color="red"
+              onClick={() => handleStageCardClick(LEAD_STAGE.HOT)}
+              isActive={selectedStageCard === LEAD_STAGE.HOT}
+            />
+            <StatCard
+              title="Warm"
+              value={warmLeads}
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707" />
                 </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">{warmLeads}</h3>
-              <p className="text-sm text-gray-600">Warm</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="w-10 h-10 bg-cyan-50 text-cyan-600 rounded-lg flex items-center justify-center mb-3">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              }
+              color="orange"
+              onClick={() => handleStageCardClick(LEAD_STAGE.WARM)}
+              isActive={selectedStageCard === LEAD_STAGE.WARM}
+            />
+            <StatCard
+              title="Cold"
+              value={coldLeads}
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">{coldLeads}</h3>
-              <p className="text-sm text-gray-600">Cold</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="w-10 h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center mb-3">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              }
+              color="cyan"
+              onClick={() => handleStageCardClick(LEAD_STAGE.COLD)}
+              isActive={selectedStageCard === LEAD_STAGE.COLD}
+            />
+            <StatCard
+              title="Converted"
+              value={convertedLeads}
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">{convertedLeads}</h3>
-              <p className="text-sm text-gray-600">Converted</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-3">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              }
+              color="green"
+              onClick={() => handleStageCardClick(LEAD_STAGE.CONVERTED)}
+              isActive={selectedStageCard === LEAD_STAGE.CONVERTED}
+            />
+            <StatCard
+              title="Closed"
+              value={closedLeads}
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">{closedLeads}</h3>
-              <p className="text-sm text-gray-600">Closed</p>
-            </div>
+              }
+              color="gray"
+              onClick={() => handleStageCardClick(LEAD_STAGE.CLOSED)}
+              isActive={selectedStageCard === LEAD_STAGE.CLOSED}
+            />
           </div>
 
           {/* Search and Filters */}
@@ -377,6 +418,7 @@ export default function AdminLeadsPage() {
                     setServiceFilter('');
                     setCounselorFilter('');
                     setSearchQuery('');
+                    setSelectedStageCard(null);
                   }}
                   className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
                 >
@@ -517,5 +559,45 @@ export default function AdminLeadsPage() {
         </div>
       )}
     </>
+  );
+}
+
+// Stat Card Component
+interface StatCardProps {
+  title: string;
+  value: number;
+  icon: React.ReactNode;
+  color: 'blue' | 'green' | 'red' | 'orange' | 'cyan' | 'gray';
+  onClick?: () => void;
+  isActive?: boolean;
+}
+
+function StatCard({ title, value, icon, color, onClick, isActive }: StatCardProps) {
+  const colorClasses = {
+    blue: 'bg-blue-100 text-blue-600',
+    green: 'bg-green-100 text-green-600',
+    red: 'bg-red-100 text-red-600',
+    orange: 'bg-orange-100 text-orange-600',
+    cyan: 'bg-cyan-100 text-cyan-600',
+    gray: 'bg-gray-200 text-gray-600',
+  };
+
+  return (
+    <div 
+      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
+        onClick ? 'cursor-pointer hover:shadow-md' : ''
+      } ${
+        isActive ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'
+      }`}
+      onClick={onClick}
+    >
+      <div className="flex items-center justify-between">
+        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
+          {icon}
+        </div>
+        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+      </div>
+      <p className="text-sm font-semibold text-gray-700 mt-3">{title}</p>
+    </div>
   );
 }

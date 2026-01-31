@@ -4,6 +4,7 @@ import FollowUp, { FOLLOWUP_STATUS } from "../models/FollowUp";
 import Lead from "../models/Lead";
 import Counselor from "../models/Counselor";
 import mongoose from "mongoose";
+import { USER_ROLE } from "../types/roles";
 
 /**
  * Helper: Get start and end of a day
@@ -42,14 +43,15 @@ const doTimeSlotsOverlap = (
 };
 
 /**
- * COUNSELOR: Create a new follow-up
+ * COUNSELOR/ADMIN: Create a new follow-up
  */
 export const createFollowUp = async (
   req: AuthRequest,
   res: Response
 ): Promise<Response> => {
   try {
-    const counselorUserId = req.user?.userId;
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
     const { leadId, scheduledDate, scheduledTime, duration, notes } = req.body;
 
     // Validate required fields
@@ -60,35 +62,58 @@ export const createFollowUp = async (
       });
     }
 
-    // Find counselor
-    const counselor = await Counselor.findOne({ userId: counselorUserId });
-    if (!counselor) {
-      return res.status(404).json({
-        success: false,
-        message: "Counselor profile not found",
-      });
-    }
+    let lead;
+    let counselorId;
 
-    // Validate lead exists and is assigned to this counselor
-    const lead = await Lead.findOne({
-      _id: leadId,
-      assignedCounselorId: counselor._id,
-    });
+    // Admin can create follow-up for any lead
+    if (userRole === USER_ROLE.ADMIN) {
+      lead = await Lead.findById(leadId).populate('assignedCounselorId');
+      if (!lead) {
+        return res.status(404).json({
+          success: false,
+          message: "Lead not found",
+        });
+      }
+      // Use the assigned counselor's ID for the follow-up
+      counselorId = lead.assignedCounselorId?._id;
+      if (!counselorId) {
+        return res.status(400).json({
+          success: false,
+          message: "Lead must be assigned to a counselor before scheduling follow-ups",
+        });
+      }
+    } else {
+      // Find counselor
+      const counselor = await Counselor.findOne({ userId });
+      if (!counselor) {
+        return res.status(404).json({
+          success: false,
+          message: "Counselor profile not found",
+        });
+      }
 
-    if (!lead) {
-      return res.status(404).json({
-        success: false,
-        message: "Lead not found or not assigned to you",
+      // Validate lead exists and is assigned to this counselor
+      lead = await Lead.findOne({
+        _id: leadId,
+        assignedCounselorId: counselor._id,
       });
+
+      if (!lead) {
+        return res.status(404).json({
+          success: false,
+          message: "Lead not found or not assigned to you",
+        });
+      }
+      counselorId = counselor._id;
     }
 
     const scheduleDate = new Date(scheduledDate);
     const { start: dayStart, end: dayEnd } = getDayBounds(scheduleDate);
 
-    // Check for time slot conflicts for this counselor on this date
+    // Check for time slot conflicts for the counselor on this date
     // Check ALL scheduled follow-ups for the counselor on this day
     const existingFollowUps = await FollowUp.find({
-      counselorId: counselor._id,
+      counselorId,
       scheduledDate: { $gte: dayStart, $lte: dayEnd },
       status: FOLLOWUP_STATUS.SCHEDULED,
     }).populate('leadId', 'name');
@@ -124,7 +149,7 @@ export const createFollowUp = async (
     // Create the follow-up
     const followUp = new FollowUp({
       leadId,
-      counselorId: counselor._id,
+      counselorId,
       scheduledDate: scheduleDate,
       scheduledTime,
       duration,
@@ -132,7 +157,7 @@ export const createFollowUp = async (
       stageAtFollowUp: lead.stage,
       followUpNumber,
       notes: notes || "",
-      createdBy: counselorUserId,
+      createdBy: userId,
     });
 
     await followUp.save();
@@ -278,28 +303,37 @@ export const getFollowUpSummary = async (
 };
 
 /**
- * COUNSELOR: Get follow-up by ID
+ * COUNSELOR/ADMIN: Get follow-up by ID
  */
 export const getFollowUpById = async (
   req: AuthRequest,
   res: Response
 ): Promise<Response> => {
   try {
-    const counselorUserId = req.user?.userId;
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
     const { followUpId } = req.params;
 
-    const counselor = await Counselor.findOne({ userId: counselorUserId });
-    if (!counselor) {
-      return res.status(404).json({
-        success: false,
-        message: "Counselor profile not found",
-      });
-    }
+    let followUp;
 
-    const followUp = await FollowUp.findOne({
-      _id: followUpId,
-      counselorId: counselor._id,
-    }).populate("leadId", "name email mobileNumber city serviceTypes stage");
+    // Admin can access any follow-up
+    if (userRole === USER_ROLE.ADMIN) {
+      followUp = await FollowUp.findById(followUpId)
+        .populate("leadId", "name email mobileNumber city serviceTypes stage");
+    } else {
+      const counselor = await Counselor.findOne({ userId });
+      if (!counselor) {
+        return res.status(404).json({
+          success: false,
+          message: "Counselor profile not found",
+        });
+      }
+
+      followUp = await FollowUp.findOne({
+        _id: followUpId,
+        counselorId: counselor._id,
+      }).populate("leadId", "name email mobileNumber city serviceTypes stage");
+    }
 
     if (!followUp) {
       return res.status(404).json({
@@ -347,14 +381,15 @@ export const getFollowUpById = async (
 };
 
 /**
- * COUNSELOR: Update follow-up (complete/reschedule)
+ * COUNSELOR/ADMIN: Update follow-up (complete/reschedule)
  */
 export const updateFollowUp = async (
   req: AuthRequest,
   res: Response
 ): Promise<Response> => {
   try {
-    const counselorUserId = req.user?.userId;
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
     const { followUpId } = req.params;
     const {
       status,
@@ -363,24 +398,40 @@ export const updateFollowUp = async (
       nextFollowUp, // { scheduledDate, scheduledTime, duration }
     } = req.body;
 
-    const counselor = await Counselor.findOne({ userId: counselorUserId });
-    if (!counselor) {
-      return res.status(404).json({
-        success: false,
-        message: "Counselor profile not found",
-      });
-    }
+    let followUp;
+    let counselorId;
 
-    const followUp = await FollowUp.findOne({
-      _id: followUpId,
-      counselorId: counselor._id,
-    });
+    // Admin can update any follow-up
+    if (userRole === USER_ROLE.ADMIN) {
+      followUp = await FollowUp.findById(followUpId);
+      if (!followUp) {
+        return res.status(404).json({
+          success: false,
+          message: "Follow-up not found",
+        });
+      }
+      counselorId = followUp.counselorId;
+    } else {
+      const counselor = await Counselor.findOne({ userId });
+      if (!counselor) {
+        return res.status(404).json({
+          success: false,
+          message: "Counselor profile not found",
+        });
+      }
 
-    if (!followUp) {
-      return res.status(404).json({
-        success: false,
-        message: "Follow-up not found",
+      followUp = await FollowUp.findOne({
+        _id: followUpId,
+        counselorId: counselor._id,
       });
+
+      if (!followUp) {
+        return res.status(404).json({
+          success: false,
+          message: "Follow-up not found",
+        });
+      }
+      counselorId = counselor._id;
     }
 
     // Check if follow-up is locked based on followUpNumber
@@ -410,7 +461,7 @@ export const updateFollowUp = async (
       followUp.notes = notes;
     }
 
-    followUp.updatedBy = new mongoose.Types.ObjectId(counselorUserId);
+    followUp.updatedBy = new mongoose.Types.ObjectId(userId);
 
     // If stage is changed, update both follow-up and lead
     if (stageChangedTo) {
@@ -432,7 +483,7 @@ export const updateFollowUp = async (
 
       // Check for time conflicts - check ALL scheduled follow-ups for the counselor on this day
       const conflictingFollowUps = await FollowUp.find({
-        counselorId: counselor._id,
+        counselorId,
         scheduledDate: { $gte: dayStart, $lte: dayEnd },
         status: FOLLOWUP_STATUS.SCHEDULED,
       }).populate('leadId', 'name');
@@ -470,7 +521,7 @@ export const updateFollowUp = async (
 
       newFollowUp = new FollowUp({
         leadId: followUp.leadId,
-        counselorId: counselor._id,
+        counselorId,
         scheduledDate: nextDate,
         scheduledTime: nextFollowUp.scheduledTime,
         duration: nextFollowUp.duration || 30,
@@ -478,7 +529,7 @@ export const updateFollowUp = async (
         stageAtFollowUp: stageChangedTo || lead?.stage || followUp.stageAtFollowUp,
         followUpNumber: nextFollowUpNumber,
         notes: "",
-        createdBy: counselorUserId,
+        createdBy: userId,
       });
 
       await newFollowUp.save();
@@ -513,28 +564,43 @@ export const getLeadFollowUpHistory = async (
   res: Response
 ): Promise<Response> => {
   try {
-    const counselorUserId = req.user?.userId;
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
     const { leadId } = req.params;
 
-    const counselor = await Counselor.findOne({ userId: counselorUserId });
-    if (!counselor) {
-      return res.status(404).json({
-        success: false,
-        message: "Counselor profile not found",
-      });
-    }
+    let lead;
 
-    // Verify lead is assigned to this counselor
-    const lead = await Lead.findOne({
-      _id: leadId,
-      assignedCounselorId: counselor._id,
-    });
+    // Admin can access any lead's follow-up history
+    if (userRole === USER_ROLE.ADMIN) {
+      lead = await Lead.findById(leadId);
+      if (!lead) {
+        return res.status(404).json({
+          success: false,
+          message: "Lead not found",
+        });
+      }
+    } else {
+      // Counselor can only access assigned leads
+      const counselor = await Counselor.findOne({ userId });
+      if (!counselor) {
+        return res.status(404).json({
+          success: false,
+          message: "Counselor profile not found",
+        });
+      }
 
-    if (!lead) {
-      return res.status(404).json({
-        success: false,
-        message: "Lead not found or not assigned to you",
+      // Verify lead is assigned to this counselor
+      lead = await Lead.findOne({
+        _id: leadId,
+        assignedCounselorId: counselor._id,
       });
+
+      if (!lead) {
+        return res.status(404).json({
+          success: false,
+          message: "Lead not found or not assigned to you",
+        });
+      }
     }
 
     // Get all follow-ups for this lead (newest first)
@@ -567,15 +633,16 @@ export const getLeadFollowUpHistory = async (
 };
 
 /**
- * COUNSELOR: Check time slot availability
+ * COUNSELOR/ADMIN: Check time slot availability
  */
 export const checkTimeSlotAvailability = async (
   req: AuthRequest,
   res: Response
 ): Promise<Response> => {
   try {
-    const counselorUserId = req.user?.userId;
-    const { date, time, duration } = req.query;
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+    const { date, time, duration, leadId } = req.query;
 
     if (!date || !time || !duration) {
       return res.status(400).json({
@@ -584,12 +651,39 @@ export const checkTimeSlotAvailability = async (
       });
     }
 
-    const counselor = await Counselor.findOne({ userId: counselorUserId });
-    if (!counselor) {
-      return res.status(404).json({
-        success: false,
-        message: "Counselor profile not found",
-      });
+    let counselorId;
+
+    // Admin needs to provide leadId to check availability for the assigned counselor
+    if (userRole === USER_ROLE.ADMIN) {
+      if (!leadId) {
+        return res.status(400).json({
+          success: false,
+          message: "Lead ID is required for admin to check availability",
+        });
+      }
+      const lead = await Lead.findById(leadId).populate('assignedCounselorId');
+      if (!lead) {
+        return res.status(404).json({
+          success: false,
+          message: "Lead not found",
+        });
+      }
+      if (!lead.assignedCounselorId) {
+        return res.status(400).json({
+          success: false,
+          message: "Lead must be assigned to a counselor first",
+        });
+      }
+      counselorId = lead.assignedCounselorId._id;
+    } else {
+      const counselor = await Counselor.findOne({ userId });
+      if (!counselor) {
+        return res.status(404).json({
+          success: false,
+          message: "Counselor profile not found",
+        });
+      }
+      counselorId = counselor._id;
     }
 
     const checkDate = new Date(date as string);
@@ -597,7 +691,7 @@ export const checkTimeSlotAvailability = async (
 
     // Check ALL scheduled follow-ups for this counselor on this day
     const existingFollowUps = await FollowUp.find({
-      counselorId: counselor._id,
+      counselorId,
       scheduledDate: { $gte: dayStart, $lte: dayEnd },
       status: FOLLOWUP_STATUS.SCHEDULED,
     }).populate('leadId', 'name');

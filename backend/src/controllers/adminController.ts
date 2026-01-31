@@ -1,7 +1,10 @@
 import { Response } from "express";
 import User from "../models/User";
+import Admin from "../models/Admin";
 import { USER_ROLE } from "../types/roles";
 import Counselor from "../models/Counselor";
+import Lead from "../models/Lead";
+import FollowUp, { FOLLOWUP_STATUS } from "../models/FollowUp";
 import { AuthRequest } from "../types/auth";
 
 /**
@@ -181,4 +184,191 @@ export const toggleCounselorStatus = async (req: AuthRequest, res: Response): Pr
   }
 };
 
+/**
+ * Get counselor detail with dashboard data (Admin only)
+ */
+export const getCounselorDetail = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { counselorId } = req.params;
+    const adminUserId = req.user?.userId;
 
+    if (!adminUserId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    // Find counselor and verify it belongs to this admin
+    const counselor = await Counselor.findOne({
+      _id: counselorId,
+      adminId: adminUserId,
+    }).populate('userId', 'name email isActive isVerified');
+
+    if (!counselor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Counselor not found or unauthorized',
+      });
+    }
+
+    // Get counselor's leads
+    const leads = await Lead.find({
+      assignedCounselorId: counselorId,
+    }).sort({ createdAt: -1 });
+
+    // Get admin's enquiry form slug
+    const admin = await Admin.findOne({ userId: adminUserId });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        counselor: {
+          _id: counselor._id,
+          userId: counselor.userId,
+          email: counselor.email,
+          mobileNumber: counselor.mobileNumber,
+          createdAt: counselor.createdAt,
+        },
+        leads,
+        enquirySlug: admin?.enquiryFormSlug || '',
+      },
+    });
+  } catch (error: any) {
+    console.error('Get counselor detail error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch counselor detail',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get counselor's follow-ups (Admin only)
+ */
+export const getCounselorFollowUps = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { counselorId } = req.params;
+    const adminUserId = req.user?.userId;
+
+    if (!adminUserId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    // Verify counselor belongs to this admin
+    const counselor = await Counselor.findOne({
+      _id: counselorId,
+      adminId: adminUserId,
+    });
+
+    if (!counselor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Counselor not found or unauthorized',
+      });
+    }
+
+    // Get follow-ups
+    const followUps = await FollowUp.find({
+      counselorId: counselorId,
+    })
+      .populate('leadId', 'name email mobileNumber city serviceTypes stage')
+      .sort({ scheduledDate: 1, scheduledTime: 1 });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        followUps,
+      },
+    });
+  } catch (error: any) {
+    console.error('Get counselor follow-ups error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch counselor follow-ups',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get counselor's follow-up summary (Admin only)
+ */
+export const getCounselorFollowUpSummary = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { counselorId } = req.params;
+    const adminUserId = req.user?.userId;
+
+    if (!adminUserId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    // Verify counselor belongs to this admin
+    const counselor = await Counselor.findOne({
+      _id: counselorId,
+      adminId: adminUserId,
+    });
+
+    if (!counselor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Counselor not found or unauthorized',
+      });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Get today's follow-ups
+    const todayFollowUps = await FollowUp.find({
+      counselorId: counselorId,
+      scheduledDate: { $gte: today, $lt: tomorrow },
+    })
+      .populate('leadId', 'name email mobileNumber city serviceTypes stage')
+      .sort({ scheduledTime: 1 });
+
+    // Get missed follow-ups
+    const missedFollowUps = await FollowUp.find({
+      counselorId: counselorId,
+      scheduledDate: { $lt: today },
+      status: FOLLOWUP_STATUS.SCHEDULED,
+    })
+      .populate('leadId', 'name email mobileNumber city serviceTypes stage')
+      .sort({ scheduledDate: -1 });
+
+    // Get upcoming follow-ups
+    const upcomingFollowUps = await FollowUp.find({
+      counselorId: counselorId,
+      scheduledDate: { $gt: tomorrow },
+      status: FOLLOWUP_STATUS.SCHEDULED,
+    })
+      .populate('leadId', 'name email mobileNumber city serviceTypes stage')
+      .sort({ scheduledDate: 1, scheduledTime: 1 })
+      .limit(10);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        today: todayFollowUps,
+        missed: missedFollowUps,
+        upcoming: upcomingFollowUps,
+      },
+    });
+  } catch (error: any) {
+    console.error('Get counselor follow-up summary error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch follow-up summary',
+      error: error.message,
+    });
+  }
+};

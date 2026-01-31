@@ -17,10 +17,10 @@ const router = express.Router();
 // All routes require authentication
 router.use(authenticate);
 
-// Counselor routes
+// Counselor and Admin routes
 router.post(
   "/",
-  authorize([USER_ROLE.COUNSELOR]),
+  authorize([USER_ROLE.COUNSELOR, USER_ROLE.ADMIN]),
   createFollowUp
 );
 
@@ -38,25 +38,25 @@ router.get(
 
 router.get(
   "/check-availability",
-  authorize([USER_ROLE.COUNSELOR]),
+  authorize([USER_ROLE.COUNSELOR, USER_ROLE.ADMIN]),
   checkTimeSlotAvailability
 );
 
 router.get(
   "/lead/:leadId/history",
-  authorize([USER_ROLE.COUNSELOR]),
+  authorize([USER_ROLE.COUNSELOR, USER_ROLE.ADMIN]),
   getLeadFollowUpHistory
 );
 
 router.get(
   "/:followUpId",
-  authorize([USER_ROLE.COUNSELOR]),
+  authorize([USER_ROLE.COUNSELOR, USER_ROLE.ADMIN]),
   getFollowUpById
 );
 
 router.patch(
   "/:followUpId",
-  authorize([USER_ROLE.COUNSELOR]),
+  authorize([USER_ROLE.COUNSELOR, USER_ROLE.ADMIN]),
   updateFollowUp
 );
 

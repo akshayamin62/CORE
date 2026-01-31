@@ -249,18 +249,6 @@ export enum LEAD_STAGE {
   CLOSED = 'Closed',
 }
 
-export interface LeadNote {
-  _id: string;
-  note: string;
-  addedBy: {
-    _id: string;
-    name: string;
-    email: string;
-  };
-  addedByRole: string;
-  createdAt: string;
-}
-
 export interface Lead {
   _id: string;
   adminId: {
@@ -286,7 +274,6 @@ export interface Lead {
   city: string;
   serviceTypes: SERVICE_TYPE[];
   stage: LEAD_STAGE;
-  notes: LeadNote[];
   createdAt: string;
   updatedAt: string;
 }

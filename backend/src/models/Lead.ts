@@ -16,13 +16,6 @@ export enum LEAD_STAGE {
   CLOSED = "Closed",
 }
 
-export interface ILeadNote {
-  text: string;
-  addedBy: mongoose.Types.ObjectId;
-  addedByName: string;
-  createdAt: Date;
-}
-
 export interface ILead extends Document {
   name: string;
   email: string;
@@ -32,34 +25,10 @@ export interface ILead extends Document {
   adminId: mongoose.Types.ObjectId; // Reference to Admin's userId
   assignedCounselorId?: mongoose.Types.ObjectId; // Reference to Counselor document
   stage: LEAD_STAGE;
-  notes: ILeadNote[];
   source: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
-
-const leadNoteSchema = new Schema<ILeadNote>(
-  {
-    text: {
-      type: String,
-      required: true,
-    },
-    addedBy: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-    addedByName: {
-      type: String,
-      required: true,
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-  },
-  { _id: true }
-);
 
 const leadSchema = new Schema<ILead>(
   {
@@ -109,10 +78,6 @@ const leadSchema = new Schema<ILead>(
       type: String,
       enum: Object.values(LEAD_STAGE),
       default: LEAD_STAGE.NEW,
-    },
-    notes: {
-      type: [leadNoteSchema],
-      default: [],
     },
     source: {
       type: String,
