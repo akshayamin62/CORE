@@ -11,6 +11,7 @@ interface FollowUpFormPanelProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
+  readOnly?: boolean; // For admin view-only mode
 }
 
 export default function FollowUpFormPanel({
@@ -18,6 +19,7 @@ export default function FollowUpFormPanel({
   isOpen,
   onClose,
   onSave,
+  readOnly = false,
 }: FollowUpFormPanelProps) {
   const [status, setStatus] = useState<FOLLOWUP_STATUS>(FOLLOWUP_STATUS.SCHEDULED);
   const [stageChangedTo, setStageChangedTo] = useState<string>('');
@@ -176,8 +178,13 @@ export default function FollowUpFormPanel({
   // Check if follow-up is locked
   // A follow-up is locked when its followUpNumber < totalFollowUpsForLead (not the latest)
   const currentFollowUpNumber = followUpData?.followUpNumber || 1;
-  const isLocked = currentFollowUpNumber < totalFollowUpsForLead;
+  const isNotLatestFollowUp = currentFollowUpNumber < totalFollowUpsForLead;
   const isLatestFollowUp = currentFollowUpNumber === totalFollowUpsForLead;
+  
+  // Fully lock all fields when:
+  // 1. Not the latest follow-up (isNotLatestFollowUp)
+  // 2. Or in admin readOnly mode
+  const isFullyLocked = isNotLatestFollowUp || readOnly;
 
   return (
     <>
@@ -244,14 +251,18 @@ export default function FollowUpFormPanel({
                 </div>
               </div>
 
-              {/* Locked Follow-Up Info - Show when timing is locked */}
-              {isLocked && (
+              {/* Locked Follow-Up Info - Show when locked */}
+              {isFullyLocked && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-2">
                   <div className="flex items-center gap-2 text-amber-800">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                    <span className="text-xs font-medium">This follow-up is locked. You can only edit status, stage, and notes.</span>
+                    <span className="text-xs font-medium">
+                      {readOnly 
+                        ? 'View only mode. Admins cannot edit follow-ups.'
+                        : 'This follow-up is locked. A newer follow-up has been scheduled.'}
+                    </span>
                   </div>
                 </div>
               )}
@@ -262,10 +273,11 @@ export default function FollowUpFormPanel({
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value as FOLLOWUP_STATUS)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  disabled={isFullyLocked}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   {/* Only show Scheduled option if follow-up is NOT locked */}
-                  {!isLocked && <option value={FOLLOWUP_STATUS.SCHEDULED}>Scheduled</option>}
+                  {!isFullyLocked && <option value={FOLLOWUP_STATUS.SCHEDULED}>Scheduled</option>}
                   <optgroup label="Call Issues">
                     <option value={FOLLOWUP_STATUS.CALL_NOT_ANSWERED}>Call Not Answered</option>
                     <option value={FOLLOWUP_STATUS.PHONE_SWITCHED_OFF}>Phone Switched Off</option>
@@ -302,7 +314,8 @@ export default function FollowUpFormPanel({
                 <select
                   value={stageChangedTo}
                   onChange={(e) => setStageChangedTo(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                  disabled={isFullyLocked}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">Keep current ({currentStage})</option>
                   <option value={LEAD_STAGE.NEW}>New</option>
@@ -322,12 +335,13 @@ export default function FollowUpFormPanel({
                   onChange={(e) => setNotes(e.target.value)}
                   rows={2}
                   placeholder="Add notes..."
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  disabled={isFullyLocked}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
 
               {/* Schedule Next Follow-Up - Only visible when status changed from Scheduled AND not locked */}
-              {status !== FOLLOWUP_STATUS.SCHEDULED && !isLocked && (
+              {status !== FOLLOWUP_STATUS.SCHEDULED && !isFullyLocked && (
               <div className="border-t border-gray-200 pt-3">
                 <div className="flex items-center gap-2 mb-2">
                   <input
@@ -410,7 +424,7 @@ export default function FollowUpFormPanel({
               )}
 
               {/* Next Follow-Up Info - Show when locked (has next follow-up scheduled) */}
-              {isLocked && nextFollowUpInfo && (
+              {isNotLatestFollowUp && nextFollowUpInfo && (
                 <div className="border-t border-gray-200 pt-3">
                   <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
                     <div className="flex items-center gap-2 mb-2">
@@ -450,24 +464,26 @@ export default function FollowUpFormPanel({
               onClick={onClose}
               className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
             >
-              Cancel
+              {isFullyLocked ? 'Close' : 'Cancel'}
             </button>
-            <button
-              onClick={handleSave}
-              disabled={saving || status === FOLLOWUP_STATUS.SCHEDULED || (scheduleNext && slotAvailable === false)}
-              className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-            >
-              {saving ? (
-                <>
-                  <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Saving...
-                </>
-              ) : (
-                'Save'
-              )}
-            </button>
+            {!isFullyLocked && (
+              <button
+                onClick={handleSave}
+                disabled={saving || status === FOLLOWUP_STATUS.SCHEDULED || (scheduleNext && slotAvailable === false)}
+                className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+              >
+                {saving ? (
+                  <>
+                    <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
+                )}
+              </button>
+            )}
           </div>
         )}
       </div>

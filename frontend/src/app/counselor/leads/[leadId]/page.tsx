@@ -604,7 +604,9 @@ export default function CounselorLeadDetailPage() {
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600"></div>
                   </div>
                 ) : followUps.length > 0 ? (
-                  followUps.map((followUp) => (
+                  followUps.map((followUp, index) => {
+                    const isLatestFollowUp = index === 0; // First item is latest (sorted by followUpNumber desc)
+                    return (
                     <div 
                       key={followUp._id} 
                       onClick={() => handleFollowUpClick(followUp)}
@@ -638,12 +640,21 @@ export default function CounselorLeadDetailPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-500">{followUp.duration} min</span>
-                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
+                        {/* Show edit icon only on latest follow-up */}
+                        {isLatestFollowUp ? (
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        )}
                       </div>
                     </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <p className="text-gray-500 text-center py-6">No follow-ups scheduled yet</p>
                 )}

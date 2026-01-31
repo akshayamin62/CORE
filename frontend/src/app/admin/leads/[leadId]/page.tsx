@@ -20,33 +20,17 @@ export default function AdminLeadDetailPage() {
   const [loading, setLoading] = useState(true);
   const [lead, setLead] = useState<Lead | null>(null);
   const [counselors, setCounselors] = useState<any[]>([]);
-  
-  // Stage update
-  const [updatingStage, setUpdatingStage] = useState(false);
 
   // Assignment
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [selectedCounselorId, setSelectedCounselorId] = useState<string>('');
   const [assigning, setAssigning] = useState(false);
 
-  // Follow-ups
+  // Follow-ups (admin is view-only)
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [loadingFollowUps, setLoadingFollowUps] = useState(false);
-  const [showScheduleForm, setShowScheduleForm] = useState(false);
-  const [newFollowUp, setNewFollowUp] = useState({
-    date: '',
-    time: '',
-    duration: 30,
-  });
-  const [scheduling, setScheduling] = useState(false);
-  const [checkingAvailability, setCheckingAvailability] = useState(false);
-  const [availabilityStatus, setAvailabilityStatus] = useState<{
-    checked: boolean;
-    available: boolean;
-    message: string;
-  } | null>(null);
   
-  // Follow-up panel for editing
+  // Follow-up panel for viewing
   const [selectedFollowUp, setSelectedFollowUp] = useState<FollowUp | null>(null);
   const [showFollowUpPanel, setShowFollowUpPanel] = useState(false);
   
@@ -153,21 +137,6 @@ export default function AdminLeadDetailPage() {
     }
   };
 
-  const handleStageChange = async (newStage: string) => {
-    if (!lead || lead.stage === newStage) return;
-
-    try {
-      setUpdatingStage(true);
-      await leadAPI.updateLeadStage(lead._id, newStage);
-      toast.success('Stage updated successfully');
-      fetchLead();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update stage');
-    } finally {
-      setUpdatingStage(false);
-    }
-  };
-
   const handleAssign = async () => {
     if (!lead) return;
 
@@ -191,75 +160,6 @@ export default function AdminLeadDetailPage() {
   const openAssignModal = () => {
     setSelectedCounselorId(lead?.assignedCounselorId?._id || '');
     setAssignModalOpen(true);
-  };
-
-  const checkAvailability = async () => {
-    if (!newFollowUp.date || !newFollowUp.time) {
-      toast.error('Please select date and time first');
-      return;
-    }
-
-    try {
-      setCheckingAvailability(true);
-      const response = await followUpAPI.checkTimeSlotAvailability({
-        date: newFollowUp.date,
-        time: newFollowUp.time,
-        duration: newFollowUp.duration,
-        leadId, // Required for admin to check the assigned counselor's availability
-      });
-      
-      const { isAvailable, conflictingTime, conflictingLead } = response.data.data;
-      
-      let message = '';
-      if (!isAvailable) {
-        message = `✗ Conflict with follow-up at ${conflictingTime}${conflictingLead ? ` for ${conflictingLead}` : ''}`;
-      } else {
-        message = '✓ Time slot is available!';
-      }
-      
-      setAvailabilityStatus({
-        checked: true,
-        available: isAvailable,
-        message,
-      });
-      
-      if (isAvailable) {
-        toast.success('Time slot is available!');
-      } else {
-        toast.error(`Time slot conflicts with follow-up at ${conflictingTime}${conflictingLead ? ` for ${conflictingLead}` : ''}`);
-      }
-    } catch (error: any) {
-      toast.error('Failed to check availability');
-      setAvailabilityStatus(null);
-    } finally {
-      setCheckingAvailability(false);
-    }
-  };
-
-  const handleScheduleFollowUp = async () => {
-    if (!newFollowUp.date || !newFollowUp.time) {
-      toast.error('Please select date and time');
-      return;
-    }
-
-    try {
-      setScheduling(true);
-      await followUpAPI.createFollowUp({
-        leadId,
-        scheduledDate: newFollowUp.date,
-        scheduledTime: newFollowUp.time,
-        duration: newFollowUp.duration,
-      });
-      toast.success('Follow-up scheduled successfully');
-      setShowScheduleForm(false);
-      setNewFollowUp({ date: '', time: '', duration: 30 });
-      setAvailabilityStatus(null);
-      fetchFollowUps();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to schedule follow-up');
-    } finally {
-      setScheduling(false);
-    }
   };
 
   const handleFollowUpClick = (followUp: FollowUp) => {
@@ -446,32 +346,11 @@ export default function AdminLeadDetailPage() {
 
             {/* Right Column - Stage + Services + Assignment stacked */}
             <div className="space-y-4">
-              {/* Stage Card */}
+              {/* Stage Card - View Only for Admin */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <h3 className="text-sm font-bold text-gray-900 mb-2">Stage</h3>
-                <div className="relative">
-                  <select
-                    value={lead.stage}
-                    onChange={(e) => handleStageChange(e.target.value)}
-                    disabled={updatingStage}
-                    className={`w-full px-3 py-2 rounded-lg border-2 text-sm font-medium appearance-none cursor-pointer focus:ring-2 focus:ring-teal-500 focus:outline-none disabled:opacity-50 ${getStageColor(lead.stage)}`}
-                    style={{ backgroundImage: 'none' }}
-                  >
-                    {Object.values(LEAD_STAGE).map((stage) => (
-                      <option key={stage} value={stage} className="bg-white text-gray-900">{stage}</option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                    {updatingStage ? (
-                      <svg className="w-4 h-4 animate-spin text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                    ) : (
-                      <svg className="w-4 h-4 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    )}
-                  </div>
+                <div className={`w-full px-3 py-2 rounded-lg border-2 text-sm font-medium ${getStageColor(lead.stage)}`}>
+                  {lead.stage}
                 </div>
               </div>
 
@@ -536,6 +415,7 @@ export default function AdminLeadDetailPage() {
                 upcoming={upcomingFollowUps}
                 onFollowUpClick={handleFollowUpClick}
                 leadName={lead.name}
+                basePath="/admin/leads"
               />
             </div>
           </div>
@@ -545,121 +425,7 @@ export default function AdminLeadDetailPage() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Follow-Up History</h3>
-                {followUps.length === 0 && (
-                  <button
-                    onClick={() => setShowScheduleForm(!showScheduleForm)}
-                    className="px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium flex items-center gap-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Schedule First Follow-Up
-                  </button>
-                )}
               </div>
-
-              {/* Schedule Form - Only shown for first follow-up */}
-              {showScheduleForm && followUps.length === 0 && (
-                <div className="mb-4 p-4 bg-teal-50 rounded-lg border border-teal-200">
-                  <div className="grid grid-cols-3 gap-3 mb-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
-                      <input
-                        type="date"
-                        value={newFollowUp.date}
-                        onChange={(e) => {
-                          setNewFollowUp({ ...newFollowUp, date: e.target.value });
-                          setAvailabilityStatus(null);
-                        }}
-                        min={format(new Date(), 'yyyy-MM-dd')}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Time</label>
-                      <input
-                        type="time"
-                        value={newFollowUp.time}
-                        onChange={(e) => {
-                          setNewFollowUp({ ...newFollowUp, time: e.target.value });
-                          setAvailabilityStatus(null);
-                        }}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Duration</label>
-                      <select
-                        value={newFollowUp.duration}
-                        onChange={(e) => {
-                          setNewFollowUp({ ...newFollowUp, duration: parseInt(e.target.value) });
-                          setAvailabilityStatus(null);
-                        }}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                      >
-                        <option value={15}>15 min</option>
-                        <option value={30}>30 min</option>
-                        <option value={45}>45 min</option>
-                        <option value={60}>60 min</option>
-                      </select>
-                    </div>
-                  </div>
-                  
-                  {/* Availability Status */}
-                  {availabilityStatus && (
-                    <div className={`mb-3 p-2 rounded-lg text-sm font-medium ${
-                      availabilityStatus.available 
-                        ? 'bg-green-100 text-green-800 border border-green-200'
-                        : 'bg-red-100 text-red-800 border border-red-200'
-                    }`}>
-                      {availabilityStatus.message}
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between items-center gap-2">
-                    <button
-                      onClick={checkAvailability}
-                      disabled={checkingAvailability || !newFollowUp.date || !newFollowUp.time}
-                      className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                    >
-                      {checkingAvailability ? (
-                        <>
-                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Checking...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          Check Availability
-                        </>
-                      )}
-                    </button>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          setShowScheduleForm(false);
-                          setAvailabilityStatus(null);
-                        }}
-                        className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleScheduleFollowUp}
-                        disabled={scheduling}
-                        className="px-3 py-1.5 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 flex items-center gap-1"
-                      >
-                        {scheduling ? 'Scheduling...' : 'Schedule'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Follow-Up History List */}
               <div className="space-y-3">
@@ -668,7 +434,7 @@ export default function AdminLeadDetailPage() {
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600"></div>
                   </div>
                 ) : followUps.length > 0 ? (
-                  followUps.map((followUp) => (
+                  followUps.map((followUp, index) => (
                     <div 
                       key={followUp._id} 
                       onClick={() => handleFollowUpClick(followUp)}
@@ -702,8 +468,10 @@ export default function AdminLeadDetailPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-500">{followUp.duration} min</span>
+                        {/* Show view icon for admin - view only */}
                         <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                       </div>
                     </div>
@@ -765,12 +533,13 @@ export default function AdminLeadDetailPage() {
         </div>
       )}
 
-      {/* Follow-up Edit Panel */}
+      {/* Follow-up View Panel - Read Only for Admin */}
       <FollowUpFormPanel
         followUp={selectedFollowUp}
         isOpen={showFollowUpPanel}
         onClose={handleFollowUpPanelClose}
         onSave={handleFollowUpSave}
+        readOnly={true}
       />
     </>
   );

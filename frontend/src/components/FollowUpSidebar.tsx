@@ -13,6 +13,7 @@ interface FollowUpSidebarProps {
   leadName?: string; // Override lead name for single-lead views
   onLeadClick?: (leadId: string) => void;
   showLeadLink?: boolean; // Explicitly control whether to show links
+  basePath?: string; // Base path for links (e.g., '/admin/leads' or '/counselor/leads')
 }
 
 // Helper to get stage badge color - matching the standard color mapping
@@ -42,9 +43,10 @@ interface FollowUpItemProps {
   isMissed?: boolean;
   leadName?: string;
   showLeadLink?: boolean;
+  basePath?: string;
 }
 
-function FollowUpItem({ followUp, onClick, showDate = false, isMissed = false, leadName, showLeadLink = true }: FollowUpItemProps) {
+function FollowUpItem({ followUp, onClick, showDate = false, isMissed = false, leadName, showLeadLink = true, basePath = '/counselor/leads' }: FollowUpItemProps) {
   const lead = followUp.leadId as Lead;
   const stage = lead?.stage || followUp.stageAtFollowUp;
   const displayName = leadName || lead?.name || 'Unknown Lead';
@@ -68,7 +70,7 @@ function FollowUpItem({ followUp, onClick, showDate = false, isMissed = false, l
         <div className="flex-1 min-w-0">
           {showLeadLink && leadId ? (
             <Link 
-              href={`/counselor/leads/${leadId}`}
+              href={`${basePath}/${leadId}`}
               onClick={handleNameClick}
               className={`font-medium truncate block hover:underline ${isMissed ? 'text-purple-900' : 'text-gray-900'}`}
             >
@@ -114,6 +116,7 @@ export default function FollowUpSidebar({
   leadName,
   onLeadClick,
   showLeadLink: showLeadLinkProp,
+  basePath = '/counselor/leads',
 }: FollowUpSidebarProps) {
   // Show links by default unless leadName is provided (single-lead view)
   const showLeadLink = showLeadLinkProp !== undefined ? showLeadLinkProp : !leadName;
@@ -149,6 +152,7 @@ export default function FollowUpSidebar({
                   onClick={() => onFollowUpClick(followUp)}
                   leadName={leadName}
                   showLeadLink={showLeadLink}
+                  basePath={basePath}
                 />
               ))}
             </div>
@@ -178,6 +182,7 @@ export default function FollowUpSidebar({
                   isMissed
                   leadName={leadName}
                   showLeadLink={showLeadLink}
+                  basePath={basePath}
                 />
               ))}
             </div>
@@ -205,6 +210,7 @@ export default function FollowUpSidebar({
                   onClick={() => onFollowUpClick(followUp)}
                   leadName={leadName}
                   showLeadLink={showLeadLink}
+                  basePath={basePath}
                 />
               ))}
             </div>

@@ -271,6 +271,7 @@ export default function AdminLeadsPage() {
               color="blue"
               onClick={() => handleStageCardClick('all')}
               isActive={selectedStageCard === 'all'}
+              showPercentage={false}
             />
             <StatCard
               title="New"
@@ -283,6 +284,7 @@ export default function AdminLeadsPage() {
               color="blue"
               onClick={() => handleStageCardClick(LEAD_STAGE.NEW)}
               isActive={selectedStageCard === LEAD_STAGE.NEW}
+              percentage={totalLeads > 0 ? (newLeads / totalLeads) * 100 : 0}
             />
             <StatCard
               title="Hot"
@@ -295,6 +297,7 @@ export default function AdminLeadsPage() {
               color="red"
               onClick={() => handleStageCardClick(LEAD_STAGE.HOT)}
               isActive={selectedStageCard === LEAD_STAGE.HOT}
+              percentage={totalLeads > 0 ? (hotLeads / totalLeads) * 100 : 0}
             />
             <StatCard
               title="Warm"
@@ -307,6 +310,7 @@ export default function AdminLeadsPage() {
               color="orange"
               onClick={() => handleStageCardClick(LEAD_STAGE.WARM)}
               isActive={selectedStageCard === LEAD_STAGE.WARM}
+              percentage={totalLeads > 0 ? (warmLeads / totalLeads) * 100 : 0}
             />
             <StatCard
               title="Cold"
@@ -319,6 +323,7 @@ export default function AdminLeadsPage() {
               color="cyan"
               onClick={() => handleStageCardClick(LEAD_STAGE.COLD)}
               isActive={selectedStageCard === LEAD_STAGE.COLD}
+              percentage={totalLeads > 0 ? (coldLeads / totalLeads) * 100 : 0}
             />
             <StatCard
               title="Converted"
@@ -331,6 +336,7 @@ export default function AdminLeadsPage() {
               color="green"
               onClick={() => handleStageCardClick(LEAD_STAGE.CONVERTED)}
               isActive={selectedStageCard === LEAD_STAGE.CONVERTED}
+              percentage={totalLeads > 0 ? (convertedLeads / totalLeads) * 100 : 0}
             />
             <StatCard
               title="Closed"
@@ -343,6 +349,7 @@ export default function AdminLeadsPage() {
               color="gray"
               onClick={() => handleStageCardClick(LEAD_STAGE.CLOSED)}
               isActive={selectedStageCard === LEAD_STAGE.CLOSED}
+              percentage={totalLeads > 0 ? (closedLeads / totalLeads) * 100 : 0}
             />
           </div>
 
@@ -570,9 +577,11 @@ interface StatCardProps {
   color: 'blue' | 'green' | 'red' | 'orange' | 'cyan' | 'gray';
   onClick?: () => void;
   isActive?: boolean;
+  percentage?: number; // Percentage of total leads
+  showPercentage?: boolean; // Whether to show percentage
 }
 
-function StatCard({ title, value, icon, color, onClick, isActive }: StatCardProps) {
+function StatCard({ title, value, icon, color, onClick, isActive, percentage, showPercentage = true }: StatCardProps) {
   const colorClasses = {
     blue: 'bg-blue-100 text-blue-600',
     green: 'bg-green-100 text-green-600',
@@ -595,7 +604,12 @@ function StatCard({ title, value, icon, color, onClick, isActive }: StatCardProp
         <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
           {icon}
         </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+        <div className="text-right">
+          <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+          {showPercentage && percentage !== undefined && (
+            <p className="text-xs text-gray-500 mt-0.5">{percentage.toFixed(1)}%</p>
+          )}
+        </div>
       </div>
       <p className="text-sm font-semibold text-gray-700 mt-3">{title}</p>
     </div>

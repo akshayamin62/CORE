@@ -337,6 +337,7 @@ export default function AdminCounselorDetailPage() {
               color="blue"
               onClick={() => handleStatCardClick('all')}
               isActive={selectedStage === 'all'}
+              showPercentage={false}
             />
             <StatCard
               title="New"
@@ -349,6 +350,7 @@ export default function AdminCounselorDetailPage() {
               color="blue"
               onClick={() => handleStatCardClick(LEAD_STAGE.NEW)}
               isActive={selectedStage === LEAD_STAGE.NEW}
+              percentage={stats && stats.totalLeads > 0 ? (stats.newLeads / stats.totalLeads) * 100 : 0}
             />
             <StatCard
               title="Hot"
@@ -361,6 +363,7 @@ export default function AdminCounselorDetailPage() {
               color="red"
               onClick={() => handleStatCardClick(LEAD_STAGE.HOT)}
               isActive={selectedStage === LEAD_STAGE.HOT}
+              percentage={stats && stats.totalLeads > 0 ? (stats.hotLeads / stats.totalLeads) * 100 : 0}
             />
             <StatCard
               title="Warm"
@@ -373,6 +376,7 @@ export default function AdminCounselorDetailPage() {
               color="orange"
               onClick={() => handleStatCardClick(LEAD_STAGE.WARM)}
               isActive={selectedStage === LEAD_STAGE.WARM}
+              percentage={stats && stats.totalLeads > 0 ? (stats.warmLeads / stats.totalLeads) * 100 : 0}
             />
             <StatCard
               title="Cold"
@@ -385,6 +389,7 @@ export default function AdminCounselorDetailPage() {
               color="cyan"
               onClick={() => handleStatCardClick(LEAD_STAGE.COLD)}
               isActive={selectedStage === LEAD_STAGE.COLD}
+              percentage={stats && stats.totalLeads > 0 ? (stats.coldLeads / stats.totalLeads) * 100 : 0}
             />
             <StatCard
               title="Converted"
@@ -397,6 +402,7 @@ export default function AdminCounselorDetailPage() {
               color="green"
               onClick={() => handleStatCardClick(LEAD_STAGE.CONVERTED)}
               isActive={selectedStage === LEAD_STAGE.CONVERTED}
+              percentage={stats && stats.totalLeads > 0 ? (stats.convertedLeads / stats.totalLeads) * 100 : 0}
             />
             <StatCard
               title="Closed"
@@ -409,6 +415,7 @@ export default function AdminCounselorDetailPage() {
               color="gray"
               onClick={() => handleStatCardClick(LEAD_STAGE.CLOSED)}
               isActive={selectedStage === LEAD_STAGE.CLOSED}
+              percentage={stats && stats.totalLeads > 0 ? (stats.closedLeads / stats.totalLeads) * 100 : 0}
             />
           </div>
 
@@ -469,6 +476,7 @@ export default function AdminCounselorDetailPage() {
                       upcoming={followUpSummary?.upcoming || []}
                       onFollowUpClick={handleSidebarFollowUpClick}
                       showLeadLink={true}
+                      basePath="/admin/leads"
                     />
                   </div>
                 </div>
@@ -649,9 +657,11 @@ interface StatCardProps {
   color: 'blue' | 'green' | 'red' | 'orange' | 'cyan' | 'gray';
   onClick?: () => void;
   isActive?: boolean;
+  percentage?: number;
+  showPercentage?: boolean;
 }
 
-function StatCard({ title, value, icon, color, onClick, isActive }: StatCardProps) {
+function StatCard({ title, value, icon, color, onClick, isActive, percentage, showPercentage = true }: StatCardProps) {
   const colorClasses = {
     blue: 'bg-blue-100 text-blue-600',
     green: 'bg-green-100 text-green-600',
@@ -674,7 +684,12 @@ function StatCard({ title, value, icon, color, onClick, isActive }: StatCardProp
         <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
           {icon}
         </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+        <div className="text-right">
+          <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+          {showPercentage && percentage !== undefined && (
+            <p className="text-xs text-gray-500 mt-0.5">{percentage.toFixed(1)}%</p>
+          )}
+        </div>
       </div>
       <p className="text-sm font-semibold text-gray-700 mt-3">{title}</p>
     </div>
