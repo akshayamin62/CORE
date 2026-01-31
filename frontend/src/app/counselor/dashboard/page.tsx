@@ -638,14 +638,14 @@ function StatCard({ title, value, icon, color, onClick, isActive, percentage, sh
         <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
           {icon}
         </div>
-        <div className="text-right">
-          <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
-          {showPercentage && percentage !== undefined && (
-            <p className="text-sm text-gray-500 mt-0.5">{percentage.toFixed(1)}%</p>
-          )}
-        </div>
+        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
       </div>
-      <p className="text-sm font-semibold text-gray-700 mt-3">{title}</p>
+      <div className="flex items-center justify-between mt-3">
+        <p className="text-sm font-semibold text-gray-700">{title}</p>
+        {showPercentage && percentage !== undefined && (
+          <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
+        )}
+      </div>
     </div>
   );
 }
