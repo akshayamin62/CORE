@@ -117,6 +117,10 @@ export const createFollowUp = async (
     
     console.log('No conflicts found - time slot is available');
 
+    // Count existing follow-ups for this lead to determine followUpNumber
+    const existingFollowUpsForLead = await FollowUp.countDocuments({ leadId });
+    const followUpNumber = existingFollowUpsForLead + 1;
+
     // Create the follow-up
     const followUp = new FollowUp({
       leadId,
@@ -126,6 +130,7 @@ export const createFollowUp = async (
       duration,
       status: FOLLOWUP_STATUS.SCHEDULED,
       stageAtFollowUp: lead.stage,
+      followUpNumber,
       notes: notes || "",
       createdBy: counselorUserId,
     });
@@ -303,9 +308,34 @@ export const getFollowUpById = async (
       });
     }
 
+    // Get total follow-ups count for this lead
+    const totalFollowUpsForLead = await FollowUp.countDocuments({ leadId: followUp.leadId });
+
+    // If this is not the latest follow-up, get the next follow-up's timing
+    let nextFollowUpInfo = null;
+    if (followUp.followUpNumber < totalFollowUpsForLead) {
+      const nextFollowUp = await FollowUp.findOne({
+        leadId: followUp.leadId,
+        followUpNumber: followUp.followUpNumber + 1,
+      }).select('scheduledDate scheduledTime duration followUpNumber');
+      
+      if (nextFollowUp) {
+        nextFollowUpInfo = {
+          scheduledDate: nextFollowUp.scheduledDate,
+          scheduledTime: nextFollowUp.scheduledTime,
+          duration: nextFollowUp.duration,
+          followUpNumber: nextFollowUp.followUpNumber,
+        };
+      }
+    }
+
     return res.status(200).json({
       success: true,
-      data: { followUp },
+      data: { 
+        followUp,
+        totalFollowUpsForLead,
+        nextFollowUpInfo,
+      },
     });
   } catch (error) {
     console.error("Error fetching follow-up:", error);
@@ -353,11 +383,25 @@ export const updateFollowUp = async (
       });
     }
 
+    // Check if follow-up is locked based on followUpNumber
+    // A follow-up is locked when its followUpNumber < total follow-ups for the lead
+    const totalFollowUpsForLead = await FollowUp.countDocuments({ leadId: followUp.leadId });
+    const isLocked = followUp.followUpNumber < totalFollowUpsForLead;
+    // const isLatestFollowUp = followUp.followUpNumber === totalFollowUpsForLead;
+
+    // If locked (not the latest), prevent scheduling next follow-up
+    if (isLocked && nextFollowUp) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot schedule next follow-up from a locked follow-up. Only the latest follow-up can schedule next.",
+      });
+    }
+
     // Update follow-up fields
     if (status) {
       followUp.status = status;
-      // Set completedAt if status is not SCHEDULED
-      if (status !== FOLLOWUP_STATUS.SCHEDULED) {
+      // Set completedAt if status is not SCHEDULED (only if not already set)
+      if (status !== FOLLOWUP_STATUS.SCHEDULED && !followUp.completedAt) {
         followUp.completedAt = new Date();
       }
     }
@@ -419,6 +463,10 @@ export const updateFollowUp = async (
 
       // Get current lead stage
       const lead = await Lead.findById(followUp.leadId);
+      
+      // Calculate followUpNumber for the next follow-up
+      const existingFollowUpsCount = await FollowUp.countDocuments({ leadId: followUp.leadId });
+      const nextFollowUpNumber = existingFollowUpsCount + 1;
 
       newFollowUp = new FollowUp({
         leadId: followUp.leadId,
@@ -428,6 +476,7 @@ export const updateFollowUp = async (
         duration: nextFollowUp.duration || 30,
         status: FOLLOWUP_STATUS.SCHEDULED,
         stageAtFollowUp: stageChangedTo || lead?.stage || followUp.stageAtFollowUp,
+        followUpNumber: nextFollowUpNumber,
         notes: "",
         createdBy: counselorUserId,
       });

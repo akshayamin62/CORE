@@ -328,6 +328,13 @@ export default function FollowUpCalendar({
             >
               Today
             </button>
+            
+            {/* Show current date when in day view */}
+            {view === 'day' && (
+              <div className="px-3 py-1.5 text-sm font-semibold text-gray-900 bg-white border border-gray-300 rounded-lg">
+                {format(date, 'EEEE, d')}
+              </div>
+            )}
           </div>
           
           <button

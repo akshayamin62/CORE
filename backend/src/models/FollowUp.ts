@@ -33,6 +33,7 @@ export interface IFollowUp extends Document {
   status: FOLLOWUP_STATUS;
   stageAtFollowUp: LEAD_STAGE; // Stage of lead at the time of follow-up
   stageChangedTo?: LEAD_STAGE; // If stage was changed during this follow-up
+  followUpNumber: number; // Sequential number for this lead (1st, 2nd, 3rd follow-up)
   notes?: string;
   createdBy: mongoose.Types.ObjectId; // User who created
   updatedBy?: mongoose.Types.ObjectId; // User who last updated
@@ -87,6 +88,11 @@ const followUpSchema = new Schema<IFollowUp>(
       type: String,
       enum: Object.values(LEAD_STAGE),
       default: null,
+    },
+    followUpNumber: {
+      type: Number,
+      required: true,
+      default: 1,
     },
     notes: {
       type: String,

@@ -31,6 +31,13 @@ export default function FollowUpFormPanel({
   const [slotAvailable, setSlotAvailable] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
   const [followUpData, setFollowUpData] = useState<FollowUp | null>(null);
+  const [totalFollowUpsForLead, setTotalFollowUpsForLead] = useState<number>(0);
+  const [nextFollowUpInfo, setNextFollowUpInfo] = useState<{
+    scheduledDate: string;
+    scheduledTime: string;
+    duration: number;
+    followUpNumber: number;
+  } | null>(null);
 
   // Fetch full follow-up data when followUp changes
   useEffect(() => {
@@ -39,6 +46,8 @@ export default function FollowUpFormPanel({
     } else if (!isOpen) {
       // Reset state when panel closes
       setFollowUpData(null);
+      setTotalFollowUpsForLead(0);
+      setNextFollowUpInfo(null);
       setLoading(false);
     }
   }, [followUp, isOpen]);
@@ -50,7 +59,12 @@ export default function FollowUpFormPanel({
     try {
       const response = await followUpAPI.getFollowUpById(followUp._id);
       const data = response.data.data.followUp;
+      const totalCount = response.data.data.totalFollowUpsForLead || 1;
+      const nextInfo = response.data.data.nextFollowUpInfo || null;
+      
       setFollowUpData(data);
+      setTotalFollowUpsForLead(totalCount);
+      setNextFollowUpInfo(nextInfo);
       
       // Reset form with fetched data
       setStatus(data.status as FOLLOWUP_STATUS);
@@ -158,6 +172,12 @@ export default function FollowUpFormPanel({
   const currentStage = lead?.stage || followUpData?.stageAtFollowUp;
   const isPastFollowUp = followUpData && new Date(followUpData.scheduledDate) < new Date() && 
     new Date(followUpData.scheduledDate).toDateString() !== new Date().toDateString();
+  
+  // Check if follow-up is locked
+  // A follow-up is locked when its followUpNumber < totalFollowUpsForLead (not the latest)
+  const currentFollowUpNumber = followUpData?.followUpNumber || 1;
+  const isLocked = currentFollowUpNumber < totalFollowUpsForLead;
+  const isLatestFollowUp = currentFollowUpNumber === totalFollowUpsForLead;
 
   return (
     <>
@@ -203,9 +223,14 @@ export default function FollowUpFormPanel({
                       {format(new Date(followUpData.scheduledDate), 'MMM d, yyyy')} at {followUpData.scheduledTime}
                     </p>
                   </div>
-                  <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
-                    {followUpData.duration} min
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                      #{currentFollowUpNumber}
+                    </span>
+                    <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
+                      {followUpData.duration} min
+                    </span>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-200">
                   <div>
@@ -219,6 +244,18 @@ export default function FollowUpFormPanel({
                 </div>
               </div>
 
+              {/* Locked Follow-Up Info - Show when timing is locked */}
+              {isLocked && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-2">
+                  <div className="flex items-center gap-2 text-amber-800">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span className="text-xs font-medium">This follow-up is locked. You can only edit status, stage, and notes.</span>
+                  </div>
+                </div>
+              )}
+
               {/* Status - Compact */}
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
@@ -227,7 +264,8 @@ export default function FollowUpFormPanel({
                   onChange={(e) => setStatus(e.target.value as FOLLOWUP_STATUS)}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
                 >
-                  <option value={FOLLOWUP_STATUS.SCHEDULED}>Scheduled</option>
+                  {/* Only show Scheduled option if follow-up is NOT locked */}
+                  {!isLocked && <option value={FOLLOWUP_STATUS.SCHEDULED}>Scheduled</option>}
                   <optgroup label="Call Issues">
                     <option value={FOLLOWUP_STATUS.CALL_NOT_ANSWERED}>Call Not Answered</option>
                     <option value={FOLLOWUP_STATUS.PHONE_SWITCHED_OFF}>Phone Switched Off</option>
@@ -288,8 +326,8 @@ export default function FollowUpFormPanel({
                 />
               </div>
 
-              {/* Schedule Next Follow-Up - Only visible when status changed from Scheduled */}
-              {status !== FOLLOWUP_STATUS.SCHEDULED && (
+              {/* Schedule Next Follow-Up - Only visible when status changed from Scheduled AND not locked */}
+              {status !== FOLLOWUP_STATUS.SCHEDULED && !isLocked && (
               <div className="border-t border-gray-200 pt-3">
                 <div className="flex items-center gap-2 mb-2">
                   <input
@@ -369,6 +407,28 @@ export default function FollowUpFormPanel({
                   </div>
                 )}
               </div>
+              )}
+
+              {/* Next Follow-Up Info - Show when locked (has next follow-up scheduled) */}
+              {isLocked && nextFollowUpInfo && (
+                <div className="border-t border-gray-200 pt-3">
+                  <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-xs font-medium text-teal-800">
+                        Next Follow-Up (#{nextFollowUpInfo.followUpNumber})
+                      </span>
+                    </div>
+                    <div className="text-sm text-teal-900">
+                      <p className="font-medium">
+                        {format(new Date(nextFollowUpInfo.scheduledDate), 'MMM d, yyyy')} at {nextFollowUpInfo.scheduledTime}
+                      </p>
+                      <p className="text-xs text-teal-700 mt-1">Duration: {nextFollowUpInfo.duration} min</p>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
           ) : (

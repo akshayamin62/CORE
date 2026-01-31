@@ -330,6 +330,7 @@ export interface FollowUp {
   status: FOLLOWUP_STATUS;
   stageAtFollowUp: LEAD_STAGE;
   stageChangedTo?: LEAD_STAGE;
+  followUpNumber: number; // Sequential number for this lead (1st, 2nd, 3rd follow-up)
   notes?: string;
   createdBy: {
     _id: string;
