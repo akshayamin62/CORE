@@ -618,20 +618,20 @@ function StatCard({ title, value, icon, color, onClick, isActive }: StatCardProp
 
   return (
     <div 
-      className={`bg-white rounded-xl shadow-sm border-2 p-6 transition-all ${
+      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
         onClick ? 'cursor-pointer hover:shadow-md' : ''
       } ${
         isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
       }`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className={`w-12 h-12 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
+      <div className="flex items-center justify-between">
+        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
           {icon}
         </div>
+        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
       </div>
-      <h3 className="text-3xl font-extrabold text-gray-900 mb-1">{value}</h3>
-      <p className="text-sm font-semibold text-gray-700">{title}</p>
+      <p className="text-sm font-semibold text-gray-700 mt-3">{title}</p>
     </div>
   );
 }
