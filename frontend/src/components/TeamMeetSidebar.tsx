@@ -16,19 +16,19 @@ const getUserId = (user: { _id?: string; id?: string }): string => {
   return user?.id || user?._id || '';
 };
 
-// Helper to get status badge color - TeamMeet theme (Purple/Violet based)
+// Helper to get status badge color - TeamMeet theme (Updated)
 const getStatusBadgeColor = (status: TEAMMEET_STATUS) => {
   switch (status) {
     case TEAMMEET_STATUS.PENDING_CONFIRMATION:
-      return 'bg-amber-100 text-amber-700';
+      return 'bg-amber-100 text-amber-700'; // Yellow
     case TEAMMEET_STATUS.CONFIRMED:
-      return 'bg-violet-100 text-violet-700';
+      return 'bg-pink-100 text-pink-700'; // Pink
     case TEAMMEET_STATUS.REJECTED:
-      return 'bg-rose-100 text-rose-700';
+      return 'bg-red-200 text-red-900'; // Dark Red
     case TEAMMEET_STATUS.CANCELLED:
-      return 'bg-slate-100 text-slate-600';
+      return 'bg-slate-100 text-slate-600'; // Same
     case TEAMMEET_STATUS.COMPLETED:
-      return 'bg-blue-100 text-blue-600';
+      return 'bg-teal-100 text-teal-700'; // Teal
     default:
       return 'bg-gray-100 text-gray-800';
   }
@@ -86,11 +86,11 @@ function TeamMeetItem({ teamMeet, onClick, showDate = false, currentUserId, isAc
             {teamMeet.duration}m
           </div>
           {teamMeet.meetingType === TEAMMEET_TYPE.ONLINE ? (
-            <svg className="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
           ) : (
-            <svg className="w-4 h-4 text-violet-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           )}
@@ -136,9 +136,9 @@ export default function TeamMeetSidebar({
     <div className={`bg-white overflow-hidden h-fit ${hideHeader ? '' : 'rounded-xl shadow-sm border border-gray-200'}`}>
       {/* Header - conditionally shown */}
       {!hideHeader && (
-        <div className="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-violet-50 to-purple-50 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-pink-50 to-rose-50 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <h3 className="font-semibold text-gray-900">TeamMeet Overview</h3>
@@ -146,7 +146,7 @@ export default function TeamMeetSidebar({
           {onScheduleClick && (
             <button
               onClick={onScheduleClick}
-              className="text-sm font-medium text-violet-600 hover:text-violet-700 flex items-center gap-1"
+              className="text-sm font-medium text-pink-600 hover:text-pink-700 flex items-center gap-1"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -189,9 +189,9 @@ export default function TeamMeetSidebar({
         {/* Waiting Confirmation Section */}
         <div className="p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-2 rounded-full bg-violet-400"></div>
+            <div className="w-2 h-2 rounded-full bg-pink-400"></div>
             <h4 className="text-sm font-semibold text-gray-700">Awaiting Response</h4>
-            <span className="ml-auto bg-violet-100 text-violet-700 text-xs font-medium px-2 py-0.5 rounded-full">
+            <span className="ml-auto bg-pink-100 text-pink-700 text-xs font-medium px-2 py-0.5 rounded-full">
               {waitingConfirmation.length}
             </span>
           </div>

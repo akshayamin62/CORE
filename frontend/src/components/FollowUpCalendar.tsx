@@ -214,31 +214,49 @@ export default function FollowUpCalendar({
           </div>
         </div>
         
-        {/* Legend */}
+        {/* Legend with Hover Tooltip */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="w-3 h-3 rounded bg-blue-500"></span>
-            <span className="text-gray-600">New</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="w-3 h-3 rounded bg-red-500"></span>
-            <span className="text-gray-600">Hot</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="w-3 h-3 rounded bg-amber-500"></span>
-            <span className="text-gray-600">Warm</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="w-3 h-3 rounded bg-cyan-200 "></span>
-            <span className="text-gray-600">Cold</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="w-3 h-3 rounded bg-green-500"></span>
-            <span className="text-gray-600">Converted</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="w-3 h-3 rounded-sm bg-purple-200 border border-purple-500"></span>
-            <span className="text-gray-600">Missed</span>
+          <div className="relative group">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg cursor-help hover:bg-blue-50 transition-colors">
+              <span className="text-xs text-gray-500">📋</span>
+              <span className="w-2 h-2 rounded bg-blue-500"></span>
+              <span className="w-2 h-2 rounded bg-red-500"></span>
+              <span className="w-2 h-2 rounded bg-amber-500"></span>
+              <span className="w-2 h-2 rounded bg-cyan-400"></span>
+              <span className="w-2 h-2 rounded bg-green-500"></span>
+              <span className="w-2 h-2 rounded bg-purple-400"></span>
+              <span className="text-xs text-gray-500">Lead Stage</span>
+            </div>
+            {/* Hover Tooltip */}
+            <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              <p className="text-xs font-semibold text-gray-700 mb-2">Follow-up Colors (Lead Stage)</p>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded bg-blue-500"></span>
+                  <span className="text-xs text-gray-600">New Lead</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded bg-red-500"></span>
+                  <span className="text-xs text-gray-600">Hot Lead</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded bg-amber-500"></span>
+                  <span className="text-xs text-gray-600">Warm Lead</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded bg-cyan-400"></span>
+                  <span className="text-xs text-gray-600">Cold Lead</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded bg-green-500"></span>
+                  <span className="text-xs text-gray-600">Converted Lead</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded bg-purple-400"></span>
+                  <span className="text-xs text-gray-600">Missed Follow-up</span>
+                </div>
+              </div>
+            </div>
           </div>
           
           {onToggleMinimize && (

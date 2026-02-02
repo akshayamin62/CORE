@@ -6,12 +6,10 @@ import Link from 'next/link';
 import { authAPI, leadAPI, followUpAPI, teamMeetAPI } from '@/lib/api';
 import { User, USER_ROLE, LEAD_STAGE, FollowUp, FollowUpSummary, FOLLOWUP_STATUS, TeamMeet, TEAMMEET_STATUS } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
-import FollowUpCalendar from '@/components/FollowUpCalendar';
-import FollowUpSidebar from '@/components/FollowUpSidebar';
+import ScheduleCalendar from '@/components/ScheduleCalendar';
+import ScheduleOverview from '@/components/ScheduleOverview';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
 import LeadDetailPanel from '@/components/LeadDetailPanel';
-import TeamMeetCalendar from '@/components/TeamMeetCalendar';
-import TeamMeetSidebar from '@/components/TeamMeetSidebar';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 
 interface DashboardStats {
@@ -50,7 +48,6 @@ export default function CounselorDashboardPage() {
   const [showTeamMeetPanel, setShowTeamMeetPanel] = useState(false);
   const [teamMeetPanelMode, setTeamMeetPanelMode] = useState<'create' | 'view' | 'respond'>('create');
   const [selectedTeamMeetDate, setSelectedTeamMeetDate] = useState<Date | undefined>(undefined);
-  const [activeCalendarTab, setActiveCalendarTab] = useState<'followups' | 'teammeet'>('followups');
 
   useEffect(() => {
     checkAuth();
@@ -438,41 +435,20 @@ export default function CounselorDashboardPage() {
           {/* Collapsed Calendar Icon - Show when leads table is open */}
           {calendarCollapsed && !selectedLeadId && (
             <div className="flex justify-end gap-3 mb-4">
-              {/* FollowUp Collapsed Button */}
+              {/* Combined Calendar Collapsed Button */}
               <button
-                onClick={() => { handleExpandCalendar(); setActiveCalendarTab('followups'); }}
-                className="flex items-center gap-2 px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-300 transition-all"
+                onClick={handleExpandCalendar}
+                className="flex items-center gap-2 px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-teal-300 transition-all"
               >
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-gray-900 text-sm">Follow-Up Calendar</p>
+                  <p className="font-semibold text-gray-900 text-sm">Schedule Calendar</p>
                   <p className="text-xs text-gray-500">
-                    {followUps.length} scheduled • {followUpSummary?.counts?.missed || 0} missed
-                  </p>
-                </div>
-                <svg className="w-5 h-5 text-gray-400 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              
-              {/* TeamMeet Collapsed Button */}
-              <button
-                onClick={() => { handleExpandCalendar(); setActiveCalendarTab('teammeet'); }}
-                className="flex items-center gap-2 px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-violet-300 transition-all"
-              >
-                <div className="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-gray-900 text-sm">TeamMeet</p>
-                  <p className="text-xs text-gray-500">
-                    {teamMeets.filter(tm => tm.status === TEAMMEET_STATUS.PENDING_CONFIRMATION && tm.requestedTo._id === (user?.id || user?._id)).length} pending
+                    {followUps.length} follow-ups • {teamMeets.length} team meets
                   </p>
                 </div>
                 <svg className="w-5 h-5 text-gray-400 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -482,7 +458,7 @@ export default function CounselorDashboardPage() {
             </div>
           )}
 
-          {/* Follow-up Calendar and Sidebar Section */}
+          {/* Combined Calendar and Sidebar Section */}
           {!calendarCollapsed && (
             <div className="mb-8">
               {selectedLeadId ? (
@@ -493,101 +469,34 @@ export default function CounselorDashboardPage() {
                   onFollowUpScheduled={handleFollowUpScheduled}
                 />
               ) : (
-                <>
-                  {/* Tab Switcher */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <button
-                      onClick={() => setActiveCalendarTab('followups')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                        activeCalendarTab === 'followups'
-                          ? 'bg-blue-600 text-white shadow-md'
-                          : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      Follow-Ups
-                      {followUpSummary?.counts?.missed ? (
-                        <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                          {followUpSummary.counts.missed}
-                        </span>
-                      ) : null}
-                    </button>
-                    <button
-                      onClick={() => setActiveCalendarTab('teammeet')}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
-                        activeCalendarTab === 'teammeet'
-                          ? 'bg-violet-600 text-white shadow-md'
-                          : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      TeamMeet
-                      {teamMeets.filter(tm => tm.status === TEAMMEET_STATUS.PENDING_CONFIRMATION && tm.requestedTo._id === (user?.id || user?._id)).length > 0 && (
-                        <span className="bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full animate-pulse">
-                          {teamMeets.filter(tm => tm.status === TEAMMEET_STATUS.PENDING_CONFIRMATION && tm.requestedTo._id === (user?.id || user?._id)).length}
-                        </span>
-                      )}
-                    </button>
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                  {/* Schedule Calendar Section */}
+                  <div className="lg:col-span-3">
+                    <ScheduleCalendar
+                      followUps={followUps}
+                      teamMeets={teamMeets}
+                      onFollowUpSelect={handleFollowUpSelect}
+                      onTeamMeetSelect={handleTeamMeetSelect}
+                      onDateSelect={handleTeamMeetDateSelect}
+                      minimized={false}
+                      onToggleMinimize={() => setCalendarCollapsed(true)}
+                      currentUserId={user?.id || user?._id}
+                    />
                   </div>
 
-                  {/* FollowUp Calendar + Sidebar View */}
-                  {activeCalendarTab === 'followups' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                      {/* Calendar Section */}
-                      <div className="lg:col-span-3">
-                        <FollowUpCalendar
-                          followUps={followUps}
-                          onFollowUpSelect={handleFollowUpSelect}
-                          onLeadSelect={handleLeadDetailOpen}
-                          minimized={false}
-                          onToggleMinimize={() => setCalendarCollapsed(true)}
-                        />
-                      </div>
-
-                      {/* Sidebar Section */}
-                      <div className="lg:col-span-1">
-                        <FollowUpSidebar
-                          today={followUpSummary?.today || []}
-                          missed={followUpSummary?.missed || []}
-                          upcoming={followUpSummary?.upcoming || []}
-                          onFollowUpClick={handleSidebarFollowUpClick}
-                          showLeadLink={true}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TeamMeet Calendar + Sidebar View */}
-                  {activeCalendarTab === 'teammeet' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                      {/* Calendar Section */}
-                      <div className="lg:col-span-3">
-                        <TeamMeetCalendar
-                          teamMeets={teamMeets}
-                          onTeamMeetSelect={handleTeamMeetSelect}
-                          onDateSelect={handleTeamMeetDateSelect}
-                          minimized={false}
-                          onToggleMinimize={() => setCalendarCollapsed(true)}
-                          currentUserId={user?.id || user?._id}
-                        />
-                      </div>
-
-                      {/* Sidebar Section */}
-                      <div className="lg:col-span-1">
-                        <TeamMeetSidebar
-                          teamMeets={teamMeets}
-                          onTeamMeetClick={handleTeamMeetSelect}
-                          onScheduleClick={handleScheduleTeamMeet}
-                          currentUserId={user?.id || user?._id}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </>
+                  {/* Schedule Overview Section */}
+                  <div className="lg:col-span-1">
+                    <ScheduleOverview
+                      followUps={followUps}
+                      teamMeets={teamMeets}
+                      onFollowUpClick={handleSidebarFollowUpClick}
+                      onTeamMeetClick={handleTeamMeetSelect}
+                      onScheduleClick={handleScheduleTeamMeet}
+                      currentUserId={user?.id || user?._id}
+                      showLeadLink={true}
+                    />
+                  </div>
+                </div>
               )}
             </div>
           )}

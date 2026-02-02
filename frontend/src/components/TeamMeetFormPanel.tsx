@@ -17,13 +17,13 @@ interface TeamMeetFormPanelProps {
   readOnly?: boolean; // If true, hides all action buttons (for admin viewing counselor's TeamMeets)
 }
 
-// TeamMeet theme colors (Purple/Violet theme)
+// TeamMeet theme colors (Updated theme)
 const TEAMMEET_COLORS = {
   PENDING_CONFIRMATION: { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-500' },
-  CONFIRMED: { bg: 'bg-violet-100', text: 'text-violet-700', border: 'border-violet-500' },
-  REJECTED: { bg: 'bg-rose-100', text: 'text-rose-700', border: 'border-rose-500' },
+  CONFIRMED: { bg: 'bg-pink-100', text: 'text-pink-700', border: 'border-pink-500' },
+  REJECTED: { bg: 'bg-red-200', text: 'text-red-900', border: 'border-red-800' },
   CANCELLED: { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-500' },
-  COMPLETED: { bg: 'bg-blue-100', text: 'text-blue-600', border: 'border-blue-500' },
+  COMPLETED: { bg: 'bg-teal-100', text: 'text-teal-700', border: 'border-teal-500' },
 };
 
 export default function TeamMeetFormPanel({
