@@ -207,6 +207,7 @@ interface FormFieldRendererProps {
   error?: string;
   allValues?: any; // All form values for cascading dropdowns
   isAdminEdit?: boolean; // If true, email field should be read-only
+  readOnly?: boolean; // If true, all fields are disabled/read-only
 }
 
 export default function FormFieldRenderer({
@@ -216,8 +217,10 @@ export default function FormFieldRenderer({
   error,
   allValues = {},
   isAdminEdit = false,
+  readOnly = false,
 }: FormFieldRendererProps) {
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    if (readOnly) return; // Don't allow changes in read-only mode
     const newValue = field.type === FieldType.CHECKBOX 
       ? (e.target as HTMLInputElement).checked 
       : e.target.value;
@@ -226,7 +229,7 @@ export default function FormFieldRenderer({
 
   const baseInputClasses = `w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-gray-900 font-medium bg-white ${
     error ? 'border-red-500 bg-red-50' : 'border-gray-300'
-  }`;
+  } ${readOnly ? 'cursor-not-allowed bg-gray-100' : ''}`;
 
   const renderField = () => {
     switch (field.type) {
@@ -241,6 +244,7 @@ export default function FormFieldRenderer({
             onChange={handleChange}
             placeholder={field.placeholder}
             required={field.required}
+            disabled={readOnly}
             className={baseInputClasses}
           />
         );
@@ -254,6 +258,7 @@ export default function FormFieldRenderer({
             onChange={handleChange}
             placeholder={field.placeholder}
             required={field.required}
+            disabled={readOnly}
             min={field.validation?.min}
             max={field.validation?.max}
             step="0.1"
@@ -269,6 +274,7 @@ export default function FormFieldRenderer({
             value={value || ''}
             onChange={handleChange}
             required={field.required}
+            disabled={readOnly}
             className={baseInputClasses}
           />
         );
@@ -281,6 +287,7 @@ export default function FormFieldRenderer({
             onChange={handleChange}
             placeholder={field.placeholder}
             required={field.required}
+            disabled={readOnly}
             rows={4}
             className={baseInputClasses}
           />
@@ -299,6 +306,7 @@ export default function FormFieldRenderer({
               value={currentValue}
               onChange={handleChange}
               required={field.required}
+              disabled={readOnly}
               className={baseInputClasses}
             >
               <option value="">Select {field.label}</option>
@@ -328,6 +336,7 @@ export default function FormFieldRenderer({
               value={value || ''}
               onChange={handleChange}
               required={field.required}
+              disabled={readOnly}
               className={baseInputClasses}
             >
               <option value="">Select {field.label}</option>
@@ -353,6 +362,7 @@ export default function FormFieldRenderer({
               value={value || ''}
               onChange={handleChange}
               required={field.required}
+              disabled={readOnly}
               className={baseInputClasses}
             >
               <option value="">Select {field.label}</option>
@@ -375,6 +385,7 @@ export default function FormFieldRenderer({
             value={selectValue}
             onChange={handleChange}
             required={field.required}
+            disabled={readOnly}
             className={baseInputClasses}
           >
             <option value="">Select {field.label}</option>
@@ -396,6 +407,7 @@ export default function FormFieldRenderer({
             value={countryValue}
             onChange={handleChange}
             required={field.required}
+            disabled={readOnly}
             className={baseInputClasses}
           >
             <option value="">Select Country</option>
@@ -413,7 +425,7 @@ export default function FormFieldRenderer({
             {field.options?.map((option) => (
               <label
                 key={option.value}
-                className="flex items-center space-x-2 cursor-pointer group px-4 py-2 rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                className={`flex items-center space-x-2 cursor-pointer group px-4 py-2 rounded-lg border border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-colors ${readOnly ? 'cursor-not-allowed opacity-75' : ''}`}
               >
                 <input
                   type="radio"
@@ -422,6 +434,7 @@ export default function FormFieldRenderer({
                   checked={value === option.value}
                   onChange={handleChange}
                   required={field.required}
+                  disabled={readOnly}
                   className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                 />
                 <span className="text-gray-900 text-sm font-medium group-hover:text-blue-600">
@@ -434,12 +447,13 @@ export default function FormFieldRenderer({
 
       case FieldType.CHECKBOX:
         return (
-          <label className="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50">
+          <label className={`flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 ${readOnly ? 'cursor-not-allowed opacity-75' : ''}`}>
             <input
               type="checkbox"
               id={field.key}
               checked={value || false}
               onChange={handleChange}
+              disabled={readOnly}
               className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
             />
             <span className="text-gray-900 font-medium">{field.label}</span>
@@ -453,11 +467,13 @@ export default function FormFieldRenderer({
               type="file"
               id={field.key}
               onChange={(e) => {
+                if (readOnly) return;
                 const file = e.target.files?.[0];
                 onChange(field.key, file);
               }}
               required={field.required}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              disabled={readOnly}
+              className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 ${readOnly ? 'cursor-not-allowed bg-gray-100' : ''}`}
             />
             {value && (
               <p className="text-sm text-gray-600">
@@ -476,6 +492,7 @@ export default function FormFieldRenderer({
             onChange={handleChange}
             placeholder={field.placeholder}
             required={field.required}
+            disabled={readOnly}
             className={baseInputClasses}
           />
         );

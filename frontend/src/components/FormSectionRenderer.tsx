@@ -15,7 +15,8 @@ interface FormSectionRendererProps {
   isAdminEdit?: boolean;
   registrationId?: string;
   studentId?: string;
-  userRole?: 'STUDENT' | 'OPS' | 'SUPER_ADMIN';
+  userRole?: 'STUDENT' | 'OPS' | 'SUPER_ADMIN' | 'ADMIN';
+  readOnly?: boolean;
 }
 
 export default function FormSectionRenderer({
@@ -29,6 +30,7 @@ export default function FormSectionRenderer({
   registrationId,
   studentId,
   userRole,
+  readOnly = false,
 }: FormSectionRendererProps) {
   // Check if this is a document section
   const isDocumentSection = section.title.toLowerCase().includes('document');
@@ -114,6 +116,7 @@ export default function FormSectionRenderer({
                   onRemove={(index) => onRemoveInstance(subSection._id, index)}
                   errors={errors[subSection._id]}
                   isAdminEdit={isAdminEdit}
+                  readOnly={readOnly}
                 />
               </div>
             );

@@ -117,6 +117,22 @@ export const superAdminAPI = {
     api.post(`/super-admin/students/registrations/${registrationId}/switch-active-ops`, { activeOpsId }),
 };
 
+// Admin Student API (read-only access to students for admin/counselor)
+export const adminStudentAPI = {
+  // Get all students under this admin
+  getStudents: () => api.get('/admin/students'),
+  
+  // Get student by lead ID (for converted leads)
+  getStudentByLeadId: (leadId: string) => api.get(`/admin/students/by-lead/${leadId}`),
+  
+  // Get student details
+  getStudentDetails: (studentId: string) => api.get(`/admin/students/${studentId}`),
+  
+  // Get student form answers for a registration (read-only)
+  getStudentFormAnswers: (studentId: string, registrationId: string) => 
+    api.get(`/admin/students/${studentId}/registrations/${registrationId}/answers`),
+};
+
 // Service API
 export const serviceAPI = {
   getAllServices: () => api.get('/services/services'),

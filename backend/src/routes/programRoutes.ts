@@ -48,7 +48,7 @@ router.delete('/student/programs/:programId', authorize([USER_ROLE.STUDENT]), re
 
 // OPS routes
 router.get('/ops/programs', authorize([USER_ROLE.OPS]), getOpsPrograms);
-router.get('/ops/student/:studentId/programs', authorize([USER_ROLE.OPS]), getOpsStudentPrograms);
+router.get('/ops/student/:studentId/programs', authorize([USER_ROLE.OPS, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), getOpsStudentPrograms);
 router.post('/ops/programs', authorize([USER_ROLE.OPS]), createProgram);
 router.post('/ops/student/:studentId/programs', authorize([USER_ROLE.OPS]), createProgram);
 router.post('/ops/programs/upload-excel', authorize([USER_ROLE.OPS]), upload.single('file'), uploadProgramsFromExcel);

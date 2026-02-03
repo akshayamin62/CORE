@@ -43,10 +43,11 @@ interface ChatInfo {
 interface ProgramChatViewProps {
   program: Program;
   onClose: () => void;
-  userRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN';
+  userRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN' | 'ADMIN' | 'COUNSELOR';
+  isReadOnly?: boolean;
 }
 
-export default function ProgramChatView({ program, onClose, userRole }: ProgramChatViewProps) {
+export default function ProgramChatView({ program, onClose, userRole, isReadOnly = false }: ProgramChatViewProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -288,6 +289,11 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
           </div>
 
           {/* Message Input */}
+          {isReadOnly ? (
+            <div className="bg-gray-50 border-t border-gray-200 p-4">
+              <p className="text-sm text-gray-500 text-center">Chat is in read-only mode</p>
+            </div>
+          ) : (
           <div className="bg-white border-t border-gray-200 p-4">
             <form onSubmit={handleSendMessage} className="flex items-end space-x-3">
               <div className="flex-1">
@@ -328,6 +334,7 @@ export default function ProgramChatView({ program, onClose, userRole }: ProgramC
               </button>
             </form>
           </div>
+          )}
         </div>
     );
   }

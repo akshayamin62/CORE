@@ -9,6 +9,7 @@ import serviceRoutes from "./routes/serviceRoutes";
 import formAnswerRoutes from "./routes/formAnswerRoutes";
 import studentRoutes from "./routes/studentRoutes";
 import superAdminStudentRoutes from "./routes/superAdminStudentRoutes";
+import adminStudentRoutes from "./routes/adminStudentRoutes";
 import programRoutes from "./routes/programRoutes";
 import chatRoutes from "./routes/chatRoutes";
 import documentRoutes from "./routes/documentRoutes";
@@ -56,6 +57,7 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use("/api/auth", authRoutes);
 app.use("/api/super-admin/students", superAdminStudentRoutes); // More specific route must come first
 app.use("/api/super-admin", superAdminRoutes);
+app.use("/api/admin/students", adminStudentRoutes); // Admin students routes (read-only)
 app.use("/api/admin", adminRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/forms", formAnswerRoutes);

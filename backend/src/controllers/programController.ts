@@ -83,19 +83,23 @@ export const getOpsStudentPrograms = async (req: AuthRequest, res: Response): Pr
     const userId = req.user?.userId;
     const user = await User.findById(userId);
     
-    if (user?.role !== USER_ROLE.OPS) {
+    // Allow OPS, ADMIN, and COUNSELOR roles
+    if (!user || (user.role !== USER_ROLE.OPS && user.role !== USER_ROLE.ADMIN && user.role !== USER_ROLE.COUNSELOR)) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
       });
     }
 
-    const ops = await Ops.findOne({ userId });
-    if (!ops) {
-      return res.status(404).json({
-        success: false,
-        message: 'Ops record not found',
-      });
+    // OPS role verification (skip for ADMIN/COUNSELOR who are read-only)
+    if (user.role === USER_ROLE.OPS) {
+      const ops = await Ops.findOne({ userId });
+      if (!ops) {
+        return res.status(404).json({
+          success: false,
+          message: 'Ops record not found',
+        });
+      }
     }
 
     const { studentId } = req.params;
