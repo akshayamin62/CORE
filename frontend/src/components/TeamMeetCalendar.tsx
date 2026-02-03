@@ -182,8 +182,8 @@ export default function TeamMeetCalendar({
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
@@ -206,8 +206,8 @@ export default function TeamMeetCalendar({
       {!hideHeader && (
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
@@ -289,7 +289,7 @@ export default function TeamMeetCalendar({
                 onClick={() => handleViewChange('month')}
                 className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                   view === 'month'
-                    ? 'bg-pink-600 text-white'
+                    ? 'bg-blue-600 text-white'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
@@ -299,7 +299,7 @@ export default function TeamMeetCalendar({
                 onClick={() => handleViewChange('week')}
                 className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                   view === 'week'
-                    ? 'bg-pink-600 text-white'
+                    ? 'bg-blue-600 text-white'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
@@ -309,7 +309,7 @@ export default function TeamMeetCalendar({
                 onClick={() => handleViewChange('day')}
                 className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
                   view === 'day'
-                    ? 'bg-pink-600 text-white'
+                    ? 'bg-blue-600 text-white'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
@@ -321,7 +321,7 @@ export default function TeamMeetCalendar({
             <select
               value={currentMonth}
               onChange={handleMonthChange}
-              className="px-3 py-1.5 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+              className="px-3 py-1.5 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               {months.map((month, index) => (
                 <option key={month} value={index}>{month}</option>
@@ -331,7 +331,7 @@ export default function TeamMeetCalendar({
             <select
               value={currentYear}
               onChange={handleYearChange}
-              className="px-3 py-1.5 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+              className="px-3 py-1.5 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               {years.map((year) => (
                 <option key={year} value={year}>{year}</option>
@@ -340,7 +340,7 @@ export default function TeamMeetCalendar({
             
             <button
               onClick={() => handleNavigate(new Date())}
-              className="px-3 py-1.5 text-sm font-medium text-pink-600 bg-pink-50 border border-pink-200 rounded-lg hover:bg-pink-100 transition-colors"
+              className="px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
             >
               Today
             </button>

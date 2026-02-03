@@ -136,9 +136,9 @@ export default function TeamMeetSidebar({
     <div className={`bg-white overflow-hidden h-fit ${hideHeader ? '' : 'rounded-xl shadow-sm border border-gray-200'}`}>
       {/* Header - conditionally shown */}
       {!hideHeader && (
-        <div className="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-pink-50 to-rose-50 flex items-center justify-between">
+        <div className="px-4 py-3 border-b border-gray-200 bg-blue-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <h3 className="font-semibold text-gray-900">TeamMeet Overview</h3>
@@ -146,7 +146,7 @@ export default function TeamMeetSidebar({
           {onScheduleClick && (
             <button
               onClick={onScheduleClick}
-              className="text-sm font-medium text-pink-600 hover:text-pink-700 flex items-center gap-1"
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -189,9 +189,9 @@ export default function TeamMeetSidebar({
         {/* Waiting Confirmation Section */}
         <div className="p-4">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-2 h-2 rounded-full bg-pink-400"></div>
+            <div className="w-2 h-2 rounded-full bg-blue-400"></div>
             <h4 className="text-sm font-semibold text-gray-700">Awaiting Response</h4>
-            <span className="ml-auto bg-pink-100 text-pink-700 text-xs font-medium px-2 py-0.5 rounded-full">
+            <span className="ml-auto bg-pink-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">
               {waitingConfirmation.length}
             </span>
           </div>
