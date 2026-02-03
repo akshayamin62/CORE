@@ -16,6 +16,7 @@ import ksDocumentRoutes from "./routes/ksDocumentRoutes";
 import leadRoutes from "./routes/leadRoutes";
 import followUpRoutes from "./routes/followUpRoutes";
 import teamMeetRoutes from "./routes/teamMeetRoutes";
+import opsScheduleRoutes from "./routes/opsScheduleRoutes";
 
 // Import all models to register them with Mongoose
 import "./models/User";
@@ -39,6 +40,7 @@ import "./models/KSDocumentField";
 import "./models/Lead";
 import "./models/FollowUp";
 import "./models/TeamMeet";
+import "./models/OpsSchedule";
 
 dotenv.config();
 
@@ -62,6 +64,7 @@ app.use("/api/documents", documentRoutes);
 app.use("/api/ks-documents", ksDocumentRoutes);
 app.use("/api/follow-ups", followUpRoutes); // Follow-up routes
 app.use("/api/team-meets", teamMeetRoutes); // TeamMeet routes
+app.use("/api/ops-schedules", opsScheduleRoutes); // OPS Schedule routes
 app.use("/api", leadRoutes); // Lead routes (includes public, admin, counselor endpoints)
 
 // Basic test route

@@ -421,6 +421,42 @@ export const teamMeetAPI = {
   getCounselorTeamMeets: (counselorId: string) => api.get(`/team-meets/counselor/${counselorId}`),
 };
 
+// OPS Schedule API
+export const opsScheduleAPI = {
+  // Get all schedules for current OPS
+  getMySchedules: () => api.get('/ops-schedules'),
+  
+  // Get schedule summary (today, missed, tomorrow)
+  getSummary: () => api.get('/ops-schedules/summary'),
+  
+  // Get students assigned to current OPS
+  getMyStudents: () => api.get('/ops-schedules/students'),
+  
+  // Get single schedule by ID
+  getScheduleById: (scheduleId: string) => api.get(`/ops-schedules/${scheduleId}`),
+  
+  // Create new schedule
+  createSchedule: (data: {
+    studentId: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    description: string;
+  }) => api.post('/ops-schedules', data),
+  
+  // Update schedule
+  updateSchedule: (scheduleId: string, data: {
+    studentId?: string;
+    scheduledDate?: string;
+    scheduledTime?: string;
+    description?: string;
+    status?: string;
+    notes?: string;
+  }) => api.put(`/ops-schedules/${scheduleId}`, data),
+  
+  // Delete schedule
+  deleteSchedule: (scheduleId: string) => api.delete(`/ops-schedules/${scheduleId}`),
+};
+
 export default api;
 
 

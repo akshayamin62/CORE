@@ -157,7 +157,7 @@ export default function TeamMeetSidebar({
         </div>
       )}
 
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-gray-300\">
         {/* Pending Actions Section (Needs Response) */}
         <div className="p-4">
           <div className="flex items-center gap-2 mb-3">

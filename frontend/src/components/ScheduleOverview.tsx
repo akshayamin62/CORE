@@ -299,7 +299,7 @@ export default function ScheduleOverview({
         </div>
       )}
 
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-gray-300">
         {/* Today Section */}
         <div className="p-4">
           <div className="flex items-center gap-2 mb-3">

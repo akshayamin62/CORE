@@ -443,3 +443,52 @@ export interface TeamMeetAvailability {
     with: string;
   };
 }
+
+// OPS Schedule Types
+export enum OPS_SCHEDULE_STATUS {
+  SCHEDULED = 'SCHEDULED',
+  COMPLETED = 'COMPLETED',
+  MISSED = 'MISSED',
+}
+
+export interface OpsScheduleStudent {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export interface OpsSchedule {
+  _id: string;
+  opsId: string;
+  studentId?: OpsScheduleStudent | string | null; // Optional for "Me" tasks
+  scheduledDate: string;
+  scheduledTime: string;
+  description: string;
+  status: OPS_SCHEDULE_STATUS;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OpsScheduleSummary {
+  today: OpsSchedule[];
+  missed: OpsSchedule[];
+  tomorrow: OpsSchedule[];
+  counts: {
+    today: number;
+    missed: number;
+    tomorrow: number;
+    total: number;
+  };
+}
+
+export interface CreateOpsScheduleData {
+  studentId?: string | null; // Optional - null for "Me" tasks
+  scheduledDate: string;
+  scheduledTime: string;
+  description: string;
+  status?: OPS_SCHEDULE_STATUS;
+}

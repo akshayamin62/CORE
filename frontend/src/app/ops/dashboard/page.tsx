@@ -1,20 +1,55 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { authAPI } from '@/lib/api';
-import { User, USER_ROLE } from '@/types';
+import { authAPI, opsScheduleAPI } from '@/lib/api';
+import { User, USER_ROLE, OpsSchedule, OpsScheduleSummary, OpsScheduleStudent, CreateOpsScheduleData } from '@/types';
 import OpsLayout from '@/components/OpsLayout';
+import OpsScheduleCalendar from '@/components/OpsScheduleCalendar';
+import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
+import OpsScheduleSidebar from '@/components/OpsScheduleSidebar';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function OpsDashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Schedule states
+  const [schedules, setSchedules] = useState<OpsSchedule[]>([]);
+  const [summary, setSummary] = useState<OpsScheduleSummary>({ today: [], missed: [], tomorrow: [] });
+  const [students, setStudents] = useState<OpsScheduleStudent[]>([]);
+  const [selectedSchedule, setSelectedSchedule] = useState<OpsSchedule | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showFormPanel, setShowFormPanel] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
 
   useEffect(() => {
     checkAuth();
   }, []);
+
+  // Fetch schedule data
+  const fetchScheduleData = useCallback(async () => {
+    try {
+      const [schedulesRes, summaryRes, studentsRes] = await Promise.all([
+        opsScheduleAPI.getMySchedules(),
+        opsScheduleAPI.getSummary(),
+        opsScheduleAPI.getMyStudents(),
+      ]);
+      
+      setSchedules(schedulesRes.data.data.schedules || []);
+      setSummary(summaryRes.data.data || { today: [], missed: [], tomorrow: [] });
+      setStudents(studentsRes.data.data.students || []);
+    } catch (error) {
+      console.error('Error fetching schedule data:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchScheduleData();
+    }
+  }, [user, fetchScheduleData]);
 
   const checkAuth = async () => {
     try {
@@ -34,6 +69,78 @@ export default function OpsDashboardPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Handle schedule selection from calendar or sidebar
+  const handleScheduleSelect = (schedule: OpsSchedule) => {
+    setSelectedSchedule(schedule);
+    setSelectedDate(null);
+    setShowFormPanel(true);
+  };
+
+  // Handle date selection from calendar
+  const handleDateSelect = (date: Date) => {
+    setSelectedSchedule(null);
+    setSelectedDate(date);
+    setShowFormPanel(true);
+  };
+
+  // Handle creating new schedule
+  const handleCreateNew = () => {
+    setSelectedSchedule(null);
+    setSelectedDate(new Date());
+    setShowFormPanel(true);
+  };
+
+  // Handle form submission
+  const handleFormSubmit = async (data: CreateOpsScheduleData) => {
+    setFormLoading(true);
+    try {
+      if (selectedSchedule) {
+        // Update existing schedule
+        await opsScheduleAPI.updateSchedule(selectedSchedule._id, data);
+        toast.success('Schedule updated successfully');
+      } else {
+        // Create new schedule
+        await opsScheduleAPI.createSchedule(data);
+        toast.success('Schedule created successfully');
+      }
+      
+      setShowFormPanel(false);
+      setSelectedSchedule(null);
+      setSelectedDate(null);
+      await fetchScheduleData();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to save schedule');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  // Handle schedule deletion
+  const handleDelete = async () => {
+    if (!selectedSchedule) return;
+    
+    setFormLoading(true);
+    try {
+      await opsScheduleAPI.deleteSchedule(selectedSchedule._id);
+      toast.success('Schedule deleted successfully');
+      
+      setShowFormPanel(false);
+      setSelectedSchedule(null);
+      await fetchScheduleData();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete schedule');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  // Handle cancel form
+  const handleCancel = () => {
+    setShowFormPanel(false);
+    setSelectedSchedule(null);
+    setSelectedDate(null);
   };
 
   if (loading) {
@@ -66,7 +173,7 @@ export default function OpsDashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             <StatCard
               title="Assigned Students"
-              value="0"
+              value={students.length.toString()}
               icon={
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -75,26 +182,58 @@ export default function OpsDashboardPage() {
               color="blue"
             />
             <StatCard
-              title="Active Applications"
-              value="0"
+              title="Today's Schedules"
+              value={summary.today.length.toString()}
               icon={
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               }
               color="green"
             />
             <StatCard
-              title="Pending Reviews"
-              value="0"
+              title="Missed Schedules"
+              value={summary.missed.length.toString()}
               icon={
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               }
               color="yellow"
             />
           </div>
+
+          {/* Calendar Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            {/* Calendar - Takes 3 columns on left */}
+            <div className="lg:col-span-3">
+              <OpsScheduleCalendar
+                schedules={schedules}
+                onScheduleSelect={handleScheduleSelect}
+                onDateSelect={handleDateSelect}
+              />
+            </div>
+
+            {/* Sidebar - Takes 1 column on right */}
+            <div className="lg:col-span-1">
+              <OpsScheduleSidebar
+                summary={summary}
+                onScheduleClick={handleScheduleSelect}
+              />
+            </div>
+          </div>
+
+      {/* Form Panel - Slide-in from left (overlay) */}
+      <OpsScheduleFormPanel
+        schedule={selectedSchedule}
+        students={students}
+        selectedDate={selectedDate}
+        isOpen={showFormPanel}
+        onClose={handleCancel}
+        onSubmit={handleFormSubmit}
+        onDelete={selectedSchedule ? handleDelete : undefined}
+        isLoading={formLoading}
+      />
 
           {/* Quick Actions */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
