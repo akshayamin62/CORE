@@ -21,6 +21,22 @@ interface StudentData {
     createdAt: string;
   };
   mobileNumber?: string;
+  adminId?: {
+    _id: string;
+    userId: {
+      _id: string;
+      name: string;
+      email: string;
+    };
+  };
+  counselorId?: {
+    _id: string;
+    userId: {
+      _id: string;
+      name: string;
+      email: string;
+    };
+  };
   registrationCount: number;
   createdAt: string;
 }
@@ -146,7 +162,7 @@ export default function SuperAdminStudentsPage() {
                       Email
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Mobile
+                      Admin
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       Registrations
@@ -184,7 +200,7 @@ export default function SuperAdminStudentsPage() {
                           {student.user.email}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {student.mobileNumber || 'N/A'}
+                          {student.adminId?.userId?.name || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">

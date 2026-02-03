@@ -457,6 +457,28 @@ export const opsScheduleAPI = {
   deleteSchedule: (scheduleId: string) => api.delete(`/ops-schedules/${scheduleId}`),
 };
 
+// Lead Student Conversion API
+export const leadConversionAPI = {
+  // Request conversion (Counselor)
+  requestConversion: (leadId: string) => api.post(`/lead-conversions/request/${leadId}`),
+  
+  // Get pending conversions (Admin)
+  getPendingConversions: () => api.get('/lead-conversions/pending'),
+  
+  // Approve conversion (Admin)
+  approveConversion: (conversionId: string) => api.post(`/lead-conversions/approve/${conversionId}`),
+  
+  // Reject conversion (Admin)
+  rejectConversion: (conversionId: string, reason?: string) => 
+    api.post(`/lead-conversions/reject/${conversionId}`, { reason }),
+  
+  // Get conversion history for a lead
+  getConversionHistory: (leadId: string) => api.get(`/lead-conversions/history/${leadId}`),
+  
+  // Get all conversions (Super Admin)
+  getAllConversions: (status?: string) => api.get('/lead-conversions/all', { params: { status } }),
+};
+
 export default api;
 
 

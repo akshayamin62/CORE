@@ -364,6 +364,22 @@ export const updateLeadStage = async (req: AuthRequest, res: Response): Promise<
       });
     }
 
+    // If lead is already converted and approved, stage is locked
+    if (lead.stage === LEAD_STAGE.CONVERTED && lead.conversionStatus === 'APPROVED') {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot change stage. This lead has been converted to a student.",
+      });
+    }
+
+    // Prevent direct change to CONVERTED stage - must use conversion flow
+    if (stage === LEAD_STAGE.CONVERTED) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot directly change to 'Converted to Student'. Please use the conversion request flow.",
+      });
+    }
+
     // Check access
     if (userRole === USER_ROLE.ADMIN) {
       if (lead.adminId.toString() !== userId) {

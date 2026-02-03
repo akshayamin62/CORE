@@ -26,6 +26,8 @@ export interface ILead extends Document {
   assignedCounselorId?: mongoose.Types.ObjectId; // Reference to Counselor document
   stage: LEAD_STAGE;
   source: string;
+  conversionRequestId?: mongoose.Types.ObjectId; // Reference to LeadStudentConversion
+  conversionStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -82,6 +84,16 @@ const leadSchema = new Schema<ILead>(
     source: {
       type: String,
       default: "Enquiry Form",
+    },
+    conversionRequestId: {
+      type: Schema.Types.ObjectId,
+      ref: "LeadStudentConversion",
+      default: null,
+    },
+    conversionStatus: {
+      type: String,
+      enum: ['PENDING', 'APPROVED', 'REJECTED'],
+      default: null,
     },
   },
   { timestamps: true }

@@ -22,6 +22,22 @@ interface StudentDetails {
     createdAt: string;
   };
   mobileNumber?: string;
+  adminId?: {
+    _id: string;
+    userId: {
+      _id: string;
+      name: string;
+      email: string;
+    };
+  };
+  counselorId?: {
+    _id: string;
+    userId: {
+      _id: string;
+      name: string;
+      email: string;
+    };
+  };
   createdAt: string;
 }
 
@@ -190,6 +206,28 @@ export default function StudentDetailPage() {
                 <p className="font-medium text-gray-900">
                   {new Date(student.createdAt).toLocaleDateString()}
                 </p>
+              </div>
+            </div>
+
+            {/* Admin and Counselor Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 mt-4 border-t border-gray-200">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Admin</p>
+                <p className="font-medium text-gray-900">
+                  {student.adminId?.userId?.name || 'Not assigned'}
+                </p>
+                {student.adminId?.userId?.email && (
+                  <p className="text-sm text-gray-500">{student.adminId.userId.email}</p>
+                )}
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Counselor</p>
+                <p className="font-medium text-gray-900">
+                  {student.counselorId?.userId?.name || 'Not assigned'}
+                </p>
+                {student.counselorId?.userId?.email && (
+                  <p className="text-sm text-gray-500">{student.counselorId.userId.email}</p>
+                )}
               </div>
             </div>
           </div>

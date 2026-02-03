@@ -276,7 +276,7 @@ export const getCounselorFollowUps = async (req: AuthRequest, res: Response): Pr
     const followUps = await FollowUp.find({
       counselorId: counselorId,
     })
-      .populate('leadId', 'name email mobileNumber city serviceTypes stage')
+      .populate('leadId', 'name email mobileNumber city serviceTypes stage conversionStatus')
       .sort({ scheduledDate: 1, scheduledTime: 1 });
 
     return res.status(200).json({
@@ -333,7 +333,7 @@ export const getCounselorFollowUpSummary = async (req: AuthRequest, res: Respons
       counselorId: counselorId,
       scheduledDate: { $gte: today, $lt: tomorrow },
     })
-      .populate('leadId', 'name email mobileNumber city serviceTypes stage')
+      .populate('leadId', 'name email mobileNumber city serviceTypes stage conversionStatus')
       .sort({ scheduledTime: 1 });
 
     // Get missed follow-ups
@@ -342,7 +342,7 @@ export const getCounselorFollowUpSummary = async (req: AuthRequest, res: Respons
       scheduledDate: { $lt: today },
       status: FOLLOWUP_STATUS.SCHEDULED,
     })
-      .populate('leadId', 'name email mobileNumber city serviceTypes stage')
+      .populate('leadId', 'name email mobileNumber city serviceTypes stage conversionStatus')
       .sort({ scheduledDate: -1 });
 
     // Get upcoming follow-ups
@@ -351,7 +351,7 @@ export const getCounselorFollowUpSummary = async (req: AuthRequest, res: Respons
       scheduledDate: { $gt: tomorrow },
       status: FOLLOWUP_STATUS.SCHEDULED,
     })
-      .populate('leadId', 'name email mobileNumber city serviceTypes stage')
+      .populate('leadId', 'name email mobileNumber city serviceTypes stage conversionStatus')
       .sort({ scheduledDate: 1, scheduledTime: 1 })
       .limit(10);
 

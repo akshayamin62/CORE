@@ -205,4 +205,85 @@ export const sendDocumentRejectionEmail = async (
   });
 };
 
+/**
+ * Send student account creation email
+ */
+export const sendStudentAccountCreatedEmail = async (
+  email: string,
+  name: string,
+  loginUrl: string = 'http://localhost:3000/'
+): Promise<void> => {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Welcome to CORE - Your Account is Ready!</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; margin: 0; padding: 0;">
+      <div style="max-width: 600px; margin: 20px auto; background-color: white; padding: 30px; border: 1px solid #ddd; border-radius: 8px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="color: #2563eb; margin-bottom: 10px;">🎉 Welcome to CORE!</h1>
+        </div>
+        
+        <p style="font-size: 16px;">Hi ${name},</p>
+        
+        <p style="font-size: 16px;">Great news! Your student account has been successfully created.</p>
+        
+        <div style="background-color: #f0f9ff; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; font-weight: bold;">Your Login Email:</p>
+          <p style="margin: 5px 0; font-size: 18px; color: #2563eb;">${email}</p>
+        </div>
+        
+        <p style="font-size: 16px;">You can now access your account and start your journey with us!</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${loginUrl}" style="display: inline-block; background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">Click Here to Login</a>
+        </div>
+        
+        <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
+          <p style="margin: 0; font-size: 14px; color: #92400e;">
+            <strong>Note:</strong> You will receive a one-time password (OTP) on this email when you try to login.
+          </p>
+        </div>
+        
+        <p style="font-size: 14px; color: #666;">If you have any questions, feel free to reach out to your counselor or contact our support team.</p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+        
+        <p style="color: #999; font-size: 12px; text-align: center;">
+          This is an automated message. Please do not reply to this email.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `
+    Welcome to CORE - Your Account is Ready!
+    
+    Hi ${name},
+    
+    Great news! Your student account has been successfully created.
+    
+    Your Login Email: ${email}
+    
+    You can now access your account and start your journey with us!
+    
+    Click here to login: ${loginUrl}
+    
+    Note: You will receive a one-time password (OTP) on this email when you try to login.
+    
+    If you have any questions, feel free to reach out to your counselor or contact our support team.
+  `;
+
+  await sendEmail({
+    to: email,
+    subject: 'Welcome to CORE - Your Account is Ready!',
+    html,
+    text,
+  });
+};
+
 

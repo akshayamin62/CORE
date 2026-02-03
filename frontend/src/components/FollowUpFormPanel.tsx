@@ -175,6 +175,9 @@ export default function FollowUpFormPanel({
   const isPastFollowUp = followUpData && new Date(followUpData.scheduledDate) < new Date() && 
     new Date(followUpData.scheduledDate).toDateString() !== new Date().toDateString();
   
+  // Check if lead is converted and approved - stage is locked
+  const isLeadConverted = lead?.stage === LEAD_STAGE.CONVERTED && lead?.conversionStatus === 'APPROVED';
+  
   // Check if follow-up is locked
   // A follow-up is locked when its followUpNumber < totalFollowUpsForLead (not the latest)
   const currentFollowUpNumber = followUpData?.followUpNumber || 1;
@@ -185,6 +188,11 @@ export default function FollowUpFormPanel({
   // 1. Not the latest follow-up (isNotLatestFollowUp)
   // 2. Or in admin readOnly mode
   const isFullyLocked = isNotLatestFollowUp || readOnly;
+  
+  // Stage is locked when:
+  // 1. All fields are locked (isFullyLocked)
+  // 2. OR lead is converted and approved (isLeadConverted)
+  const isStageLocked = isFullyLocked || isLeadConverted;
 
   return (
     <>
@@ -314,7 +322,7 @@ export default function FollowUpFormPanel({
                 <select
                   value={stageChangedTo}
                   onChange={(e) => setStageChangedTo(e.target.value)}
-                  disabled={isFullyLocked}
+                  disabled={isStageLocked}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">Keep current ({currentStage})</option>
@@ -322,9 +330,18 @@ export default function FollowUpFormPanel({
                   <option value={LEAD_STAGE.HOT}>Hot</option>
                   <option value={LEAD_STAGE.WARM}>Warm</option>
                   <option value={LEAD_STAGE.COLD}>Cold</option>
-                  <option value={LEAD_STAGE.CONVERTED}>Converted to Student</option>
                   <option value={LEAD_STAGE.CLOSED}>Closed</option>
                 </select>
+                {isLeadConverted ? (
+                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Stage locked - Lead converted to student
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500 mt-1">To convert to student, use the conversion request on the lead detail page</p>
+                )}
               </div>
 
               {/* Notes - Compact */}

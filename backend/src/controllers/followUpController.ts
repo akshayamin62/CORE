@@ -187,7 +187,7 @@ export const createFollowUp = async (
     await followUp.save();
 
     // Populate lead info for response
-    await followUp.populate("leadId", "name email mobileNumber city serviceTypes stage");
+    await followUp.populate("leadId", "name email mobileNumber city serviceTypes stage conversionStatus");
 
     return res.status(201).json({
       success: true,
@@ -237,7 +237,7 @@ export const getCounselorFollowUps = async (
     }
 
     const followUps = await FollowUp.find(filter)
-      .populate("leadId", "name email mobileNumber city serviceTypes stage")
+      .populate("leadId", "name email mobileNumber city serviceTypes stage conversionStatus")
       .sort({ scheduledDate: 1, scheduledTime: 1 });
 
     return res.status(200).json({
@@ -283,7 +283,7 @@ export const getFollowUpSummary = async (
       counselorId: counselor._id,
       scheduledDate: { $gte: todayStart, $lte: todayEnd },
     })
-      .populate("leadId", "name email mobileNumber city serviceTypes stage")
+      .populate("leadId", "name email mobileNumber city serviceTypes stage conversionStatus")
       .sort({ scheduledTime: 1 });
 
     // Missed follow-ups (past date + status still SCHEDULED)
@@ -292,7 +292,7 @@ export const getFollowUpSummary = async (
       scheduledDate: { $lt: todayStart },
       status: FOLLOWUP_STATUS.SCHEDULED,
     })
-      .populate("leadId", "name email mobileNumber city serviceTypes stage")
+      .populate("leadId", "name email mobileNumber city serviceTypes stage conversionStatus")
       .sort({ scheduledDate: -1 });
 
     // Upcoming (tomorrow only)
@@ -301,7 +301,7 @@ export const getFollowUpSummary = async (
       scheduledDate: { $gte: tomorrowStart, $lte: tomorrowEnd },
       status: FOLLOWUP_STATUS.SCHEDULED,
     })
-      .populate("leadId", "name email mobileNumber city serviceTypes stage")
+      .populate("leadId", "name email mobileNumber city serviceTypes stage conversionStatus")
       .sort({ scheduledTime: 1 });
 
     return res.status(200).json({
@@ -343,7 +343,7 @@ export const getFollowUpById = async (
     // Admin can access any follow-up
     if (userRole === USER_ROLE.ADMIN) {
       followUp = await FollowUp.findById(followUpId)
-        .populate("leadId", "name email mobileNumber city serviceTypes stage");
+        .populate("leadId", "name email mobileNumber city serviceTypes stage conversionStatus");
     } else {
       const counselor = await Counselor.findOne({ userId });
       if (!counselor) {
@@ -356,7 +356,7 @@ export const getFollowUpById = async (
       followUp = await FollowUp.findOne({
         _id: followUpId,
         counselorId: counselor._id,
-      }).populate("leadId", "name email mobileNumber city serviceTypes stage");
+      }).populate("leadId", "name email mobileNumber city serviceTypes stage conversionStatus");
     }
 
     if (!followUp) {
@@ -580,11 +580,11 @@ export const updateFollowUp = async (
       });
 
       await newFollowUp.save();
-      await newFollowUp.populate("leadId", "name email mobileNumber city serviceTypes stage");
+      await newFollowUp.populate("leadId", "name email mobileNumber city serviceTypes stage conversionStatus");
     }
 
     // Populate and return updated follow-up
-    await followUp.populate("leadId", "name email mobileNumber city serviceTypes stage");
+    await followUp.populate("leadId", "name email mobileNumber city serviceTypes stage conversionStatus");
 
     return res.status(200).json({
       success: true,

@@ -22,6 +22,22 @@ interface StudentDetails {
     createdAt: string;
   };
   mobileNumber?: string;
+  adminId?: {
+    _id: string;
+    userId: {
+      _id: string;
+      name: string;
+      email: string;
+    };
+  };
+  counselorId?: {
+    _id: string;
+    userId: {
+      _id: string;
+      name: string;
+      email: string;
+    };
+  };
   createdAt: string;
 }
 
@@ -275,7 +291,7 @@ export default function StudentDetailPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Mobile Number</p>
                 <p className="font-medium text-gray-900">
@@ -283,8 +299,16 @@ export default function StudentDetailPage() {
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Role</p>
-                <p className="font-medium text-gray-900">{student.userId.role}</p>
+                <p className="text-sm text-gray-600 mb-1">Admin</p>
+                <p className="font-medium text-gray-900">
+                  {student.adminId?.userId?.name || 'N/A'}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Counselor</p>
+                <p className="font-medium text-gray-900">
+                  {student.counselorId?.userId?.name || 'N/A'}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Joined Date</p>

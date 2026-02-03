@@ -274,6 +274,8 @@ export interface Lead {
   city: string;
   serviceTypes: SERVICE_TYPE[];
   stage: LEAD_STAGE;
+  conversionRequestId?: string;
+  conversionStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;
   updatedAt: string;
 }
@@ -491,4 +493,73 @@ export interface CreateOpsScheduleData {
   scheduledTime: string;
   description: string;
   status?: OPS_SCHEDULE_STATUS;
+}
+
+// Lead Student Conversion Types
+export enum CONVERSION_STATUS {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export interface LeadStudentConversion {
+  _id: string;
+  leadId: Lead | string;
+  requestedBy: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  adminId: {
+    _id: string;
+    userId: {
+      _id: string;
+      name: string;
+      email: string;
+    };
+  };
+  status: CONVERSION_STATUS;
+  rejectionReason?: string;
+  approvedBy?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  approvedAt?: string;
+  rejectedBy?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  rejectedAt?: string;
+  createdStudentId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Extended Student type with admin and counselor info
+export interface StudentWithDetails extends Student {
+  adminId?: {
+    _id: string;
+    userId: {
+      _id: string;
+      name: string;
+      email: string;
+    };
+  };
+  counselorId?: {
+    _id: string;
+    userId: {
+      _id: string;
+      name: string;
+      email: string;
+    };
+  };
+  convertedFromLeadId?: string;
+  conversionDate?: string;
+  user?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
 }

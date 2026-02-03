@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { authAPI, leadAPI } from '@/lib/api';
+import { authAPI, leadAPI, leadConversionAPI } from '@/lib/api';
 import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
@@ -28,6 +28,13 @@ export default function AdminLeadsPage() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [selectedCounselorId, setSelectedCounselorId] = useState<string>('');
   const [assigning, setAssigning] = useState(false);
+
+  // Conversion approval
+  const [approving, setApproving] = useState<string | null>(null);
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectLeadId, setRejectLeadId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejecting, setRejecting] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -69,7 +76,14 @@ export default function AdminLeadsPage() {
       if (counselorFilter) params.assignedCounselorId = counselorFilter;
 
       const response = await leadAPI.getAdminLeads(params);
-      setLeads(response.data.data.leads);
+      const fetchedLeads = response.data.data.leads;
+      console.log('📋 Fetched leads sample:', fetchedLeads.slice(0, 2).map((l: any) => ({
+        id: l._id,
+        name: l.name,
+        conversionStatus: l.conversionStatus,
+        conversionRequestId: l.conversionRequestId
+      })));
+      setLeads(fetchedLeads);
     } catch (error) {
       console.error('Error fetching leads:', error);
       toast.error('Failed to fetch leads');
@@ -145,6 +159,57 @@ export default function AdminLeadsPage() {
       setSelectedStageCard(stage);
       setStageFilter(stage);
     }
+  };
+
+  // Approve conversion
+  const handleApproveConversion = async (lead: Lead) => {
+    if (!lead.conversionRequestId) {
+      toast.error('No conversion request found for this lead');
+      console.error('❌ Missing conversionRequestId:', lead);
+      return;
+    }
+    
+    try {
+      setApproving(lead._id);
+      console.log('🚀 Approving conversion:', { leadId: lead._id, conversionRequestId: lead.conversionRequestId });
+      await leadConversionAPI.approveConversion(lead.conversionRequestId);
+      toast.success(`${lead.name} has been converted to a student`);
+      fetchLeads();
+    } catch (error: any) {
+      console.error('❌ Approval error:', error);
+      console.error('❌ Error response:', error.response?.data);
+      toast.error(error.response?.data?.message || 'Failed to approve conversion');
+    } finally {
+      setApproving(null);
+    }
+  };
+
+  // Reject conversion
+  const handleRejectConversion = async () => {
+    if (!rejectLeadId) return;
+    
+    const lead = leads.find(l => l._id === rejectLeadId);
+    if (!lead?.conversionRequestId) return;
+    
+    try {
+      setRejecting(true);
+      await leadConversionAPI.rejectConversion(lead.conversionRequestId, rejectReason);
+      toast.success('Conversion request rejected');
+      setRejectModalOpen(false);
+      setRejectLeadId(null);
+      setRejectReason('');
+      fetchLeads();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to reject conversion');
+    } finally {
+      setRejecting(false);
+    }
+  };
+
+  const openRejectModal = (leadId: string) => {
+    setRejectLeadId(leadId);
+    setRejectReason('');
+    setRejectModalOpen(true);
   };
 
   // Clear the stage card filter
@@ -501,12 +566,31 @@ export default function AdminLeadsPage() {
                           </span>
                         </td>
                         <td className="px-4 py-4 text-center">
-                          <button
-                            onClick={() => router.push(`/admin/leads/${lead._id}`)}
-                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-                          >
-                            View Details
-                          </button>
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => router.push(`/admin/leads/${lead._id}`)}
+                              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                            >
+                              View Details
+                            </button>
+                            {lead.conversionStatus === 'PENDING' && (
+                              <>
+                                <button
+                                  onClick={() => handleApproveConversion(lead)}
+                                  disabled={approving === lead._id}
+                                  className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                  {approving === lead._id ? 'Approving...' : 'Approve'}
+                                </button>
+                                <button
+                                  onClick={() => openRejectModal(lead._id)}
+                                  className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -560,6 +644,52 @@ export default function AdminLeadsPage() {
                 className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
               >
                 {assigning ? 'Assigning...' : 'Assign'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rejection Modal */}
+      {rejectModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Reject Conversion Request
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Are you sure you want to reject this lead conversion request?
+            </p>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reason for Rejection (Optional)
+              </label>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Enter reason for rejection..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 h-24 resize-none"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setRejectModalOpen(false);
+                  setRejectLeadId(null);
+                  setRejectReason('');
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRejectConversion}
+                disabled={rejecting}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {rejecting ? 'Rejecting...' : 'Reject'}
               </button>
             </div>
           </div>

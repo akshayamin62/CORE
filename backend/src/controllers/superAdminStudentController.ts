@@ -3,6 +3,8 @@ import { AuthRequest } from '../middleware/auth';
 import Student from '../models/Student';
 import User from '../models/User';
 import Ops from '../models/Ops';
+// import Admin from '../models/Admin';
+// import Counselor from '../models/Counselor';
 import StudentServiceRegistration from '../models/StudentServiceRegistration';
 import StudentFormAnswer from '../models/StudentFormAnswer';
 import { USER_ROLE } from '../types/roles';
@@ -59,6 +61,20 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
     
     const students = await Student.find(studentQuery)
       .populate('userId', 'name email isVerified isActive createdAt')
+      .populate({
+        path: 'adminId',
+        populate: {
+          path: 'userId',
+          select: 'name email'
+        }
+      })
+      .populate({
+        path: 'counselorId',
+        populate: {
+          path: 'userId',
+          select: 'name email'
+        }
+      })
       .sort({ createdAt: -1 });
 
     // Get registration count for each student
@@ -72,6 +88,8 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
           _id: student._id,
           user: student.userId,
           mobileNumber: student.mobileNumber,
+          adminId: student.adminId,
+          counselorId: student.counselorId,
           registrationCount,
           createdAt: student.createdAt,
         };
@@ -108,6 +126,20 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
 
     const student = await Student.findById(studentId)
       .populate('userId', 'name email role isVerified isActive createdAt')
+      .populate({
+        path: 'adminId',
+        populate: {
+          path: 'userId',
+          select: 'name email'
+        }
+      })
+      .populate({
+        path: 'counselorId',
+        populate: {
+          path: 'userId',
+          select: 'name email'
+        }
+      })
       .lean()
       .exec();
 

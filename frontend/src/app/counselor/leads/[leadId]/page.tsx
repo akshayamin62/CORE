@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { authAPI, leadAPI, followUpAPI } from '@/lib/api';
+import { authAPI, leadAPI, followUpAPI, leadConversionAPI } from '@/lib/api';
 import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE, FollowUp, FOLLOWUP_STATUS } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -21,6 +21,9 @@ export default function CounselorLeadDetailPage() {
   
   // Stage update
   const [updatingStage, setUpdatingStage] = useState(false);
+  
+  // Conversion request
+  const [requestingConversion, setRequestingConversion] = useState(false);
   
   // Follow-ups
   const [followUps, setFollowUps] = useState<FollowUp[]>([]);
@@ -140,6 +143,12 @@ export default function CounselorLeadDetailPage() {
 
   const handleStageChange = async (newStage: string) => {
     if (!lead || lead.stage === newStage) return;
+    
+    // Prevent changing to CONVERTED - must use conversion flow
+    if (newStage === LEAD_STAGE.CONVERTED) {
+      toast.error('Please use the "Request Conversion" button to convert this lead to a student.');
+      return;
+    }
 
     try {
       setUpdatingStage(true);
@@ -150,6 +159,21 @@ export default function CounselorLeadDetailPage() {
       toast.error(error.response?.data?.message || 'Failed to update stage');
     } finally {
       setUpdatingStage(false);
+    }
+  };
+
+  const handleRequestConversion = async () => {
+    if (!lead) return;
+    
+    try {
+      setRequestingConversion(true);
+      await leadConversionAPI.requestConversion(lead._id);
+      toast.success('Conversion request submitted! Waiting for admin approval.');
+      fetchLead();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to request conversion');
+    } finally {
+      setRequestingConversion(false);
     }
   };
 
@@ -413,30 +437,114 @@ export default function CounselorLeadDetailPage() {
             {/* Stage Card */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
               <h3 className="text-sm font-bold text-gray-900 mb-2">Stage</h3>
-              <div className="relative">
-                <select
-                  value={lead.stage}
-                  onChange={(e) => handleStageChange(e.target.value)}
-                  disabled={updatingStage}
-                  className={`w-full px-3 py-2 rounded-lg border-2 text-sm font-medium appearance-none cursor-pointer focus:ring-2 focus:ring-teal-500 focus:outline-none disabled:opacity-50 ${getStageColor(lead.stage)}`}
-                  style={{ backgroundImage: 'none' }}
-                >
-                  {Object.values(LEAD_STAGE).map((stage) => (
-                    <option key={stage} value={stage} className="bg-white text-gray-900">{stage}</option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                  {updatingStage ? (
-                    <svg className="w-4 h-4 animate-spin text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              
+              {/* If already converted and approved - show locked state */}
+              {lead.stage === LEAD_STAGE.CONVERTED && lead.conversionStatus === 'APPROVED' ? (
+                <div className={`w-full px-3 py-2 rounded-lg border-2 text-sm font-medium ${getStageColor(lead.stage)}`}>
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                  ) : (
-                    <svg className="w-4 h-4 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  )}
+                    {lead.stage}
+                  </div>
+                  <p className="text-xs mt-1 opacity-75">Stage locked - Lead converted to student</p>
                 </div>
-              </div>
+              ) : lead.conversionStatus === 'PENDING' ? (
+                // Pending conversion - show status
+                <div className="w-full px-3 py-2 rounded-lg border-2 text-sm font-medium bg-yellow-100 text-yellow-800 border-yellow-200">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Conversion Pending
+                  </div>
+                  <p className="text-xs mt-1">Waiting for admin approval</p>
+                </div>
+              ) : lead.conversionStatus === 'REJECTED' ? (
+                // Rejected conversion - allow retry
+                <div className="space-y-2">
+                  <div className="w-full px-3 py-2 rounded-lg border-2 text-sm font-medium bg-red-100 text-red-800 border-red-200">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Conversion Rejected
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={lead.stage}
+                      onChange={(e) => handleStageChange(e.target.value)}
+                      disabled={updatingStage}
+                      className={`w-full px-3 py-2 rounded-lg border-2 text-sm font-medium appearance-none cursor-pointer focus:ring-2 focus:ring-teal-500 focus:outline-none disabled:opacity-50 ${getStageColor(lead.stage)}`}
+                    >
+                      {Object.values(LEAD_STAGE).filter(s => s !== LEAD_STAGE.CONVERTED).map((stage) => (
+                        <option key={stage} value={stage} className="bg-white text-gray-900">{stage}</option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                      <svg className="w-4 h-4 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleRequestConversion}
+                    disabled={requestingConversion}
+                    className="w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium disabled:opacity-50"
+                  >
+                    {requestingConversion ? 'Requesting...' : 'Request Conversion Again'}
+                  </button>
+                </div>
+              ) : (
+                // Normal state - show dropdown and conversion button
+                <div className="space-y-2">
+                  <div className="relative">
+                    <select
+                      value={lead.stage}
+                      onChange={(e) => handleStageChange(e.target.value)}
+                      disabled={updatingStage}
+                      className={`w-full px-3 py-2 rounded-lg border-2 text-sm font-medium appearance-none cursor-pointer focus:ring-2 focus:ring-teal-500 focus:outline-none disabled:opacity-50 ${getStageColor(lead.stage)}`}
+                    >
+                      {Object.values(LEAD_STAGE).filter(s => s !== LEAD_STAGE.CONVERTED).map((stage) => (
+                        <option key={stage} value={stage} className="bg-white text-gray-900">{stage}</option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                      {updatingStage ? (
+                        <svg className="w-4 h-4 animate-spin text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleRequestConversion}
+                    disabled={requestingConversion}
+                    className="w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {requestingConversion ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Requesting...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Request Conversion to Student
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Services Interested Card */}
