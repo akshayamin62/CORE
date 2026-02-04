@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { documentAPI } from '@/lib/documentAPI';
-import { ksDocumentAPI } from '@/lib/ksDocumentAPI';
+import { coreDocumentAPI } from '@/lib/coreDocumentAPI';
 import { YOUR_DOCUMENTS_CONFIG } from '@/config/yourDocumentsConfig';
 import { StudentDocument, DocumentCategory, DocumentStatus } from '@/types';
 import toast from 'react-hot-toast';
@@ -15,7 +15,7 @@ interface DocumentUploadSectionProps {
   sectionTitle: string;
 }
 
-interface KSDocumentField {
+interface COREDocumentField {
   _id: string;
   documentKey: string;
   documentName: string;
@@ -37,7 +37,7 @@ export default function DocumentUploadSection({
   const canUpload = ['STUDENT', 'OPS', 'SUPER_ADMIN'].includes(userRole);
   
   const [documents, setDocuments] = useState<StudentDocument[]>([]);
-  const [ksDocumentFields, setKSDocumentFields] = useState<KSDocumentField[]>([]);
+  const [coreDocumentFields, setCOREDocumentFields] = useState<COREDocumentField[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState<string | null>(null);
   const [showAddFieldModal, setShowAddFieldModal] = useState(false);
@@ -52,7 +52,7 @@ export default function DocumentUploadSection({
   const [customDocumentName, setCustomDocumentName] = useState('');
 
   const isYourDocumentsSection = sectionTitle.toLowerCase().includes('your');
-  const isKSDocumentsSection = sectionTitle.toLowerCase().includes('ks');
+  const isCOREDocumentsSection = sectionTitle.toLowerCase().includes('core');
 
   useEffect(() => {
     fetchData();
@@ -68,8 +68,8 @@ export default function DocumentUploadSection({
   const fetchData = async () => {
     try {
       setLoading(true);
-      if (isKSDocumentsSection) {
-        await Promise.all([fetchKSDocumentFields(), fetchDocuments()]);
+      if (isCOREDocumentsSection) {
+        await Promise.all([fetchCOREDocumentFields(), fetchDocuments()]);
       } else {
         await fetchDocuments();
       }
@@ -87,13 +87,13 @@ export default function DocumentUploadSection({
     }
   };
 
-  const fetchKSDocumentFields = async () => {
+  const fetchCOREDocumentFields = async () => {
     try {
-      const response = await ksDocumentAPI.getKSDocumentFields(registrationId);
+      const response = await coreDocumentAPI.getCOREDocumentFields(registrationId);
       const fields = response.data.data.fields || [];
-      setKSDocumentFields(fields);
+      setCOREDocumentFields(fields);
     } catch (error: any) {
-      console.error('Failed to fetch KS document fields:', error);
+      console.error('Failed to fetch CORE document fields:', error);
       throw error;
     }
   };
@@ -254,7 +254,7 @@ export default function DocumentUploadSection({
     }
   };
 
-  const handleAddKSDocumentField = async () => {
+  const handleAddCOREDocumentField = async () => {
     if (!newFieldName.trim()) {
       toast.error('Please enter a document name');
       return;
@@ -262,7 +262,7 @@ export default function DocumentUploadSection({
 
     try {
       // Always set category as SECONDARY and required as false
-      await ksDocumentAPI.addKSDocumentField(
+      await coreDocumentAPI.addCOREDocumentField(
         registrationId,
         newFieldName,
         DocumentCategory.SECONDARY,
@@ -270,18 +270,18 @@ export default function DocumentUploadSection({
         newFieldHelpText || undefined,
         newFieldAllowMultiple
       );
-      toast.success('KS document field added successfully');
+      toast.success('CORE document field added successfully');
       setShowAddFieldModal(false);
       setNewFieldName('');
       setNewFieldHelpText('');
       setNewFieldAllowMultiple(false);
-      await fetchKSDocumentFields();
+      await fetchCOREDocumentFields();
     } catch (error: any) {
       console.warn('Add field error:', error);
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
-        toast.error('Failed to add KS document field');
+        toast.error('Failed to add CORE document field');
       }
     }
   };
@@ -666,8 +666,8 @@ export default function DocumentUploadSection({
     );
   }
 
-  // Render KS Documents Section
-  if (isKSDocumentsSection) {
+  // Render CORE Documents Section
+  if (isCOREDocumentsSection) {
     return (
       <>
         <div className="space-y-6">
@@ -684,15 +684,15 @@ export default function DocumentUploadSection({
           </div>
         )}
 
-        {/* KS Document Fields */}
+        {/* CORE Document Fields */}
         {loading ? (
           <div className="bg-white rounded-lg border border-gray-300 p-8 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-700">Loading KS documents...</p>
+            <p className="mt-4 text-gray-700">Loading CORE documents...</p>
           </div>
-        ) : ksDocumentFields.length > 0 ? (
+        ) : coreDocumentFields.length > 0 ? (
           <div className="space-y-4">
-            {ksDocumentFields.map((field) =>
+            {coreDocumentFields.map((field) =>
               renderDocumentField(
                 field.documentKey,
                 field.documentName,
@@ -706,11 +706,11 @@ export default function DocumentUploadSection({
         ) : (
           <div className="bg-white rounded-lg border border-gray-300 p-8 text-center">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No KS Document Fields</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No CORE Document Fields</h3>
             <p className="text-gray-700">
               {userRole === 'SUPER_ADMIN' || userRole === 'OPS'
                 ? 'Click "Add Document Field" to create personalized document requirements for this student.'
-                : 'No KS document fields have been configured for you yet.'}
+                : 'No CORE document fields have been configured for you yet.'}
             </p>
           </div>
         )}
@@ -719,7 +719,7 @@ export default function DocumentUploadSection({
         {showAddFieldModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Add KS Document Field</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Add CORE Document Field</h3>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-1">
@@ -771,7 +771,7 @@ export default function DocumentUploadSection({
                   Cancel
                 </button>
                 <button
-                  onClick={handleAddKSDocumentField}
+                  onClick={handleAddCOREDocumentField}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Add Field

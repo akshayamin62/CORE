@@ -1373,7 +1373,7 @@ const seedFormData = async () => {
       },
       {
         partId: documentPart._id,
-        title: "KS Documents",
+        title: "CORE Documents",
         description: "Documents from Kareer Studio",
         order: 2,
         isActive: true,

@@ -35,6 +35,7 @@ interface ProgramCardProps {
   showActions?: boolean;
   onEdit?: (programId: string) => void;
   editingProgramId?: string | null;
+  index?: number;
 }
 
 export default function ProgramCard({
@@ -43,6 +44,7 @@ export default function ProgramCard({
   showActions = false,
   onEdit,
   editingProgramId,
+  index,
 }: ProgramCardProps) {
   return (
     <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors bg-white">
@@ -67,7 +69,14 @@ export default function ProgramCard({
               )}
             </div>
           )}
-          <h4 className="font-semibold text-gray-900 mb-1">{program.programName}</h4>
+          <div className="flex items-center gap-2 mb-1">
+            {index !== undefined && (
+              <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs">
+                {index + 1}
+              </div>
+            )}
+            <h4 className="font-semibold text-gray-900">{program.programName}</h4>
+          </div>
           <p className="text-sm text-gray-600 mb-2">{program.university}</p>
           {program.createdBy?.name && (
             <p className="text-xs text-blue-600 mb-2">

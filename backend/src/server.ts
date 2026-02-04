@@ -13,7 +13,7 @@ import adminStudentRoutes from "./routes/adminStudentRoutes";
 import programRoutes from "./routes/programRoutes";
 import chatRoutes from "./routes/chatRoutes";
 import documentRoutes from "./routes/documentRoutes";
-import ksDocumentRoutes from "./routes/ksDocumentRoutes";
+import coreDocumentRoutes from "./routes/coreDocumentRoutes";
 import leadRoutes from "./routes/leadRoutes";
 import followUpRoutes from "./routes/followUpRoutes";
 import teamMeetRoutes from "./routes/teamMeetRoutes";
@@ -38,7 +38,7 @@ import "./models/Program";
 import "./models/ProgramChat";
 import "./models/ChatMessage";
 import "./models/StudentDocument";
-import "./models/KSDocumentField";
+import "./models/COREDocumentField";
 import "./models/Lead";
 import "./models/FollowUp";
 import "./models/TeamMeet";
@@ -65,7 +65,7 @@ app.use("/api/student", studentRoutes);
 app.use("/api/programs", programRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/documents", documentRoutes);
-app.use("/api/ks-documents", ksDocumentRoutes);
+app.use("/api/core-documents", coreDocumentRoutes);
 app.use("/api/follow-ups", followUpRoutes); // Follow-up routes
 app.use("/api/team-meets", teamMeetRoutes); // TeamMeet routes
 app.use("/api/ops-schedules", opsScheduleRoutes); // OPS Schedule routes

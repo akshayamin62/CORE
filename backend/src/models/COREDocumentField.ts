@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-// Model for student-specific KS Document fields
-export interface IKSDocumentField extends Document {
+// Model for student-specific CORE Document fields
+export interface ICOREDocumentField extends Document {
   studentId: mongoose.Types.ObjectId;
   registrationId: mongoose.Types.ObjectId;
   documentName: string;
@@ -18,7 +18,7 @@ export interface IKSDocumentField extends Document {
   updatedAt: Date;
 }
 
-const ksDocumentFieldSchema = new Schema<IKSDocumentField>(
+const coreDocumentFieldSchema = new Schema<ICOREDocumentField>(
   {
     studentId: {
       type: Schema.Types.ObjectId,
@@ -81,13 +81,13 @@ const ksDocumentFieldSchema = new Schema<IKSDocumentField>(
 );
 
 // Compound index for student + registration + documentKey uniqueness
-ksDocumentFieldSchema.index(
+coreDocumentFieldSchema.index(
   { studentId: 1, registrationId: 1, documentKey: 1 },
   { unique: true }
 );
 
-export default mongoose.model<IKSDocumentField>(
-  "KSDocumentField",
-  ksDocumentFieldSchema
+export default mongoose.model<ICOREDocumentField>(
+  "COREDocumentField",
+  coreDocumentFieldSchema
 );
 

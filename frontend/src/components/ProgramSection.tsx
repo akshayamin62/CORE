@@ -371,12 +371,19 @@ export default function ProgramSection({
 
           {programs.length > 0 ? (
             <div className="space-y-4">
-              {programs.map((program) => (
+              {programs.map((program, index) => (
                 <div key={program._id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                   {canSelectPrograms ? (
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900 mb-1">{program.programName}</h4>
+                      {/* Program Number Badge */}
+                      <div className="flex items-start gap-3 flex-1">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs">
+                              {index + 1}
+                            </div>
+                            <h4 className="font-semibold text-gray-900">{program.programName}</h4>
+                          </div>
                         <p className="text-sm text-gray-600 mb-2">{program.university}</p>
                         {program.createdBy?.name && (
                           <p className="text-xs text-blue-600 mb-2">
@@ -400,6 +407,7 @@ export default function ProgramSection({
                             </div>
                           )}
                         </div>
+                      </div>
                       </div>
                       {!expandedPrograms.has(program._id) ? (
                         <button
@@ -467,7 +475,7 @@ export default function ProgramSection({
                       )}
                     </div>
                   ) : (
-                    <ProgramCard program={program} showPriority={false} showActions={false} />
+                    <ProgramCard program={program} showPriority={false} showActions={false} index={index} />
                   )}
                 </div>
               ))}
@@ -502,10 +510,17 @@ export default function ProgramSection({
           <div className={`flex gap-4 ${selectedChatProgram ? '' : 'flex-col'}`}>
             {/* Programs List */}
             <div className={`space-y-4 ${selectedChatProgram ? 'w-1/2 overflow-y-auto max-h-[600px]' : 'w-full'}`}>
-              {programs.map((program) => (
+              {programs.map((program, index) => (
                 <div key={program._id} className={selectedChatProgram?._id === program._id ? 'bg-gray-200 rounded-lg p-2' : ''}>
                   {canEditApplied && editingProgram === program._id ? (
                     <div className="border border-gray-200 rounded-lg p-4 bg-white">
+                      {/* Program Number Badge */}
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs">
+                          {index + 1}
+                        </div>
+                        <h4 className="font-semibold text-gray-900">{program.programName}</h4>
+                      </div>
                       <div className="flex gap-2 items-center flex-wrap mb-4">
                         <div>
                           <label className="block text-xs font-medium text-gray-700 mb-1">Priority *</label>
@@ -567,14 +582,16 @@ export default function ProgramSection({
                           </button>
                         </div>
                       </div>
-                      <ProgramCard program={program} showPriority={true} showActions={false} />
+                      <ProgramCard program={program} showPriority={true} showActions={false} index={index} />
                     </div>
                   ) : (
                     <div className="relative">
+                      {/* Program Number Badge */}
                       <ProgramCard
                         program={program}
                         showPriority={true}
                         showActions={false}
+                        index={index}
                       />
                       <div className="absolute top-4 right-4 flex gap-2">
                         <button
