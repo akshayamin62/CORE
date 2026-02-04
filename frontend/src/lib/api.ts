@@ -453,7 +453,7 @@ export const opsScheduleAPI = {
   
   // Create new schedule
   createSchedule: (data: {
-    studentId: string;
+    studentId?: string | null;
     scheduledDate: string;
     scheduledTime: string;
     description: string;
@@ -461,7 +461,7 @@ export const opsScheduleAPI = {
   
   // Update schedule
   updateSchedule: (scheduleId: string, data: {
-    studentId?: string;
+    studentId?: string | null;
     scheduledDate?: string;
     scheduledTime?: string;
     description?: string;

@@ -11,7 +11,7 @@ import { Upload, Download, Check, X, Plus, FileText, AlertCircle, Trash2 } from 
 interface DocumentUploadSectionProps {
   registrationId: string;
   studentId: string;
-  userRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN';
+  userRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN' | 'ADMIN' | 'COUNSELOR';
   sectionTitle: string;
 }
 
@@ -32,6 +32,10 @@ export default function DocumentUploadSection({
   userRole,
   sectionTitle,
 }: DocumentUploadSectionProps) {
+  // Only STUDENT, OPS, and SUPER_ADMIN can upload documents
+  // ADMIN and COUNSELOR have read-only access
+  const canUpload = ['STUDENT', 'OPS', 'SUPER_ADMIN'].includes(userRole);
+  
   const [documents, setDocuments] = useState<StudentDocument[]>([]);
   const [ksDocumentFields, setKSDocumentFields] = useState<KSDocumentField[]>([]);
   const [loading, setLoading] = useState(true);
@@ -323,8 +327,8 @@ export default function DocumentUploadSection({
     helpText?: string
   ) => {
     const fieldDocuments = getDocumentsForField(documentKey);
+    
     const isUploading = uploading === documentKey;
-    const canUpload = userRole === 'STUDENT' || userRole === 'OPS' || userRole === 'SUPER_ADMIN';
     
     return (
       <div
@@ -668,7 +672,7 @@ export default function DocumentUploadSection({
       <>
         <div className="space-y-6">
         {/* Add Document Button - Only for Admin/OPS */}
-        {(userRole === 'SUPER_ADMIN' || userRole === 'OPS') && (
+        {canUpload && (userRole === 'SUPER_ADMIN' || userRole === 'OPS') && (
           <div className="flex justify-end">
             <button
               onClick={() => setShowAddFieldModal(true)}

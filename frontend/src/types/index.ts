@@ -488,7 +488,7 @@ export interface OpsScheduleSummary {
 }
 
 export interface CreateOpsScheduleData {
-  studentId?: string | null; // Optional - null for "Me" tasks
+  studentId?: string | null; // Optional - null/undefined for "Me" tasks
   scheduledDate: string;
   scheduledTime: string;
   description: string;

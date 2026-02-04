@@ -17,7 +17,7 @@ export default function OpsDashboardPage() {
   
   // Schedule states
   const [schedules, setSchedules] = useState<OpsSchedule[]>([]);
-  const [summary, setSummary] = useState<OpsScheduleSummary>({ today: [], missed: [], tomorrow: [] });
+  const [summary, setSummary] = useState<OpsScheduleSummary>({ today: [], missed: [], tomorrow: [], counts: { today: 0, missed: 0, tomorrow: 0, total: 0 } });
   const [students, setStudents] = useState<OpsScheduleStudent[]>([]);
   const [selectedSchedule, setSelectedSchedule] = useState<OpsSchedule | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -38,7 +38,7 @@ export default function OpsDashboardPage() {
       ]);
       
       setSchedules(schedulesRes.data.data.schedules || []);
-      setSummary(summaryRes.data.data || { today: [], missed: [], tomorrow: [] });
+      setSummary(summaryRes.data.data || { today: [], missed: [], tomorrow: [], counts: { today: 0, missed: 0, tomorrow: 0, total: 0 } });
       setStudents(studentsRes.data.data.students || []);
     } catch (error) {
       console.error('Error fetching schedule data:', error);
