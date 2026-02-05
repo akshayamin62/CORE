@@ -105,7 +105,7 @@ export default function SuperAdminDashboardPage() {
             {roleCards.map((card) => (
               <RoleStatCard
                 key={card.key}
-                title={`Total ${card.label}`}
+                title={`${card.label}`}
                 value={roleStats[card.key as keyof RoleStats] || 0}
                 color={card.color as any}
                 onClick={() => router.push(card.path)}

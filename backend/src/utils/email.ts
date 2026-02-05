@@ -286,4 +286,49 @@ export const sendStudentAccountCreatedEmail = async (
   });
 };
 
+/**
+ * Send service registration notification to super admin
+ */
+export const sendServiceRegistrationEmailToSuperAdmin = async (
+  superAdminEmail: string,
+  studentName: string,
+  studentEmail: string,
+  serviceName: string
+): Promise<void> => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #2563eb;">New Service Registration</h2>
+      <p>A student has registered for a service and requires role assignment.</p>
+      
+      <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0; color: #1f2937;">Student Details:</h3>
+        <p><strong>Name:</strong> ${studentName}</p>
+        <p><strong>Email:</strong> ${studentEmail}</p>
+      </div>
+      
+      <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0; color: #1f2937;">Service Details:</h3>
+        <p><strong>Service:</strong> ${serviceName}</p>
+      </div>
+      
+      <p style="color: #dc2626; font-weight: bold;">Action Required: Please assign the appropriate role to this registration.</p>
+      
+      <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/super-admin/roles/student" 
+         style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; 
+                text-decoration: none; border-radius: 6px; margin-top: 20px;">
+        View Student Dashboard
+      </a>
+    </div>
+  `;
+
+  const text = `New Service Registration - Role Assignment Pending\n\nStudent: ${studentName} (${studentEmail})\nService: ${serviceName}\n\nPlease assign the appropriate role to this registration.`;
+
+  await sendEmail({
+    to: superAdminEmail,
+    subject: 'New Service Registration - Role Assignment Pending',
+    html,
+    text,
+  });
+};
+
 

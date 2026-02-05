@@ -3,6 +3,9 @@ import { AuthRequest } from '../middleware/auth';
 import Student from '../models/Student';
 import User from '../models/User';
 import Ops from '../models/Ops';
+import IvyExpert from '../models/IvyExpert';
+import EduplanCoach from '../models/EduplanCoach';
+// import Service from '../models/Service';
 // import Admin from '../models/Admin';
 // import Counselor from '../models/Counselor';
 import StudentServiceRegistration from '../models/StudentServiceRegistration';
@@ -97,12 +100,52 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
       })
     );
 
+    // Count registrations without appropriate role assignment (only for SUPER_ADMIN)
+    let pendingOpsAssignments = 0;
+    const pendingStudentIds: string[] = [];
+    if (userRole === USER_ROLE.SUPER_ADMIN) {
+      // Get all registrations with their service info
+      const allRegistrations = await StudentServiceRegistration.find({})
+        .populate('serviceId', 'name slug');
+
+      for (const registration of allRegistrations) {
+        const service = registration.serviceId as any;
+        if (!service) continue;
+
+        const serviceName = service.name;
+        let isPending = false;
+
+        // Study Abroad -> needs OPS role (check primaryOpsId/activeOpsId)
+        if (serviceName === 'Study Abroad') {
+          isPending = !registration.primaryOpsId && !registration.activeOpsId;
+        }
+        // Ivy League Preparation -> needs IVY_EXPERT role (check primaryIvyExpertId/activeIvyExpertId)
+        else if (serviceName === 'Ivy League Preparation') {
+          isPending = !registration.primaryIvyExpertId && !registration.activeIvyExpertId;
+        }
+        // Education Planning -> needs EDUPLAN_COACH role (check primaryEduplanCoachId/activeEduplanCoachId)
+        else if (serviceName === 'Education Planning') {
+          isPending = !registration.primaryEduplanCoachId && !registration.activeEduplanCoachId;
+        }
+
+        if (isPending) {
+          pendingOpsAssignments++;
+          const studentIdStr = registration.studentId.toString();
+          if (!pendingStudentIds.includes(studentIdStr)) {
+            pendingStudentIds.push(studentIdStr);
+          }
+        }
+      }
+    }
+
     return res.status(200).json({
       success: true,
       message: 'Students fetched successfully',
       data: {
         students: studentsWithStats,
         total: studentsWithStats.length,
+        pendingOpsAssignments: pendingOpsAssignments,
+        pendingStudentIds: pendingStudentIds,
       },
     });
   } catch (error: any) {
@@ -155,9 +198,51 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
       studentId: student._id,
     })
       .populate('serviceId', 'name slug shortDescription icon')
-      .populate('primaryOpsId', 'userId email specializations')
-      .populate('secondaryOpsId', 'userId email specializations')
-      .populate('activeOpsId', 'userId email specializations')
+      .populate({
+        path: 'primaryOpsId',
+        select: 'userId email specializations',
+        populate: { path: 'userId', select: 'name email' }
+      })
+      .populate({
+        path: 'secondaryOpsId',
+        select: 'userId email specializations',
+        populate: { path: 'userId', select: 'name email' }
+      })
+      .populate({
+        path: 'activeOpsId',
+        select: 'userId email specializations',
+        populate: { path: 'userId', select: 'name email' }
+      })
+      .populate({
+        path: 'primaryIvyExpertId',
+        select: 'userId email',
+        populate: { path: 'userId', select: 'name email' }
+      })
+      .populate({
+        path: 'secondaryIvyExpertId',
+        select: 'userId email',
+        populate: { path: 'userId', select: 'name email' }
+      })
+      .populate({
+        path: 'activeIvyExpertId',
+        select: 'userId email',
+        populate: { path: 'userId', select: 'name email' }
+      })
+      .populate({
+        path: 'primaryEduplanCoachId',
+        select: 'userId email',
+        populate: { path: 'userId', select: 'name email' }
+      })
+      .populate({
+        path: 'secondaryEduplanCoachId',
+        select: 'userId email',
+        populate: { path: 'userId', select: 'name email' }
+      })
+      .populate({
+        path: 'activeEduplanCoachId',
+        select: 'userId email',
+        populate: { path: 'userId', select: 'name email' }
+      })
       .sort({ createdAt: -1 })
       .lean()
       .exec();
@@ -370,21 +455,20 @@ export const getStudentsWithRegistrations = async (req: AuthRequest, res: Respon
 };
 
 /**
- * Assign primary and secondary ops to a student service registration
+ * Assign role (OPS/IvyExpert/EduplanCoach) to a student service registration
+ * Based on service type:
+ * - Study Abroad -> OPS
+ * - Ivy League Preparation -> IVY_EXPERT
+ * - Education Planning -> EDUPLAN_COACH
  */
 export const assignOps = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const { registrationId } = req.params;
-    const { primaryOpsId, secondaryOpsId } = req.body;
+    const { primaryOpsId, secondaryOpsId, primaryIvyExpertId, secondaryIvyExpertId, primaryEduplanCoachId, secondaryEduplanCoachId } = req.body;
 
-    if (!primaryOpsId && !secondaryOpsId) {
-      return res.status(400).json({
-        success: false,
-        message: 'At least one OPS ID is required',
-      });
-    }
-
-    const registration = await StudentServiceRegistration.findById(registrationId);
+    const registration = await StudentServiceRegistration.findById(registrationId)
+      .populate('serviceId', 'name slug');
+    
     if (!registration) {
       return res.status(404).json({
         success: false,
@@ -392,33 +476,116 @@ export const assignOps = async (req: AuthRequest, res: Response): Promise<Respon
       });
     }
 
-    // Verify primary OPS exists
-    if (primaryOpsId) {
-      const primaryOps = await Ops.findById(primaryOpsId);
-      if (!primaryOps) {
-        return res.status(404).json({
+    const service = registration.serviceId as any;
+    const serviceName = service?.name;
+
+    // Handle Study Abroad service -> OPS role
+    if (serviceName === 'Study Abroad') {
+      if (!primaryOpsId && !secondaryOpsId) {
+        return res.status(400).json({
           success: false,
-          message: 'Primary OPS not found',
+          message: 'At least one OPS ID is required for Study Abroad service',
         });
       }
-      registration.primaryOpsId = primaryOpsId;
-      
-      // Set as active if no active OPS or if updating primary
-      if (!registration.activeOpsId) {
-        registration.activeOpsId = primaryOpsId;
+
+      if (primaryOpsId) {
+        const primaryOps = await Ops.findById(primaryOpsId);
+        if (!primaryOps) {
+          return res.status(404).json({
+            success: false,
+            message: 'Primary OPS not found',
+          });
+        }
+        registration.primaryOpsId = primaryOpsId;
+        if (!registration.activeOpsId) {
+          registration.activeOpsId = primaryOpsId;
+        }
+      }
+
+      if (secondaryOpsId) {
+        const secondaryOps = await Ops.findById(secondaryOpsId);
+        if (!secondaryOps) {
+          return res.status(404).json({
+            success: false,
+            message: 'Secondary OPS not found',
+          });
+        }
+        registration.secondaryOpsId = secondaryOpsId;
       }
     }
-
-    // Verify secondary OPS exists
-    if (secondaryOpsId) {
-      const secondaryOps = await Ops.findById(secondaryOpsId);
-      if (!secondaryOps) {
-        return res.status(404).json({
+    // Handle Ivy League Preparation service -> IVY_EXPERT role
+    else if (serviceName === 'Ivy League Preparation') {
+      if (!primaryIvyExpertId && !secondaryIvyExpertId) {
+        return res.status(400).json({
           success: false,
-          message: 'Secondary OPS not found',
+          message: 'At least one Ivy Expert ID is required for Ivy League service',
         });
       }
-      registration.secondaryOpsId = secondaryOpsId;
+
+      if (primaryIvyExpertId) {
+        const primaryIvyExpert = await IvyExpert.findById(primaryIvyExpertId);
+        if (!primaryIvyExpert) {
+          return res.status(404).json({
+            success: false,
+            message: 'Primary Ivy Expert not found',
+          });
+        }
+        registration.primaryIvyExpertId = primaryIvyExpertId;
+        if (!registration.activeIvyExpertId) {
+          registration.activeIvyExpertId = primaryIvyExpertId;
+        }
+      }
+
+      if (secondaryIvyExpertId) {
+        const secondaryIvyExpert = await IvyExpert.findById(secondaryIvyExpertId);
+        if (!secondaryIvyExpert) {
+          return res.status(404).json({
+            success: false,
+            message: 'Secondary Ivy Expert not found',
+          });
+        }
+        registration.secondaryIvyExpertId = secondaryIvyExpertId;
+      }
+    }
+    // Handle Education Planning service -> EDUPLAN_COACH role
+    else if (serviceName === 'Education Planning') {
+      if (!primaryEduplanCoachId && !secondaryEduplanCoachId) {
+        return res.status(400).json({
+          success: false,
+          message: 'At least one Eduplan Coach ID is required for Education Planning service',
+        });
+      }
+
+      if (primaryEduplanCoachId) {
+        const primaryEduplanCoach = await EduplanCoach.findById(primaryEduplanCoachId);
+        if (!primaryEduplanCoach) {
+          return res.status(404).json({
+            success: false,
+            message: 'Primary Eduplan Coach not found',
+          });
+        }
+        registration.primaryEduplanCoachId = primaryEduplanCoachId;
+        if (!registration.activeEduplanCoachId) {
+          registration.activeEduplanCoachId = primaryEduplanCoachId;
+        }
+      }
+
+      if (secondaryEduplanCoachId) {
+        const secondaryEduplanCoach = await EduplanCoach.findById(secondaryEduplanCoachId);
+        if (!secondaryEduplanCoach) {
+          return res.status(404).json({
+            success: false,
+            message: 'Secondary Eduplan Coach not found',
+          });
+        }
+        registration.secondaryEduplanCoachId = secondaryEduplanCoachId;
+      }
+    }
+    else {
+      return res.status(400).json({
+        success: false,
+        message: 'Unknown service type for role assignment',
+      });
     }
 
     await registration.save();
@@ -427,41 +594,43 @@ export const assignOps = async (req: AuthRequest, res: Response): Promise<Respon
       .populate('serviceId', 'name slug shortDescription icon')
       .populate('primaryOpsId')
       .populate('secondaryOpsId')
-      .populate('activeOpsId');
+      .populate('activeOpsId')
+      .populate('primaryIvyExpertId')
+      .populate('secondaryIvyExpertId')
+      .populate('activeIvyExpertId')
+      .populate('primaryEduplanCoachId')
+      .populate('secondaryEduplanCoachId')
+      .populate('activeEduplanCoachId');
 
     return res.status(200).json({
       success: true,
-      message: 'Ops assigned successfully',
+      message: 'Role assigned successfully',
       data: {
         registration: updatedRegistration,
       },
     });
   } catch (error: any) {
-    console.error('Assign ops error:', error);
+    console.error('Assign role error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to assign ops',
+      message: 'Failed to assign role',
       error: error.message,
     });
   }
 };
 
 /**
- * Switch active OPS between primary and secondary
+ * Switch active role between primary and secondary
+ * Works for OPS, IvyExpert, and EduplanCoach based on service type
  */
 export const switchActiveOps = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const { registrationId } = req.params;
-    const { activeOpsId } = req.body;
+    const { activeOpsId, activeIvyExpertId, activeEduplanCoachId } = req.body;
 
-    if (!activeOpsId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Active OPS ID is required',
-      });
-    }
-
-    const registration = await StudentServiceRegistration.findById(registrationId);
+    const registration = await StudentServiceRegistration.findById(registrationId)
+      .populate('serviceId', 'name slug');
+    
     if (!registration) {
       return res.status(404).json({
         success: false,
@@ -469,39 +638,105 @@ export const switchActiveOps = async (req: AuthRequest, res: Response): Promise<
       });
     }
 
-    // Verify the OPS is either primary or secondary
-    const isPrimary = registration.primaryOpsId?.toString() === activeOpsId;
-    const isSecondary = registration.secondaryOpsId?.toString() === activeOpsId;
+    const service = registration.serviceId as any;
+    const serviceName = service?.name;
 
-    if (!isPrimary && !isSecondary) {
+    // Handle Study Abroad service -> OPS role
+    if (serviceName === 'Study Abroad') {
+      if (!activeOpsId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Active OPS ID is required',
+        });
+      }
+
+      const isPrimary = registration.primaryOpsId?.toString() === activeOpsId;
+      const isSecondary = registration.secondaryOpsId?.toString() === activeOpsId;
+
+      if (!isPrimary && !isSecondary) {
+        return res.status(400).json({
+          success: false,
+          message: 'Selected OPS must be either primary or secondary OPS',
+        });
+      }
+
+      registration.activeOpsId = activeOpsId;
+    }
+    // Handle Ivy League Preparation service -> IVY_EXPERT role
+    else if (serviceName === 'Ivy League Preparation') {
+      if (!activeIvyExpertId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Active Ivy Expert ID is required',
+        });
+      }
+
+      const isPrimary = registration.primaryIvyExpertId?.toString() === activeIvyExpertId;
+      const isSecondary = registration.secondaryIvyExpertId?.toString() === activeIvyExpertId;
+
+      if (!isPrimary && !isSecondary) {
+        return res.status(400).json({
+          success: false,
+          message: 'Selected Ivy Expert must be either primary or secondary',
+        });
+      }
+
+      registration.activeIvyExpertId = activeIvyExpertId;
+    }
+    // Handle Education Planning service -> EDUPLAN_COACH role
+    else if (serviceName === 'Education Planning') {
+      if (!activeEduplanCoachId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Active Eduplan Coach ID is required',
+        });
+      }
+
+      const isPrimary = registration.primaryEduplanCoachId?.toString() === activeEduplanCoachId;
+      const isSecondary = registration.secondaryEduplanCoachId?.toString() === activeEduplanCoachId;
+
+      if (!isPrimary && !isSecondary) {
+        return res.status(400).json({
+          success: false,
+          message: 'Selected Eduplan Coach must be either primary or secondary',
+        });
+      }
+
+      registration.activeEduplanCoachId = activeEduplanCoachId;
+    }
+    else {
       return res.status(400).json({
         success: false,
-        message: 'Selected OPS must be either primary or secondary OPS',
+        message: 'Unknown service type',
       });
     }
 
-    registration.activeOpsId = activeOpsId;
     await registration.save();
 
     const updatedRegistration = await StudentServiceRegistration.findById(registrationId)
       .populate('serviceId', 'name slug shortDescription icon')
       .populate('primaryOpsId')
       .populate('secondaryOpsId')
-      .populate('activeOpsId');
+      .populate('activeOpsId')
+      .populate('primaryIvyExpertId')
+      .populate('secondaryIvyExpertId')
+      .populate('activeIvyExpertId')
+      .populate('primaryEduplanCoachId')
+      .populate('secondaryEduplanCoachId')
+      .populate('activeEduplanCoachId');
 
     return res.status(200).json({
       success: true,
-      message: 'Active OPS switched successfully',
+      message: 'Active role switched successfully',
       data: {
         registration: updatedRegistration,
       },
     });
   } catch (error: any) {
-    console.error('Switch active OPS error:', error);
+    console.error('Switch active role error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to switch active OPS',
-      error: error.message,
+      message: 'Failed to switch active role',
     });
   }
 };

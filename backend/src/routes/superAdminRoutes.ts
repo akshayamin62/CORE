@@ -9,6 +9,8 @@ import {
   getPendingApprovals,
   createOps,
   getAllOps,
+  getAllIvyExperts,
+  getAllEduplanCoaches,
   createAdmin,
   getAdmins,
   getAdminDetails,
@@ -90,6 +92,20 @@ router.post("/ops", createOps);
  * @access  Super Admin only
  */
 router.get("/ops", getAllOps);
+
+/**
+ * @route   GET /api/super-admin/ivy-experts
+ * @desc    Get all ivy experts
+ * @access  Super Admin only
+ */
+router.get("/ivy-experts", getAllIvyExperts);
+
+/**
+ * @route   GET /api/super-admin/eduplan-coaches
+ * @desc    Get all eduplan coaches
+ * @access  Super Admin only
+ */
+router.get("/eduplan-coaches", getAllEduplanCoaches);
 
 /**
  * @route   POST /api/super-admin/admin

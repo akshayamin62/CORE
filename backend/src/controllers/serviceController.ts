@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import Service from "../models/Service";
 import Student from "../models/Student";
+import User from "../models/User";
 import StudentServiceRegistration, {
   ServiceRegistrationStatus,
 } from "../models/StudentServiceRegistration";
@@ -10,6 +11,8 @@ import FormSection from "../models/FormSection";
 import FormSubSection from "../models/FormSubSection";
 import FormField from "../models/FormField";
 import { AuthRequest } from "../types/auth";
+import { USER_ROLE } from "../types/roles";
+import { sendServiceRegistrationEmailToSuperAdmin } from "../utils/email";
 
 // Get all active services
 export const getAllServices = async (_req: Request, res: Response) => {
@@ -127,6 +130,23 @@ export const registerForService = async (req: AuthRequest, res: Response) => {
     const populatedRegistration = await StudentServiceRegistration.findById(
       registration._id
     ).populate("serviceId");
+
+    // Send email notification to super admin
+    try {
+      const superAdmin = await User.findOne({ role: USER_ROLE.SUPER_ADMIN });
+      if (superAdmin) {
+        const studentUser = await User.findById(userId);
+        await sendServiceRegistrationEmailToSuperAdmin(
+          superAdmin.email,
+          studentUser?.name || 'Unknown Student',
+          studentUser?.email || 'Unknown Email',
+          service.name
+        );
+      }
+    } catch (emailError) {
+      console.error('Failed to send notification email:', emailError);
+      // Don't fail the registration if email fails
+    }
 
     return res.status(201).json({
       success: true,

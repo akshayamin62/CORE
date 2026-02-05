@@ -10,9 +10,18 @@ export enum ServiceRegistrationStatus {
 export interface IStudentServiceRegistration extends Document {
   studentId: mongoose.Types.ObjectId;
   serviceId: mongoose.Types.ObjectId;
+  // For Study Abroad service - OPS role
   primaryOpsId?: mongoose.Types.ObjectId;
   secondaryOpsId?: mongoose.Types.ObjectId;
-  activeOpsId?: mongoose.Types.ObjectId;  // Points to either primary or secondary
+  activeOpsId?: mongoose.Types.ObjectId;
+  // For Ivy League service - IVY_EXPERT role
+  primaryIvyExpertId?: mongoose.Types.ObjectId;
+  secondaryIvyExpertId?: mongoose.Types.ObjectId;
+  activeIvyExpertId?: mongoose.Types.ObjectId;
+  // For Education Planning service - EDUPLAN_COACH role
+  primaryEduplanCoachId?: mongoose.Types.ObjectId;
+  secondaryEduplanCoachId?: mongoose.Types.ObjectId;
+  activeEduplanCoachId?: mongoose.Types.ObjectId;
   status: ServiceRegistrationStatus;
   registeredAt: Date;
   completedAt?: Date;
@@ -36,6 +45,7 @@ const studentServiceRegistrationSchema = new Schema<IStudentServiceRegistration>
       ref: "Service",
       required: true,
     },
+    // For Study Abroad service - OPS role
     primaryOpsId: {
       type: Schema.Types.ObjectId,
       ref: "Ops",
@@ -49,6 +59,38 @@ const studentServiceRegistrationSchema = new Schema<IStudentServiceRegistration>
     activeOpsId: {
       type: Schema.Types.ObjectId,
       ref: "Ops",
+      required: false,
+    },
+    // For Ivy League service - IVY_EXPERT role
+    primaryIvyExpertId: {
+      type: Schema.Types.ObjectId,
+      ref: "IvyExpert",
+      required: false,
+    },
+    secondaryIvyExpertId: {
+      type: Schema.Types.ObjectId,
+      ref: "IvyExpert",
+      required: false,
+    },
+    activeIvyExpertId: {
+      type: Schema.Types.ObjectId,
+      ref: "IvyExpert",
+      required: false,
+    },
+    // For Education Planning service - EDUPLAN_COACH role
+    primaryEduplanCoachId: {
+      type: Schema.Types.ObjectId,
+      ref: "EduplanCoach",
+      required: false,
+    },
+    secondaryEduplanCoachId: {
+      type: Schema.Types.ObjectId,
+      ref: "EduplanCoach",
+      required: false,
+    },
+    activeEduplanCoachId: {
+      type: Schema.Types.ObjectId,
+      ref: "EduplanCoach",
       required: false,
     },
     status: {

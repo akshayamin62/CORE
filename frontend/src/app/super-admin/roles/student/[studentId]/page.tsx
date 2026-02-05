@@ -53,6 +53,28 @@ interface OPS {
   specializations?: string[];
 }
 
+interface IvyExpert {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  email: string;
+  mobileNumber?: string;
+}
+
+interface EduplanCoach {
+  _id: string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  email: string;
+  mobileNumber?: string;
+}
+
 interface Registration {
   _id: string;
   serviceId: {
@@ -61,9 +83,18 @@ interface Registration {
     slug: string;
     shortDescription: string;
   };
+  // OPS fields (for Study Abroad)
   primaryOpsId?: OPS;
   secondaryOpsId?: OPS;
   activeOpsId?: OPS;
+  // Ivy Expert fields (for Ivy League Preparation)
+  primaryIvyExpertId?: IvyExpert;
+  secondaryIvyExpertId?: IvyExpert;
+  activeIvyExpertId?: IvyExpert;
+  // Eduplan Coach fields (for Education Planning)
+  primaryEduplanCoachId?: EduplanCoach;
+  secondaryEduplanCoachId?: EduplanCoach;
+  activeEduplanCoachId?: EduplanCoach;
   status: string;
   createdAt: string;
 }
@@ -78,6 +109,8 @@ export default function StudentDetailPage() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
   const [ops, setOps] = useState<OPS[]>([]);
+  const [ivyExperts, setIvyExperts] = useState<IvyExpert[]>([]);
+  const [eduplanCoaches, setEduplanCoaches] = useState<EduplanCoach[]>([]);
   const [assigningOps, setAssigningOps] = useState<string | null>(null);
   const [switchingActive, setSwitchingActive] = useState<string | null>(null);
 
@@ -137,6 +170,32 @@ export default function StudentDetailPage() {
         console.error('❌ Failed to fetch ops:', err);
         setOps([]);
       }
+      
+      // Fetch ivy experts
+      try {
+        console.log('🔍 Fetching ivy experts list...');
+        const ivyExpertsResponse = await axios.get(`${API_URL}/super-admin/ivy-experts`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log('✅ Ivy Experts response:', ivyExpertsResponse.data);
+        setIvyExperts(ivyExpertsResponse.data.data.ivyExperts || []);
+      } catch (err) {
+        console.error('❌ Failed to fetch ivy experts:', err);
+        setIvyExperts([]);
+      }
+      
+      // Fetch eduplan coaches
+      try {
+        console.log('🔍 Fetching eduplan coaches list...');
+        const eduplanCoachesResponse = await axios.get(`${API_URL}/super-admin/eduplan-coaches`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log('✅ Eduplan Coaches response:', eduplanCoachesResponse.data);
+        setEduplanCoaches(eduplanCoachesResponse.data.data.eduplanCoaches || []);
+      } catch (err) {
+        console.error('❌ Failed to fetch eduplan coaches:', err);
+        setEduplanCoaches([]);
+      }
     } catch (error: any) {
       console.error('❌ Fetch student details error:', error);
       console.error('❌ Error response:', error.response?.data);
@@ -156,46 +215,75 @@ export default function StudentDetailPage() {
   const handleAssignOps = async (
     registrationId: string, 
     primaryId: string, 
-    secondaryId: string
+    secondaryId: string,
+    serviceName: string
   ) => {
     if (!primaryId && !secondaryId) {
-      toast.error('Please select at least one OPS');
+      toast.error('Please select at least one role');
       return;
     }
 
     setAssigningOps(registrationId);
     try {
       const token = localStorage.getItem('token');
-      await axios.post(
-        `${API_URL}/super-admin/students/registrations/${registrationId}/assign-ops`,
-        { 
+      
+      // Determine which field names to use based on service
+      let payload: any = {};
+      if (serviceName === 'Study Abroad') {
+        payload = {
           primaryOpsId: primaryId || undefined,
           secondaryOpsId: secondaryId || undefined
-        },
+        };
+      } else if (serviceName === 'Ivy League Preparation') {
+        payload = {
+          primaryIvyExpertId: primaryId || undefined,
+          secondaryIvyExpertId: secondaryId || undefined
+        };
+      } else if (serviceName === 'Education Planning') {
+        payload = {
+          primaryEduplanCoachId: primaryId || undefined,
+          secondaryEduplanCoachId: secondaryId || undefined
+        };
+      }
+      
+      await axios.post(
+        `${API_URL}/super-admin/students/registrations/${registrationId}/assign-ops`,
+        payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Ops assigned successfully');
+      toast.success('Role assigned successfully');
       fetchStudentDetails(); // Refresh data
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to assign ops');
-      console.error('Assign ops error:', error);
+      toast.error(error.response?.data?.message || 'Failed to assign role');
+      console.error('Assign role error:', error);
     } finally {
       setAssigningOps(null);
     }
   };
 
-  const handleSwitchActiveOps = async (registrationId: string, opsId: string) => {
-    if (!opsId) {
-      toast.error('Please select a OPS');
+  const handleSwitchActiveOps = async (registrationId: string, roleId: string, serviceName: string) => {
+    if (!roleId) {
+      toast.error('Please select a role');
       return;
     }
 
     setSwitchingActive(registrationId);
     try {
       const token = localStorage.getItem('token');
+      
+      // Determine which field name to use based on service
+      let payload: any = {};
+      if (serviceName === 'Study Abroad') {
+        payload = { activeOpsId: roleId };
+      } else if (serviceName === 'Ivy League Preparation') {
+        payload = { activeIvyExpertId: roleId };
+      } else if (serviceName === 'Education Planning') {
+        payload = { activeEduplanCoachId: roleId };
+      }
+      
       await axios.post(
         `${API_URL}/super-admin/students/registrations/${registrationId}/switch-active-ops`,
-        { activeOpsId: opsId },
+        payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success('Active OPS switched successfully');
@@ -348,138 +436,400 @@ export default function StudentDetailPage() {
                         </div>
                         {user?.role === USER_ROLE.SUPER_ADMIN && (
                           <div className="mt-4 space-y-4 border-t pt-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {/* Primary OPS */}
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Primary OPS
-                                </label>
-                                <select
-                                  id={`primary-${registration._id}`}
-                                  value={registration.primaryOpsId?._id || ''}
-                                  onChange={(e) => {
-                                    const secondarySelect = document.getElementById(`secondary-${registration._id}`) as HTMLSelectElement;
-                                    handleAssignOps(registration._id, e.target.value, secondarySelect?.value || '');
-                                  }}
-                                  disabled={assigningOps === registration._id}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
-                                >
-                                  <option value="">Select Primary OPS</option>
-                                  {ops.map((OPS) => (
-                                    <option key={OPS._id} value={OPS._id}>
-                                      {OPS.userId?.name || OPS.email}
-                                      {OPS.specializations && OPS.specializations.length > 0 && 
-                                        ` (${OPS.specializations.join(', ')})`
-                                      }
-                                    </option>
-                                  ))}
-                                </select>
-                                {registration.primaryOpsId && (
-                                  <p className="mt-1 text-xs text-gray-600">
-                                    {registration.primaryOpsId.userId?.name || registration.primaryOpsId.email}
-                                  </p>
-                                )}
-                              </div>
-
-                              {/* Secondary OPS */}
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Secondary OPS
-                                </label>
-                                <select
-                                  id={`secondary-${registration._id}`}
-                                  value={registration.secondaryOpsId?._id || ''}
-                                  onChange={(e) => {
-                                    const primarySelect = document.getElementById(`primary-${registration._id}`) as HTMLSelectElement;
-                                    handleAssignOps(registration._id, primarySelect?.value || '', e.target.value);
-                                  }}
-                                  disabled={assigningOps === registration._id}
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
-                                >
-                                  <option value="">Select Secondary OPS</option>
-                                  {ops.map((OPS) => (
-                                    <option key={OPS._id} value={OPS._id}>
-                                      {OPS.userId?.name || OPS.email}
-                                      {OPS.specializations && OPS.specializations.length > 0 && 
-                                        ` (${OPS.specializations.join(', ')})`
-                                      }
-                                    </option>
-                                  ))}
-                                </select>
-                                {registration.secondaryOpsId && (
-                                  <p className="mt-1 text-xs text-gray-600">
-                                    {registration.secondaryOpsId.userId?.name || registration.secondaryOpsId.email}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Active OPS Switcher */}
-                            {(registration.primaryOpsId || registration.secondaryOpsId) && (
-                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <label className="block text-sm font-semibold text-blue-900 mb-2">
-                                  🎯 Active OPS (Has Access)
-                                </label>
-                                <div className="flex items-center gap-3">
-                                  <select
-                                    value={registration.activeOpsId?._id || ''}
-                                    onChange={(e) => handleSwitchActiveOps(registration._id, e.target.value)}
-                                    disabled={switchingActive === registration._id}
-                                    className="flex-1 px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 text-sm font-medium"
-                                  >
-                                    <option value="">Select Active OPS</option>
+                            {/* Service-specific role assignment */}
+                            {registration.serviceId.name === 'Study Abroad' && (
+                              <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {/* Primary OPS */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Primary OPS
+                                    </label>
+                                    <select
+                                      id={`primary-${registration._id}`}
+                                      value={registration.primaryOpsId?._id || ''}
+                                      onChange={(e) => {
+                                        const secondarySelect = document.getElementById(`secondary-${registration._id}`) as HTMLSelectElement;
+                                        handleAssignOps(registration._id, e.target.value, secondarySelect?.value || '', registration.serviceId.name);
+                                      }}
+                                      disabled={assigningOps === registration._id}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
+                                    >
+                                      <option value="">Select Primary OPS</option>
+                                      {ops.map((OPS) => (
+                                        <option key={OPS._id} value={OPS._id}>
+                                          {OPS.userId?.name || OPS.email}
+                                          {OPS.specializations && OPS.specializations.length > 0 && 
+                                            ` (${OPS.specializations.join(', ')})`
+                                          }
+                                        </option>
+                                      ))}
+                                    </select>
                                     {registration.primaryOpsId && (
-                                      <option value={registration.primaryOpsId._id}>
-                                        Primary: {registration.primaryOpsId.userId?.name || registration.primaryOpsId.email}
-                                      </option>
+                                      <p className="mt-1 text-xs text-gray-600">
+                                        {registration.primaryOpsId.userId?.name || registration.primaryOpsId.email}
+                                      </p>
                                     )}
+                                  </div>
+
+                                  {/* Secondary OPS */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Secondary OPS
+                                    </label>
+                                    <select
+                                      id={`secondary-${registration._id}`}
+                                      value={registration.secondaryOpsId?._id || ''}
+                                      onChange={(e) => {
+                                        const primarySelect = document.getElementById(`primary-${registration._id}`) as HTMLSelectElement;
+                                        handleAssignOps(registration._id, primarySelect?.value || '', e.target.value, registration.serviceId.name);
+                                      }}
+                                      disabled={assigningOps === registration._id}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm"
+                                    >
+                                      <option value="">Select Secondary OPS</option>
+                                      {ops.map((OPS) => (
+                                        <option key={OPS._id} value={OPS._id}>
+                                          {OPS.userId?.name || OPS.email}
+                                          {OPS.specializations && OPS.specializations.length > 0 && 
+                                            ` (${OPS.specializations.join(', ')})`
+                                          }
+                                        </option>
+                                      ))}
+                                    </select>
                                     {registration.secondaryOpsId && (
-                                      <option value={registration.secondaryOpsId._id}>
-                                        Secondary: {registration.secondaryOpsId.userId?.name || registration.secondaryOpsId.email}
-                                      </option>
+                                      <p className="mt-1 text-xs text-gray-600">
+                                        {registration.secondaryOpsId.userId?.name || registration.secondaryOpsId.email}
+                                      </p>
                                     )}
-                                  </select>
-                                  {switchingActive === registration._id && (
-                                    <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                                  )}
+                                  </div>
                                 </div>
-                                {registration.activeOpsId && (
-                                  <div className="mt-2 flex items-center text-sm">
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                      ✓ Active
-                                    </span>
-                                    <span className="ml-2 text-gray-700">
-                                      {registration.activeOpsId.userId?.name || registration.activeOpsId.email}
-                                    </span>
+
+                                {/* Active OPS Switcher */}
+                                {(registration.primaryOpsId || registration.secondaryOpsId) && (
+                                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <label className="block text-sm font-semibold text-blue-900 mb-2">
+                                      🎯 Active OPS (Has Access)
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                      <select
+                                        value={registration.activeOpsId?._id || ''}
+                                        onChange={(e) => handleSwitchActiveOps(registration._id, e.target.value, registration.serviceId.name)}
+                                        disabled={switchingActive === registration._id}
+                                        className="flex-1 px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 text-sm font-medium"
+                                      >
+                                        <option value="">Select Active OPS</option>
+                                        {registration.primaryOpsId && (
+                                          <option value={registration.primaryOpsId._id}>
+                                            Primary: {registration.primaryOpsId.userId?.name || registration.primaryOpsId.email}
+                                          </option>
+                                        )}
+                                        {registration.secondaryOpsId && (
+                                          <option value={registration.secondaryOpsId._id}>
+                                            Secondary: {registration.secondaryOpsId.userId?.name || registration.secondaryOpsId.email}
+                                          </option>
+                                        )}
+                                      </select>
+                                      {switchingActive === registration._id && (
+                                        <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                      )}
+                                    </div>
+                                    {registration.activeOpsId && (
+                                      <div className="mt-2 flex items-center text-sm">
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                          ✓ Active
+                                        </span>
+                                        <span className="ml-2 text-gray-700">
+                                          {registration.activeOpsId.userId?.name || registration.activeOpsId.email}
+                                        </span>
+                                      </div>
+                                    )}
                                   </div>
                                 )}
-                              </div>
+                              </>
+                            )}
+
+                            {registration.serviceId.name === 'Ivy League Preparation' && (
+                              <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {/* Primary Ivy Expert */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Primary Ivy Expert
+                                    </label>
+                                    <select
+                                      id={`primary-${registration._id}`}
+                                      value={registration.primaryIvyExpertId?._id || ''}
+                                      onChange={(e) => {
+                                        const secondarySelect = document.getElementById(`secondary-${registration._id}`) as HTMLSelectElement;
+                                        handleAssignOps(registration._id, e.target.value, secondarySelect?.value || '', registration.serviceId.name);
+                                      }}
+                                      disabled={assigningOps === registration._id}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-sm"
+                                    >
+                                      <option value="">Select Primary Ivy Expert</option>
+                                      {ivyExperts.map((expert) => (
+                                        <option key={expert._id} value={expert._id}>
+                                          {expert.userId?.name || expert.email}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {registration.primaryIvyExpertId && (
+                                      <p className="mt-1 text-xs text-gray-600">
+                                        {registration.primaryIvyExpertId.userId?.name || registration.primaryIvyExpertId.email}
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  {/* Secondary Ivy Expert */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Secondary Ivy Expert
+                                    </label>
+                                    <select
+                                      id={`secondary-${registration._id}`}
+                                      value={registration.secondaryIvyExpertId?._id || ''}
+                                      onChange={(e) => {
+                                        const primarySelect = document.getElementById(`primary-${registration._id}`) as HTMLSelectElement;
+                                        handleAssignOps(registration._id, primarySelect?.value || '', e.target.value, registration.serviceId.name);
+                                      }}
+                                      disabled={assigningOps === registration._id}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-900 text-sm"
+                                    >
+                                      <option value="">Select Secondary Ivy Expert</option>
+                                      {ivyExperts.map((expert) => (
+                                        <option key={expert._id} value={expert._id}>
+                                          {expert.userId?.name || expert.email}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {registration.secondaryIvyExpertId && (
+                                      <p className="mt-1 text-xs text-gray-600">
+                                        {registration.secondaryIvyExpertId.userId?.name || registration.secondaryIvyExpertId.email}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Active Ivy Expert Switcher */}
+                                {(registration.primaryIvyExpertId || registration.secondaryIvyExpertId) && (
+                                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                                    <label className="block text-sm font-semibold text-purple-900 mb-2">
+                                      🎯 Active Ivy Expert (Has Access)
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                      <select
+                                        value={registration.activeIvyExpertId?._id || ''}
+                                        onChange={(e) => handleSwitchActiveOps(registration._id, e.target.value, registration.serviceId.name)}
+                                        disabled={switchingActive === registration._id}
+                                        className="flex-1 px-3 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white text-gray-900 text-sm font-medium"
+                                      >
+                                        <option value="">Select Active Ivy Expert</option>
+                                        {registration.primaryIvyExpertId && (
+                                          <option value={registration.primaryIvyExpertId._id}>
+                                            Primary: {registration.primaryIvyExpertId.userId?.name || registration.primaryIvyExpertId.email}
+                                          </option>
+                                        )}
+                                        {registration.secondaryIvyExpertId && (
+                                          <option value={registration.secondaryIvyExpertId._id}>
+                                            Secondary: {registration.secondaryIvyExpertId.userId?.name || registration.secondaryIvyExpertId.email}
+                                          </option>
+                                        )}
+                                      </select>
+                                      {switchingActive === registration._id && (
+                                        <div className="w-5 h-5 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                                      )}
+                                    </div>
+                                    {registration.activeIvyExpertId && (
+                                      <div className="mt-2 flex items-center text-sm">
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                          ✓ Active
+                                        </span>
+                                        <span className="ml-2 text-gray-700">
+                                          {registration.activeIvyExpertId.userId?.name || registration.activeIvyExpertId.email}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </>
+                            )}
+
+                            {registration.serviceId.name === 'Education Planning' && (
+                              <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {/* Primary Eduplan Coach */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Primary Eduplan Coach
+                                    </label>
+                                    <select
+                                      id={`primary-${registration._id}`}
+                                      value={registration.primaryEduplanCoachId?._id || ''}
+                                      onChange={(e) => {
+                                        const secondarySelect = document.getElementById(`secondary-${registration._id}`) as HTMLSelectElement;
+                                        handleAssignOps(registration._id, e.target.value, secondarySelect?.value || '', registration.serviceId.name);
+                                      }}
+                                      disabled={assigningOps === registration._id}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-gray-900 text-sm"
+                                    >
+                                      <option value="">Select Primary Eduplan Coach</option>
+                                      {eduplanCoaches.map((coach) => (
+                                        <option key={coach._id} value={coach._id}>
+                                          {coach.userId?.name || coach.email}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {registration.primaryEduplanCoachId && (
+                                      <p className="mt-1 text-xs text-gray-600">
+                                        {registration.primaryEduplanCoachId.userId?.name || registration.primaryEduplanCoachId.email}
+                                      </p>
+                                    )}
+                                  </div>
+
+                                  {/* Secondary Eduplan Coach */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                      Secondary Eduplan Coach
+                                    </label>
+                                    <select
+                                      id={`secondary-${registration._id}`}
+                                      value={registration.secondaryEduplanCoachId?._id || ''}
+                                      onChange={(e) => {
+                                        const primarySelect = document.getElementById(`primary-${registration._id}`) as HTMLSelectElement;
+                                        handleAssignOps(registration._id, primarySelect?.value || '', e.target.value, registration.serviceId.name);
+                                      }}
+                                      disabled={assigningOps === registration._id}
+                                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-gray-900 text-sm"
+                                    >
+                                      <option value="">Select Secondary Eduplan Coach</option>
+                                      {eduplanCoaches.map((coach) => (
+                                        <option key={coach._id} value={coach._id}>
+                                          {coach.userId?.name || coach.email}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    {registration.secondaryEduplanCoachId && (
+                                      <p className="mt-1 text-xs text-gray-600">
+                                        {registration.secondaryEduplanCoachId.userId?.name || registration.secondaryEduplanCoachId.email}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Active Eduplan Coach Switcher */}
+                                {(registration.primaryEduplanCoachId || registration.secondaryEduplanCoachId) && (
+                                  <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+                                    <label className="block text-sm font-semibold text-teal-900 mb-2">
+                                      🎯 Active Eduplan Coach (Has Access)
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                      <select
+                                        value={registration.activeEduplanCoachId?._id || ''}
+                                        onChange={(e) => handleSwitchActiveOps(registration._id, e.target.value, registration.serviceId.name)}
+                                        disabled={switchingActive === registration._id}
+                                        className="flex-1 px-3 py-2 border border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-white text-gray-900 text-sm font-medium"
+                                      >
+                                        <option value="">Select Active Eduplan Coach</option>
+                                        {registration.primaryEduplanCoachId && (
+                                          <option value={registration.primaryEduplanCoachId._id}>
+                                            Primary: {registration.primaryEduplanCoachId.userId?.name || registration.primaryEduplanCoachId.email}
+                                          </option>
+                                        )}
+                                        {registration.secondaryEduplanCoachId && (
+                                          <option value={registration.secondaryEduplanCoachId._id}>
+                                            Secondary: {registration.secondaryEduplanCoachId.userId?.name || registration.secondaryEduplanCoachId.email}
+                                          </option>
+                                        )}
+                                      </select>
+                                      {switchingActive === registration._id && (
+                                        <div className="w-5 h-5 border-2 border-teal-600 border-t-transparent rounded-full animate-spin"></div>
+                                      )}
+                                    </div>
+                                    {registration.activeEduplanCoachId && (
+                                      <div className="mt-2 flex items-center text-sm">
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                          ✓ Active
+                                        </span>
+                                        <span className="ml-2 text-gray-700">
+                                          {registration.activeEduplanCoachId.userId?.name || registration.activeEduplanCoachId.email}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </>
                             )}
 
                             {assigningOps === registration._id && (
                               <div className="flex items-center justify-center py-2">
                                 <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2"></div>
-                                <span className="text-sm text-gray-600">Updating ops...</span>
+                                <span className="text-sm text-gray-600">Updating assignment...</span>
                               </div>
                             )}
                           </div>
                         )}
-                        {user?.role === USER_ROLE.OPS && (registration.primaryOpsId || registration.secondaryOpsId) && (
+                        {user?.role === USER_ROLE.OPS && (
                           <div className="mt-3 space-y-2">
-                            {registration.primaryOpsId && (
-                              <p className="text-xs text-gray-600">
-                                <span className="font-medium">Primary:</span> {registration.primaryOpsId.userId?.name || registration.primaryOpsId.email}
-                              </p>
+                            {/* Study Abroad - OPS */}
+                            {registration.serviceId.name === 'Study Abroad' && (registration.primaryOpsId || registration.secondaryOpsId) && (
+                              <>
+                                {registration.primaryOpsId && (
+                                  <p className="text-xs text-gray-600">
+                                    <span className="font-medium">Primary OPS:</span> {registration.primaryOpsId.userId?.name || registration.primaryOpsId.email}
+                                  </p>
+                                )}
+                                {registration.secondaryOpsId && (
+                                  <p className="text-xs text-gray-600">
+                                    <span className="font-medium">Secondary OPS:</span> {registration.secondaryOpsId.userId?.name || registration.secondaryOpsId.email}
+                                  </p>
+                                )}
+                                {registration.activeOpsId && (
+                                  <p className="text-xs font-medium text-green-600">
+                                    ✓ Active: {registration.activeOpsId.userId?.name || registration.activeOpsId.email}
+                                  </p>
+                                )}
+                              </>
                             )}
-                            {registration.secondaryOpsId && (
-                              <p className="text-xs text-gray-600">
-                                <span className="font-medium">Secondary:</span> {registration.secondaryOpsId.userId?.name || registration.secondaryOpsId.email}
-                              </p>
+                            {/* Ivy League Preparation - Ivy Expert */}
+                            {registration.serviceId.name === 'Ivy League Preparation' && (registration.primaryIvyExpertId || registration.secondaryIvyExpertId) && (
+                              <>
+                                {registration.primaryIvyExpertId && (
+                                  <p className="text-xs text-gray-600">
+                                    <span className="font-medium">Primary Ivy Expert:</span> {registration.primaryIvyExpertId.userId?.name || registration.primaryIvyExpertId.email}
+                                  </p>
+                                )}
+                                {registration.secondaryIvyExpertId && (
+                                  <p className="text-xs text-gray-600">
+                                    <span className="font-medium">Secondary Ivy Expert:</span> {registration.secondaryIvyExpertId.userId?.name || registration.secondaryIvyExpertId.email}
+                                  </p>
+                                )}
+                                {registration.activeIvyExpertId && (
+                                  <p className="text-xs font-medium text-green-600">
+                                    ✓ Active: {registration.activeIvyExpertId.userId?.name || registration.activeIvyExpertId.email}
+                                  </p>
+                                )}
+                              </>
                             )}
-                            {registration.activeOpsId && (
-                              <p className="text-xs font-medium text-green-600">
-                                ✓ Active: {registration.activeOpsId.userId?.name || registration.activeOpsId.email}
-                              </p>
+                            {/* Education Planning - Eduplan Coach */}
+                            {registration.serviceId.name === 'Education Planning' && (registration.primaryEduplanCoachId || registration.secondaryEduplanCoachId) && (
+                              <>
+                                {registration.primaryEduplanCoachId && (
+                                  <p className="text-xs text-gray-600">
+                                    <span className="font-medium">Primary Eduplan Coach:</span> {registration.primaryEduplanCoachId.userId?.name || registration.primaryEduplanCoachId.email}
+                                  </p>
+                                )}
+                                {registration.secondaryEduplanCoachId && (
+                                  <p className="text-xs text-gray-600">
+                                    <span className="font-medium">Secondary Eduplan Coach:</span> {registration.secondaryEduplanCoachId.userId?.name || registration.secondaryEduplanCoachId.email}
+                                  </p>
+                                )}
+                                {registration.activeEduplanCoachId && (
+                                  <p className="text-xs font-medium text-green-600">
+                                    ✓ Active: {registration.activeEduplanCoachId.userId?.name || registration.activeEduplanCoachId.email}
+                                  </p>
+                                )}
+                              </>
                             )}
                           </div>
                         )}

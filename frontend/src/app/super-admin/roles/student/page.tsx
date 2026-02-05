@@ -40,22 +40,27 @@ interface StudentData {
   };
   registrationCount: number;
   createdAt: string;
+  hasPendingAssignment?: boolean;
 }
 
 interface UserStats {
   total: number;
   active: number;
+  pendingOpsAssignments: number;
 }
 
 // Stat Card Component
-function StatCard({ title, value, color }: { title: string; value: string; color: string }) {
+function StatCard({ title, value, color, onClick }: { title: string; value: string; color: string; onClick?: () => void }) {
   const colorClasses: Record<string, string> = {
     blue: 'bg-blue-100 text-blue-600',
     green: 'bg-green-100 text-green-600',
     purple: 'bg-purple-100 text-purple-600',
   };
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div 
+      className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+      onClick={onClick}
+    >
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-600 mb-1">{title}</p>
@@ -78,7 +83,8 @@ export default function StudentUsersPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [stats, setStats] = useState<UserStats>({ total: 0, active: 0 });
+  const [pendingFilter, setPendingFilter] = useState(false);
+  const [stats, setStats] = useState<UserStats>({ total: 0, active: 0, pendingOpsAssignments: 0 });
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
@@ -111,12 +117,23 @@ export default function StudentUsersPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const fetchedStudents = response.data.data.students;
-      setStudents(fetchedStudents);
+      const pendingOpsAssignments = response.data.data.pendingOpsAssignments || 0;
+      const pendingStudentIds = response.data.data.pendingStudentIds || [];
+      console.log('📊 Pending student IDs from backend:', pendingStudentIds);
+      setStudents(fetchedStudents.map((s: StudentData) => {
+        const isPending = pendingStudentIds.includes(s._id.toString());
+        console.log(`Student ${s.user?.name} (${s._id}): isPending=${isPending}`);
+        return {
+          ...s,
+          hasPendingAssignment: isPending
+        };
+      }));
       
       // Calculate stats
       setStats({
         total: fetchedStudents.length,
         active: fetchedStudents.filter((s: StudentData) => s.user.isActive).length,
+        pendingOpsAssignments: pendingOpsAssignments,
       });
     } catch (error: any) {
       toast.error('Failed to fetch students');
@@ -138,7 +155,9 @@ export default function StudentUsersPage() {
       (statusFilter === 'active' && student.user.isActive) ||
       (statusFilter === 'inactive' && !student.user.isActive);
     
-    return matchesSearch && matchesStatus;
+    const matchesPending = !pendingFilter || student.hasPendingAssignment;
+    
+    return matchesSearch && matchesStatus && matchesPending;
   });
 
   const handleViewStudent = (studentId: string) => {
@@ -186,10 +205,51 @@ export default function StudentUsersPage() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <StatCard title="Total Students" value={stats.total.toString()} color="blue" />
-            <StatCard title="Active Users" value={stats.active.toString()} color="green" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <StatCard 
+              title="Total Students" 
+              value={stats.total.toString()} 
+              color="blue" 
+              onClick={() => {
+                setSearchQuery('');
+                setStatusFilter('');
+                setPendingFilter(false);
+              }}
+            />
+            <StatCard 
+              title="Active Students" 
+              value={stats.active.toString()} 
+              color="green" 
+              onClick={() => {
+                setStatusFilter('active');
+                setPendingFilter(false);
+              }}
+            />
+            <StatCard 
+              title="Pending Assignment" 
+              value={stats.pendingOpsAssignments.toString()} 
+              color="purple" 
+              onClick={() => setPendingFilter(!pendingFilter)}
+            />
           </div>
+
+          {/* Active Filters Banner */}
+          {pendingFilter && (
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <span className="text-purple-900 font-medium">Showing students with pending assignments</span>
+              </div>
+              <button
+                onClick={() => setPendingFilter(false)}
+                className="text-purple-600 hover:text-purple-800 font-medium text-sm"
+              >
+                Clear Filter
+              </button>
+            </div>
+          )}
 
           {/* Search & Filters */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
@@ -215,6 +275,7 @@ export default function StudentUsersPage() {
                   onClick={() => {
                     setSearchQuery('');
                     setStatusFilter('');
+                    setPendingFilter(false);
                   }}
                   className="px-4 py-2.5 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
                 >

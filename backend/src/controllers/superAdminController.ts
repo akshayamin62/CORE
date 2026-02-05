@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import User from "../models/User";
 import { USER_ROLE } from "../types/roles";
 import Ops from "../models/Ops";
+import IvyExpert from "../models/IvyExpert";
+import EduplanCoach from "../models/EduplanCoach";
 import Admin from "../models/Admin";
 import Counselor from "../models/Counselor";
 import { generateSlug, getUniqueSlug } from "./leadController";
@@ -567,6 +569,68 @@ export const getAllOps = async (_req: Request, res: Response): Promise<Response>
 };
 
 /**
+ * Get all Ivy Experts
+ */
+export const getAllIvyExperts = async (_req: Request, res: Response): Promise<Response> => {
+  try {
+    const ivyExperts = await IvyExpert.find()
+      .populate('userId', 'name email isActive')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Ivy Experts fetched successfully',
+      data: {
+        ivyExperts: ivyExperts.map((c: any) => ({
+          _id: c._id,
+          userId: c.userId,
+          email: c.email,
+          mobileNumber: c.mobileNumber,
+        })),
+      },
+    });
+  } catch (error: any) {
+    console.error('Get ivy experts error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch ivy experts',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get all Eduplan Coaches
+ */
+export const getAllEduplanCoaches = async (_req: Request, res: Response): Promise<Response> => {
+  try {
+    const eduplanCoaches = await EduplanCoach.find()
+      .populate('userId', 'name email isActive')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Eduplan Coaches fetched successfully',
+      data: {
+        eduplanCoaches: eduplanCoaches.map((c: any) => ({
+          _id: c._id,
+          userId: c.userId,
+          email: c.email,
+          mobileNumber: c.mobileNumber,
+        })),
+      },
+    });
+  } catch (error: any) {
+    console.error('Get eduplan coaches error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch eduplan coaches',
+      error: error.message,
+    });
+  }
+};
+
+/**
  * Create a new Admin
  */
 export const createAdmin = async (req: Request, res: Response): Promise<Response> => {
@@ -841,7 +905,7 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
       await newAdmin.save();
     }
 
-    // If creating OPS role, also create Ops profile
+    // If creating OPS role, also create Ops profile (for Study Abroad service)
     if (role === USER_ROLE.OPS) {
       const newOps = new Ops({
         userId: newUser._id,
@@ -849,6 +913,26 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
         mobileNumber: phoneNumber?.trim() || undefined,
       });
       await newOps.save();
+    }
+
+    // If creating IVY_EXPERT role, create IvyExpert profile (for Ivy League service)
+    if (role === USER_ROLE.IVY_EXPERT) {
+      const newIvyExpert = new IvyExpert({
+        userId: newUser._id,
+        email: email.toLowerCase().trim(),
+        mobileNumber: phoneNumber?.trim() || undefined,
+      });
+      await newIvyExpert.save();
+    }
+
+    // If creating EDUPLAN_COACH role, create EduplanCoach profile (for Education Planning service)
+    if (role === USER_ROLE.EDUPLAN_COACH) {
+      const newEduplanCoach = new EduplanCoach({
+        userId: newUser._id,
+        email: email.toLowerCase().trim(),
+        mobileNumber: phoneNumber?.trim() || undefined,
+      });
+      await newEduplanCoach.save();
     }
 
     // If creating COUNSELOR role, also create Counselor profile with adminId
