@@ -11,7 +11,7 @@ interface ProgramFormData {
     qs: string;
   };
   programName: string;
-  websiteUrl: string;
+  programUrl: string;
   campus: string;
   country: string;
   studyLevel: string;
@@ -43,7 +43,7 @@ export default function ProgramFormModal({
       qs: '',
     },
     programName: '',
-    websiteUrl: '',
+    programUrl: '',
     campus: '',
     country: '',
     studyLevel: '',
@@ -85,7 +85,7 @@ export default function ProgramFormModal({
         qs: '',
       },
       programName: '',
-      websiteUrl: '',
+      programUrl: '',
       campus: '',
       country: '',
       studyLevel: '',
@@ -134,11 +134,11 @@ export default function ProgramFormModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Website URL *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Program Link *</label>
               <input
                 type="url"
-                name="websiteUrl"
-                value={formData.websiteUrl}
+                name="programUrl"
+                value={formData.programUrl}
                 onChange={handleInputChange}
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"

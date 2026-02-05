@@ -226,7 +226,7 @@ export const createProgram = async (req: AuthRequest, res: Response): Promise<Re
       university,
       universityRanking,
       programName,
-      websiteUrl,
+      programUrl,
       campus,
       country,
       studyLevel,
@@ -237,10 +237,10 @@ export const createProgram = async (req: AuthRequest, res: Response): Promise<Re
     } = req.body;
 
     // Validate required fields (only 5 fields are required)
-    if (!university || !programName || !websiteUrl || !country || !studyLevel) {
+    if (!university || !programName || !programUrl || !country || !studyLevel) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: University, Program Name, Website URL, Country, and Study Level are required',
+        message: 'Missing required fields: University, Program Name, Program Link, Country, and Study Level are required',
       });
     }
 
@@ -309,7 +309,7 @@ export const createProgram = async (req: AuthRequest, res: Response): Promise<Re
       university,
       universityRanking: universityRanking || {},
       programName,
-      websiteUrl,
+      programUrl,
       campus,
       country,
       studyLevel,
@@ -689,7 +689,7 @@ export const uploadProgramsFromExcel = async (req: AuthRequest & { file?: Expres
       const row: any = data[i];
       try {
         // Map Excel columns to program fields
-        // Expected columns: University, Program Name, Website URL, Campus, Country, Study Level, Duration, IELTS Score, Application Fee, Yearly Tuition Fees, Webometrics World, Webometrics National, US News, QS
+        // Expected columns: University, Program Name, Program Link (or Website URL), Campus, Country, Study Level, Duration, IELTS Score, Application Fee, Yearly Tuition Fees, Webometrics World, Webometrics National, US News, QS
         
         // Helper function to get value from row with multiple possible column names
         const getValue = (keys: string[]) => {
@@ -740,26 +740,26 @@ export const uploadProgramsFromExcel = async (req: AuthRequest & { file?: Expres
           createdBy: userId, // Track who created the program
           studentId: studentObjectId, // Link to specific student if provided
           university: getValue(['University', 'university', 'UNIVERSITY']),
-          programName: getValue(['Program Name', 'Program Name', 'programName', 'Program', 'program']),
-          websiteUrl: getValue(['Website URL', 'Website Url', 'websiteUrl', 'Website', 'website', 'URL', 'url']),
+          programName: getValue(['Program Name', 'programName', 'Program', 'program']),
+          programUrl: getValue(['Program Link', 'programLink', 'Website URL', 'programUrl', 'Website', 'website', 'URL', 'url']),
           campus: getValue(['Campus', 'campus', 'CAMPUS']),
           country: getValue(['Country', 'country', 'COUNTRY']),
-          studyLevel: getValue(['Study Level', 'Study Level', 'studyLevel', 'Level', 'level']) || 'Postgraduate',
+          studyLevel: getValue(['Study Level', 'studyLevel', 'Level', 'level']) || 'Postgraduate',
           duration: getNumber(['Duration', 'duration', 'DURATION'], 12),
-          ieltsScore: getNumber(['IELTS Score', 'IELTS Score', 'ieltsScore', 'IELTS', 'ielts'], 0),
-          applicationFee: getNumber(['Application Fee', 'Application Fee', 'applicationFee', 'Fee', 'fee'], 0),
-          yearlyTuitionFees: getNumber(['Yearly Tuition Fees', 'Yearly Tuition Fees', 'yearlyTuitionFees', 'Tuition', 'tuition'], 0),
+          ieltsScore: getNumber(['IELTS Score', 'ieltsScore', 'IELTS', 'ielts'], 0),
+          applicationFee: getNumber(['Application Fee', 'applicationFee', 'Fee', 'fee'], 0),
+          yearlyTuitionFees: getNumber(['Yearly Tuition Fees', 'yearlyTuitionFees', 'Tuition', 'tuition'], 0),
           universityRanking: {
-            webometricsWorld: getInt(['Webometrics World', 'Webometrics World', 'webometricsWorld', 'Webometrics World Ranking']),
-            webometricsNational: getInt(['Webometrics National', 'Webometrics National', 'webometricsNational', 'Webometrics National Ranking']),
-            usNews: getInt(['US News', 'US News', 'usNews', 'US News Ranking']),
-            qs: getInt(['QS', 'QS', 'qs', 'QS Ranking']),
+            webometricsWorld: getInt(['Webometrics World', 'webometricsWorld', 'Webometrics World Ranking']),
+            webometricsNational: getInt(['Webometrics Continent', 'webometricsContinent', 'Webometrics National', 'webometricsNational', 'Webometrics National Ranking']),
+            usNews: getInt(['US News', 'usNews', 'US News Ranking']),
+            qs: getInt(['QS Ranking', 'QS', 'qs', 'qsRanking']),
           },
           isSelectedByStudent: false,
         };
 
         // Validate required fields (only 5 fields are required)
-        if (!programData.university || !programData.programName || !programData.websiteUrl || 
+        if (!programData.university || !programData.programName || !programData.programUrl || 
             !programData.country || !programData.studyLevel) {
           errors.push({
             row: i + 2, // +2 because Excel rows start at 1 and we have header

@@ -11,7 +11,7 @@ export interface IProgram extends Document {
     qs?: number;
   };
   programName: string;
-  websiteUrl: string;
+  programUrl: string;
   campus: string;
   country: string;
   studyLevel: string;
@@ -54,7 +54,7 @@ const programSchema = new Schema<IProgram>(
       type: String,
       required: true,
     },
-    websiteUrl: {
+    programUrl: {
       type: String,
       required: true,
     },

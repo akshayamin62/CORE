@@ -20,7 +20,7 @@ interface Program {
     qs?: number;
   };
   programName: string;
-  websiteUrl?: string;
+  programUrl?: string;
   campus?: string;
   country: string;
   studyLevel: string;
@@ -140,7 +140,7 @@ export default function ProgramSection({
           qs: formData.universityRanking.qs ? parseInt(formData.universityRanking.qs) : undefined,
         },
         programName: formData.programName,
-        websiteUrl: formData.websiteUrl,
+        programUrl: formData.programUrl,
         country: formData.country,
         studyLevel: formData.studyLevel,
       };
@@ -398,15 +398,34 @@ export default function ProgramSection({
                           {program.ieltsScore && <div><span className="font-medium">IELTS:</span> {program.ieltsScore}</div>}
                           {program.yearlyTuitionFees && <div><span className="font-medium">Tuition:</span> £{program.yearlyTuitionFees.toLocaleString()}</div>}
                           {program.applicationFee && <div><span className="font-medium">App Fee:</span> £{program.applicationFee.toLocaleString()}</div>}
-                          {program.websiteUrl && (
+                          {program.programUrl && (
                             <div>
-                              <span className="font-medium">Website:</span>{' '}
-                              <a href={program.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                              <span className="font-medium">Program Link:</span>{' '}
+                              <a href={program.programUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                                 View
                               </a>
                             </div>
                           )}
                         </div>
+                        {program.universityRanking && (Object.keys(program.universityRanking).some(key => program.universityRanking[key as keyof typeof program.universityRanking])) && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <p className="text-xs font-semibold text-gray-700 mb-1">University Rankings:</p>
+                            <div className="flex flex-wrap gap-3 text-xs text-gray-600">
+                              {program.universityRanking.webometricsWorld && (
+                                <span className="px-2 py-1 bg-blue-50 rounded">🌍 Webometrics World: #{program.universityRanking.webometricsWorld}</span>
+                              )}
+                              {program.universityRanking.webometricsNational && (
+                                <span className="px-2 py-1 bg-green-50 rounded">🏛️ Webometrics National: #{program.universityRanking.webometricsNational}</span>
+                              )}
+                              {program.universityRanking.usNews && (
+                                <span className="px-2 py-1 bg-purple-50 rounded">📰 US News: #{program.universityRanking.usNews}</span>
+                              )}
+                              {program.universityRanking.qs && (
+                                <span className="px-2 py-1 bg-orange-50 rounded">⭐ QS: #{program.universityRanking.qs}</span>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                       </div>
                       {!expandedPrograms.has(program._id) ? (
@@ -417,7 +436,7 @@ export default function ProgramSection({
                           Select
                         </button>
                       ) : (
-                        <div className="ml-4 flex flex-col gap-2 min-w-[200px]">
+                        <div className="ml-4 flex flex-col gap-2 max-w-[200px]">
                           <div className="space-y-2">
                             <select
                               value={programFormData[program._id]?.year || String(currentYear)}

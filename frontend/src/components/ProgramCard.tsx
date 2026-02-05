@@ -10,7 +10,7 @@ interface Program {
     qs?: number;
   };
   programName: string;
-  websiteUrl?: string;
+  programUrl?: string;
   campus?: string;
   country: string;
   studyLevel: string;
@@ -115,29 +115,32 @@ export default function ProgramCard({
                 <span className="font-medium">Application Fee:</span> £{program.applicationFee.toLocaleString()}
               </div>
             )}
-            {program.websiteUrl && (
+            {program.programUrl && (
               <div>
-                <span className="font-medium">Website:</span>{' '}
-                <a href={program.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                <span className="font-medium">Program Link:</span>{' '}
+                <a href={program.programUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                   View Program
                 </a>
               </div>
             )}
           </div>
-          {program.universityRanking && (
-            <div className="mt-2 flex gap-4 text-xs text-gray-700">
-              {program.universityRanking.webometricsWorld && (
-                <span>Webometrics World: {program.universityRanking.webometricsWorld}</span>
-              )}
-              {program.universityRanking.webometricsNational && (
-                <span>Webometrics National: {program.universityRanking.webometricsNational}</span>
-              )}
-              {program.universityRanking.usNews && (
-                <span>US News: {program.universityRanking.usNews}</span>
-              )}
-              {program.universityRanking.qs && (
-                <span>QS: {program.universityRanking.qs}</span>
-              )}
+          {program.universityRanking && (Object.keys(program.universityRanking).some(key => program.universityRanking[key as keyof typeof program.universityRanking])) && (
+            <div className="mt-3 pt-3 border-t border-gray-200">
+              <p className="text-xs font-semibold text-gray-700 mb-2">University Rankings:</p>
+              <div className="flex flex-wrap gap-2 text-xs">
+                {program.universityRanking.webometricsWorld && (
+                  <span className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded font-medium">🌍 Webometrics World: #{program.universityRanking.webometricsWorld}</span>
+                )}
+                {program.universityRanking.webometricsNational && (
+                  <span className="px-2.5 py-1 bg-green-50 text-green-700 rounded font-medium">🏛️ Webometrics National: #{program.universityRanking.webometricsNational}</span>
+                )}
+                {program.universityRanking.usNews && (
+                  <span className="px-2.5 py-1 bg-purple-50 text-purple-700 rounded font-medium">📰 US News: #{program.universityRanking.usNews}</span>
+                )}
+                {program.universityRanking.qs && (
+                  <span className="px-2.5 py-1 bg-orange-50 text-orange-700 rounded font-medium">⭐ QS: #{program.universityRanking.qs}</span>
+                )}
+              </div>
             </div>
           )}
         </div>

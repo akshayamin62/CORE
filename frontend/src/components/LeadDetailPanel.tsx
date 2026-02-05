@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Lead, FollowUp, LEAD_STAGE, FOLLOWUP_STATUS } from '@/types';
+import { Lead, FollowUp, LEAD_STAGE, FOLLOWUP_STATUS, MEETING_TYPE } from '@/types';
 import { followUpAPI, leadAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -86,6 +86,7 @@ export default function LeadDetailPanel({
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
   const [scheduleDuration, setScheduleDuration] = useState(30);
+  const [scheduleMeetingType, setScheduleMeetingType] = useState<MEETING_TYPE>(MEETING_TYPE.ONLINE);
   const [scheduleNotes, setScheduleNotes] = useState('');
   const [scheduling, setScheduling] = useState(false);
   const [checkingSlot, setCheckingSlot] = useState(false);
@@ -154,6 +155,7 @@ export default function LeadDetailPanel({
         scheduledDate: scheduleDate,
         scheduledTime: scheduleTime,
         duration: scheduleDuration,
+        meetingType: scheduleMeetingType,
         notes: scheduleNotes,
       });
       toast.success('Follow-up scheduled successfully');
