@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI, leadAPI, followUpAPI, leadConversionAPI, adminStudentAPI } from '@/lib/api';
-import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE, FollowUp, FOLLOWUP_STATUS, CONVERSION_STATUS } from '@/types';
+import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE, FollowUp, FOLLOWUP_STATUS, CONVERSION_STATUS, MEETING_TYPE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import { format } from 'date-fns';
 import FollowUpCalendar from '@/components/FollowUpCalendar';
@@ -33,6 +33,7 @@ export default function CounselorLeadDetailPage() {
     date: '',
     time: '',
     duration: 30,
+    meetingType: MEETING_TYPE.ONLINE,
   });
   const [scheduling, setScheduling] = useState(false);
   const [checkingAvailability, setCheckingAvailability] = useState(false);
@@ -257,10 +258,11 @@ export default function CounselorLeadDetailPage() {
         scheduledDate: newFollowUp.date,
         scheduledTime: newFollowUp.time,
         duration: newFollowUp.duration,
+        meetingType: newFollowUp.meetingType,
       });
       toast.success('Follow-up scheduled successfully');
       setShowScheduleForm(false);
-      setNewFollowUp({ date: '', time: '', duration: 30 });
+      setNewFollowUp({ date: '', time: '', duration: 30, meetingType: MEETING_TYPE.ONLINE });
       setAvailabilityStatus(null);
       fetchFollowUps();
     } catch (error: any) {
@@ -313,7 +315,7 @@ export default function CounselorLeadDetailPage() {
       case SERVICE_TYPE.IVY_LEAGUE_ADMISSION:
         return 'bg-amber-100 text-amber-800';
       case SERVICE_TYPE.EDUCATION_PLANNING:
-        return 'bg-teal-100 text-teal-800';
+        return 'bg-blue-100 text-blue-800';
       case SERVICE_TYPE.IELTS_GRE_LANGUAGE_COACHING:
         return 'bg-rose-100 text-rose-800';
       default:
@@ -428,13 +430,13 @@ export default function CounselorLeadDetailPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1">Mobile Number</label>
-                <a href={`tel:${lead.mobileNumber}`} className="text-teal-600 hover:underline font-medium">
+                <a href={`tel:${lead.mobileNumber}`} className="text-blue-600 hover:underline font-medium">
                   {lead.mobileNumber}
                 </a>
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1">Email Address</label>
-                <a href={`mailto:${lead.email}`} className="text-teal-600 hover:underline text-sm break-all">
+                <a href={`mailto:${lead.email}`} className="text-blue-600 hover:underline text-sm break-all">
                   {lead.email}
                 </a>
               </div>
@@ -550,7 +552,7 @@ export default function CounselorLeadDetailPage() {
                       value={lead.stage}
                       onChange={(e) => handleStageChange(e.target.value)}
                       disabled={updatingStage}
-                      className={`w-full px-3 py-2 rounded-lg border-2 text-sm font-medium appearance-none cursor-pointer focus:ring-2 focus:ring-teal-500 focus:outline-none disabled:opacity-50 ${getStageColor(lead.stage)}`}
+                        className={`w-full px-3 py-2 rounded-lg border-2 text-sm font-medium appearance-none cursor-pointer focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50 ${getStageColor(lead.stage)}`}
                     >
                       {Object.values(LEAD_STAGE).filter(s => s !== LEAD_STAGE.CONVERTED).map((stage) => (
                         <option key={stage} value={stage} className="bg-white text-gray-900">{stage}</option>
@@ -638,7 +640,7 @@ export default function CounselorLeadDetailPage() {
                 {followUps.length === 0 && (
                   <button
                     onClick={() => setShowScheduleForm(!showScheduleForm)}
-                    className="px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors text-sm font-medium flex items-center gap-1"
+                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-1"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -650,8 +652,8 @@ export default function CounselorLeadDetailPage() {
 
               {/* Schedule Form - Only shown for first follow-up */}
               {showScheduleForm && followUps.length === 0 && (
-                <div className="mb-4 p-4 bg-teal-50 rounded-lg border border-teal-200">
-                  <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="grid grid-cols-4 gap-3 mb-3">
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
                       <input
@@ -662,7 +664,7 @@ export default function CounselorLeadDetailPage() {
                           setAvailabilityStatus(null);
                         }}
                         min={format(new Date(), 'yyyy-MM-dd')}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
                     <div>
@@ -674,7 +676,7 @@ export default function CounselorLeadDetailPage() {
                           setNewFollowUp({ ...newFollowUp, time: e.target.value });
                           setAvailabilityStatus(null);
                         }}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
                     <div>
@@ -685,12 +687,25 @@ export default function CounselorLeadDetailPage() {
                           setNewFollowUp({ ...newFollowUp, duration: parseInt(e.target.value) });
                           setAvailabilityStatus(null);
                         }}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value={15}>15 min</option>
                         <option value={30}>30 min</option>
                         <option value={45}>45 min</option>
                         <option value={60}>60 min</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Meeting Type</label>
+                      <select
+                        value={newFollowUp.meetingType}
+                        onChange={(e) => {
+                          setNewFollowUp({ ...newFollowUp, meetingType: e.target.value as MEETING_TYPE });
+                        }}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value={MEETING_TYPE.ONLINE}>Online</option>
+                        <option value={MEETING_TYPE.FACE_TO_FACE}>Face to Face</option>
                       </select>
                     </div>
                   </div>
@@ -742,7 +757,7 @@ export default function CounselorLeadDetailPage() {
                       <button
                         onClick={handleScheduleFollowUp}
                         disabled={scheduling}
-                        className="px-3 py-1.5 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 flex items-center gap-1"
+                        className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
                       >
                         {scheduling ? 'Scheduling...' : 'Schedule'}
                       </button>
@@ -755,7 +770,7 @@ export default function CounselorLeadDetailPage() {
               <div className="space-y-3">
                 {loadingFollowUps ? (
                   <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-600"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                   </div>
                 ) : followUps.length > 0 ? (
                   followUps.map((followUp, index) => {
@@ -779,6 +794,25 @@ export default function CounselorLeadDetailPage() {
                           <span className="text-sm font-medium text-gray-900">
                             {format(new Date(followUp.scheduledDate), 'MMM d, yyyy')} at {followUp.scheduledTime}
                           </span>
+                          {followUp.meetingType && (
+                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded flex items-center gap-1">
+                              {followUp.meetingType === MEETING_TYPE.ONLINE ? (
+                                <>
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                  Online
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  </svg>
+                                  Face to Face
+                                </>
+                              )}
+                            </span>
+                          )}
                           <span className={`px-2 py-0.5 text-xs rounded-full ${getFollowUpStatusColor(followUp.status)}`}>
                             {followUp.status}
                           </span>

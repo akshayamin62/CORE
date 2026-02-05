@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthRequest } from "../types/auth";
-import FollowUp, { FOLLOWUP_STATUS } from "../models/FollowUp";
+import FollowUp, { FOLLOWUP_STATUS, MEETING_TYPE } from "../models/FollowUp";
 import Lead from "../models/Lead";
 import Counselor from "../models/Counselor";
 import TeamMeet, { TEAMMEET_STATUS } from "../models/TeamMeet";
@@ -53,7 +53,7 @@ export const createFollowUp = async (
   try {
     const userId = req.user?.userId;
     const userRole = req.user?.role;
-    const { leadId, scheduledDate, scheduledTime, duration, notes } = req.body;
+    const { leadId, scheduledDate, scheduledTime, duration, meetingType, notes } = req.body;
 
     // Validate required fields
     if (!leadId || !scheduledDate || !scheduledTime || !duration) {
@@ -177,6 +177,7 @@ export const createFollowUp = async (
       scheduledDate: scheduleDate,
       scheduledTime,
       duration,
+      meetingType: meetingType || MEETING_TYPE.ONLINE,
       status: FOLLOWUP_STATUS.SCHEDULED,
       stageAtFollowUp: lead.stage,
       followUpNumber,
@@ -375,7 +376,7 @@ export const getFollowUpById = async (
       const nextFollowUp = await FollowUp.findOne({
         leadId: followUp.leadId,
         followUpNumber: followUp.followUpNumber + 1,
-      }).select('scheduledDate scheduledTime duration followUpNumber');
+      }).select('scheduledDate scheduledTime duration followUpNumber meetingType');
       
       if (nextFollowUp) {
         nextFollowUpInfo = {
@@ -383,6 +384,7 @@ export const getFollowUpById = async (
           scheduledTime: nextFollowUp.scheduledTime,
           duration: nextFollowUp.duration,
           followUpNumber: nextFollowUp.followUpNumber,
+          meetingType: nextFollowUp.meetingType,
         };
       }
     }
@@ -572,6 +574,7 @@ export const updateFollowUp = async (
         scheduledDate: nextDate,
         scheduledTime: nextFollowUp.scheduledTime,
         duration: nextFollowUp.duration || 30,
+        meetingType: nextFollowUp.meetingType || MEETING_TYPE.ONLINE,
         status: FOLLOWUP_STATUS.SCHEDULED,
         stageAtFollowUp: stageChangedTo || lead?.stage || followUp.stageAtFollowUp,
         followUpNumber: nextFollowUpNumber,

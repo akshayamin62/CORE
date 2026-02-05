@@ -331,6 +331,7 @@ export const followUpAPI = {
     scheduledDate: string;
     scheduledTime: string;
     duration: number;
+    meetingType: string;
     notes?: string;
   }) => api.post('/follow-ups', data),
 
@@ -356,6 +357,7 @@ export const followUpAPI = {
       scheduledDate: string;
       scheduledTime: string;
       duration: number;
+      meetingType: string;
     };
   }) => api.patch(`/follow-ups/${followUpId}`, data),
 

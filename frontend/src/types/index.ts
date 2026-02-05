@@ -312,6 +312,12 @@ export enum FOLLOWUP_STATUS {
   REPEATEDLY_NOT_RESPONDING = 'Repeatedly Not Responding',
   FAKE_ENQUIRY = 'Fake / Test Enquiry',
   DUPLICATE_ENQUIRY = 'Duplicate Enquiry',
+  CONVERTED_TO_STUDENT = 'Converted to Student',
+}
+
+export enum MEETING_TYPE {
+  ONLINE = 'Online',
+  FACE_TO_FACE = 'Face to Face',
 }
 
 export interface FollowUp {
@@ -321,6 +327,7 @@ export interface FollowUp {
   scheduledDate: string;
   scheduledTime: string;
   duration: number;
+  meetingType: MEETING_TYPE;
   status: FOLLOWUP_STATUS;
   stageAtFollowUp: LEAD_STAGE;
   stageChangedTo?: LEAD_STAGE;
@@ -355,6 +362,7 @@ export interface CreateFollowUpData {
   scheduledDate: string;
   scheduledTime: string;
   duration: number;
+  meetingType: MEETING_TYPE;
   notes?: string;
 }
 

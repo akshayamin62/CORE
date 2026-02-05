@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FollowUp, FOLLOWUP_STATUS, Lead, LEAD_STAGE } from '@/types';
+import { FollowUp, FOLLOWUP_STATUS, Lead, LEAD_STAGE, MEETING_TYPE } from '@/types';
 import { followUpAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -28,6 +28,7 @@ export default function FollowUpFormPanel({
   const [nextDate, setNextDate] = useState('');
   const [nextTime, setNextTime] = useState('');
   const [nextDuration, setNextDuration] = useState(30);
+  const [nextMeetingType, setNextMeetingType] = useState<MEETING_TYPE>(MEETING_TYPE.ONLINE);
   const [saving, setSaving] = useState(false);
   const [checkingSlot, setCheckingSlot] = useState(false);
   const [slotAvailable, setSlotAvailable] = useState<boolean | null>(null);
@@ -39,6 +40,7 @@ export default function FollowUpFormPanel({
     scheduledTime: string;
     duration: number;
     followUpNumber: number;
+    meetingType?: MEETING_TYPE;
   } | null>(null);
 
   // Fetch full follow-up data when followUp changes
@@ -76,6 +78,7 @@ export default function FollowUpFormPanel({
       setNextDate('');
       setNextTime('');
       setNextDuration(30);
+      setNextMeetingType(MEETING_TYPE.ONLINE);
       setSlotAvailable(null);
     } catch (error: any) {
       console.error('Error fetching follow-up:', error);
@@ -155,6 +158,7 @@ export default function FollowUpFormPanel({
           scheduledDate: nextDate,
           scheduledTime: nextTime,
           duration: nextDuration,
+          meetingType: nextMeetingType,
         };
       }
 
@@ -245,6 +249,25 @@ export default function FollowUpFormPanel({
                     <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded">
                       {followUpData.duration} min
                     </span>
+                    {followUpData.meetingType && (
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded flex items-center gap-1">
+                        {followUpData.meetingType === MEETING_TYPE.ONLINE ? (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            Online
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            F2F
+                          </>
+                        )}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-200">
@@ -312,6 +335,9 @@ export default function FollowUpFormPanel({
                     <option value={FOLLOWUP_STATUS.REPEATEDLY_NOT_RESPONDING}>Repeatedly Not Responding</option>
                     <option value={FOLLOWUP_STATUS.FAKE_ENQUIRY}>Fake / Test Enquiry</option>
                     <option value={FOLLOWUP_STATUS.DUPLICATE_ENQUIRY}>Duplicate Enquiry</option>
+                  </optgroup>
+                  <optgroup label="Conversion">
+                    <option value={FOLLOWUP_STATUS.CONVERTED_TO_STUDENT}>Converted to Student</option>
                   </optgroup>
                 </select>
               </div>
@@ -396,18 +422,31 @@ export default function FollowUpFormPanel({
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-xs text-gray-600 mb-1">Duration</label>
-                      <select
-                        value={nextDuration}
-                        onChange={(e) => setNextDuration(parseInt(e.target.value))}
-                        className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value={15}>15 min</option>
-                        <option value={30}>30 min</option>
-                        <option value={45}>45 min</option>
-                        <option value={60}>60 min</option>
-                      </select>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Duration</label>
+                        <select
+                          value={nextDuration}
+                          onChange={(e) => setNextDuration(parseInt(e.target.value))}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value={15}>15 min</option>
+                          <option value={30}>30 min</option>
+                          <option value={45}>45 min</option>
+                          <option value={60}>60 min</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-600 mb-1">Meeting Type</label>
+                        <select
+                          value={nextMeetingType}
+                          onChange={(e) => setNextMeetingType(e.target.value as MEETING_TYPE)}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value={MEETING_TYPE.ONLINE}>Online</option>
+                          <option value={MEETING_TYPE.FACE_TO_FACE}>Face to Face</option>
+                        </select>
+                      </div>
                     </div>
                     
                     {/* Slot Availability Status - Compact */}
@@ -456,7 +495,28 @@ export default function FollowUpFormPanel({
                       <p className="font-medium">
                         {format(new Date(nextFollowUpInfo.scheduledDate), 'MMM d, yyyy')} at {nextFollowUpInfo.scheduledTime}
                       </p>
-                      <p className="text-xs text-teal-700 mt-1">Duration: {nextFollowUpInfo.duration} min</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-xs text-teal-700">Duration: {nextFollowUpInfo.duration} min</p>
+                        {nextFollowUpInfo.meetingType && (
+                          <span className="text-xs bg-blue-200 text-blue-700 px-2 py-0.5 rounded flex items-center gap-1">
+                            {nextFollowUpInfo.meetingType === MEETING_TYPE.ONLINE ? (
+                              <>
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                Online
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                F2F
+                              </>
+                            )}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

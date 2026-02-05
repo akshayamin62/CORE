@@ -22,6 +22,12 @@ export enum FOLLOWUP_STATUS {
   REPEATEDLY_NOT_RESPONDING = "Repeatedly Not Responding",
   FAKE_ENQUIRY = "Fake / Test Enquiry",
   DUPLICATE_ENQUIRY = "Duplicate Enquiry",
+  CONVERTED_TO_STUDENT = "Converted to Student",
+}
+
+export enum MEETING_TYPE {
+  ONLINE = "Online",
+  FACE_TO_FACE = "Face to Face",
 }
 
 export interface IFollowUp extends Document {
@@ -30,6 +36,7 @@ export interface IFollowUp extends Document {
   scheduledDate: Date;
   scheduledTime: string; // Format: "HH:mm"
   duration: number; // Duration in minutes (15, 30, 45, 60)
+  meetingType: MEETING_TYPE; // Online or Face to Face
   status: FOLLOWUP_STATUS;
   stageAtFollowUp: LEAD_STAGE; // Stage of lead at the time of follow-up
   stageChangedTo?: LEAD_STAGE; // If stage was changed during this follow-up
@@ -73,6 +80,12 @@ const followUpSchema = new Schema<IFollowUp>(
       required: true,
       enum: [15, 30, 45, 60],
       default: 30,
+    },
+    meetingType: {
+      type: String,
+      enum: Object.values(MEETING_TYPE),
+      required: true,
+      default: MEETING_TYPE.ONLINE,
     },
     status: {
       type: String,
