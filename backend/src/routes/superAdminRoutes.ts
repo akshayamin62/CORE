@@ -11,11 +11,13 @@ import {
   getAllOps,
   createAdmin,
   getAdmins,
+  getAdminDetails,
   createUserByRole,
 } from "../controllers/superAdminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
 import { USER_ROLE } from "../types/roles";
+import { uploadAdminLogo } from "../middleware/upload";
 
 const router = Router();
 
@@ -105,12 +107,19 @@ router.post("/admin", createAdmin);
 router.get("/admins", getAdmins);
 
 /**
+ * @route   GET /api/super-admin/admins/:adminId
+ * @desc    Get admin details by ID
+ * @access  Super Admin only
+ */
+router.get("/admins/:adminId", getAdminDetails);
+
+/**
  * @route   POST /api/super-admin/user
  * @desc    Create a new User by Role
  * @access  Super Admin only
- * @body    name, email, phoneNumber (optional), role, adminId (for COUNSELOR)
+ * @body    name, email, phoneNumber (optional), role, adminId (for COUNSELOR), companyName, address, companyLogo (file)
  */
-router.post("/user", createUserByRole);
+router.post("/user", uploadAdminLogo.single('companyLogo'), createUserByRole);
 
 export default router;
 

@@ -133,6 +133,8 @@ export const getAdminInfoBySlug = async (req: Request, res: Response): Promise<R
       success: true,
       data: {
         adminName: (admin.userId as any)?.name || "Kareer Studio",
+        companyName: admin.companyName || "Kareer Studio",
+        companyLogo: admin.companyLogo || null,
         services: Object.values(SERVICE_TYPE),
       },
     });

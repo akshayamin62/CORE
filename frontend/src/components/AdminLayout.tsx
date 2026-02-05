@@ -2,17 +2,24 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import { User, USER_ROLE } from '@/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { authAPI } from '@/lib/api';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
   user: User;
 }
 
+interface AdminProfile {
+  companyLogo?: string;
+  companyName?: string;
+}
+
 export default function AdminLayout({ children, user }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
 
   const navigationItems = [
     {
@@ -46,6 +53,27 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
     },
   ];
 
+  useEffect(() => {
+    fetchAdminProfile();
+  }, [user]);
+
+  const fetchAdminProfile = async () => {
+    try {
+      const response = await authAPI.getProfile();
+      const profileData = response.data.data;
+      
+      // Check if admin field exists with logo and company name
+      if (profileData.admin) {
+        setAdminProfile({
+          companyLogo: profileData.admin.companyLogo,
+          companyName: profileData.admin.companyName,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch admin profile:', error);
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     router.push('/login');
@@ -63,10 +91,28 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4">
           {sidebarOpen && (
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
+              {adminProfile?.companyLogo ? (
+                <img
+                  src={`http://localhost:5000${adminProfile.companyLogo}`}
+                  alt="Company Logo"
+                  className="w-8 h-8 rounded-lg object-cover"
+                  onError={(e) => {
+                    // Fallback to default avatar if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div className={`w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center ${adminProfile?.companyLogo ? 'hidden' : ''}`}>
+                <span className="text-white font-bold text-sm">
+                  {adminProfile?.companyName?.charAt(0) || 'A'}
+                </span>
               </div>
-              <span className="font-semibold text-gray-900">Admin</span>
+              <span className="font-semibold text-gray-900">
+                {adminProfile?.companyName || 'Admin'}
+              </span>
             </div>
           )}
           <button

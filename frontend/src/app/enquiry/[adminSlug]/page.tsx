@@ -19,7 +19,9 @@ export default function PublicEnquiryFormPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
     email: '',
     mobileNumber: '',
     city: '',
@@ -68,8 +70,12 @@ export default function PublicEnquiryFormPage() {
     e.preventDefault();
 
     // Validation
-    if (!formData.name.trim()) {
-      toast.error('Please enter your name');
+    if (!formData.firstName.trim()) {
+      toast.error('Please enter your first name');
+      return;
+    }
+    if (!formData.lastName.trim()) {
+      toast.error('Please enter your last name');
       return;
     }
     if (!formData.email.trim()) {
@@ -103,10 +109,15 @@ export default function PublicEnquiryFormPage() {
       return;
     }
 
+    // Combine names
+    const fullName = [formData.firstName.trim(), formData.middleName.trim(), formData.lastName.trim()]
+      .filter(Boolean)
+      .join(' ');
+
     try {
       setSubmitting(true);
       await leadAPI.submitEnquiry(adminSlug, {
-        name: formData.name.trim(),
+        name: fullName,
         email: formData.email.trim().toLowerCase(),
         mobileNumber: formData.mobileNumber.trim(),
         city: formData.city.trim(),
@@ -169,15 +180,15 @@ export default function PublicEnquiryFormPage() {
           <p className="text-gray-600 mb-6">
             Your enquiry has been submitted successfully. Our team will contact you shortly.
           </p>
-          <button
+          {/* <button
             onClick={() => {
               setSubmitted(false);
-              setFormData({ name: '', email: '', mobileNumber: '', city: '', serviceTypes: [] });
+              setFormData({ firstName: '', middleName: '', lastName: '', email: '', mobileNumber: '', city: '', serviceTypes: [] });
             }}
             className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
           >
             Submit Another Enquiry
-          </button>
+          </button> */}
         </div>
       </div>
     );
@@ -190,13 +201,27 @@ export default function PublicEnquiryFormPage() {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
+          {adminInfo?.companyLogo ? (
+            <img
+              src={`http://localhost:5000${adminInfo.companyLogo}`}
+              alt={adminInfo.companyName || 'Company Logo'}
+              className="w-24 h-24 rounded-2xl object-cover mx-auto mb-4 shadow-lg border border-gray-200"
+              onError={(e) => {
+                // Fallback to default icon if image fails to load
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.classList.remove('hidden');
+              }}
+            />
+          ) : null}
+          <div className={`w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30 ${adminInfo?.companyLogo ? 'hidden' : ''}`}>
             <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Get in Touch with {adminInfo?.adminName || 'Us'}
+            Get in Touch with {adminInfo?.companyName || adminInfo?.adminName || 'Us'}
           </h1>
           <p className="text-gray-500 text-lg">
             Fill out the form below and we'll get back to you as soon as possible.
@@ -206,25 +231,58 @@ export default function PublicEnquiryFormPage() {
         {/* Form Card */}
         <div className="bg-white rounded-3xl shadow-2xl shadow-gray-200/50 p-10 border border-gray-100">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name */}
-            {/* Row 1: Full Name + Email */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* Row 1: First Name, Middle Name, Last Name */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               <div>
-                <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Full Name <span className="text-red-500">*</span>
+                <label htmlFor="firstName" className="block text-sm font-semibold text-gray-700 mb-2">
+                  First Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
                   onChange={handleInputChange}
-                  placeholder="Enter your full name"
+                  placeholder="First name"
                   className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 placeholder:text-gray-400"
                   required
                 />
               </div>
 
+              <div>
+                <label htmlFor="middleName" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Middle Name
+                </label>
+                <input
+                  type="text"
+                  id="middleName"
+                  name="middleName"
+                  value={formData.middleName}
+                  onChange={handleInputChange}
+                  placeholder="Middle name"
+                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 placeholder:text-gray-400"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Last Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  placeholder="Last name"
+                  className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-gray-900 placeholder:text-gray-400"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Row 2: Email + Mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
                 <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
                   Email Address <span className="text-red-500">*</span>
@@ -240,10 +298,7 @@ export default function PublicEnquiryFormPage() {
                   required
                 />
               </div>
-            </div>
 
-            {/* Row 2: Mobile Number + City */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
                 <label htmlFor="mobileNumber" className="block text-sm font-semibold text-gray-700 mb-2">
                   Mobile Number <span className="text-red-500">*</span>

@@ -81,11 +81,11 @@ export default function SuperAdminDashboardPage() {
   const roleCards = [
     { key: 'ADMIN', label: 'Admins', color: 'red', path: '/super-admin/roles/admin' },
     { key: 'OPS', label: 'Ops', color: 'green', path: '/super-admin/roles/ops' },
-    { key: 'EDUPLAN_COACH', label: 'EduPlan Coaches', color: 'indigo', path: '/super-admin/roles/eduplan-coach' },
-    { key: 'IVY_EXPERT', label: 'Ivy Experts', color: 'purple', path: '/super-admin/roles/ivy-expert' },
     { key: 'COUNSELOR', label: 'Counselors', color: 'teal', path: '/super-admin/roles/counselor' },
     { key: 'STUDENT', label: 'Students', color: 'blue', path: '/super-admin/roles/student' },
     { key: 'PARENT', label: 'Parents', color: 'amber', path: '/super-admin/roles/parent' },
+    { key: 'IVY_EXPERT', label: 'Ivy Experts', color: 'purple', path: '/super-admin/roles/ivy-expert' },
+    { key: 'EDUPLAN_COACH', label: 'EduPlan Coaches', color: 'indigo', path: '/super-admin/roles/eduplan-coach' },
     { key: 'ALUMNI', label: 'Alumni', color: 'pink', path: '/super-admin/roles/alumni' },
     { key: 'SERVICE_PROVIDER', label: 'Service Providers', color: 'orange', path: '/super-admin/roles/service-provider' },
   ];
@@ -97,10 +97,7 @@ export default function SuperAdminDashboardPage() {
         <div className="p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Super Admin</h1>
-            <p className="text-gray-600 mt-2">
-              Overview of all users and system management
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">{user.name}</h1>
           </div>
 
           {/* Role Stats Cards */}

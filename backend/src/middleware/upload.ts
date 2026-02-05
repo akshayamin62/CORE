@@ -44,6 +44,47 @@ export const upload = multer({
   },
 });
 
+// Admin logo upload - only images
+const adminLogoStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    const uploadsDir = path.join(__dirname, "../../uploads/admin");
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    cb(null, uploadsDir);
+  },
+  filename: (_req, file, cb) => {
+    const timestamp = Date.now();
+    const ext = path.extname(file.originalname);
+    const filename = `logo_${timestamp}${ext}`;
+    cb(null, filename);
+  },
+});
+
+const imageFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const allowedMimes = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+  ];
+
+  if (allowedMimes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Invalid file type. Only images (JPG, PNG, GIF, WEBP) are allowed."));
+  }
+};
+
+export const uploadAdminLogo = multer({
+  storage: adminLogoStorage,
+  fileFilter: imageFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB max for logos
+  },
+});
+
 // Error handler for multer errors
 export const handleMulterError = (err: any, _req: any, res: any, next: any) => {
   if (err instanceof multer.MulterError) {

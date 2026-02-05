@@ -163,10 +163,7 @@ export default function OpsDashboardPage() {
         <div className="p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">OPS Dashboard</h1>
-            <p className="text-gray-600 mt-2">
-              Manage and guide your students
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">{user.name}</h1>
           </div>
 
           {/* Stats Cards */}

@@ -32,6 +32,13 @@ const counselorSchema = new Schema<ICounselor>(
       type: String,
       required: false,
       trim: true,
+      validate: {
+        validator: function(v: string) {
+          if (!v) return true; // Allow empty if not required
+          return /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,5}[-\s.]?[0-9]{1,5}$/.test(v);
+        },
+        message: 'Invalid phone number format'
+      }
     },
   },
   { timestamps: true }

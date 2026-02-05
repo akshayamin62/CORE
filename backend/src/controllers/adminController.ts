@@ -23,6 +23,22 @@ export const createCounselor = async (req: AuthRequest, res: Response): Promise<
       });
     }
 
+    if (!mobileNumber || !mobileNumber.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mobile number is required',
+      });
+    }
+
+    // Validate phone number format
+    const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,5}[-\s.]?[0-9]{1,5}$/;
+    if (!phoneRegex.test(mobileNumber.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid phone number format. Please use only numbers and allowed characters (+, -, (), spaces)',
+      });
+    }
+
     if (!adminUserId) {
       return res.status(401).json({
         success: false,

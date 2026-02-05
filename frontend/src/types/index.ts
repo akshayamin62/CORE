@@ -21,6 +21,9 @@ export interface User {
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  // Admin-specific fields (populated when role is ADMIN)
+  companyName?: string;
+  companyLogo?: string;
 }
 
 export interface Student {
@@ -282,6 +285,8 @@ export interface Lead {
 
 export interface AdminInfo {
   adminName: string;
+  companyName?: string;
+  companyLogo?: string | null;
   services: string[];
 }
 

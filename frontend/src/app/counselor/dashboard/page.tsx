@@ -305,10 +305,7 @@ export default function CounselorDashboardPage() {
           {/* Header */}
           <div className="mb-8 flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Counselor</h1>
-              <p className="text-gray-600 mt-2">
-                Welcome back, {user.name}! Here's your overview
-              </p>
+              <h1 className="text-3xl font-bold text-gray-900">{user.name}</h1>
             </div>
             {/* Copy Enquiry URL */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 max-w-lg">

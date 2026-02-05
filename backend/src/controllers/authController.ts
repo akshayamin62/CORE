@@ -1,6 +1,7 @@
 import { Response } from "express";
 import User from "../models/User";
 import Student from "../models/Student";
+import Admin from "../models/Admin";
 import { USER_ROLE } from "../types/roles";
 import { generateToken } from "../utils/jwt";
 import { Request } from "express";
@@ -414,20 +415,35 @@ export const getProfile = async (
       });
     }
 
+    const responseData: any = {
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+    };
+
+    // If user is an ADMIN, include admin profile data
+    if (user.role === USER_ROLE.ADMIN) {
+      const admin = await Admin.findOne({ userId: user._id });
+      if (admin) {
+        responseData.admin = {
+          companyName: admin.companyName,
+          companyLogo: admin.companyLogo,
+          address: admin.address,
+          enquiryFormSlug: admin.enquiryFormSlug,
+        };
+      }
+    }
+
     return res.status(200).json({
       success: true,
-      data: {
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          isVerified: user.isVerified,
-          isActive: user.isActive,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
-        },
-      },
+      data: responseData,
     });
   } catch (err: any) {
     console.error("Get profile error:", err);

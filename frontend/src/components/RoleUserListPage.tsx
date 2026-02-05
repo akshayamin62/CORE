@@ -52,6 +52,16 @@ export default function RoleUserListPage({
     email: '',
     phoneNumber: '',
   });
+  
+  // Admin-specific form fields
+  const [adminFormData, setAdminFormData] = useState({
+    companyName: '',
+    address: '',
+  });
+
+  const [companyLogoFile, setCompanyLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  
   const [submitting, setSubmitting] = useState(false);
 
   // Check if this role should show verified stats (only Alumni and Service Provider)
@@ -67,9 +77,9 @@ export default function RoleUserListPage({
   const [customSlug, setCustomSlug] = useState('');
   const [slugPreview, setSlugPreview] = useState('');
 
-  // Generate slug preview from name
-  const generateSlugFromName = (name: string): string => {
-    return name
+  // Generate slug preview from company name
+  const generateSlugFromName = (text: string): string => {
+    return text
       .toLowerCase()
       .trim()
       .replace(/[^a-z0-9\s-]/g, '')
@@ -78,21 +88,21 @@ export default function RoleUserListPage({
       .substring(0, 50);
   };
 
-  // Update slug preview when name changes (for Admin)
+  // Update slug preview when company name changes (for Admin)
   useEffect(() => {
-    if (isAdminRole && formData.name && !customSlug) {
-      setSlugPreview(generateSlugFromName(formData.name));
+    if (isAdminRole && adminFormData.companyName && !customSlug) {
+      setSlugPreview(generateSlugFromName(adminFormData.companyName));
     }
-  }, [formData.name, isAdminRole, customSlug]);
+  }, [adminFormData.companyName, isAdminRole, customSlug]);
 
   // Update slug preview when custom slug changes
   useEffect(() => {
     if (customSlug) {
       setSlugPreview(generateSlugFromName(customSlug));
-    } else if (formData.name) {
-      setSlugPreview(generateSlugFromName(formData.name));
+    } else if (adminFormData.companyName) {
+      setSlugPreview(generateSlugFromName(adminFormData.companyName));
     }
-  }, [customSlug, formData.name]);
+  }, [customSlug, adminFormData.companyName]);
 
   useEffect(() => {
     checkAdminAccess();
@@ -183,22 +193,61 @@ export default function RoleUserListPage({
       return;
     }
 
+    if (!formData.phoneNumber.trim()) {
+      toast.error('Phone number is required');
+      return;
+    }
+
+    // Validate phone number format
+    const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,5}[-\s.]?[0-9]{1,5}$/;
+    if (!phoneRegex.test(formData.phoneNumber.trim())) {
+      toast.error('Invalid phone number format. Please use only numbers and allowed characters (+, -, (), spaces)');
+      return;
+    }
+
     // Validate admin selection for counselors
     if (requiresAdminSelection && !selectedAdminId) {
       toast.error('Please select an admin for this counselor');
       return;
     }
 
+    // Validate admin-specific fields
+    if (isAdminRole) {
+      if (!adminFormData.companyName.trim()) {
+        toast.error('Company name is required');
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
-      const response = await superAdminAPI.createUserByRole({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phoneNumber: formData.phoneNumber.trim() || undefined,
-        role: roleEnum,
-        adminId: requiresAdminSelection ? selectedAdminId : undefined,
-        customSlug: isAdminRole && customSlug ? customSlug.trim() : undefined,
-      });
+      // Create FormData for file upload
+      const formDataToSend = new FormData();
+      formDataToSend.append('name', formData.name.trim());
+      formDataToSend.append('email', formData.email.trim());
+      if (formData.phoneNumber.trim()) {
+        formDataToSend.append('phoneNumber', formData.phoneNumber.trim());
+      }
+      formDataToSend.append('role', roleEnum);
+      
+      if (requiresAdminSelection) {
+        formDataToSend.append('adminId', selectedAdminId);
+      }
+      
+      if (isAdminRole) {
+        formDataToSend.append('companyName', adminFormData.companyName.trim());
+        if (adminFormData.address.trim()) {
+          formDataToSend.append('address', adminFormData.address.trim());
+        }
+        if (companyLogoFile) {
+          formDataToSend.append('companyLogo', companyLogoFile);
+        }
+        if (customSlug?.trim()) {
+          formDataToSend.append('customSlug', customSlug.trim());
+        }
+      }
+
+      const response = await superAdminAPI.createUserByRole(formDataToSend);
       
       // Show success message with slug for Admin
       if (isAdminRole && response.data.data.enquiryFormSlug) {
@@ -211,6 +260,9 @@ export default function RoleUserListPage({
       }
       
       setFormData({ name: '', email: '', phoneNumber: '' });
+      setAdminFormData({ companyName: '', address: '' });
+      setCompanyLogoFile(null);
+      setLogoPreview(null);
       setSelectedAdminId('');
       setCustomSlug('');
       setSlugPreview('');
@@ -353,13 +405,28 @@ export default function RoleUserListPage({
                       <tr key={user._id || user.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+                            {isAdminRole && user.companyLogo ? (
+                              <img
+                                src={`http://localhost:5000${user.companyLogo}`}
+                                alt={user.companyName || 'Company Logo'}
+                                className="w-10 h-10 rounded-full object-cover"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  const fallback = target.nextElementSibling as HTMLElement;
+                                  if (fallback) fallback.style.display = 'flex';
+                                }}
+                              />
+                            ) : null}
+                            <div className={`w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center ${isAdminRole && user.companyLogo ? 'hidden' : ''}`}>
                               <span className="text-blue-600 font-semibold">
-                                {user.name.charAt(0).toUpperCase()}
+                                {isAdminRole && user.companyName ? user.companyName.charAt(0).toUpperCase() : user.name.charAt(0).toUpperCase()}
                               </span>
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {isAdminRole && user.companyName ? user.companyName : user.name}
+                              </div>
                               <div className="text-sm text-gray-500">{user.email}</div>
                             </div>
                           </div>
@@ -387,17 +454,27 @@ export default function RoleUserListPage({
                           {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <button
-                            onClick={() => handleToggleStatus(user._id || user.id!)}
-                            disabled={actionLoading === (user._id || user.id)}
-                            className={`px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 text-xs ${
-                              user.isActive
-                                ? 'bg-yellow-600 text-white hover:bg-yellow-700'
-                                : 'bg-blue-600 text-white hover:bg-blue-700'
-                            }`}
-                          >
-                            {user.isActive ? 'Deactivate' : 'Activate'}
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            {isAdminRole && (
+                              <button
+                                onClick={() => router.push(`/super-admin/roles/admin/${user._id || user.id}`)}
+                                className="px-3 py-1.5 rounded-lg transition-colors text-xs bg-blue-600 text-white hover:bg-blue-700"
+                              >
+                                View Detail
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleToggleStatus(user._id || user.id!)}
+                              disabled={actionLoading === (user._id || user.id)}
+                              className={`px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 text-xs ${
+                                user.isActive
+                                  ? 'bg-yellow-600 text-white hover:bg-yellow-700'
+                                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                              }`}
+                            >
+                              {user.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -434,46 +511,128 @@ export default function RoleUserListPage({
               </div>
 
               <form onSubmit={handleAddUser} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Full Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    placeholder="Enter full name"
-                    required
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      placeholder="Enter full name"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email Address <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      placeholder="user@example.com"
+                      required
+                    />
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    placeholder="user@example.com"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number
+                    Phone Number <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
                     value={formData.phoneNumber}
-                    onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Allow only numbers and phone number special characters
+                      if (value === '' || /^[+()\-\s.0-9]*$/.test(value)) {
+                        setFormData({ ...formData, phoneNumber: value });
+                      }
+                    }}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    placeholder="+1234567890"
+                    placeholder="+1234567890 or (123) 456-7890"
+                    pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,5}[-\s.]?[0-9]{1,5}"
+                    required
                   />
                 </div>
+
+                {/* Admin-specific fields */}
+                {isAdminRole && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Company Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={adminFormData.companyName}
+                          onChange={(e) => setAdminFormData({ ...adminFormData, companyName: e.target.value })}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                          placeholder="Enter company name"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Company Logo
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              // Validate file size (5MB)
+                              if (file.size > 5 * 1024 * 1024) {
+                                toast.error('File size must be less than 5MB');
+                                e.target.value = '';
+                                return;
+                              }
+                              setCompanyLogoFile(file);
+                              // Create preview
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setLogoPreview(reader.result as string);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                        />
+                        {logoPreview && (
+                          <div className="mt-2">
+                            <img 
+                              src={logoPreview} 
+                              alt="Logo preview" 
+                              className="h-20 w-20 object-cover rounded-lg border-2 border-gray-200"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Address
+                      </label>
+                      <textarea
+                        value={adminFormData.address}
+                        onChange={(e) => setAdminFormData({ ...adminFormData, address: e.target.value })}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                        placeholder="Enter company address"
+                        rows={2}
+                      />
+                    </div>
+                  </>
+                )}
 
                 {/* Admin Selection for Counselor */}
                 {requiresAdminSelection && (

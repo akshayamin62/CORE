@@ -51,11 +51,29 @@ export const getAllUsers = async (req: Request, res: Response): Promise<Response
       .select("-password -emailVerificationToken -passwordResetToken")
       .sort({ createdAt: -1 });
 
+    // If filtering by ADMIN role or no role filter, include admin profile data
+    let enrichedUsers = users;
+    if (!role || (role && String(role).toUpperCase() === 'ADMIN')) {
+      enrichedUsers = await Promise.all(
+        users.map(async (user: any) => {
+          const userObj = user.toObject();
+          if (userObj.role === USER_ROLE.ADMIN) {
+            const adminProfile = await Admin.findOne({ userId: user._id }).select('companyName companyLogo');
+            if (adminProfile) {
+              userObj.companyName = adminProfile.companyName;
+              userObj.companyLogo = adminProfile.companyLogo;
+            }
+          }
+          return userObj;
+        })
+      );
+    }
+
     return res.json({
       success: true,
       data: {
-        users,
-        count: users.length,
+        users: enrichedUsers,
+        count: enrichedUsers.length,
       },
     });
   } catch (error) {
@@ -623,18 +641,92 @@ export const getAdmins = async (_req: Request, res: Response): Promise<Response>
 };
 
 /**
+ * Get admin details by admin user ID
+ */
+export const getAdminDetails = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { adminId } = req.params;
+
+    const user = await User.findOne({ _id: adminId, role: USER_ROLE.ADMIN });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Admin not found',
+      });
+    }
+
+    const adminProfile = await Admin.findOne({ userId: adminId });
+    if (!adminProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Admin profile not found',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isActive: user.isActive,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
+        mobileNumber: adminProfile.mobileNumber,
+        companyName: adminProfile.companyName,
+        address: adminProfile.address,
+        companyLogo: adminProfile.companyLogo,
+        enquiryFormSlug: adminProfile.enquiryFormSlug,
+      },
+    });
+  } catch (error: any) {
+    console.error('Get admin details error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch admin details',
+      error: error.message,
+    });
+  }
+};
+
+/**
  * Create a new User by Role (generic function for all roles)
  * This allows Super Admin to create users with any role
  */
 export const createUserByRole = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { name, email, phoneNumber, role, adminId, customSlug } = req.body;
+    const { name, email, phoneNumber, role, adminId, customSlug, companyName, address } = req.body;
+    const companyLogo = (req as any).file ? `/uploads/admin/${(req as any).file.filename}` : undefined;
 
     // Validation
     if (!name || !email || !role) {
       return res.status(400).json({
         success: false,
         message: 'Name, email, and role are required',
+      });
+    }
+
+    if (!phoneNumber || !phoneNumber.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number is required',
+      });
+    }
+
+    // Validate phone number format
+    const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,5}[-\s.]?[0-9]{1,5}$/;
+    if (!phoneRegex.test(phoneNumber.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid phone number format. Please use only numbers and allowed characters (+, -, (), spaces)',
+      });
+    }
+
+    // For ADMIN role, companyName is required
+    if (role === USER_ROLE.ADMIN && !companyName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Company name is required for Admin creation',
       });
     }
 
@@ -697,14 +789,24 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
 
     // If creating ADMIN role, also create Admin profile with slug
     if (role === USER_ROLE.ADMIN) {
-      // Generate slug from name or use custom slug
-      let baseSlug = customSlug ? generateSlug(customSlug) : generateSlug(name);
+      // Generate slug from company name, falling back to custom slug or name
+      let baseSlug: string;
+      if (customSlug) {
+        baseSlug = generateSlug(customSlug);
+      } else if (companyName) {
+        baseSlug = generateSlug(companyName);
+      } else {
+        baseSlug = generateSlug(name);
+      }
       enquiryFormSlug = await getUniqueSlug(baseSlug);
 
       const newAdmin = new Admin({
         userId: newUser._id,
         email: email.toLowerCase().trim(),
         mobileNumber: phoneNumber?.trim() || undefined,
+        companyName: companyName.trim(),
+        address: address?.trim() || undefined,
+        companyLogo: companyLogo || undefined,
         enquiryFormSlug: enquiryFormSlug,
       });
       await newAdmin.save();

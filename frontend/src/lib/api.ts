@@ -95,18 +95,33 @@ export const superAdminAPI = {
     phoneNumber?: string;
   }) => api.post('/super-admin/admin', data),
   
-  createUserByRole: (data: {
+  createUserByRole: (data: FormData | {
     name: string;
     email: string;
     phoneNumber?: string;
     role: string;
     adminId?: string;
     customSlug?: string;
-  }) => api.post('/super-admin/user', data),
+    companyName?: string;
+    address?: string;
+    companyLogo?: string;
+  }) => {
+    // If data is FormData, set appropriate headers
+    if (data instanceof FormData) {
+      return api.post('/super-admin/user', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    }
+    return api.post('/super-admin/user', data);
+  },
   
   getOps: () => api.get('/super-admin/ops'),
   
   getAdmins: () => api.get('/super-admin/admins'),
+  
+  getAdminDetails: (adminId: string) => api.get(`/super-admin/admins/${adminId}`),
   
   assignOps: (registrationId: string, data: {
     primaryOpsId?: string;

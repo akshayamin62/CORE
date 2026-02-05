@@ -163,10 +163,7 @@ export default function AdminDashboardPage() {
         <div className="p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600 mt-2">
-              Manage your counselors and leads
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">{user.name}</h1>
           </div>
 
           {/* Stats Cards */}
