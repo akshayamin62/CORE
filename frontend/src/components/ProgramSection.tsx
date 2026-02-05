@@ -408,20 +408,19 @@ export default function ProgramSection({
                           )}
                         </div>
                         {program.universityRanking && (Object.keys(program.universityRanking).some(key => program.universityRanking[key as keyof typeof program.universityRanking])) && (
-                          <div className="mt-3 pt-3 border-t border-gray-200">
-                            <p className="text-xs font-semibold text-gray-700 mb-1">University Rankings:</p>
-                            <div className="flex flex-wrap gap-3 text-xs text-gray-600">
+                          <div className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-600">
+                            <div className="flex flex-wrap gap-4">
                               {program.universityRanking.webometricsWorld && (
-                                <span className="px-2 py-1 bg-blue-50 rounded">🌍 Webometrics World: #{program.universityRanking.webometricsWorld}</span>
+                                <span>Webometrics World: {program.universityRanking.webometricsWorld}</span>
                               )}
                               {program.universityRanking.webometricsNational && (
-                                <span className="px-2 py-1 bg-green-50 rounded">🏛️ Webometrics National: #{program.universityRanking.webometricsNational}</span>
+                                <span>Webometrics National: {program.universityRanking.webometricsNational}</span>
                               )}
                               {program.universityRanking.usNews && (
-                                <span className="px-2 py-1 bg-purple-50 rounded">📰 US News: #{program.universityRanking.usNews}</span>
+                                <span>US News: {program.universityRanking.usNews}</span>
                               )}
                               {program.universityRanking.qs && (
-                                <span className="px-2 py-1 bg-orange-50 rounded">⭐ QS: #{program.universityRanking.qs}</span>
+                                <span>QS: {program.universityRanking.qs}</span>
                               )}
                             </div>
                           </div>
