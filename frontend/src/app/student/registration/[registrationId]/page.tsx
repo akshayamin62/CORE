@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { serviceAPI, formAnswerAPI } from '@/lib/api';
 import { FormStructure, StudentServiceRegistration, Service } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
@@ -11,8 +11,8 @@ import ProgramSection from '@/components/ProgramSection';
 
 function MyDetailsContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const registrationId = searchParams.get('registrationId');
+  const params = useParams();
+  const registrationId = params.registrationId as string;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -495,5 +495,3 @@ export default function MyDetailsPage() {
     </Suspense>
   );
 }
-
-

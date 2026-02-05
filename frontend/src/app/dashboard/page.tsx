@@ -129,7 +129,7 @@ export default function DashboardPage() {
       return (typeof r.serviceId === 'object' ? r.serviceId._id : r.serviceId) === serviceId;
     });
     if (registration) {
-      router.push(`/my-details?registrationId=${registration._id}`);
+      router.push(`/student/registration/${registration._id}`);
     } else {
       // Show service details modal or page
       toast('Service details coming soon!');

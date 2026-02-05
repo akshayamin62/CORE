@@ -276,7 +276,7 @@ export default function Home() {
     });
 
     if (registration) {
-      router.push(`/my-details?registrationId=${registration._id}`);
+      router.push(`/student/registration/${registration._id}`);
     }
   };
 
