@@ -23,6 +23,7 @@ interface StudentData {
   mobileNumber?: string;
   adminId?: {
     _id: string;
+    companyName?: string;
     userId: {
       _id: string;
       name: string;
@@ -130,7 +131,8 @@ export default function StudentUsersPage() {
     const matchesSearch = 
       student.user.name.toLowerCase().includes(query) ||
       student.user.email.toLowerCase().includes(query) ||
-      student.mobileNumber?.includes(query);
+      student.mobileNumber?.includes(query) ||
+      student.adminId?.companyName?.toLowerCase().includes(query);
     
     const matchesStatus = !statusFilter || 
       (statusFilter === 'active' && student.user.isActive) ||
@@ -195,7 +197,7 @@ export default function StudentUsersPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <input
                   type="text"
-                  placeholder="Search by name, email, or mobile..."
+                  placeholder="Search by name, email, mobile, or company..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
@@ -271,7 +273,7 @@ export default function StudentUsersPage() {
                           {student.user.email}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {student.adminId?.userId?.name || 'N/A'}
+                          {student.adminId?.companyName || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">

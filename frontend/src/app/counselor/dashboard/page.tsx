@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI, leadAPI, followUpAPI, teamMeetAPI } from '@/lib/api';
-import { User, USER_ROLE, LEAD_STAGE, FollowUp, FollowUpSummary, FOLLOWUP_STATUS, TeamMeet, TEAMMEET_STATUS } from '@/types';
+import { User, USER_ROLE, LEAD_STAGE, FollowUp, FollowUpSummary, FOLLOWUP_STATUS, TeamMeet, TEAMMEET_STATUS, SERVICE_TYPE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import ScheduleCalendar from '@/components/ScheduleCalendar';
 import ScheduleOverview from '@/components/ScheduleOverview';
@@ -135,6 +135,21 @@ export default function CounselorDashboardPage() {
     } catch (error) {
       console.error('Failed to copy:', error);
       toast.error('Failed to copy URL');
+    }
+  };
+
+  const getServiceColor = (service: string) => {
+    switch (service) {
+      case SERVICE_TYPE.CARRER_FOCUS_STUDY_ABROAD:
+        return 'bg-indigo-100 text-indigo-800';
+      case SERVICE_TYPE.IVY_LEAGUE_ADMISSION:
+        return 'bg-amber-100 text-amber-800';
+      case SERVICE_TYPE.EDUCATION_PLANNING:
+        return 'bg-teal-100 text-teal-800';
+      case SERVICE_TYPE.IELTS_GRE_LANGUAGE_COACHING:
+        return 'bg-rose-100 text-rose-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -625,8 +640,14 @@ export default function CounselorDashboardPage() {
                               {lead.stage}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{lead.serviceTypes?.join(', ') || 'N/A'}</div>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col gap-1">
+                              {lead.serviceTypes?.map((service: string) => (
+                                <span key={service} className={`px-2 py-1 rounded-full text-xs font-medium ${getServiceColor(service)}`}>
+                                  {service}
+                                </span>
+                              ))}
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm text-gray-500">

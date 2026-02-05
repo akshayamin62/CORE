@@ -63,6 +63,7 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
       .populate('userId', 'name email isVerified isActive createdAt')
       .populate({
         path: 'adminId',
+        select: 'companyName',
         populate: {
           path: 'userId',
           select: 'name email'

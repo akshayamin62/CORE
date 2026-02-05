@@ -342,7 +342,7 @@ export default function RoleUserListPage({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <input
                   type="text"
-                  placeholder="Search by name or email..."
+                  placeholder={roleEnum === USER_ROLE.COUNSELOR ? "Search by name, email, or company..." : "Search by name or email..."}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
@@ -394,6 +394,9 @@ export default function RoleUserListPage({
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">User</th>
+                      {roleEnum === USER_ROLE.COUNSELOR && (
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Admin</th>
+                      )}
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Role</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Joined</th>
@@ -431,6 +434,13 @@ export default function RoleUserListPage({
                             </div>
                           </div>
                         </td>
+                        {roleEnum === USER_ROLE.COUNSELOR && (
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {user.companyName || 'N/A'}
+                            </div>
+                          </td>
+                        )}
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(user.role as string)}`}>
                             {(user.role as string).replace(/_/g, ' ')}

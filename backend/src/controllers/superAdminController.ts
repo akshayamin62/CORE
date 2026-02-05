@@ -69,6 +69,35 @@ export const getAllUsers = async (req: Request, res: Response): Promise<Response
       );
     }
 
+    // If filtering by COUNSELOR role, include admin company name
+    if (role && String(role).toUpperCase() === 'COUNSELOR') {
+      enrichedUsers = await Promise.all(
+        users.map(async (user: any) => {
+          const userObj = user.toObject();
+          if (userObj.role === USER_ROLE.COUNSELOR) {
+            const counselorProfile = await Counselor.findOne({ userId: user._id });
+            if (counselorProfile) {
+              const adminProfile = await Admin.findOne({ userId: counselorProfile.adminId }).select('companyName');
+              if (adminProfile) {
+                userObj.companyName = adminProfile.companyName;
+              }
+            }
+          }
+          return userObj;
+        })
+      );
+
+      // If there's a search query, additionally filter by company name
+      if (search) {
+        const searchLower = String(search).toLowerCase();
+        enrichedUsers = enrichedUsers.filter((user: any) => 
+          user.name.toLowerCase().includes(searchLower) ||
+          user.email.toLowerCase().includes(searchLower) ||
+          (user.companyName && user.companyName.toLowerCase().includes(searchLower))
+        );
+      }
+    }
+
     return res.json({
       success: true,
       data: {
