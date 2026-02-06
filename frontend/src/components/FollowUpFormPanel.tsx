@@ -144,12 +144,15 @@ export default function FollowUpFormPanel({
 
     setSaving(true);
     try {
+      const lead = followUpData?.leadId as Lead | undefined;
+      const isLeadConverted = lead?.stage === LEAD_STAGE.CONVERTED && lead?.conversionStatus === 'APPROVED';
+      
       const updateData: any = {
-        status,
+        status: isLeadConverted ? FOLLOWUP_STATUS.CONVERTED_TO_STUDENT : status,
         notes,
       };
 
-      if (stageChangedTo) {
+      if (stageChangedTo && !isLeadConverted) {
         updateData.stageChangedTo = stageChangedTo;
       }
 
@@ -197,6 +200,9 @@ export default function FollowUpFormPanel({
   // 1. All fields are locked (isFullyLocked)
   // 2. OR lead is converted and approved (isLeadConverted)
   const isStageLocked = isFullyLocked || isLeadConverted;
+  
+  // Status is also locked when lead is converted
+  const isStatusLocked = isFullyLocked || isLeadConverted;
 
   return (
     <>
@@ -302,9 +308,9 @@ export default function FollowUpFormPanel({
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Status</label>
                 <select
-                  value={status}
+                  value={isLeadConverted ? FOLLOWUP_STATUS.CONVERTED_TO_STUDENT : status}
                   onChange={(e) => setStatus(e.target.value as FOLLOWUP_STATUS)}
-                  disabled={isFullyLocked}
+                  disabled={isStatusLocked}
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   {/* Only show Scheduled option if follow-up is NOT locked */}
@@ -340,6 +346,14 @@ export default function FollowUpFormPanel({
                     <option value={FOLLOWUP_STATUS.CONVERTED_TO_STUDENT}>Converted to Student</option>
                   </optgroup>
                 </select>
+                {isLeadConverted && (
+                  <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Status locked - Lead converted to student
+                  </p>
+                )}
               </div>
 
               {/* Stage Change - Compact */}
