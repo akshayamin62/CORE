@@ -216,8 +216,15 @@ function MyDetailsContent() {
         });
       }
       
-      // Add the new instance with defaults
-      newValues[partKey][sectionId][subSectionId].push(newInstance);
+      // Add the new instance before the last one (if there are existing instances)
+      const instances = newValues[partKey][sectionId][subSectionId];
+      if (instances.length > 0) {
+        // Insert before the last element
+        instances.splice(instances.length - 1, 0, newInstance);
+      } else {
+        // No existing instances, just add it
+        instances.push(newInstance);
+      }
       return newValues;
     });
   };
