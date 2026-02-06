@@ -6,7 +6,7 @@ export interface IProgramChat extends Document {
   participants: {
     student: mongoose.Types.ObjectId;
     OPS?: mongoose.Types.ObjectId;
-    admin?: mongoose.Types.ObjectId;
+    superAdmin?: mongoose.Types.ObjectId;
   };
   createdAt: Date;
   updatedAt: Date;
@@ -34,7 +34,7 @@ const ProgramChatSchema = new Schema<IProgramChat>(
         type: Schema.Types.ObjectId,
         ref: 'User',
       },
-      admin: {
+      superAdmin: {
         type: Schema.Types.ObjectId,
         ref: 'User',
       },

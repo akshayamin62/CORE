@@ -63,13 +63,13 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
         return res.status(403).json({ message: 'You are not the OPS for this student' });
       }
     }
-    // Admin can access all chats (no check needed)
+    // SUPER_ADMIN, ADMIN, and COUNSELOR can access all chats for viewing
 
     // Find or create chat
     let chat = await ProgramChat.findOne({ programId, studentId })
       .populate('participants.student', 'name email')
       .populate('participants.OPS', 'name email')
-      .populate('participants.admin', 'name email');
+      .populate('participants.superAdmin', 'name email');
 
     if (!chat) {
       // Get OPS info
@@ -88,23 +88,23 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
         participants: {
           student: studentUserId,
           ops: ops?.userId || undefined,
-          admin: undefined, // Will be set when admin first joins
+          superAdmin: undefined, // Will be set when super admin first sends a message
         },
       });
 
       chat = await ProgramChat.findById(chat._id)
         .populate('participants.student', 'name email')
         .populate('participants.OPS', 'name email')
-        .populate('participants.admin', 'name email');
+        .populate('participants.superAdmin', 'name email');
     } else {
-      // Update admin participant if admin is accessing and not set
-      if (userRole === USER_ROLE.SUPER_ADMIN && !chat.participants.admin) {
-        chat.participants.admin = new mongoose.Types.ObjectId(userId) as any;
+      // Update superAdmin participant if super admin is accessing and not set
+      if (userRole === USER_ROLE.SUPER_ADMIN && !chat.participants.superAdmin) {
+        chat.participants.superAdmin = new mongoose.Types.ObjectId(userId) as any;
         await chat.save();
         chat = await ProgramChat.findById(chat._id)
           .populate('participants.student', 'name email')
           .populate('participants.OPS', 'name email')
-          .populate('participants.admin', 'name email');
+          .populate('participants.superAdmin', 'name email');
       }
     }
 
@@ -165,6 +165,7 @@ export const getChatMessages = async (req: AuthRequest, res: Response) => {
         return res.status(403).json({ message: 'You are not the OPS for this student' });
       }
     }
+    // SUPER_ADMIN, ADMIN, and COUNSELOR can view all chats
 
     // Find chat
     const chat = await ProgramChat.findOne({ programId, studentId });
@@ -218,6 +219,14 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
     const userName = user.name;
+
+    // Check if user can send messages (only STUDENT, OPS, SUPER_ADMIN)
+    if (userRole !== USER_ROLE.STUDENT && userRole !== USER_ROLE.OPS && userRole !== USER_ROLE.SUPER_ADMIN) {
+      return res.status(403).json({ 
+        success: false,
+        message: 'Only students, OPS, and super admin can send messages. Admins and counselors have view-only access.' 
+      });
+    }
 
     // Find the program
     const program = await Program.findById(programId).populate('studentId');
@@ -278,9 +287,15 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         participants: {
           student: studentUserId,
           ops: ops?.userId || undefined,
-          admin: userRole === USER_ROLE.SUPER_ADMIN ? userId : undefined,
+          superAdmin: userRole === USER_ROLE.SUPER_ADMIN ? userId : undefined,
         },
       });
+    } else {
+      // Update superAdmin participant if super admin is sending and not set
+      if (userRole === USER_ROLE.SUPER_ADMIN && !chat.participants.superAdmin) {
+        chat.participants.superAdmin = new mongoose.Types.ObjectId(userId) as any;
+        await chat.save();
+      }
     }
 
     // Determine OPS type if user is a OPS
@@ -343,7 +358,7 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
         })
         .populate('participants.student', 'name email')
         .populate('participants.OPS', 'name email')
-        .populate('participants.admin', 'name email')
+        .populate('participants.superAdmin', 'name email')
         .sort({ updatedAt: -1 });
     } else if (userRole === USER_ROLE.OPS) {
       // Get chats where user is the OPS
@@ -354,10 +369,10 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
         })
         .populate('participants.student', 'name email')
         .populate('participants.OPS', 'name email')
-        .populate('participants.admin', 'name email')
+        .populate('participants.superAdmin', 'name email')
         .sort({ updatedAt: -1 });
-    } else if (userRole === USER_ROLE.SUPER_ADMIN) {
-      // Get all chats or chats where admin participated
+    } else if (userRole === USER_ROLE.SUPER_ADMIN || userRole === USER_ROLE.ADMIN || userRole === USER_ROLE.COUNSELOR) {
+      // SUPER_ADMIN can see all chats, ADMIN and COUNSELOR can view chats (read-only)
       chats = await ProgramChat.find({})
         .populate({
           path: 'programId',
@@ -365,7 +380,7 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
         })
         .populate('participants.student', 'name email')
         .populate('participants.OPS', 'name email')
-        .populate('participants.admin', 'name email')
+        .populate('participants.superAdmin', 'name email')
         .sort({ updatedAt: -1 })
         .limit(100); // Limit for admins
     }
