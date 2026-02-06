@@ -30,7 +30,7 @@ export default function DashboardPage() {
       } else if (user.role === 'OPS') {
         router.push('/ops/dashboard');
       } else if (user.role === 'COUNSELOR') {
-        router.push('/counselor/leads');
+        router.push('/counselor/dashboard');
       } else {
         fetchMyServices();
       }

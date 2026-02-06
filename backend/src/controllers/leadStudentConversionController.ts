@@ -6,10 +6,33 @@ import Student from "../models/Student";
 import User from "../models/User";
 import Admin from "../models/Admin";
 import Counselor from "../models/Counselor";
+import StudentFormAnswer from "../models/StudentFormAnswer";
+import FormPart from "../models/FormPart";
+import FormSection from "../models/FormSection";
+import FormSubSection from "../models/FormSubSection";
 import { USER_ROLE } from "../types/roles";
 import mongoose from "mongoose";
 import { generateOTP } from "../utils/otp";
 import { sendStudentAccountCreatedEmail } from "../utils/email";
+
+/**
+ * Helper function to parse full name into first, middle, and last name
+ */
+const parseName = (fullName: string): { firstName: string; middleName: string; lastName: string } => {
+  const nameParts = fullName.trim().split(/\s+/);
+  
+  if (nameParts.length === 1) {
+    return { firstName: nameParts[0], middleName: '', lastName: '' };
+  } else if (nameParts.length === 2) {
+    return { firstName: nameParts[0], middleName: '', lastName: nameParts[1] };
+  } else {
+    // 3 or more parts: first is firstName, last is lastName, everything in between is middleName
+    const firstName = nameParts[0];
+    const lastName = nameParts[nameParts.length - 1];
+    const middleName = nameParts.slice(1, -1).join(' ');
+    return { firstName, middleName, lastName };
+  }
+};
 
 /**
  * Request conversion of lead to student (Counselor)
@@ -300,6 +323,70 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
 
     await newStudent.save();
     console.log('✅ Student created:', newStudent._id);
+
+    // Parse lead name into first, middle, and last name
+    const { firstName, middleName, lastName } = parseName(lead.name);
+
+    // Pre-populate student form with lead information
+    try {
+      // Find the PROFILE part
+      const profilePart = await FormPart.findOne({ key: 'PROFILE' });
+      if (!profilePart) {
+        throw new Error('PROFILE part not found');
+      }
+
+      // Find the "Personal Details" section under PROFILE
+      const personalDetailsSection = await FormSection.findOne({
+        partId: profilePart._id,
+        title: 'Personal Details'
+      });
+      if (!personalDetailsSection) {
+        throw new Error('Personal Details section not found');
+      }
+
+      // Find the "Personal Information" subsection
+      const personalInfoSubSection = await FormSubSection.findOne({
+        sectionId: personalDetailsSection._id,
+        title: 'Personal Information'
+      });
+      if (!personalInfoSubSection) {
+        throw new Error('Personal Information subsection not found');
+      }
+
+      // Create nested structure: answers[sectionId][subSectionId][0]
+      const answers = {
+        [personalDetailsSection._id.toString()]: {
+          [personalInfoSubSection._id.toString()]: [
+            {
+              firstName: firstName,
+              middleName: middleName,
+              lastName: lastName,
+              phone: lead.mobileNumber
+            }
+          ]
+        }
+      };
+
+      const profileAnswers = new StudentFormAnswer({
+        studentId: newStudent._id,
+        partKey: 'PROFILE',
+        answers: answers,
+        lastSavedAt: new Date()
+      });
+
+      await profileAnswers.save();
+      console.log('✅ Profile form pre-populated with lead data:', {
+        firstName,
+        middleName,
+        lastName,
+        phone: lead.mobileNumber,
+        sectionId: personalDetailsSection._id,
+        subSectionId: personalInfoSubSection._id
+      });
+    } catch (formError) {
+      console.error("⚠️ Failed to pre-populate form data:", formError);
+      // Continue with conversion even if form pre-population fails
+    }
 
     // Update conversion request
     conversion.status = CONVERSION_STATUS.APPROVED;
