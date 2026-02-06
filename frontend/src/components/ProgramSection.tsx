@@ -41,7 +41,7 @@ interface Program {
   };
 }
 
-type UserRole = 'STUDENT' | 'OPS' | 'SUPER_ADMIN';
+type UserRole = 'STUDENT' | 'OPS' | 'SUPER_ADMIN' | 'ADMIN' | 'COUNSELOR';
 type SectionType = 'available' | 'applied';
 
 interface ProgramSectionProps {
@@ -64,6 +64,7 @@ export default function ProgramSection({
   
   // For chat feature
   const [selectedChatProgram, setSelectedChatProgram] = useState<Program | null>(null);
+  const [selectedChatType, setSelectedChatType] = useState<'open' | 'private'>('open');
   
   // For student selecting programs
   const [expandedPrograms, setExpandedPrograms] = useState<Set<string>>(new Set());
@@ -82,7 +83,7 @@ export default function ProgramSection({
   ];
 
   const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 5 }, (_, i) => currentYear + i);
+  const yearOptions = Array.from({ length: 2050 - currentYear + 1 }, (_, i) => currentYear + i);
 
   const canAddPrograms = sectionType === 'available' && !isReadOnly;
   const canEditApplied = sectionType === 'applied' && userRole === 'SUPER_ADMIN';
@@ -612,19 +613,53 @@ export default function ProgramSection({
                         index={index}
                       />
                       <div className="absolute top-4 right-4 flex gap-2">
-                        <button
-                          onClick={() => setSelectedChatProgram(program)}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-md hover:shadow-lg flex items-center space-x-2"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                          </svg>
-                          <span>Chat</span>
-                        </button>
+                        {userRole === 'STUDENT' ? (
+                          // Student sees only one Chat button (open chat)
+                          <button
+                            onClick={() => {
+                              setSelectedChatProgram(program);
+                              setSelectedChatType('open');
+                            }}
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs font-medium shadow flex items-center space-x-1"
+                          >
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            <span>Chat</span>
+                          </button>
+                        ) : (
+                          // Non-students see Open Chat and Private Chat buttons
+                          <>
+                            <button
+                              onClick={() => {
+                                setSelectedChatProgram(program);
+                                setSelectedChatType('open');
+                              }}
+                              className="px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs font-medium shadow flex items-center space-x-1"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                              </svg>
+                              <span>Open</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedChatProgram(program);
+                                setSelectedChatType('private');
+                              }}
+                              className="px-2 py-1 bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors text-xs font-medium shadow flex items-center space-x-1"
+                            >
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                              </svg>
+                              <span>Private</span>
+                            </button>
+                          </>
+                        )}
                         {canEditApplied && !isReadOnly && (
                           <button
                             onClick={() => handleEdit(program._id, program)}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-md hover:shadow-lg"
+                            className="px-2 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium shadow-md hover:shadow-lg"
                           >
                             Edit
                           </button>
@@ -643,7 +678,8 @@ export default function ProgramSection({
                   program={selectedChatProgram}
                   onClose={() => setSelectedChatProgram(null)}
                   userRole={userRole}
-                  isReadOnly={isReadOnly}
+                  isReadOnly={false}
+                  chatType={selectedChatType}
                 />
               </div>
             )}

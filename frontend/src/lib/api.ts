@@ -375,17 +375,20 @@ export const followUpAPI = {
 
 export const chatAPI = {
   // Get or create chat for a program
-  getOrCreateChat: (programId: string) => api.get(`/chat/program/${programId}/chat`),
+  getOrCreateChat: (programId: string, chatType: 'open' | 'private' = 'open') => 
+    api.get(`/chat/program/${programId}/chat`, { params: { chatType } }),
   
   // Get all messages for a program
-  getMessages: (programId: string) => api.get(`/chat/program/${programId}/messages`),
+  getMessages: (programId: string, chatType: 'open' | 'private' = 'open') => 
+    api.get(`/chat/program/${programId}/messages`, { params: { chatType } }),
   
   // Send a message
-  sendMessage: (programId: string, message: string) => 
-    api.post(`/chat/program/${programId}/messages`, { message }),
+  sendMessage: (programId: string, message: string, chatType: 'open' | 'private' = 'open') => 
+    api.post(`/chat/program/${programId}/messages`, { message, chatType }),
   
   // Get all chats for current user
-  getMyChatsList: () => api.get('/chat/my-chats'),
+  getMyChatsList: (chatType?: 'open' | 'private') => 
+    api.get('/chat/my-chats', { params: chatType ? { chatType } : {} }),
 };
 
 // TeamMeet API

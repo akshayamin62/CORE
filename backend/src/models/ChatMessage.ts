@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface IChatMessage extends Document {
   chatId: mongoose.Types.ObjectId;
   senderId: mongoose.Types.ObjectId;
-  senderRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN';
+  senderRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN' | 'ADMIN' | 'COUNSELOR';
   opsType?: 'PRIMARY' | 'ACTIVE'; // Only for OPS role
   message: string;
   timestamp: Date;
@@ -25,7 +25,7 @@ const ChatMessageSchema = new Schema<IChatMessage>(
     },
     senderRole: {
       type: String,
-      enum: ['STUDENT', 'OPS', 'SUPER_ADMIN'],
+      enum: ['STUDENT', 'OPS', 'SUPER_ADMIN', 'ADMIN', 'COUNSELOR'],
       required: true,
     },
     opsType: {

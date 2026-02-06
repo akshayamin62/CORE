@@ -18,7 +18,7 @@ interface Program {
 interface ChatMessage {
   _id: string;
   senderId: string;
-  senderRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN';
+  senderRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN' | 'ADMIN' | 'COUNSELOR';
   senderName: string;
   opsType?: 'PRIMARY' | 'ACTIVE';
   message: string;
@@ -45,9 +45,10 @@ interface ProgramChatViewProps {
   onClose: () => void;
   userRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN' | 'ADMIN' | 'COUNSELOR';
   isReadOnly?: boolean;
+  chatType?: 'open' | 'private';
 }
 
-export default function ProgramChatView({ program, onClose, userRole, isReadOnly = false }: ProgramChatViewProps) {
+export default function ProgramChatView({ program, onClose, userRole, isReadOnly = false, chatType = 'open' }: ProgramChatViewProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -95,18 +96,18 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [program._id]);
+  }, [program._id, chatType]);
 
   const fetchChatAndMessages = async () => {
     try {
       setLoading(true);
       
       // Get or create chat
-      const chatResponse = await chatAPI.getOrCreateChat(program._id);
+      const chatResponse = await chatAPI.getOrCreateChat(program._id, chatType);
       setChatInfo(chatResponse.data.data.chat);
       
       // Get messages
-      const messagesResponse = await chatAPI.getMessages(program._id);
+      const messagesResponse = await chatAPI.getMessages(program._id, chatType);
       setMessages(messagesResponse.data.data.messages || []);
     } catch (error: any) {
       console.error('Failed to fetch chat:', error);
@@ -118,7 +119,7 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
 
   const fetchMessages = async () => {
     try {
-      const response = await chatAPI.getMessages(program._id);
+      const response = await chatAPI.getMessages(program._id, chatType);
       setMessages(response.data.data.messages || []);
     } catch (error: any) {
       console.error('Failed to fetch messages:', error);
@@ -134,7 +135,7 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
     setSending(true);
 
     try {
-      const response = await chatAPI.sendMessage(program._id, messageToSend);
+      const response = await chatAPI.sendMessage(program._id, messageToSend, chatType);
       setMessages(prev => [...prev, response.data.data.message]);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to send message');
@@ -152,6 +153,10 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
         return 'bg-green-100 text-green-800';
       case 'SUPER_ADMIN':
         return 'bg-purple-100 text-purple-800';
+      case 'ADMIN':
+        return 'bg-orange-100 text-orange-800';
+      case 'COUNSELOR':
+        return 'bg-teal-100 text-teal-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -165,6 +170,10 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
         return 'bg-green-500 text-white';
       case 'SUPER_ADMIN':
         return 'bg-purple-500 text-white';
+      case 'ADMIN':
+        return 'bg-orange-500 text-white';
+      case 'COUNSELOR':
+        return 'bg-teal-500 text-white';
       default:
         return 'bg-gray-500 text-white';
     }
@@ -189,11 +198,16 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
   return (
     <div className="w-full h-[600px] bg-white rounded-lg shadow-lg overflow-hidden flex flex-col">
       {/* Chat Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6 shadow-lg">
+      <div className={`${chatType === 'private' ? 'bg-gradient-to-r from-teal-600 to-cyan-600' : 'bg-gradient-to-r from-blue-600 to-indigo-600'} text-white p-6 shadow-lg`}>
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-bold mb-1">Program Chat</h3>
-            <p className="text-sm text-blue-100">{program.programName} - {program.university}</p>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-xl font-bold">{chatType === 'private' ? 'Private Chat' : 'Open Chat'}</h3>
+              {chatType === 'private' && (
+                <span className="px-2 py-0.5 bg-white/20 rounded text-xs">Staff Only</span>
+              )}
+            </div>
+            <p className={`text-sm ${chatType === 'private' ? 'text-orange-100' : 'text-blue-100'}`}>{program.programName} - {program.university}</p>
           </div>
           <button
             onClick={onClose}
@@ -252,7 +266,10 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm ${
                           msg.senderRole === 'STUDENT' ? 'bg-blue-500' :
                           msg.senderRole === 'OPS' ? 'bg-green-500' :
-                          'bg-purple-500'
+                          msg.senderRole === 'SUPER_ADMIN' ? 'bg-purple-500' :
+                          msg.senderRole === 'ADMIN' ? 'bg-orange-500' :
+                          msg.senderRole === 'COUNSELOR' ? 'bg-teal-500' :
+                          'bg-gray-500'
                         }`}>
                           {msg.senderName ? msg.senderName.charAt(0).toUpperCase() : '?'}
                         </div>
@@ -275,7 +292,10 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
                           ? 'bg-blue-600 text-white' 
                           : msg.senderRole === 'STUDENT' ? 'bg-blue-100 text-gray-900' :
                             msg.senderRole === 'OPS' ? 'bg-green-100 text-gray-900' :
-                            'bg-purple-100 text-gray-900'
+                            msg.senderRole === 'SUPER_ADMIN' ? 'bg-purple-100 text-gray-900' :
+                            msg.senderRole === 'ADMIN' ? 'bg-orange-100 text-gray-900' :
+                            msg.senderRole === 'COUNSELOR' ? 'bg-teal-100 text-gray-900' :
+                            'bg-gray-100 text-gray-900'
                       }`}>
                         <p className="text-sm leading-relaxed break-words">{msg.message}</p>
                       </div>
