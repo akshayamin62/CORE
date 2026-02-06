@@ -362,6 +362,9 @@ export default function PublicEnquiryFormPage() {
                   {formData.serviceTypes.length} service{formData.serviceTypes.length > 1 ? 's' : ''} selected
                 </p>
               )}
+              <p className="text-sm text-gray-400 mt-2">
+                You can select multiple option
+              </p>
             </div>
 
             {/* Submit Button */}
