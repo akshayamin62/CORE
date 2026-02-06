@@ -19,6 +19,7 @@ interface COREDocumentField {
   _id: string;
   documentKey: string;
   documentName: string;
+  documentType?: 'CORE' | 'EXTRA';
   category: 'PRIMARY' | 'SECONDARY';
   required: boolean;
   helpText?: string;
@@ -38,9 +39,11 @@ export default function DocumentUploadSection({
   
   const [documents, setDocuments] = useState<StudentDocument[]>([]);
   const [coreDocumentFields, setCOREDocumentFields] = useState<COREDocumentField[]>([]);
+  const [extraDocumentFields, setExtraDocumentFields] = useState<COREDocumentField[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState<string | null>(null);
   const [showAddFieldModal, setShowAddFieldModal] = useState(false);
+  const [showAddExtraFieldModal, setShowAddExtraFieldModal] = useState(false);
   const [rejectingDocumentId, setRejectingDocumentId] = useState<string | null>(null);
   const [rejectionMessage, setRejectionMessage] = useState('');
   const [newFieldName, setNewFieldName] = useState('');
@@ -70,6 +73,8 @@ export default function DocumentUploadSection({
       setLoading(true);
       if (isCOREDocumentsSection) {
         await Promise.all([fetchCOREDocumentFields(), fetchDocuments()]);
+      } else if (isYourDocumentsSection) {
+        await Promise.all([fetchExtraDocumentFields(), fetchDocuments()]);
       } else {
         await fetchDocuments();
       }
@@ -89,12 +94,23 @@ export default function DocumentUploadSection({
 
   const fetchCOREDocumentFields = async () => {
     try {
-      const response = await coreDocumentAPI.getCOREDocumentFields(registrationId);
+      const response = await coreDocumentAPI.getCOREDocumentFields(registrationId, 'CORE');
       const fields = response.data.data.fields || [];
       setCOREDocumentFields(fields);
     } catch (error: any) {
       console.error('Failed to fetch CORE document fields:', error);
       throw error;
+    }
+  };
+
+  const fetchExtraDocumentFields = async () => {
+    try {
+      const response = await coreDocumentAPI.getCOREDocumentFields(registrationId, 'EXTRA');
+      const fields = response.data.data.fields || [];
+      setExtraDocumentFields(fields);
+    } catch (error: any) {
+      console.error('Failed to fetch Extra document fields:', error);
+      // Don't throw - Extra documents are optional, just log the error
     }
   };
 
@@ -268,7 +284,8 @@ export default function DocumentUploadSection({
         DocumentCategory.SECONDARY,
         false, // required is always false
         newFieldHelpText || undefined,
-        newFieldAllowMultiple
+        newFieldAllowMultiple,
+        'CORE' // Document type
       );
       toast.success('CORE document field added successfully');
       setShowAddFieldModal(false);
@@ -282,6 +299,39 @@ export default function DocumentUploadSection({
         toast.error(error.response.data.message);
       } else {
         toast.error('Failed to add CORE document field');
+      }
+    }
+  };
+
+  const handleAddExtraDocumentField = async () => {
+    if (!newFieldName.trim()) {
+      toast.error('Please enter a document name');
+      return;
+    }
+
+    try {
+      // Always set category as SECONDARY and required as false
+      await coreDocumentAPI.addCOREDocumentField(
+        registrationId,
+        newFieldName,
+        DocumentCategory.SECONDARY,
+        false, // required is always false
+        newFieldHelpText || undefined,
+        newFieldAllowMultiple,
+        'EXTRA' // Document type for Extra documents
+      );
+      toast.success('Extra document field added successfully');
+      setShowAddExtraFieldModal(false);
+      setNewFieldName('');
+      setNewFieldHelpText('');
+      setNewFieldAllowMultiple(false);
+      await fetchExtraDocumentFields();
+    } catch (error: any) {
+      console.warn('Add Extra field error:', error);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Failed to add Extra document field');
       }
     }
   };
@@ -576,6 +626,19 @@ export default function DocumentUploadSection({
     return (
       <>
         <div className="space-y-6">
+          {/* Add Document Button - Only for OPS/SUPER_ADMIN */}
+          {canUpload && (userRole === 'SUPER_ADMIN' || userRole === 'OPS') && (
+            <div className="flex justify-end">
+              <button
+                onClick={() => setShowAddExtraFieldModal(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Document Field
+              </button>
+            </div>
+          )}
+
           {/* Primary Documents */}
           {primaryFields.length > 0 && (
             <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden shadow-md">
@@ -607,6 +670,28 @@ export default function DocumentUploadSection({
               </div>
               <div className="p-6 space-y-3">
                 {secondaryFields.map((field) =>
+                  renderDocumentField(
+                    field.documentKey,
+                    field.documentName,
+                    field.category,
+                    field.required,
+                    field.allowMultiple,
+                    field.helpText
+                  )
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Extra Documents - Student-specific, dynamic fields */}
+          {extraDocumentFields.length > 0 && (
+            <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden shadow-md">
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b-2 border-gray-200">
+                <h3 className="text-xl font-bold ">Extra Documents</h3>
+                {/* <p className=" text-sm mt-1">Additional documents specific to your profile</p> */}
+              </div>
+              <div className="p-6 space-y-3">
+                {extraDocumentFields.map((field) =>
                   renderDocumentField(
                     field.documentKey,
                     field.documentName,

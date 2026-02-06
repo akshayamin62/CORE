@@ -1,10 +1,13 @@
 import api from './api';
 import { DocumentCategory } from '@/types';
 
+export type COREDocumentType = 'CORE' | 'EXTRA';
+
 export const coreDocumentAPI = {
-  // Get CORE document fields for a specific student
-  getCOREDocumentFields: (registrationId: string) => {
-    return api.get(`/core-documents/${registrationId}`);
+  // Get CORE document fields for a specific student (optionally filter by type)
+  getCOREDocumentFields: (registrationId: string, type?: COREDocumentType) => {
+    const params = type ? { type } : {};
+    return api.get(`/core-documents/${registrationId}`, { params });
   },
 
   // Add new CORE document field (Admin/OPS only)
@@ -14,7 +17,8 @@ export const coreDocumentAPI = {
     category: DocumentCategory,
     required: boolean = false,
     helpText?: string,
-    allowMultiple?: boolean
+    allowMultiple?: boolean,
+    documentType?: COREDocumentType
   ) => {
     return api.post('/core-documents/add', {
       registrationId,
@@ -23,6 +27,7 @@ export const coreDocumentAPI = {
       required,
       helpText,
       allowMultiple,
+      documentType,
     });
   },
 

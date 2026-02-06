@@ -1,11 +1,18 @@
 import mongoose, { Document, Schema } from "mongoose";
 
+// Document type enum for differentiating between CORE and EXTRA documents
+export enum COREDocumentType {
+  CORE = "CORE",
+  EXTRA = "EXTRA",
+}
+
 // Model for student-specific CORE Document fields
 export interface ICOREDocumentField extends Document {
   studentId: mongoose.Types.ObjectId;
   registrationId: mongoose.Types.ObjectId;
   documentName: string;
   documentKey: string;
+  documentType: COREDocumentType;
   category: "PRIMARY" | "SECONDARY";
   required: boolean;
   helpText?: string;
@@ -39,6 +46,13 @@ const coreDocumentFieldSchema = new Schema<ICOREDocumentField>(
     documentKey: {
       type: String,
       required: true,
+    },
+    documentType: {
+      type: String,
+      enum: Object.values(COREDocumentType),
+      required: true,
+      default: COREDocumentType.CORE,
+      index: true,
     },
     category: {
       type: String,
@@ -80,9 +94,9 @@ const coreDocumentFieldSchema = new Schema<ICOREDocumentField>(
   }
 );
 
-// Compound index for student + registration + documentKey uniqueness
+// Compound index for student + registration + documentKey + documentType uniqueness
 coreDocumentFieldSchema.index(
-  { studentId: 1, registrationId: 1, documentKey: 1 },
+  { studentId: 1, registrationId: 1, documentKey: 1, documentType: 1 },
   { unique: true }
 );
 

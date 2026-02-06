@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthRequest } from "../types/auth";
-import COREDocumentField from "../models/COREDocumentField";
+import COREDocumentField, { COREDocumentType } from "../models/COREDocumentField";
 import StudentServiceRegistration from "../models/StudentServiceRegistration";
 import mongoose from "mongoose";
 
@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 export const getCOREDocumentFields = async (req: AuthRequest, res: Response) => {
   try {
     const { registrationId } = req.params;
+    const { type } = req.query; // 'CORE' | 'EXTRA' | undefined
 
     // Verify registration exists
     const registration = await StudentServiceRegistration.findById(registrationId);
@@ -18,12 +19,20 @@ export const getCOREDocumentFields = async (req: AuthRequest, res: Response) => 
       });
     }
 
-    // Get CORE document fields for this student
-    const fields = await COREDocumentField.find({
+    // Build query with optional type filter
+    const query: any = {
       studentId: registration.studentId,
       registrationId,
       isActive: true,
-    })
+    };
+
+    // Filter by documentType if provided
+    if (type && Object.values(COREDocumentType).includes(type as COREDocumentType)) {
+      query.documentType = type;
+    }
+
+    // Get CORE document fields for this student
+    const fields = await COREDocumentField.find(query)
       .sort({ order: 1, createdAt: 1 })
       .populate("createdBy", "name email");
 
@@ -43,7 +52,7 @@ export const getCOREDocumentFields = async (req: AuthRequest, res: Response) => 
 // Add new CORE document field for a specific student (Admin/OPS only)
 export const addCOREDocumentField = async (req: AuthRequest, res: Response) => {
   try {
-    const { registrationId, documentName, category, required, helpText, allowMultiple } = req.body;
+    const { registrationId, documentName, category, required, helpText, allowMultiple, documentType } = req.body;
 
     if (!registrationId || !documentName) {
       return res.status(400).json({
@@ -51,6 +60,11 @@ export const addCOREDocumentField = async (req: AuthRequest, res: Response) => {
         message: "Registration ID and document name are required",
       });
     }
+
+    // Validate documentType if provided
+    const validDocType = documentType && Object.values(COREDocumentType).includes(documentType)
+      ? documentType
+      : COREDocumentType.CORE;
 
     // Verify registration exists
     const registration = await StudentServiceRegistration.findById(registrationId);
@@ -61,16 +75,18 @@ export const addCOREDocumentField = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Generate document key from name
-    const documentKey = `core_${documentName
+    // Generate document key from name with type prefix
+    const prefix = validDocType === COREDocumentType.EXTRA ? "extra" : "core";
+    const documentKey = `${prefix}_${documentName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/^_|_$/g, "")}_${Date.now()}`;
 
-    // Get max order for this student's CORE documents
+    // Get max order for this student's documents of same type
     const maxOrderField = await COREDocumentField.findOne({
       studentId: registration.studentId,
       registrationId,
+      documentType: validDocType,
     }).sort({ order: -1 });
 
     const nextOrder = maxOrderField ? maxOrderField.order + 1 : 1;
@@ -81,6 +97,7 @@ export const addCOREDocumentField = async (req: AuthRequest, res: Response) => {
       registrationId,
       documentName,
       documentKey,
+      documentType: validDocType,
       category: category || "SECONDARY",
       required: required || false,
       helpText: helpText || undefined,
