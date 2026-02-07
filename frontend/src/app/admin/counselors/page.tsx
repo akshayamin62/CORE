@@ -6,12 +6,15 @@ import { authAPI, adminAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import { getFullName, getInitials } from '@/utils/nameHelpers';
 
 interface CounselorData {
   _id: string;
   userId: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
     isVerified: boolean;
     isActive: boolean;
@@ -31,7 +34,9 @@ export default function CounselorsListPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
     email: '',
     mobileNumber: '',
   });
@@ -92,7 +97,7 @@ export default function CounselorsListPage() {
       await adminAPI.createCounselor(formData);
       toast.success('Counselor created successfully!');
       setShowModal(false);
-      setFormData({ name: '', email: '', mobileNumber: '' });
+      setFormData({ firstName: '', middleName: '', lastName: '', email: '', mobileNumber: '' });
       fetchCounselors();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to create counselor');
@@ -102,8 +107,9 @@ export default function CounselorsListPage() {
   };
 
   const filteredCounselors = counselors.filter((counselor) => {
+    const counselorName = getFullName(counselor.userId).toLowerCase();
     const matchesSearch = 
-      counselor.userId.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      counselorName.includes(searchQuery.toLowerCase()) ||
       counselor.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (counselor.mobileNumber && counselor.mobileNumber.includes(searchQuery));
     
@@ -204,7 +210,7 @@ export default function CounselorsListPage() {
           {/* Add Counselor Modal */}
           {showModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 m-4">
+              <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 m-4">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-2xl font-bold text-gray-900">Add New Counselor</h3>
                   <button
@@ -218,37 +224,66 @@ export default function CounselorsListPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter counselor name"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        First Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter first name"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Middle Name
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.middleName}
+                        onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter middle name (optional)"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Last Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter last name"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter counselor email"
+                      />
+                    </div>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email *
-                    </label>
-                    <input
-                      type="email"
-                      required
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter counselor email"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Mobile Number *
+                      Mobile Number <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="tel"
@@ -342,10 +377,10 @@ export default function CounselorsListPage() {
                         <div className="flex items-center">
                           <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                             <span className="text-blue-600 font-semibold">
-                              {counselor.userId.name.charAt(0).toUpperCase()}
+                              {getInitials(counselor.userId)}
                             </span>
                           </div>
-                          <div className="font-medium text-gray-900">{counselor.userId.name}</div>
+                          <div className="font-medium text-gray-900">{getFullName(counselor.userId) || 'N/A'}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-600">

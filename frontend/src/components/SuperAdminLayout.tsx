@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { User, USER_ROLE } from '@/types';
 import { useState } from 'react';
+import { getFullName, getInitials } from '@/utils/nameHelpers';
 
 interface SuperAdminLayoutProps {
   children: React.ReactNode;
@@ -279,14 +280,14 @@ export default function SuperAdminLayout({ children, user }: SuperAdminLayoutPro
         <div className="border-t border-gray-200 p-4">
           {sidebarOpen ? (
             <div className="mb-3">
-              <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
+              <p className="text-sm font-medium text-gray-900 truncate">{getFullName(user)}</p>
               <p className="text-xs text-gray-500 truncate">{user.email}</p>
             </div>
           ) : (
             <div className="mb-3 flex justify-center">
               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-blue-600 font-semibold text-sm">
-                  {user.name.charAt(0).toUpperCase()}
+                  {getInitials(user)}
                 </span>
               </div>
             </div>

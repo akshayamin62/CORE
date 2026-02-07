@@ -14,22 +14,31 @@ export const validateSignup = (
   res: Response,
   next: NextFunction
 ): void => {
-  const { name, email, role } = req.body;
+  const { firstName, lastName, email, role } = req.body;
 
   // Check required fields
-  if (!name || !email || !role) {
+  if (!firstName || !lastName || !email || !role) {
     res.status(400).json({
       success: false,
-      message: "All fields are required: name, email, role",
+      message: "All fields are required: firstName, lastName, email, role",
     });
     return;
   }
 
-  // Validate name
-  if (typeof name !== "string" || name.trim().length < 2) {
+  // Validate first name
+  if (typeof firstName !== "string" || firstName.trim().length < 2) {
     res.status(400).json({
       success: false,
-      message: "Name must be at least 2 characters long",
+      message: "First name must be at least 2 characters long",
+    });
+    return;
+  }
+
+  // Validate last name
+  if (typeof lastName !== "string" || lastName.trim().length < 1) {
+    res.status(400).json({
+      success: false,
+      message: "Last name is required",
     });
     return;
   }

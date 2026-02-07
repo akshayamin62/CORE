@@ -6,12 +6,15 @@ import { authAPI, superAdminAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import { getFullName, getInitials } from '@/utils/nameHelpers';
 
 interface StudentData {
   _id: string;
   user: {
     _id: string;
-    name: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
     email: string;
     isVerified: boolean;
     isActive: boolean;
@@ -22,7 +25,9 @@ interface StudentData {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName: string;
+      middleName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -30,7 +35,9 @@ interface StudentData {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName: string;
+      middleName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -102,7 +109,7 @@ export default function SuperAdminAdminStudentsPage() {
   const filteredStudents = students.filter((student) => {
     const q = searchQuery.toLowerCase();
     const matchesSearch = !searchQuery ||
-      student.user?.name?.toLowerCase().includes(q) ||
+      getFullName(student.user)?.toLowerCase().includes(q) ||
       student.user?.email?.toLowerCase().includes(q) ||
       (student.mobileNumber && student.mobileNumber.includes(q));
 
@@ -245,11 +252,11 @@ export default function SuperAdminAdminStudentsPage() {
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
                               <span className="text-green-600 font-semibold text-sm">
-                                {student.user?.name?.charAt(0)?.toUpperCase() || '?'}
+                                {getInitials(student.user)}
                               </span>
                             </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{student.user?.name || 'N/A'}</div>
+                              <div className="text-sm font-medium text-gray-900">{getFullName(student.user) || 'N/A'}</div>
                               <div className="text-xs text-gray-500">
                                 Joined {new Date(student.user?.createdAt || student.createdAt).toLocaleDateString('en-US', {
                                   year: 'numeric',

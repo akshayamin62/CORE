@@ -50,7 +50,8 @@ export const getAllUsers = async (req: Request, res: Response): Promise<Response
 
     if (search) {
       filter.$or = [
-        { name: { $regex: search, $options: "i" } },
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
       ];
     }
@@ -99,7 +100,8 @@ export const getAllUsers = async (req: Request, res: Response): Promise<Response
       if (search) {
         const searchLower = String(search).toLowerCase();
         enrichedUsers = enrichedUsers.filter((user: any) => 
-          user.name.toLowerCase().includes(searchLower) ||
+          (user.firstName || '').toLowerCase().includes(searchLower) ||
+          (user.lastName || '').toLowerCase().includes(searchLower) ||
           user.email.toLowerCase().includes(searchLower) ||
           (user.companyName && user.companyName.toLowerCase().includes(searchLower))
         );
@@ -247,7 +249,9 @@ export const approveUser = async (req: Request, res: Response): Promise<Response
       data: {
         user: {
           id: user._id,
-          name: user.name,
+          firstName: user.firstName,
+          middleName: user.middleName,
+          lastName: user.lastName,
           email: user.email,
           role: user.role,
           isVerified: user.isVerified,
@@ -377,7 +381,9 @@ export const toggleUserStatus = async (req: Request, res: Response): Promise<Res
       data: {
         user: {
           id: user._id,
-          name: user.name,
+          firstName: user.firstName,
+          middleName: user.middleName,
+          lastName: user.lastName,
           email: user.email,
           isActive: user.isActive,
         },
@@ -464,13 +470,13 @@ export const getPendingApprovals = async (_req: Request, res: Response): Promise
  */
 export const createOps = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { name, email, phoneNumber } = req.body;
+    const { firstName, middleName, lastName, email, phoneNumber } = req.body;
 
     // Validate required fields
-    if (!name || !email) {
+    if (!firstName || !lastName || !email) {
       return res.status(400).json({
         success: false,
-        message: "Name and email are required",
+        message: "First name, last name, and email are required",
       });
     }
 
@@ -494,7 +500,9 @@ export const createOps = async (req: Request, res: Response): Promise<Response> 
 
     // Create ops user
     const opsUser = await User.create({
-      name: name.trim(),
+      firstName: firstName.trim(),
+      middleName: middleName?.trim() || undefined,
+      lastName: lastName.trim(),
       email: email.toLowerCase().trim(),
       role: USER_ROLE.OPS,
       isVerified: true, // Auto-verify ops created by admin
@@ -515,7 +523,9 @@ export const createOps = async (req: Request, res: Response): Promise<Response> 
       data: {
         ops: {
           id: opsUser._id,
-          name: opsUser.name,
+          firstName: opsUser.firstName,
+          middleName: opsUser.middleName,
+          lastName: opsUser.lastName,
           email: ops.email,
           mobileNumber: ops.mobileNumber,
           role: opsUser.role,
@@ -549,7 +559,7 @@ export const createOps = async (req: Request, res: Response): Promise<Response> 
 export const getAllOps = async (_req: Request, res: Response): Promise<Response> => {
   try {
     const ops = await Ops.find()
-      .populate('userId', 'name email isActive')
+      .populate('userId', 'firstName middleName lastName email isActive')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -580,7 +590,7 @@ export const getAllOps = async (_req: Request, res: Response): Promise<Response>
 export const getAllIvyExperts = async (_req: Request, res: Response): Promise<Response> => {
   try {
     const ivyExperts = await IvyExpert.find()
-      .populate('userId', 'name email isActive')
+      .populate('userId', 'firstName middleName lastName email isActive')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -611,7 +621,7 @@ export const getAllIvyExperts = async (_req: Request, res: Response): Promise<Re
 export const getAllEduplanCoaches = async (_req: Request, res: Response): Promise<Response> => {
   try {
     const eduplanCoaches = await EduplanCoach.find()
-      .populate('userId', 'name email isActive')
+      .populate('userId', 'firstName middleName lastName email isActive')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -641,10 +651,14 @@ export const getAllEduplanCoaches = async (_req: Request, res: Response): Promis
  */
 export const createAdmin = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { name, email, phoneNumber } = req.body;
+    const { name, firstName, middleName, lastName, email, phoneNumber } = req.body;
+
+    // Support both old name field and new firstName/lastName fields
+    const resolvedFirstName = firstName || (name ? name.trim().split(/\s+/)[0] : '');
+    const resolvedLastName = lastName || (name ? name.trim().split(/\s+/).slice(1).join(' ') || name.trim().split(/\s+/)[0] : '');
 
     // Validation
-    if (!name || !email) {
+    if ((!resolvedFirstName || !resolvedLastName) || !email) {
       return res.status(400).json({
         success: false,
         message: 'Name and email are required',
@@ -662,7 +676,9 @@ export const createAdmin = async (req: Request, res: Response): Promise<Response
 
     // Create user with ADMIN role (no password - will use OTP login)
     const newUser = new User({
-      name: name.trim(),
+      firstName: resolvedFirstName.trim(),
+      middleName: middleName?.trim() || undefined,
+      lastName: resolvedLastName.trim(),
       email: email.toLowerCase().trim(),
       role: USER_ROLE.ADMIN,
       isVerified: true, // Auto-verify admins created by super admin
@@ -694,7 +710,9 @@ export const createAdmin = async (req: Request, res: Response): Promise<Response
         admin: {
           _id: newAdmin._id,
           userId: newUser._id,
-          name: newUser.name,
+          firstName: newUser.firstName,
+          middleName: newUser.middleName,
+          lastName: newUser.lastName,
           email: newUser.email,
           mobileNumber: newAdmin.mobileNumber,
         },
@@ -716,8 +734,8 @@ export const createAdmin = async (req: Request, res: Response): Promise<Response
 export const getAdmins = async (_req: Request, res: Response): Promise<Response> => {
   try {
     const admins = await User.find({ role: USER_ROLE.ADMIN, isActive: true })
-      .select('_id name email')
-      .sort({ name: 1 });
+      .select('_id firstName middleName lastName email')
+      .sort({ lastName: 1 });
 
     return res.status(200).json({
       success: true,
@@ -766,7 +784,9 @@ export const getAdminDetails = async (req: Request, res: Response): Promise<Resp
       success: true,
       data: {
         _id: user._id,
-        name: user.name,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
         email: user.email,
         isActive: user.isActive,
         isVerified: user.isVerified,
@@ -794,14 +814,14 @@ export const getAdminDetails = async (req: Request, res: Response): Promise<Resp
  */
 export const createUserByRole = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { name, email, phoneNumber, role, adminId, customSlug, companyName, address } = req.body;
+    const { firstName, middleName, lastName, email, phoneNumber, role, adminId, customSlug, companyName, address } = req.body;
     const companyLogo = (req as any).file ? `/uploads/admin/${(req as any).file.filename}` : undefined;
 
     // Validation
-    if (!name || !email || !role) {
+    if (!firstName || !lastName || !email || !role) {
       return res.status(400).json({
         success: false,
-        message: 'Name, email, and role are required',
+        message: 'First name, last name, email, and role are required',
       });
     }
 
@@ -875,7 +895,9 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
 
     // Create user with specified role (no password - will use OTP login)
     const newUser = new User({
-      name: name.trim(),
+      firstName: firstName.trim(),
+      middleName: middleName?.trim() || undefined,
+      lastName: lastName.trim(),
       email: email.toLowerCase().trim(),
       role: role,
       isVerified: true, // Auto-verify users created by super admin
@@ -888,14 +910,15 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
 
     // If creating ADMIN role, also create Admin profile with slug
     if (role === USER_ROLE.ADMIN) {
-      // Generate slug from company name, falling back to custom slug or name
+      // Generate slug from company name, falling back to custom slug or full name
       let baseSlug: string;
       if (customSlug) {
         baseSlug = generateSlug(customSlug);
       } else if (companyName) {
         baseSlug = generateSlug(companyName);
       } else {
-        baseSlug = generateSlug(name);
+        const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
+        baseSlug = generateSlug(fullName);
       }
       enquiryFormSlug = await getUniqueSlug(baseSlug);
 
@@ -958,7 +981,9 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
       data: {
         user: {
           _id: newUser._id,
-          name: newUser.name,
+          firstName: newUser.firstName,
+          middleName: newUser.middleName,
+          lastName: newUser.lastName,
           email: newUser.email,
           role: newUser.role,
         },
@@ -1018,7 +1043,9 @@ export const getAdminDashboardStats = async (req: Request, res: Response): Promi
         enquiryFormSlug: adminProfile.enquiryFormSlug,
         admin: {
           _id: adminUser._id,
-          name: adminUser.name,
+          firstName: adminUser.firstName,
+          middleName: adminUser.middleName,
+          lastName: adminUser.lastName,
           email: adminUser.email,
           isActive: adminUser.isActive,
           isVerified: adminUser.isVerified,
@@ -1048,7 +1075,7 @@ export const getAdminCounselorsForSuperAdmin = async (req: Request, res: Respons
     }
 
     const counselors = await Counselor.find({ adminId: adminId })
-      .populate('userId', 'name email isActive isVerified')
+      .populate('userId', 'firstName middleName lastName name email isActive isVerified')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -1145,14 +1172,14 @@ export const getAdminStudentsForSuperAdmin = async (req: Request, res: Response)
     }
 
     const students = await Student.find({ adminId: adminProfile._id })
-      .populate('userId', 'name email isVerified isActive createdAt')
+      .populate('userId', 'firstName middleName lastName name email isVerified isActive createdAt')
       .populate({
         path: 'adminId',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
       })
       .populate({
         path: 'counselorId',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
       })
       .sort({ createdAt: -1 });
 
@@ -1327,11 +1354,11 @@ export const getCounselorDetailForSuperAdmin = async (req: Request, res: Respons
 
     // Find counselor by _id first, then fallback to userId
     let counselor = await Counselor.findById(counselorId)
-      .populate('userId', 'name email isActive isVerified');
+      .populate('userId', 'firstName middleName lastName name email isActive isVerified');
 
     if (!counselor) {
       counselor = await Counselor.findOne({ userId: counselorId })
-        .populate('userId', 'name email isActive isVerified');
+        .populate('userId', 'firstName middleName lastName name email isActive isVerified');
     }
 
     if (!counselor) {

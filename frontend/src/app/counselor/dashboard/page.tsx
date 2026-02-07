@@ -11,6 +11,7 @@ import ScheduleOverview from '@/components/ScheduleOverview';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
 import LeadDetailPanel from '@/components/LeadDetailPanel';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface DashboardStats {
   totalLeads: number;
@@ -320,7 +321,7 @@ export default function CounselorDashboardPage() {
           {/* Header */}
           <div className="mb-8 flex items-start justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{user.name}</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{getFullName(user)}</h1>
             </div>
             {/* Copy Enquiry URL */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 max-w-lg">

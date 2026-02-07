@@ -58,19 +58,19 @@ export const getAdminStudents = async (req: AuthRequest, res: Response): Promise
     }
     
     const students = await Student.find(studentQuery)
-      .populate('userId', 'name email isVerified isActive createdAt')
+      .populate('userId', 'firstName middleName lastName email isVerified isActive createdAt')
       .populate({
         path: 'adminId',
         populate: {
           path: 'userId',
-          select: 'name email'
+          select: 'firstName middleName lastName email'
         }
       })
       .populate({
         path: 'counselorId',
         populate: {
           path: 'userId',
-          select: 'name email'
+          select: 'firstName middleName lastName email'
         }
       })
       .sort({ createdAt: -1 });
@@ -138,19 +138,19 @@ export const getAdminStudentDetails = async (req: AuthRequest, res: Response): P
     }
 
     const student = await Student.findById(studentId)
-      .populate('userId', 'name email role isVerified isActive createdAt')
+      .populate('userId', 'firstName middleName lastName name email role isVerified isActive createdAt')
       .populate({
         path: 'adminId',
         populate: {
           path: 'userId',
-          select: 'name email'
+          select: 'firstName middleName lastName name email'
         }
       })
       .populate({
         path: 'counselorId',
         populate: {
           path: 'userId',
-          select: 'name email'
+          select: 'firstName middleName lastName name email'
         }
       })
       .lean()
@@ -198,15 +198,15 @@ export const getAdminStudentDetails = async (req: AuthRequest, res: Response): P
       .populate('serviceId', 'name slug shortDescription')
       .populate({
         path: 'primaryOpsId',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
       })
       .populate({
         path: 'secondaryOpsId',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
       })
       .populate({
         path: 'activeOpsId',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
       })
       .lean()
       .exec();

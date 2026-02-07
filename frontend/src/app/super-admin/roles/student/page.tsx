@@ -7,6 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
+import { getFullName, getInitials } from '@/utils/nameHelpers';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -14,7 +15,9 @@ interface StudentData {
   _id: string;
   user: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
     isVerified: boolean;
     isActive: boolean;
@@ -26,7 +29,9 @@ interface StudentData {
     companyName?: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
@@ -34,7 +39,9 @@ interface StudentData {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
@@ -122,7 +129,6 @@ export default function StudentUsersPage() {
       console.log('📊 Pending student IDs from backend:', pendingStudentIds);
       setStudents(fetchedStudents.map((s: StudentData) => {
         const isPending = pendingStudentIds.includes(s._id.toString());
-        console.log(`Student ${s.user?.name} (${s._id}): isPending=${isPending}`);
         return {
           ...s,
           hasPendingAssignment: isPending
@@ -145,8 +151,9 @@ export default function StudentUsersPage() {
 
   const filteredStudents = students.filter((student) => {
     const query = searchQuery.toLowerCase();
+    const studentName = getFullName(student.user).toLowerCase();
     const matchesSearch = 
-      student.user.name.toLowerCase().includes(query) ||
+      studentName.includes(query) ||
       student.user.email.toLowerCase().includes(query) ||
       student.mobileNumber?.includes(query) ||
       student.adminId?.companyName?.toLowerCase().includes(query);
@@ -317,12 +324,12 @@ export default function StudentUsersPage() {
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                               <span className="text-blue-600 font-semibold text-sm">
-                                {student.user.name.charAt(0).toUpperCase()}
+                                {getInitials(student.user)}
                               </span>
                             </div>
                             <div>
                               <div className="font-medium text-gray-900">
-                                {student.user.name}
+                                {getFullName(student.user) || 'N/A'}
                               </div>
                               <div className="text-sm text-gray-500">
                                 Joined {new Date(student.createdAt).toLocaleDateString()}

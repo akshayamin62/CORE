@@ -279,12 +279,18 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
     let newUser;
     
     if (!existingUser) {
-      // Create new user
+      // Create new user - split lead name into firstName/lastName
       const otp = generateOTP();
       const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+      // Parse lead.name into firstName and lastName
+      const nameParts = (lead.name || '').trim().split(/\s+/);
+      const leadFirstName = nameParts[0] || 'Unknown';
+      const leadLastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
       newUser = new User({
-        name: lead.name,
+        firstName: leadFirstName,
+        lastName: leadLastName || leadFirstName, // fallback if single name
         email: lead.email.toLowerCase(),
         role: USER_ROLE.STUDENT,
         isVerified: true,
@@ -409,7 +415,9 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
         student: newStudent,
         user: {
           _id: newUser._id,
-          name: newUser.name,
+          firstName: newUser.firstName,
+          middleName: newUser.middleName,
+          lastName: newUser.lastName,
           email: newUser.email
         }
       }

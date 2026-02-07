@@ -6,6 +6,7 @@ import { superAdminAPI, authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import { getFullName, getInitials } from '@/utils/nameHelpers';
 
 interface UserStats {
   total: number;
@@ -315,11 +316,11 @@ export default function UserManagementPage() {
                           <div className="flex items-center">
                             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                               <span className="text-blue-600 font-semibold">
-                                {user.name.charAt(0).toUpperCase()}
+                                {getInitials(user)}
                               </span>
                             </div>
                             <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                              <div className="text-sm font-medium text-gray-900">{getFullName(user)}</div>
                               <div className="text-sm text-gray-500">{user.email}</div>
                             </div>
                           </div>

@@ -575,9 +575,10 @@ export const rejectDocument = async (req: AuthRequest, res: Response) => {
           const user = await User.findById(student.userId);
           if (user && user.email) {
             const rejectedByRole = userRole === 'SUPER_ADMIN' ? 'super_admin' : 'OPS';
+            const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
             await sendDocumentRejectionEmail(
               user.email,
-              user.name,
+              fullName,
               document.documentName,
               rejectionMessage,
               rejectedByRole,

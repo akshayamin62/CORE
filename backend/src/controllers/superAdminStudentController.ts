@@ -63,20 +63,20 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
     }
     
     const students = await Student.find(studentQuery)
-      .populate('userId', 'name email isVerified isActive createdAt')
+      .populate('userId', 'firstName middleName lastName email isVerified isActive createdAt')
       .populate({
         path: 'adminId',
         select: 'companyName',
         populate: {
           path: 'userId',
-          select: 'name email'
+          select: 'firstName middleName lastName email'
         }
       })
       .populate({
         path: 'counselorId',
         populate: {
           path: 'userId',
-          select: 'name email'
+          select: 'firstName middleName lastName email'
         }
       })
       .sort({ createdAt: -1 });
@@ -169,19 +169,19 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
     const user = await User.findById(userId);
 
     const student = await Student.findById(studentId)
-      .populate('userId', 'name email role isVerified isActive createdAt')
+      .populate('userId', 'firstName middleName lastName email role isVerified isActive createdAt')
       .populate({
         path: 'adminId',
         populate: {
           path: 'userId',
-          select: 'name email'
+          select: 'firstName middleName lastName email'
         }
       })
       .populate({
         path: 'counselorId',
         populate: {
           path: 'userId',
-          select: 'name email'
+          select: 'firstName middleName lastName email'
         }
       })
       .lean()
@@ -201,32 +201,32 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
       .populate({
         path: 'primaryOpsId',
         select: 'userId email specializations',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
       })
       .populate({
         path: 'secondaryOpsId',
         select: 'userId email specializations',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
       })
       .populate({
         path: 'activeOpsId',
         select: 'userId email specializations',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
       })
       .populate({
         path: 'primaryIvyExpertId',
         select: 'userId email',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
       })
       .populate({
         path: 'secondaryIvyExpertId',
         select: 'userId email',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
       })
       .populate({
         path: 'activeIvyExpertId',
         select: 'userId email',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
       })
       .populate({
         path: 'primaryEduplanCoachId',

@@ -12,14 +12,14 @@ import { AuthRequest } from "../types/auth";
  */
 export const createCounselor = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
-    const { name, email, mobileNumber } = req.body;
+    const { firstName, middleName, lastName, email, mobileNumber } = req.body;
     const adminUserId = req.user?.userId; // Admin's user ID from auth middleware
 
     // Validation
-    if (!name || !email) {
+    if (!firstName || !lastName || !email) {
       return res.status(400).json({
         success: false,
-        message: 'Name and email are required',
+        message: 'First name, last name, and email are required',
       });
     }
 
@@ -57,7 +57,9 @@ export const createCounselor = async (req: AuthRequest, res: Response): Promise<
 
     // Create user with COUNSELOR role (no password - will use OTP login)
     const newUser = new User({
-      name: name.trim(),
+      firstName: firstName.trim(),
+      middleName: middleName?.trim() || undefined,
+      lastName: lastName.trim(),
       email: email.toLowerCase().trim(),
       role: USER_ROLE.COUNSELOR,
       isVerified: true, // Auto-verify counselors created by admin
@@ -85,7 +87,9 @@ export const createCounselor = async (req: AuthRequest, res: Response): Promise<
         counselor: {
           _id: newCounselor._id,
           userId: newUser._id,
-          name: newUser.name,
+          firstName: newUser.firstName,
+          middleName: newUser.middleName,
+          lastName: newUser.lastName,
           email: newUser.email,
           mobileNumber: newCounselor.mobileNumber,
         },
@@ -117,7 +121,7 @@ export const getCounselors = async (req: AuthRequest, res: Response): Promise<Re
 
     // Find counselors created by this admin
     const counselors = await Counselor.find({ adminId: adminUserId })
-      .populate('userId', 'name email isActive isVerified')
+      .populate('userId', 'firstName middleName lastName email isActive isVerified')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -219,7 +223,7 @@ export const getCounselorDetail = async (req: AuthRequest, res: Response): Promi
     const counselor = await Counselor.findOne({
       _id: counselorId,
       adminId: adminUserId,
-    }).populate('userId', 'name email isActive isVerified');
+    }).populate('userId', 'firstName middleName lastName email isActive isVerified');
 
     if (!counselor) {
       return res.status(404).json({

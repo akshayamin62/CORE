@@ -265,7 +265,7 @@ export default function AdminLeadsPage() {
   const filteredLeads = leads.filter(lead => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
-    return lead.name.toLowerCase().includes(query) || lead.email.toLowerCase().includes(query);
+    return (lead.name || '').toLowerCase().includes(query) || lead.email.toLowerCase().includes(query);
   });
 
   if (loading) {

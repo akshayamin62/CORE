@@ -240,7 +240,7 @@ export const createTeamMeet = async (
     if (!recipientAvailability.isAvailable) {
       return res.status(400).json({
         success: false,
-        message: `${recipient.name} has a conflict: ${recipientAvailability.conflict?.type} at ${recipientAvailability.conflict?.time}`,
+        message: `${[recipient.firstName, recipient.middleName, recipient.lastName].filter(Boolean).join(' ')} has a conflict: ${recipientAvailability.conflict?.type} at ${recipientAvailability.conflict?.time}`,
       });
     }
 
@@ -873,7 +873,9 @@ export const getParticipants = async (
     if (admin && admin._id.toString() !== userId) {
       participants.push({
         _id: admin._id,
-        name: admin.name,
+        firstName: admin.firstName,
+        middleName: admin.middleName,
+        lastName: admin.lastName,
         email: admin.email,
         role: admin.role,
       });

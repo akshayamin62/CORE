@@ -6,6 +6,7 @@ import { superAdminAPI, authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import { getFullName, getInitials } from '@/utils/nameHelpers';
 
 interface RoleUserListPageProps {
   role: string;
@@ -22,7 +23,9 @@ interface UserStats {
 
 interface AdminOption {
   _id: string;
-  name: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   email: string;
 }
 
@@ -48,7 +51,9 @@ export default function RoleUserListPage({
 
   // Add user form state
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
     email: '',
     phoneNumber: '',
   });
@@ -188,8 +193,8 @@ export default function RoleUserListPage({
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.email.trim()) {
-      toast.error('Name and email are required');
+    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim()) {
+      toast.error('First name, last name, and email are required');
       return;
     }
 
@@ -223,7 +228,11 @@ export default function RoleUserListPage({
     try {
       // Create FormData for file upload
       const formDataToSend = new FormData();
-      formDataToSend.append('name', formData.name.trim());
+      formDataToSend.append('firstName', formData.firstName.trim());
+      if (formData.middleName.trim()) {
+        formDataToSend.append('middleName', formData.middleName.trim());
+      }
+      formDataToSend.append('lastName', formData.lastName.trim());
       formDataToSend.append('email', formData.email.trim());
       if (formData.phoneNumber.trim()) {
         formDataToSend.append('phoneNumber', formData.phoneNumber.trim());
@@ -259,7 +268,13 @@ export default function RoleUserListPage({
         toast.success(`${roleDisplayName} created successfully! They can log in using OTP.`);
       }
       
-      setFormData({ name: '', email: '', phoneNumber: '' });
+      setFormData({ 
+        firstName: '', 
+        middleName: '', 
+        lastName: '', 
+        email: '', 
+        phoneNumber: '' 
+      });
       setAdminFormData({ companyName: '', address: '' });
       setCompanyLogoFile(null);
       setLogoPreview(null);
@@ -423,12 +438,16 @@ export default function RoleUserListPage({
                             ) : null}
                             <div className={`w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center ${isAdminRole && user.companyLogo ? 'hidden' : ''}`}>
                               <span className="text-blue-600 font-semibold">
-                                {isAdminRole && user.companyName ? user.companyName.charAt(0).toUpperCase() : user.name.charAt(0).toUpperCase()}
+                                {isAdminRole && user.companyName 
+                                  ? user.companyName.charAt(0).toUpperCase() 
+                                  : getInitials(user)}
                               </span>
                             </div>
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">
-                                {isAdminRole && user.companyName ? user.companyName : user.name}
+                                {isAdminRole && user.companyName 
+                                  ? user.companyName 
+                                  : (getFullName(user) || 'N/A')}
                               </div>
                               <div className="text-sm text-gray-500">{user.email}</div>
                             </div>
@@ -523,7 +542,7 @@ export default function RoleUserListPage({
         {/* Add User Modal */}
         {showAddModal && canAddUser && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-gray-900">Add New {roleDisplayName}</h2>
                 <button
@@ -540,14 +559,41 @@ export default function RoleUserListPage({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Name <span className="text-red-500">*</span>
+                      First Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                      placeholder="Enter full name"
+                      placeholder="Enter first name"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Middle Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.middleName}
+                      onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      placeholder="Enter middle name (optional)"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      placeholder="Enter last name"
                       required
                     />
                   </div>
@@ -565,27 +611,27 @@ export default function RoleUserListPage({
                       required
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.phoneNumber}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Allow only numbers and phone number special characters
-                      if (value === '' || /^[+()\-\s.0-9]*$/.test(value)) {
-                        setFormData({ ...formData, phoneNumber: value });
-                      }
-                    }}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    placeholder="+1234567890 or (123) 456-7890"
-                    pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,5}[-\s.]?[0-9]{1,5}"
-                    required
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phoneNumber}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow only numbers and phone number special characters
+                        if (value === '' || /^[+()\-\s.0-9]*$/.test(value)) {
+                          setFormData({ ...formData, phoneNumber: value });
+                        }
+                      }}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      placeholder="+1234567890 or (123) 456-7890"
+                      pattern="[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,5}[-\s.]?[0-9]{1,5}"
+                      required
+                    />
+                  </div>
                 </div>
 
                 {/* Admin-specific fields */}
@@ -675,7 +721,7 @@ export default function RoleUserListPage({
                       <option value="">-- Select an Admin --</option>
                       {admins.map((admin) => (
                         <option key={admin._id} value={admin._id}>
-                          {admin.name} ({admin.email})
+                          {getFullName(admin)} ({admin.email})
                         </option>
                       ))}
                     </select>

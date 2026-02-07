@@ -14,7 +14,9 @@ export enum USER_ROLE {
 export interface User {
   _id?: string;
   id?: string;
-  name: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
   email: string;
   role: USER_ROLE | string;
   isVerified: boolean;

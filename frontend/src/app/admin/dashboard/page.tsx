@@ -9,6 +9,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import TeamMeetCalendar from '@/components/TeamMeetCalendar';
 import TeamMeetSidebar from '@/components/TeamMeetSidebar';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface DashboardStats {
   totalCounselors: number;
@@ -163,7 +164,7 @@ export default function AdminDashboardPage() {
         <div className="p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">{user.name}</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{getFullName(user)}</h1>
           </div>
 
           {/* Stats Cards */}

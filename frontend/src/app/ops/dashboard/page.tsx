@@ -9,6 +9,7 @@ import OpsScheduleCalendar from '@/components/OpsScheduleCalendar';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
 import OpsScheduleSidebar from '@/components/OpsScheduleSidebar';
 import toast, { Toaster } from 'react-hot-toast';
+import { getFullName } from '@/utils/nameHelpers';
 
 export default function OpsDashboardPage() {
   const router = useRouter();
@@ -163,7 +164,7 @@ export default function OpsDashboardPage() {
         <div className="p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">{user.name}</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{getFullName(user)}</h1>
           </div>
 
           {/* Stats Cards */}

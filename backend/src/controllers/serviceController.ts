@@ -138,7 +138,7 @@ export const registerForService = async (req: AuthRequest, res: Response) => {
         const studentUser = await User.findById(userId);
         await sendServiceRegistrationEmailToSuperAdmin(
           superAdmin.email,
-          studentUser?.name || 'Unknown Student',
+          [studentUser?.firstName, studentUser?.middleName, studentUser?.lastName].filter(Boolean).join(' ') || 'Unknown Student',
           studentUser?.email || 'Unknown Email',
           service.name
         );

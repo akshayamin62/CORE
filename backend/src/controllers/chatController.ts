@@ -264,7 +264,7 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    const userName = user.name;
+    const userName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
 
     // Check who can send messages
     // For OPEN chats: All roles can send

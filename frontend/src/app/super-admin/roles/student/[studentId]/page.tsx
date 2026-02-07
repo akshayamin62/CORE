@@ -349,7 +349,7 @@ export default function StudentDetailPage() {
               <div className="flex items-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                   <span className="text-blue-600 font-bold text-xl">
-                    {student.userId.name.charAt(0).toUpperCase()}
+                    {(student.userId.name || '?').charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div>

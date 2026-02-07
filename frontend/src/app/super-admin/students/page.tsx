@@ -7,6 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
+import { getFullName, getInitials } from '@/utils/nameHelpers';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -14,7 +15,9 @@ interface StudentData {
   _id: string;
   user: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
     isVerified: boolean;
     isActive: boolean;
@@ -25,7 +28,9 @@ interface StudentData {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
@@ -33,7 +38,9 @@ interface StudentData {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
@@ -89,7 +96,7 @@ export default function SuperAdminStudentsPage() {
   const filteredStudents = students.filter((student) => {
     const query = searchQuery.toLowerCase();
     return (
-      student.user.name.toLowerCase().includes(query) ||
+      getFullName(student.user).toLowerCase().includes(query) ||
       student.user.email.toLowerCase().includes(query) ||
       student.mobileNumber?.includes(query)
     );
@@ -183,12 +190,12 @@ export default function SuperAdminStudentsPage() {
                           <div className="flex items-center">
                             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                               <span className="text-blue-600 font-semibold text-sm">
-                                {student.user.name.charAt(0).toUpperCase()}
+                                {getInitials(student.user)}
                               </span>
                             </div>
                             <div>
                               <div className="font-medium text-gray-900">
-                                {student.user.name}
+                                {getFullName(student.user) || 'N/A'}
                               </div>
                               <div className="text-sm text-gray-500">
                                 Joined {new Date(student.createdAt).toLocaleDateString()}
@@ -200,7 +207,7 @@ export default function SuperAdminStudentsPage() {
                           {student.user.email}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {student.adminId?.userId?.name || 'N/A'}
+                          {student.adminId?.userId ? getFullName(student.adminId.userId) : 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">

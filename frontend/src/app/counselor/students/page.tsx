@@ -5,12 +5,15 @@ import { useRouter } from 'next/navigation';
 import { authAPI, adminStudentAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface StudentData {
   _id: string;
   user: {
     _id: string;
-    name: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
     email: string;
     isVerified: boolean;
     isActive: boolean;
@@ -21,7 +24,9 @@ interface StudentData {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName: string;
+      middleName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -29,7 +34,9 @@ interface StudentData {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName: string;
+      middleName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -89,7 +96,7 @@ export default function CounselorStudentsPage() {
 
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
-      student.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      getFullName(student.user)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       student.mobileNumber?.includes(searchTerm);
     
@@ -189,7 +196,7 @@ export default function CounselorStudentsPage() {
                     <tr key={student._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div>
-                          <p className="font-medium text-gray-900">{student.user?.name || 'N/A'}</p>
+                          <p className="font-medium text-gray-900">{getFullName(student.user) || 'N/A'}</p>
                           <p className="text-sm text-gray-500">{student.user?.email || 'N/A'}</p>
                         </div>
                       </td>

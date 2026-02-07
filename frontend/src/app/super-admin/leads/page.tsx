@@ -110,7 +110,7 @@ export default function SuperAdminLeadsPage() {
     let matches = true;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      matches = lead.name.toLowerCase().includes(q) ||
+      matches = (lead.name || '').toLowerCase().includes(q) ||
         lead.email.toLowerCase().includes(q) ||
         lead.mobileNumber.includes(q) ||
         (lead.city ? lead.city.toLowerCase().includes(q) : false) ||

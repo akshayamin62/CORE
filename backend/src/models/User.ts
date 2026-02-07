@@ -2,7 +2,9 @@ import mongoose, { Document, Schema } from "mongoose";
 import { USER_ROLE } from "../types/roles";
 
 export interface IUser extends Document {
-  name: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
   email: string;
   role: USER_ROLE;
   isVerified: boolean;
@@ -15,7 +17,9 @@ export interface IUser extends Document {
 
 const userSchema = new Schema<IUser>(
   {
-    name: { type: String, required: true },
+    firstName: { type: String, required: true },
+    middleName: { type: String, required: false },
+    lastName: { type: String, required: true },
 
     email: {
       type: String,
@@ -47,7 +51,9 @@ const userSchema = new Schema<IUser>(
       default: undefined,
     },
   },
-  { timestamps: true }
+  { 
+    timestamps: true,
+  }
 );
 
 export default mongoose.model<IUser>("User", userSchema);

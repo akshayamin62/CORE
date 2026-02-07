@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { User } from '@/types';
 import { useState } from 'react';
+import { getFullName, getInitials } from '@/utils/nameHelpers';
 
 interface OpsLayoutProps {
   children: React.ReactNode;
@@ -106,7 +107,7 @@ export default function OpsLayout({ children, user }: OpsLayoutProps) {
           {sidebarOpen ? (
             <div className="mb-3">
               <p className="text-sm font-medium text-gray-900 truncate">
-                {user.name}
+                {getFullName(user)}
               </p>
               <p className="text-xs text-gray-500 truncate">{user.email}</p>
             </div>
@@ -114,7 +115,7 @@ export default function OpsLayout({ children, user }: OpsLayoutProps) {
             <div className="mb-3 flex justify-center">
               <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                 <span className="text-green-600 font-semibold text-sm">
-                  {user.name.charAt(0).toUpperCase()}
+                  {getInitials(user)}
                 </span>
               </div>
             </div>

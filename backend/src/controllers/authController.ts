@@ -18,7 +18,9 @@ import {
 
 interface SignupRequest extends Request {
   body: {
-    name: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
     email: string;
     role: USER_ROLE;
     captcha: string;
@@ -43,7 +45,7 @@ interface VerifyOTPRequest extends Request {
 
 export const signup = async (req: SignupRequest, res: Response): Promise<Response> => {
   try {
-    const { name, email, role, captcha, captchaInput } = req.body;
+    const { firstName, middleName, lastName, email, role, captcha, captchaInput } = req.body;
 
     const emailKey = email.toLowerCase().trim();
 
@@ -79,7 +81,9 @@ export const signup = async (req: SignupRequest, res: Response): Promise<Respons
 
     // Create user record
     const user = await User.create({
-      name: name.trim(),
+      firstName: firstName.trim(),
+      middleName: middleName?.trim() || undefined,
+      lastName: lastName.trim(),
       email: emailKey,
       role,
       isVerified: false,
@@ -88,8 +92,9 @@ export const signup = async (req: SignupRequest, res: Response): Promise<Respons
       otpExpires,
     });
 
-    // Send OTP email
-    await sendOTPEmail(user.email, user.name, otp, 'signup');
+    // Send OTP email - build full name from parts
+    const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
+    await sendOTPEmail(user.email, fullName, otp, 'signup');
 
     return res.status(201).json({
       success: true,
@@ -184,8 +189,9 @@ export const login = async (req: LoginRequest, res: Response): Promise<Response>
     user.otpExpires = otpExpires;
     await user.save();
 
-    // Send OTP email
-    await sendOTPEmail(user.email, user.name, otp, 'login');
+    // Send OTP email - build full name from parts
+    const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
+    await sendOTPEmail(user.email, fullName, otp, 'login');
 
     return res.status(200).json({
       success: true,
@@ -284,7 +290,9 @@ export const verifySignupOTP = async (req: VerifyOTPRequest, res: Response): Pro
         ...(authToken && { token: authToken }),
         user: {
           id: user._id,
-          name: user.name,
+          firstName: user.firstName,
+          middleName: user.middleName,
+          lastName: user.lastName,
           email: user.email,
           role: user.role,
           isVerified: user.isVerified,
@@ -375,7 +383,9 @@ export const verifyOTP = async (req: VerifyOTPRequest, res: Response): Promise<R
       data: {
         user: {
           id: user._id,
-          name: user.name,
+          firstName: user.firstName,
+          middleName: user.middleName,
+          lastName: user.lastName,
           email: user.email,
           role: user.role,
         },
@@ -418,7 +428,9 @@ export const getProfile = async (
     const responseData: any = {
       user: {
         id: user._id,
-        name: user.name,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
         email: user.email,
         role: user.role,
         isVerified: user.isVerified,

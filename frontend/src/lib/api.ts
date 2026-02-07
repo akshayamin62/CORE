@@ -45,7 +45,7 @@ api.interceptors.response.use(
 
 // API functions
 export const authAPI = {
-  signup: (data: { name: string; email: string; role: string; captcha: string; captchaInput: string }) =>
+  signup: (data: { firstName: string; middleName?: string; lastName: string; email: string; role: string; captcha: string; captchaInput: string }) =>
     api.post('/auth/signup', data),
   
   verifySignupOTP: (data: { email: string; otp: string }) =>
@@ -84,19 +84,25 @@ export const superAdminAPI = {
   deleteUser: (userId: string) => api.delete(`/super-admin/users/${userId}`),
   
   createOps: (data: {
-    name: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
     email: string;
     phoneNumber?: string;
   }) => api.post('/super-admin/ops', data),
   
   createAdmin: (data: {
-    name: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
     email: string;
     phoneNumber?: string;
   }) => api.post('/super-admin/admin', data),
   
   createUserByRole: (data: FormData | {
-    name: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
     email: string;
     phoneNumber?: string;
     role: string;
@@ -279,7 +285,9 @@ export const programAPI = {
 // Admin API (for ADMIN role)
 export const adminAPI = {
   createCounselor: (data: {
-    name: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
     email: string;
     mobileNumber?: string;
   }) => api.post('/admin/counselor', data),

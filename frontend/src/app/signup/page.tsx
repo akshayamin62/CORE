@@ -29,7 +29,9 @@ const hashCaptcha = async (captcha: string): Promise<string> => {
 export default function SignupPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
     email: '',
     role: USER_ROLE.STUDENT,
   });
@@ -142,6 +144,7 @@ export default function SignupPage() {
   const roleOptions = [
     { value: USER_ROLE.STUDENT, label: 'Student', icon: '🎓', color: 'from-blue-500 to-cyan-500' },
     { value: USER_ROLE.ALUMNI, label: 'Alumni', icon: '🎖️', color: 'from-purple-500 to-pink-500' },
+    { value: USER_ROLE.SERVICE_PROVIDER, label: 'Service Provider', icon: '🏢', color: 'from-emerald-500 to-teal-500' },
   ];
 
   return (
@@ -178,10 +181,61 @@ export default function SignupPage() {
           {step === 'signup' ? (
             <>
             <form onSubmit={handleSignup} className="space-y-5">
-            {/* Name Input */}
+            {/* Name Fields - 2 per row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* First Name Input */}
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-bold text-gray-900 mb-2">
+                  First Name <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <input
+                    id="firstName"
+                    name="firstName"
+                    type="text"
+                    required
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    className="block w-full pl-12 pr-4 py-3.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-gray-50 hover:bg-white"
+                    placeholder="John"
+                  />
+                </div>
+              </div>
+
+              {/* Last Name Input */}
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-bold text-gray-900 mb-2">
+                  Last Name <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <input
+                    id="lastName"
+                    name="lastName"
+                    type="text"
+                    required
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    className="block w-full pl-12 pr-4 py-3.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-gray-50 hover:bg-white"
+                    placeholder="Doe"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Middle Name Input - Full Width */}
             <div>
-              <label htmlFor="name" className="block text-sm font-bold text-gray-900 mb-2">
-                Full Name
+              <label htmlFor="middleName" className="block text-sm font-bold text-gray-900 mb-2">
+                Middle Name <span className="text-gray-400 font-normal">(Optional)</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -190,14 +244,13 @@ export default function SignupPage() {
                   </svg>
                 </div>
                 <input
-                  id="name"
-                  name="name"
+                  id="middleName"
+                  name="middleName"
                   type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  value={formData.middleName}
+                  onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
                   className="block w-full pl-12 pr-4 py-3.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 bg-gray-50 hover:bg-white"
-                  placeholder="John Doe"
+                  placeholder="Optional"
                 />
               </div>
             </div>
@@ -205,7 +258,7 @@ export default function SignupPage() {
             {/* Email Input */}
             <div>
               <label htmlFor="email" className="block text-sm font-bold text-gray-900 mb-2">
-                Email Address
+                Email Address <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
