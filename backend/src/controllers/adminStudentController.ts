@@ -18,7 +18,7 @@ export const getAdminStudents = async (req: AuthRequest, res: Response): Promise
     const userId = req.user?.userId;
     const user = await User.findById(userId);
     
-    if (!user || (user.role !== USER_ROLE.ADMIN && user.role !== USER_ROLE.COUNSELOR)) {
+    if (!user || (user.role !== USER_ROLE.ADMIN && user.role !== USER_ROLE.COUNSELOR && user.role !== USER_ROLE.SUPER_ADMIN)) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
@@ -130,7 +130,7 @@ export const getAdminStudentDetails = async (req: AuthRequest, res: Response): P
     const userId = req.user?.userId;
     const user = await User.findById(userId);
 
-    if (!user || (user.role !== USER_ROLE.ADMIN && user.role !== USER_ROLE.COUNSELOR)) {
+    if (!user || (user.role !== USER_ROLE.ADMIN && user.role !== USER_ROLE.COUNSELOR && user.role !== USER_ROLE.SUPER_ADMIN)) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
@@ -238,7 +238,7 @@ export const getAdminStudentFormAnswers = async (req: AuthRequest, res: Response
     const userId = req.user?.userId;
     const user = await User.findById(userId);
 
-    if (!user || (user.role !== USER_ROLE.ADMIN && user.role !== USER_ROLE.COUNSELOR)) {
+    if (!user || (user.role !== USER_ROLE.ADMIN && user.role !== USER_ROLE.COUNSELOR && user.role !== USER_ROLE.SUPER_ADMIN)) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',
@@ -328,7 +328,7 @@ export const getStudentByLeadId = async (req: AuthRequest, res: Response): Promi
     const userId = req.user?.userId;
     const user = await User.findById(userId);
 
-    if (!user || (user.role !== USER_ROLE.ADMIN && user.role !== USER_ROLE.COUNSELOR)) {
+    if (!user || (user.role !== USER_ROLE.ADMIN && user.role !== USER_ROLE.COUNSELOR && user.role !== USER_ROLE.SUPER_ADMIN)) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',

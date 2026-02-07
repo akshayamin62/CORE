@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FollowUp, FOLLOWUP_STATUS, Lead, LEAD_STAGE, MEETING_TYPE } from '@/types';
+import { FollowUp, FOLLOWUP_STATUS, Lead, LEAD_STAGE, MEETING_TYPE, SERVICE_TYPE } from '@/types';
 import { followUpAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -13,6 +13,21 @@ interface FollowUpFormPanelProps {
   onSave: () => void;
   readOnly?: boolean; // For admin view-only mode
 }
+
+const getServiceColor = (service: string) => {
+  switch (service) {
+    case SERVICE_TYPE.CARRER_FOCUS_STUDY_ABROAD:
+      return 'bg-indigo-100 text-indigo-800';
+    case SERVICE_TYPE.IVY_LEAGUE_ADMISSION:
+      return 'bg-amber-100 text-amber-800';
+    case SERVICE_TYPE.EDUCATION_PLANNING:
+      return 'bg-teal-100 text-teal-800';
+    case SERVICE_TYPE.IELTS_GRE_LANGUAGE_COACHING:
+      return 'bg-rose-100 text-rose-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
 
 export default function FollowUpFormPanel({
   followUp,
@@ -283,7 +298,13 @@ export default function FollowUpFormPanel({
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Services</p>
-                    <p className="text-sm font-medium text-gray-900 truncate">{lead?.serviceTypes?.join(', ') || 'N/A'}</p>
+                    <div className="flex flex-col gap-1 mt-0.5">
+                      {lead?.serviceTypes?.map((service: string, idx: number) => (
+                        <span key={idx} className={`px-2 py-0.5 rounded-full text-xs font-medium ${getServiceColor(service)}`}>
+                          {service}
+                        </span>
+                      )) || <span className="text-sm font-medium text-gray-900">N/A</span>}
+                    </div>
                   </div>
                 </div>
               </div>

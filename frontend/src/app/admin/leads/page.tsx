@@ -538,7 +538,7 @@ export default function AdminLeadsPage() {
                           </div>
                         </td>
                         <td className="px-4 py-4">
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-col gap-1">
                             {lead.serviceTypes?.map((service) => (
                               <span key={service} className={`px-2 py-1 rounded-full text-xs font-medium ${getServiceColor(service)}`}>
                                 {service}

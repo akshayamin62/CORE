@@ -473,6 +473,22 @@ export default function RoleUserListPage({
                                 View Detail
                               </button>
                             )}
+                            {roleEnum === USER_ROLE.COUNSELOR && (
+                              <button
+                                onClick={() => router.push(`/super-admin/roles/counselor/${user._id || user.id}`)}
+                                className="px-3 py-1.5 rounded-lg transition-colors text-xs bg-blue-600 text-white hover:bg-blue-700"
+                              >
+                                View Detail
+                              </button>
+                            )}
+                            {roleEnum === USER_ROLE.STUDENT && (
+                              <button
+                                onClick={() => router.push(`/super-admin/roles/student/${user._id || user.id}`)}
+                                className="px-3 py-1.5 rounded-lg transition-colors text-xs bg-blue-600 text-white hover:bg-blue-700"
+                              >
+                                View Detail
+                              </button>
+                            )}
                             <button
                               onClick={() => handleToggleStatus(user._id || user.id!)}
                               disabled={actionLoading === (user._id || user.id)}

@@ -15,6 +15,16 @@ import {
   getAdmins,
   getAdminDetails,
   createUserByRole,
+  getAdminDashboardStats,
+  getAdminCounselorsForSuperAdmin,
+  getAdminLeadsForSuperAdmin,
+  getAdminStudentsForSuperAdmin,
+  getAdminTeamMeetsForSuperAdmin,
+  getCounselorDetailForSuperAdmin,
+  getCounselorFollowUpsForSuperAdmin,
+  getCounselorFollowUpSummaryForSuperAdmin,
+  getCounselorTeamMeetsForSuperAdmin,
+  getAllLeadsForSuperAdmin,
 } from "../controllers/superAdminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
@@ -128,6 +138,80 @@ router.get("/admins", getAdmins);
  * @access  Super Admin only
  */
 router.get("/admins/:adminId", getAdminDetails);
+
+/**
+ * @route   GET /api/super-admin/admins/:adminId/dashboard
+ * @desc    Get admin dashboard stats (counselors, leads, students, enquiry URL)
+ * @access  Super Admin only
+ */
+router.get("/admins/:adminId/dashboard", getAdminDashboardStats);
+
+/**
+ * @route   GET /api/super-admin/admins/:adminId/counselors
+ * @desc    Get all counselors under a specific admin
+ * @access  Super Admin only
+ */
+router.get("/admins/:adminId/counselors", getAdminCounselorsForSuperAdmin);
+
+/**
+ * @route   GET /api/super-admin/admins/:adminId/leads
+ * @desc    Get all leads under a specific admin
+ * @access  Super Admin only
+ */
+router.get("/admins/:adminId/leads", getAdminLeadsForSuperAdmin);
+
+/**
+ * @route   GET /api/super-admin/admins/:adminId/students
+ * @desc    Get all students under a specific admin
+ * @access  Super Admin only
+ */
+router.get("/admins/:adminId/students", getAdminStudentsForSuperAdmin);
+
+/**
+ * @route   GET /api/super-admin/admins/:adminId/team-meets
+ * @desc    Get all team meets for a specific admin
+ * @access  Super Admin only
+ */
+router.get("/admins/:adminId/team-meets", getAdminTeamMeetsForSuperAdmin);
+
+// ============= ALL LEADS ROUTE =============
+
+/**
+ * @route   GET /api/super-admin/leads
+ * @desc    Get all leads across all admins
+ * @access  Super Admin only
+ */
+router.get("/leads", getAllLeadsForSuperAdmin);
+
+// ============= COUNSELOR DASHBOARD ROUTES =============
+
+/**
+ * @route   GET /api/super-admin/counselors/:counselorId/dashboard
+ * @desc    Get counselor detail with leads and stats
+ * @access  Super Admin only
+ */
+router.get("/counselors/:counselorId/dashboard", getCounselorDetailForSuperAdmin);
+
+/**
+ * @route   GET /api/super-admin/counselors/:counselorId/follow-ups
+ * @desc    Get counselor's follow-ups
+ * @access  Super Admin only
+ */
+router.get("/counselors/:counselorId/follow-ups", getCounselorFollowUpsForSuperAdmin);
+
+/**
+ * @route   GET /api/super-admin/counselors/:counselorId/follow-up-summary
+ * @desc    Get counselor's follow-up summary (today, missed, upcoming)
+ * @access  Super Admin only
+ */
+router.get("/counselors/:counselorId/follow-up-summary", getCounselorFollowUpSummaryForSuperAdmin);
+
+/**
+ * @route   GET /api/super-admin/counselors/:counselorId/team-meets
+ * @desc    Get counselor's team meets
+ * @access  Super Admin only
+ */
+router.get("/counselors/:counselorId/team-meets", getCounselorTeamMeetsForSuperAdmin);
 
 /**
  * @route   POST /api/super-admin/user

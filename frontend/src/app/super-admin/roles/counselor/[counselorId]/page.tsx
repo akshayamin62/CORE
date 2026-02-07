@@ -3,9 +3,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { authAPI, adminAPI, followUpAPI, teamMeetAPI } from '@/lib/api';
+import { authAPI, superAdminAPI } from '@/lib/api';
 import { User, USER_ROLE, LEAD_STAGE, FollowUp, FollowUpSummary, FOLLOWUP_STATUS, TeamMeet, TEAMMEET_STATUS, SERVICE_TYPE } from '@/types';
-import AdminLayout from '@/components/AdminLayout';
+import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
 import LeadDetailPanel from '@/components/LeadDetailPanel';
@@ -38,7 +38,7 @@ interface DashboardStats {
   adminEnquiryUrl: string;
 }
 
-export default function AdminCounselorDetailPage() {
+export default function SuperAdminCounselorDashboardPage() {
   const router = useRouter();
   const params = useParams();
   const counselorId = params.counselorId as string;
@@ -61,7 +61,7 @@ export default function AdminCounselorDetailPage() {
   const [calendarCollapsed, setCalendarCollapsed] = useState(false);
   const [showFollowUpPanel, setShowFollowUpPanel] = useState(false);
 
-  // TeamMeet state (read-only for admin)
+  // TeamMeet state (read-only for super admin)
   const [teamMeets, setTeamMeets] = useState<TeamMeet[]>([]);
   const [selectedTeamMeet, setSelectedTeamMeet] = useState<TeamMeet | null>(null);
   const [showTeamMeetPanel, setShowTeamMeetPanel] = useState(false);
@@ -73,8 +73,8 @@ export default function AdminCounselorDetailPage() {
   const fetchFollowUps = useCallback(async () => {
     try {
       const [followUpsResponse, summaryResponse] = await Promise.all([
-        adminAPI.getCounselorFollowUps(counselorId),
-        adminAPI.getCounselorFollowUpSummary(counselorId),
+        superAdminAPI.getCounselorFollowUps(counselorId),
+        superAdminAPI.getCounselorFollowUpSummary(counselorId),
       ]);
       setFollowUps(followUpsResponse.data.data.followUps);
       setFollowUpSummary(summaryResponse.data.data);
@@ -85,7 +85,7 @@ export default function AdminCounselorDetailPage() {
 
   const fetchTeamMeets = useCallback(async () => {
     try {
-      const response = await teamMeetAPI.getCounselorTeamMeets(counselorId);
+      const response = await superAdminAPI.getCounselorTeamMeets(counselorId);
       setTeamMeets(response.data.data.teamMeets || []);
     } catch (error: any) {
       console.error('Error fetching counselor TeamMeets:', error);
@@ -97,8 +97,8 @@ export default function AdminCounselorDetailPage() {
       const response = await authAPI.getProfile();
       const userData = response.data.data.user;
 
-      if (userData.role !== USER_ROLE.ADMIN) {
-        toast.error('Access denied. Admin only.');
+      if (userData.role !== USER_ROLE.SUPER_ADMIN) {
+        toast.error('Access denied. Super Admin only.');
         router.push('/');
         return;
       }
@@ -115,7 +115,7 @@ export default function AdminCounselorDetailPage() {
 
   const fetchCounselorDetail = async () => {
     try {
-      const response = await adminAPI.getCounselorDetail(counselorId);
+      const response = await superAdminAPI.getCounselorDashboard(counselorId);
       const data = response.data.data;
       
       setCounselor(data.counselor);
@@ -144,7 +144,7 @@ export default function AdminCounselorDetailPage() {
     } catch (error: any) {
       console.error('Error fetching counselor detail:', error);
       toast.error(error.response?.data?.message || 'Failed to fetch counselor details');
-      router.push('/admin/counselors');
+      router.push('/super-admin/roles/counselor');
     }
   };
 
@@ -165,16 +165,14 @@ export default function AdminCounselorDetailPage() {
     
     // Apply stage filter
     if (selectedStage === 'all') {
-      // When showing all leads, apply the stageFilter dropdown
       if (stageFilter !== 'all') {
         filtered = filtered.filter((lead: any) => lead.stage === stageFilter);
       }
     } else {
-      // When clicking a specific stage card, filter by that stage
       filtered = filtered.filter((lead: any) => lead.stage === selectedStage);
     }
     
-    // Apply service filter (for all views)
+    // Apply service filter
     if (serviceFilter !== 'all') {
       filtered = filtered.filter((lead: any) => lead.serviceTypes?.includes(serviceFilter));
     }
@@ -204,7 +202,7 @@ export default function AdminCounselorDetailPage() {
     setShowFollowUpPanel(true);
   };
 
-  // Handle lead detail panel open (from calendar or table)
+  // Handle lead detail panel open
   const handleLeadDetailOpen = (leadId: string) => {
     setSelectedLeadId(leadId);
     setCalendarCollapsed(true);
@@ -230,7 +228,7 @@ export default function AdminCounselorDetailPage() {
     setSelectedFollowUp(null);
   };
 
-  // TeamMeet handlers (read-only for admin)
+  // TeamMeet handlers (read-only for super admin)
   const handleTeamMeetSelect = (teamMeet: TeamMeet) => {
     setSelectedTeamMeet(teamMeet);
     setShowTeamMeetPanel(true);
@@ -256,7 +254,7 @@ export default function AdminCounselorDetailPage() {
     }
   };
 
-  // Handle stat card click - collapse calendar/sidebar
+  // Handle stat card click
   const handleStatCardClick = (stage: string | null) => {
     if (stage) {
       setSelectedStage(stage);
@@ -269,7 +267,7 @@ export default function AdminCounselorDetailPage() {
     }
   };
 
-  // Handle closing leads table - expand calendar/sidebar
+  // Handle closing leads table
   const handleCloseLeadsTable = () => {
     setSelectedStage(null);
     setCalendarCollapsed(false);
@@ -306,13 +304,13 @@ export default function AdminCounselorDetailPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <AdminLayout user={user}>
+      <SuperAdminLayout user={user}>
         <div className="p-8">
           {/* Header */}
           <div className="mb-8">
             {/* Back button */}
             <button
-              onClick={() => router.push('/admin/counselors')}
+              onClick={() => router.push('/super-admin/roles/counselor')}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -520,7 +518,7 @@ export default function AdminCounselorDetailPage() {
                       onTeamMeetClick={handleTeamMeetSelect}
                       currentUserId={counselor?.userId?._id}
                       showLeadLink={true}
-                      basePath="/admin/leads"
+                      basePath="/super-admin/leads"
                       readOnly={true}
                     />
                   </div>
@@ -553,7 +551,7 @@ export default function AdminCounselorDetailPage() {
                   </button>
                 </div>
                 
-                {/* Filters - Show for all views */}
+                {/* Filters */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Search */}
                   <div>
@@ -632,7 +630,7 @@ export default function AdminCounselorDetailPage() {
                         <tr key={lead._id} className="hover:bg-gray-50">
                           <td className="px-5 py-4 whitespace-nowrap">
                             <Link 
-                              href={`/admin/leads/${lead._id}`}
+                              href={`/super-admin/leads/${lead._id}`}
                               className="text-sm font-medium text-teal-600 hover:text-teal-800 hover:underline"
                             >
                               {lead.name}
@@ -672,7 +670,7 @@ export default function AdminCounselorDetailPage() {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <button
-                              onClick={() => router.push(`/admin/leads/${lead._id}`)}
+                              onClick={() => router.push(`/super-admin/leads/${lead._id}`)}
                               className="text-blue-600 hover:text-blue-900"
                             >
                               View
@@ -687,7 +685,7 @@ export default function AdminCounselorDetailPage() {
             </div>
           )}
         </div>
-      </AdminLayout>
+      </SuperAdminLayout>
 
       {/* Follow-up Slide-in Panel */}
       <FollowUpFormPanel
@@ -695,9 +693,10 @@ export default function AdminCounselorDetailPage() {
         isOpen={showFollowUpPanel}
         onClose={handleFollowUpPanelClose}
         onSave={handleFollowUpSave}
+        readOnly={true}
       />
 
-      {/* TeamMeet Slide-in Panel (Read-only for admin) */}
+      {/* TeamMeet Slide-in Panel (Read-only for super admin) */}
       <TeamMeetFormPanel
         teamMeet={selectedTeamMeet}
         isOpen={showTeamMeetPanel}

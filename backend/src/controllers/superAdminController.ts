@@ -6,6 +6,12 @@ import IvyExpert from "../models/IvyExpert";
 import EduplanCoach from "../models/EduplanCoach";
 import Admin from "../models/Admin";
 import Counselor from "../models/Counselor";
+import Lead, { LEAD_STAGE } from "../models/Lead";
+import Student from "../models/Student";
+import StudentServiceRegistration from "../models/StudentServiceRegistration";
+import TeamMeet from "../models/TeamMeet";
+import LeadStudentConversion from "../models/LeadStudentConversion";
+import FollowUp, { FOLLOWUP_STATUS } from "../models/FollowUp";
 import { generateSlug, getUniqueSlug } from "./leadController";
 // import { sendEmail } from "../utils/email";
 
@@ -966,6 +972,523 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
       message: 'Failed to create user',
       error: error.message,
     });
+  }
+};
+
+/**
+ * Get admin dashboard stats (for super admin to view a specific admin's dashboard)
+ */
+export const getAdminDashboardStats = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { adminId } = req.params;
+
+    // Verify admin exists
+    const adminUser = await User.findOne({ _id: adminId, role: USER_ROLE.ADMIN });
+    if (!adminUser) {
+      return res.status(404).json({ success: false, message: 'Admin not found' });
+    }
+
+    const adminProfile = await Admin.findOne({ userId: adminId });
+    if (!adminProfile) {
+      return res.status(404).json({ success: false, message: 'Admin profile not found' });
+    }
+
+    // Get counselor count
+    const totalCounselors = await Counselor.countDocuments({ adminId: adminId });
+
+    // Get lead stats
+    const allLeads = await Lead.find({ adminId: adminId });
+    const totalLeads = allLeads.length;
+    const newLeads = allLeads.filter((l) => l.stage === LEAD_STAGE.NEW).length;
+
+    // Get student count
+    const totalStudents = await Student.countDocuments({ adminId: adminProfile._id });
+
+    // Enquiry form URL
+    const enquiryFormUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/enquiry/${adminProfile.enquiryFormSlug}`;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalCounselors,
+        totalLeads,
+        newLeads,
+        totalStudents,
+        enquiryFormUrl,
+        enquiryFormSlug: adminProfile.enquiryFormSlug,
+        admin: {
+          _id: adminUser._id,
+          name: adminUser.name,
+          email: adminUser.email,
+          isActive: adminUser.isActive,
+          isVerified: adminUser.isVerified,
+          companyName: adminProfile.companyName,
+          companyLogo: adminProfile.companyLogo,
+          address: adminProfile.address,
+          mobileNumber: adminProfile.mobileNumber,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Get admin dashboard stats error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch admin dashboard stats', error: error.message });
+  }
+};
+
+/**
+ * Get counselors under a specific admin (for super admin)
+ */
+export const getAdminCounselorsForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { adminId } = req.params;
+
+    const adminUser = await User.findOne({ _id: adminId, role: USER_ROLE.ADMIN });
+    if (!adminUser) {
+      return res.status(404).json({ success: false, message: 'Admin not found' });
+    }
+
+    const counselors = await Counselor.find({ adminId: adminId })
+      .populate('userId', 'name email isActive isVerified')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        counselors: counselors.map((c: any) => ({
+          _id: c._id,
+          userId: c.userId,
+          email: c.email,
+          mobileNumber: c.mobileNumber,
+          createdAt: c.createdAt,
+        })),
+      },
+    });
+  } catch (error: any) {
+    console.error('Get admin counselors error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch admin counselors', error: error.message });
+  }
+};
+
+/**
+ * Get leads under a specific admin (for super admin)
+ */
+export const getAdminLeadsForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { adminId } = req.params;
+    const { stage, serviceTypes, assigned, search } = req.query;
+
+    const adminUser = await User.findOne({ _id: adminId, role: USER_ROLE.ADMIN });
+    if (!adminUser) {
+      return res.status(404).json({ success: false, message: 'Admin not found' });
+    }
+
+    // Build filter
+    const filter: any = { adminId: adminId };
+
+    if (stage) filter.stage = stage;
+    if (serviceTypes) filter.serviceTypes = { $in: [serviceTypes] };
+    if (assigned === "true") filter.assignedCounselorId = { $ne: null };
+    else if (assigned === "false") filter.assignedCounselorId = null;
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { mobileNumber: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const leads = await Lead.find(filter)
+      .populate({
+        path: "assignedCounselorId",
+        populate: { path: "userId", select: "name email" }
+      })
+      .sort({ createdAt: -1 });
+
+    // Get stats
+    const allLeads = await Lead.find({ adminId: adminId });
+    const stats = {
+      total: allLeads.length,
+      new: allLeads.filter((l) => l.stage === LEAD_STAGE.NEW).length,
+      hot: allLeads.filter((l) => l.stage === LEAD_STAGE.HOT).length,
+      warm: allLeads.filter((l) => l.stage === LEAD_STAGE.WARM).length,
+      cold: allLeads.filter((l) => l.stage === LEAD_STAGE.COLD).length,
+      converted: allLeads.filter((l) => l.stage === LEAD_STAGE.CONVERTED).length,
+      closed: allLeads.filter((l) => l.stage === LEAD_STAGE.CLOSED).length,
+      unassigned: allLeads.filter((l) => !l.assignedCounselorId).length,
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: { leads, stats },
+    });
+  } catch (error: any) {
+    console.error('Get admin leads error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch admin leads', error: error.message });
+  }
+};
+
+/**
+ * Get students under a specific admin (for super admin)
+ */
+export const getAdminStudentsForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { adminId } = req.params;
+
+    const adminUser = await User.findOne({ _id: adminId, role: USER_ROLE.ADMIN });
+    if (!adminUser) {
+      return res.status(404).json({ success: false, message: 'Admin not found' });
+    }
+
+    const adminProfile = await Admin.findOne({ userId: adminId });
+    if (!adminProfile) {
+      return res.status(404).json({ success: false, message: 'Admin profile not found' });
+    }
+
+    const students = await Student.find({ adminId: adminProfile._id })
+      .populate('userId', 'name email isVerified isActive createdAt')
+      .populate({
+        path: 'adminId',
+        populate: { path: 'userId', select: 'name email' }
+      })
+      .populate({
+        path: 'counselorId',
+        populate: { path: 'userId', select: 'name email' }
+      })
+      .sort({ createdAt: -1 });
+
+    // Get registration count and conversion info for each student
+    const studentsWithStats = await Promise.all(
+      students.map(async (student: any) => {
+        const registrationCount = await StudentServiceRegistration.countDocuments({
+          studentId: student._id,
+        });
+
+        // Check for conversion info
+        const conversion = await LeadStudentConversion.findOne({
+          studentId: student.userId?._id,
+        }).populate('leadId', 'name email mobileNumber');
+
+        return {
+          _id: student._id,
+          user: student.userId,
+          mobileNumber: student.mobileNumber,
+          adminId: student.adminId,
+          counselorId: student.counselorId,
+          registrationCount,
+          createdAt: student.createdAt,
+          convertedFromLead: conversion?.leadId || null,
+        };
+      })
+    );
+
+    // Calculate stats
+    const activeStudents = studentsWithStats.filter((s: any) => s.user?.isActive).length;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        students: studentsWithStats,
+        stats: {
+          total: studentsWithStats.length,
+          active: activeStudents,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Get admin students error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch admin students', error: error.message });
+  }
+};
+
+/**
+ * Get team meets for a specific admin (for super admin - read only)
+ */
+export const getAdminTeamMeetsForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { adminId } = req.params;
+    const { month, year } = req.query;
+
+    const adminUser = await User.findOne({ _id: adminId, role: USER_ROLE.ADMIN });
+    if (!adminUser) {
+      return res.status(404).json({ success: false, message: 'Admin not found' });
+    }
+
+    let startDate: Date;
+    let endDate: Date;
+
+    if (month && year) {
+      const monthNum = parseInt(month as string);
+      const yearNum = parseInt(year as string);
+      startDate = new Date(yearNum, monthNum - 1, -6);
+      endDate = new Date(yearNum, monthNum, 7, 23, 59, 59, 999);
+    } else {
+      const now = new Date();
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59, 999);
+    }
+
+    const teamMeets = await TeamMeet.find({
+      $or: [{ requestedBy: adminId }, { requestedTo: adminId }],
+      scheduledDate: { $gte: startDate, $lte: endDate },
+    })
+      .populate("requestedBy", "name email role")
+      .populate("requestedTo", "name email role")
+      .sort({ scheduledDate: 1, scheduledTime: 1 });
+
+    return res.status(200).json({
+      success: true,
+      data: { teamMeets },
+    });
+  } catch (error: any) {
+    console.error('Get admin team meets error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch admin team meets', error: error.message });
+  }
+};
+
+// ============= ALL LEADS FOR SUPER ADMIN =============
+
+/**
+ * Get all leads across all admins (for super admin)
+ */
+export const getAllLeadsForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { stage, search, serviceTypes, assigned } = req.query;
+
+    const filter: any = {};
+
+    if (stage) filter.stage = stage;
+    if (serviceTypes) filter.serviceTypes = { $in: [serviceTypes] };
+    if (assigned === "true") filter.assignedCounselorId = { $ne: null };
+    else if (assigned === "false") filter.assignedCounselorId = null;
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { mobileNumber: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const leads = await Lead.find(filter)
+      .populate({
+        path: "assignedCounselorId",
+        populate: { path: "userId", select: "name email" }
+      })
+      .populate("adminId", "name email")
+      .sort({ createdAt: -1 });
+
+    // Get admin companyNames for all unique adminIds
+    const adminUserIds = [...new Set(leads.map((l: any) => l.adminId?._id?.toString()).filter(Boolean))];
+    const admins = await Admin.find({ userId: { $in: adminUserIds } }).select("userId companyName");
+    const adminCompanyMap: Record<string, string> = {};
+    admins.forEach((a: any) => {
+      adminCompanyMap[a.userId.toString()] = a.companyName;
+    });
+
+    // Attach companyName to each lead's adminId
+    const leadsWithCompany = leads.map((lead: any) => {
+      const leadObj = lead.toObject();
+      if (leadObj.adminId?._id) {
+        leadObj.adminId.companyName = adminCompanyMap[leadObj.adminId._id.toString()] || null;
+      }
+      return leadObj;
+    });
+
+    // Get stats from all leads (ignoring filters)
+    const allLeads = await Lead.find({});
+    const stats = {
+      total: allLeads.length,
+      new: allLeads.filter((l) => l.stage === LEAD_STAGE.NEW).length,
+      hot: allLeads.filter((l) => l.stage === LEAD_STAGE.HOT).length,
+      warm: allLeads.filter((l) => l.stage === LEAD_STAGE.WARM).length,
+      cold: allLeads.filter((l) => l.stage === LEAD_STAGE.COLD).length,
+      converted: allLeads.filter((l) => l.stage === LEAD_STAGE.CONVERTED).length,
+      closed: allLeads.filter((l) => l.stage === LEAD_STAGE.CLOSED).length,
+      unassigned: allLeads.filter((l) => !l.assignedCounselorId).length,
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: { leads: leadsWithCompany, stats },
+    });
+  } catch (error: any) {
+    console.error('Get all leads for super admin error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch leads', error: error.message });
+  }
+};
+
+// ============= COUNSELOR DASHBOARD FOR SUPER ADMIN =============
+
+/**
+ * Get counselor detail with dashboard data (for super admin)
+ */
+export const getCounselorDetailForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { counselorId } = req.params;
+
+    // Find counselor by _id first, then fallback to userId
+    let counselor = await Counselor.findById(counselorId)
+      .populate('userId', 'name email isActive isVerified');
+
+    if (!counselor) {
+      counselor = await Counselor.findOne({ userId: counselorId })
+        .populate('userId', 'name email isActive isVerified');
+    }
+
+    if (!counselor) {
+      return res.status(404).json({ success: false, message: 'Counselor not found' });
+    }
+
+    // Get counselor's leads
+    const leads = await Lead.find({
+      assignedCounselorId: counselor._id,
+    }).sort({ createdAt: -1 });
+
+    // Get admin's enquiry form slug via counselor's adminId
+    const admin = await Admin.findOne({ userId: counselor.adminId });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        counselor: {
+          _id: counselor._id,
+          userId: counselor.userId,
+          email: counselor.email,
+          mobileNumber: counselor.mobileNumber,
+          adminId: counselor.adminId,
+          createdAt: counselor.createdAt,
+        },
+        leads,
+        enquirySlug: admin?.enquiryFormSlug || '',
+      },
+    });
+  } catch (error: any) {
+    console.error('Get counselor detail for super admin error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch counselor detail', error: error.message });
+  }
+};
+
+/**
+ * Get counselor's follow-ups (for super admin)
+ */
+export const getCounselorFollowUpsForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { counselorId } = req.params;
+
+    // Verify counselor exists (try _id first, then userId)
+    let counselor = await Counselor.findById(counselorId);
+    if (!counselor) {
+      counselor = await Counselor.findOne({ userId: counselorId });
+    }
+    if (!counselor) {
+      return res.status(404).json({ success: false, message: 'Counselor not found' });
+    }
+
+    const followUps = await FollowUp.find({ counselorId: counselor._id })
+      .populate('leadId', 'name email mobileNumber city serviceTypes stage conversionStatus')
+      .sort({ scheduledDate: 1, scheduledTime: 1 });
+
+    return res.status(200).json({ success: true, data: { followUps } });
+  } catch (error: any) {
+    console.error('Get counselor follow-ups for super admin error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch counselor follow-ups', error: error.message });
+  }
+};
+
+/**
+ * Get counselor's follow-up summary (for super admin)
+ */
+export const getCounselorFollowUpSummaryForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { counselorId } = req.params;
+
+    let counselor = await Counselor.findById(counselorId);
+    if (!counselor) {
+      counselor = await Counselor.findOne({ userId: counselorId });
+    }
+    if (!counselor) {
+      return res.status(404).json({ success: false, message: 'Counselor not found' });
+    }
+
+    const actualCounselorId = counselor._id;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const [todayFollowUps, missedFollowUps, upcomingFollowUps] = await Promise.all([
+      FollowUp.find({
+        counselorId: actualCounselorId,
+        scheduledDate: { $gte: today, $lt: tomorrow },
+      })
+        .populate('leadId', 'name email mobileNumber city serviceTypes stage conversionStatus')
+        .sort({ scheduledTime: 1 }),
+      FollowUp.find({
+        counselorId: actualCounselorId,
+        scheduledDate: { $lt: today },
+        status: FOLLOWUP_STATUS.SCHEDULED,
+      })
+        .populate('leadId', 'name email mobileNumber city serviceTypes stage conversionStatus')
+        .sort({ scheduledDate: -1 }),
+      FollowUp.find({
+        counselorId: actualCounselorId,
+        scheduledDate: { $gt: tomorrow },
+        status: FOLLOWUP_STATUS.SCHEDULED,
+      })
+        .populate('leadId', 'name email mobileNumber city serviceTypes stage conversionStatus')
+        .sort({ scheduledDate: 1, scheduledTime: 1 })
+        .limit(10),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        today: todayFollowUps,
+        missed: missedFollowUps,
+        upcoming: upcomingFollowUps,
+        counts: {
+          today: todayFollowUps.length,
+          missed: missedFollowUps.length,
+          upcoming: upcomingFollowUps.length,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Get counselor follow-up summary for super admin error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch follow-up summary', error: error.message });
+  }
+};
+
+/**
+ * Get counselor's team meets (for super admin)
+ */
+export const getCounselorTeamMeetsForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { counselorId } = req.params;
+
+    let counselor = await Counselor.findById(counselorId)
+      .populate('userId', '_id');
+    if (!counselor) {
+      counselor = await Counselor.findOne({ userId: counselorId })
+        .populate('userId', '_id');
+    }
+    if (!counselor) {
+      return res.status(404).json({ success: false, message: 'Counselor not found' });
+    }
+
+    const counselorUserId = (counselor.userId as any)?._id;
+
+    const teamMeets = await TeamMeet.find({
+      $or: [{ requestedBy: counselorUserId }, { requestedTo: counselorUserId }],
+    })
+      .populate('requestedBy', 'name email role')
+      .populate('requestedTo', 'name email role')
+      .sort({ scheduledDate: 1, scheduledTime: 1 });
+
+    return res.status(200).json({ success: true, data: { teamMeets } });
+  } catch (error: any) {
+    console.error('Get counselor team meets for super admin error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch counselor team meets', error: error.message });
   }
 };
 

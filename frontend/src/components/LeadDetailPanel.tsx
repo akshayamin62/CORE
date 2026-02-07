@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Lead, FollowUp, LEAD_STAGE, FOLLOWUP_STATUS, MEETING_TYPE } from '@/types';
+import { Lead, FollowUp, LEAD_STAGE, FOLLOWUP_STATUS, MEETING_TYPE, SERVICE_TYPE } from '@/types';
 import { followUpAPI, leadAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -27,6 +27,22 @@ const getStageBadgeColor = (stage: LEAD_STAGE) => {
       return 'bg-green-100 text-green-800';
     case LEAD_STAGE.CLOSED:
       return 'bg-purple-100 text-purple-800';
+    default:
+      return 'bg-gray-100 text-gray-800';
+  }
+};
+
+// Helper to get service color
+const getServiceColor = (service: string) => {
+  switch (service) {
+    case SERVICE_TYPE.CARRER_FOCUS_STUDY_ABROAD:
+      return 'bg-indigo-100 text-indigo-800';
+    case SERVICE_TYPE.IVY_LEAGUE_ADMISSION:
+      return 'bg-amber-100 text-amber-800';
+    case SERVICE_TYPE.EDUCATION_PLANNING:
+      return 'bg-teal-100 text-teal-800';
+    case SERVICE_TYPE.IELTS_GRE_LANGUAGE_COACHING:
+      return 'bg-rose-100 text-rose-800';
     default:
       return 'bg-gray-100 text-gray-800';
   }
@@ -221,7 +237,13 @@ export default function LeadDetailPanel({
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
             <p className="text-xs font-medium text-gray-500 uppercase">Services</p>
-            <p className="text-gray-900 font-medium mt-1 text-sm">{lead.serviceTypes?.join(', ') || 'N/A'}</p>
+            <div className="flex flex-col gap-1 mt-1">
+              {lead.serviceTypes?.map((service: string, idx: number) => (
+                <span key={idx} className={`px-2 py-1 rounded-full text-xs font-medium ${getServiceColor(service)}`}>
+                  {service}
+                </span>
+              )) || <span className="text-gray-900 font-medium text-sm">N/A</span>}
+            </div>
           </div>
           <div className="bg-gray-50 rounded-lg p-3">
             <p className="text-xs font-medium text-gray-500 uppercase">Stage</p>

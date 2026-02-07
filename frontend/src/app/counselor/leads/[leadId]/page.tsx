@@ -315,7 +315,7 @@ export default function CounselorLeadDetailPage() {
       case SERVICE_TYPE.IVY_LEAGUE_ADMISSION:
         return 'bg-amber-100 text-amber-800';
       case SERVICE_TYPE.EDUCATION_PLANNING:
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-teal-100 text-teal-800';
       case SERVICE_TYPE.IELTS_GRE_LANGUAGE_COACHING:
         return 'bg-rose-100 text-rose-800';
       default:

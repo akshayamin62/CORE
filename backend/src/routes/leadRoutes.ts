@@ -80,11 +80,11 @@ router.get(
 
 // ============= SHARED ROUTES (Admin & Counselor) =============
 
-// Get lead detail (Admin or assigned Counselor)
+// Get lead detail (Admin, Counselor, or Super Admin)
 router.get(
   "/leads/:leadId",
   authenticate,
-  authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]),
+  authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN]),
   getLeadDetail
 );
 

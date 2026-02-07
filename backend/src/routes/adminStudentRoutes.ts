@@ -11,9 +11,9 @@ import {
 
 const router = express.Router();
 
-// All routes require authentication and admin/counselor role
+// All routes require authentication and admin/counselor/super-admin role
 router.use(authenticate);
-router.use(authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]));
+router.use(authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN]));
 
 // Get all students under this admin
 router.get('/', getAdminStudents);

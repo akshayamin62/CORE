@@ -44,13 +44,13 @@ router.get(
 
 router.get(
   "/lead/:leadId/history",
-  authorize([USER_ROLE.COUNSELOR, USER_ROLE.ADMIN]),
+  authorize([USER_ROLE.COUNSELOR, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN]),
   getLeadFollowUpHistory
 );
 
 router.get(
   "/:followUpId",
-  authorize([USER_ROLE.COUNSELOR, USER_ROLE.ADMIN]),
+  authorize([USER_ROLE.COUNSELOR, USER_ROLE.ADMIN, USER_ROLE.SUPER_ADMIN]),
   getFollowUpById
 );
 

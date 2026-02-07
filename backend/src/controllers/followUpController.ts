@@ -341,8 +341,8 @@ export const getFollowUpById = async (
 
     let followUp;
 
-    // Admin can access any follow-up
-    if (userRole === USER_ROLE.ADMIN) {
+    // Admin and Super Admin can access any follow-up
+    if (userRole === USER_ROLE.ADMIN || userRole === USER_ROLE.SUPER_ADMIN) {
       followUp = await FollowUp.findById(followUpId)
         .populate("leadId", "name email mobileNumber city serviceTypes stage conversionStatus");
     } else {
@@ -620,8 +620,8 @@ export const getLeadFollowUpHistory = async (
 
     let lead;
 
-    // Admin can access any lead's follow-up history
-    if (userRole === USER_ROLE.ADMIN) {
+    // Admin and Super Admin can access any lead's follow-up history
+    if (userRole === USER_ROLE.ADMIN || userRole === USER_ROLE.SUPER_ADMIN) {
       lead = await Lead.findById(leadId);
       if (!lead) {
         return res.status(404).json({

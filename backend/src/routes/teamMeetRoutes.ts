@@ -22,8 +22,8 @@ const router = Router();
 // All routes require authentication
 router.use(authenticate);
 
-// Only ADMIN and COUNSELOR can access TeamMeet features
-router.use(authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]));
+// ADMIN, COUNSELOR, and SUPER_ADMIN can access TeamMeet features
+router.use(authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN]));
 
 /**
  * @route   POST /api/team-meets

@@ -123,6 +123,33 @@ export const superAdminAPI = {
   
   getAdminDetails: (adminId: string) => api.get(`/super-admin/admins/${adminId}`),
   
+  getAdminDashboardStats: (adminId: string) => api.get(`/super-admin/admins/${adminId}/dashboard`),
+  
+  getAdminCounselors: (adminId: string) => api.get(`/super-admin/admins/${adminId}/counselors`),
+  
+  getAdminLeads: (adminId: string, params?: {
+    stage?: string;
+    serviceTypes?: string;
+    assigned?: string;
+    search?: string;
+  }) => api.get(`/super-admin/admins/${adminId}/leads`, { params }),
+  
+  getAdminStudents: (adminId: string) => api.get(`/super-admin/admins/${adminId}/students`),
+  
+  getAdminTeamMeets: (adminId: string, params?: {
+    month?: number;
+    year?: number;
+  }) => api.get(`/super-admin/admins/${adminId}/team-meets`, { params }),
+  
+  // Counselor dashboard for super admin
+  getCounselorDashboard: (counselorId: string) => api.get(`/super-admin/counselors/${counselorId}/dashboard`),
+  getCounselorFollowUps: (counselorId: string) => api.get(`/super-admin/counselors/${counselorId}/follow-ups`),
+  getCounselorFollowUpSummary: (counselorId: string) => api.get(`/super-admin/counselors/${counselorId}/follow-up-summary`),
+  getCounselorTeamMeets: (counselorId: string) => api.get(`/super-admin/counselors/${counselorId}/team-meets`),
+  
+  // All leads for super admin
+  getAllLeads: (params?: any) => api.get('/super-admin/leads', { params }),
+  
   assignOps: (registrationId: string, data: {
     primaryOpsId?: string;
     secondaryOpsId?: string;
