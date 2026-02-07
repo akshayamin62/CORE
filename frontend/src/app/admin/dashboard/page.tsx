@@ -188,6 +188,32 @@ export default function AdminDashboardPage() {
               }
               color="yellow"
             />
+
+            {/* Copy Enquiry URL */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 max-w-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                <h3 className="font-semibold text-gray-900 text-sm">Enquiry Form</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 bg-blue-50 rounded-lg px-3 py-2">
+                  <code className="text-xs text-blue-700 font-mono break-all">
+                    {stats?.enquiryFormUrl || 'Loading...'}
+                  </code>
+                </div>
+                <button
+                  onClick={() => stats?.enquiryFormUrl && copyToClipboard(stats.enquiryFormUrl)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy URL
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Quick Actions */}
@@ -219,46 +245,17 @@ export default function AdminDashboardPage() {
                 color="blue"
               />
               <ActionCard
-                title="View Leads"
-                description="Check all leads from your enquiry form"
+                title="View Students"
+                description="Check all students from your enquiry form"
                 icon={
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 }
-                buttonText="View Leads"
-                onClick={() => router.push('/admin/leads')}
+                buttonText="View Students"
+                onClick={() => router.push('/admin/students')}
                 color="blue"
-              />
-              
-              {/* Enquiry Form URL Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 group hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-purple-100 text-purple-600">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">Enquiry Form URL</h3>
-                    <p className="text-sm text-gray-500">Share to collect leads</p>
-                  </div>
-                </div>
-                <div className="bg-purple-50 rounded-lg p-3 mb-3">
-                  <code className="text-xs text-purple-700 font-mono break-all">
-                    {stats?.enquiryFormUrl || 'Loading...'}
-                  </code>
-                </div>
-                <button
-                  onClick={() => stats?.enquiryFormUrl && copyToClipboard(stats.enquiryFormUrl)}
-                  className="w-full py-2 px-4 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Copy URL
-                </button>
-              </div>
+              />              
             </div>
           </div>
 
