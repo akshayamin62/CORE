@@ -6,12 +6,15 @@ import { authAPI, superAdminAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface CounselorData {
   _id: string;
   userId: {
     _id: string;
-    name: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
     email: string;
     isVerified: boolean;
     isActive: boolean;
@@ -71,7 +74,7 @@ export default function SuperAdminAdminCounselorsPage() {
 
   const filteredCounselors = counselors.filter((counselor) => {
     const matchesSearch =
-      counselor.userId?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      getFullName(counselor.userId)?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       counselor.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (counselor.mobileNumber && counselor.mobileNumber.includes(searchQuery));
 
@@ -192,10 +195,10 @@ export default function SuperAdminAdminCounselorsPage() {
                           <div className="flex items-center">
                             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
                               <span className="text-blue-600 font-semibold text-sm">
-                                {counselor.userId?.name?.charAt(0)?.toUpperCase() || '?'}
+                                {getFullName(counselor.userId)?.charAt(0)?.toUpperCase() || '?'}
                               </span>
                             </div>
-                            <span className="text-sm font-medium text-gray-900">{counselor.userId?.name || 'N/A'}</span>
+                            <span className="text-sm font-medium text-gray-900">{getFullName(counselor.userId) || 'N/A'}</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{counselor.email}</td>

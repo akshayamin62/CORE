@@ -21,6 +21,8 @@ export interface ITeamMeet extends Document {
   scheduledTime: string; // Format: "HH:mm"
   duration: number; // 15, 30, 45, 60 minutes
   meetingType: TEAMMEET_TYPE;
+  zohoMeetingKey?: string; // Zoho meeting session key
+  zohoMeetingUrl?: string; // Zoho meeting join URL
   description?: string;
   requestedBy: mongoose.Types.ObjectId; // User who created the meeting
   requestedTo: mongoose.Types.ObjectId; // User who receives the invitation
@@ -60,6 +62,14 @@ const teamMeetSchema = new Schema<ITeamMeet>(
       required: true,
       enum: Object.values(TEAMMEET_TYPE),
       default: TEAMMEET_TYPE.ONLINE,
+    },
+    zohoMeetingKey: {
+      type: String,
+      default: null,
+    },
+    zohoMeetingUrl: {
+      type: String,
+      default: null,
     },
     description: {
       type: String,

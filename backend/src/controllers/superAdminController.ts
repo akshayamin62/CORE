@@ -742,7 +742,7 @@ export const getAdmins = async (_req: Request, res: Response): Promise<Response>
       data: {
         admins: admins.map((admin: any) => ({
           _id: admin._id,
-          name: admin.name,
+          name: [admin.firstName, admin.middleName, admin.lastName].filter(Boolean).join(' '),
           email: admin.email,
         })),
       },
@@ -1075,7 +1075,7 @@ export const getAdminCounselorsForSuperAdmin = async (req: Request, res: Respons
     }
 
     const counselors = await Counselor.find({ adminId: adminId })
-      .populate('userId', 'firstName middleName lastName name email isActive isVerified')
+      .populate('userId', 'firstName middleName lastName email isActive isVerified')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -1127,7 +1127,7 @@ export const getAdminLeadsForSuperAdmin = async (req: Request, res: Response): P
     const leads = await Lead.find(filter)
       .populate({
         path: "assignedCounselorId",
-        populate: { path: "userId", select: "name email" }
+        populate: { path: "userId", select: "firstName middleName lastName email" }
       })
       .sort({ createdAt: -1 });
 
@@ -1172,14 +1172,14 @@ export const getAdminStudentsForSuperAdmin = async (req: Request, res: Response)
     }
 
     const students = await Student.find({ adminId: adminProfile._id })
-      .populate('userId', 'firstName middleName lastName name email isVerified isActive createdAt')
+      .populate('userId', 'firstName middleName lastName email isVerified isActive createdAt')
       .populate({
         path: 'adminId',
-        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName email' }
       })
       .populate({
         path: 'counselorId',
-        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName email' }
       })
       .sort({ createdAt: -1 });
 
@@ -1258,8 +1258,8 @@ export const getAdminTeamMeetsForSuperAdmin = async (req: Request, res: Response
       $or: [{ requestedBy: adminId }, { requestedTo: adminId }],
       scheduledDate: { $gte: startDate, $lte: endDate },
     })
-      .populate("requestedBy", "name email role")
-      .populate("requestedTo", "name email role")
+      .populate('requestedBy', 'firstName middleName lastName email role')
+      .populate('requestedTo', 'firstName middleName lastName email role')
       .sort({ scheduledDate: 1, scheduledTime: 1 });
 
     return res.status(200).json({
@@ -1298,9 +1298,9 @@ export const getAllLeadsForSuperAdmin = async (req: Request, res: Response): Pro
     const leads = await Lead.find(filter)
       .populate({
         path: "assignedCounselorId",
-        populate: { path: "userId", select: "name email" }
+        populate: { path: "userId", select: "firstName middleName lastName email" }
       })
-      .populate("adminId", "name email")
+      .populate("adminId", "firstName middleName lastName email")
       .sort({ createdAt: -1 });
 
     // Get admin companyNames for all unique adminIds
@@ -1354,11 +1354,11 @@ export const getCounselorDetailForSuperAdmin = async (req: Request, res: Respons
 
     // Find counselor by _id first, then fallback to userId
     let counselor = await Counselor.findById(counselorId)
-      .populate('userId', 'firstName middleName lastName name email isActive isVerified');
+      .populate('userId', 'firstName middleName lastName email isActive isVerified');
 
     if (!counselor) {
       counselor = await Counselor.findOne({ userId: counselorId })
-        .populate('userId', 'firstName middleName lastName name email isActive isVerified');
+        .populate('userId', 'firstName middleName lastName email isActive isVerified');
     }
 
     if (!counselor) {
@@ -1508,8 +1508,8 @@ export const getCounselorTeamMeetsForSuperAdmin = async (req: Request, res: Resp
     const teamMeets = await TeamMeet.find({
       $or: [{ requestedBy: counselorUserId }, { requestedTo: counselorUserId }],
     })
-      .populate('requestedBy', 'name email role')
-      .populate('requestedTo', 'name email role')
+      .populate('requestedBy', 'firstName middleName lastName email role')
+      .populate('requestedTo', 'firstName middleName lastName email role')
       .sort({ scheduledDate: 1, scheduledTime: 1 });
 
     return res.status(200).json({ success: true, data: { teamMeets } });

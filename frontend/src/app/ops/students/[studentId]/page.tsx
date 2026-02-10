@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import OpsLayout from '@/components/OpsLayout';
+import { getFullName } from '@/utils/nameHelpers';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -14,7 +15,9 @@ interface StudentDetails {
   _id: string;
   userId: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
     role: string;
     isVerified: boolean;
@@ -26,7 +29,9 @@ interface StudentDetails {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
@@ -34,7 +39,9 @@ interface StudentDetails {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
@@ -160,11 +167,11 @@ export default function StudentDetailPage() {
               <div className="flex items-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                   <span className="text-blue-600 font-bold text-xl">
-                    {(student.userId.name || '?').charAt(0).toUpperCase()}
+                    {(getFullName(student.userId) || '?').charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{student.userId.name}</h1>
+                  <h1 className="text-2xl font-bold text-gray-900">{getFullName(student.userId)}</h1>
                   <p className="text-gray-600">{student.userId.email}</p>
                 </div>
               </div>
@@ -214,7 +221,7 @@ export default function StudentDetailPage() {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Admin</p>
                 <p className="font-medium text-gray-900">
-                  {student.adminId?.userId?.name || 'Not assigned'}
+                  {getFullName(student.adminId?.userId) || 'Not assigned'}
                 </p>
                 {student.adminId?.userId?.email && (
                   <p className="text-sm text-gray-500">{student.adminId.userId.email}</p>
@@ -223,7 +230,7 @@ export default function StudentDetailPage() {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Counselor</p>
                 <p className="font-medium text-gray-900">
-                  {student.counselorId?.userId?.name || 'Not assigned'}
+                  {getFullName(student.counselorId?.userId) || 'Not assigned'}
                 </p>
                 {student.counselorId?.userId?.email && (
                   <p className="text-sm text-gray-500">{student.counselorId.userId.email}</p>

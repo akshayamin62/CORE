@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import FollowUpCalendar from '@/components/FollowUpCalendar';
 import FollowUpSidebar from '@/components/FollowUpSidebar';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
+import { getFullName } from '@/utils/nameHelpers';
 
 export default function SuperAdminLeadDetailPage() {
   const router = useRouter();
@@ -378,7 +379,7 @@ export default function SuperAdminLeadDetailPage() {
                 <h3 className="text-sm font-bold text-gray-900 mb-2">Assigned Counselor</h3>
                 {lead.assignedCounselorId ? (
                   <span className="text-gray-900 font-medium">
-                    {lead.assignedCounselorId.userId?.name || 'Unknown'}
+                    {getFullName(lead.assignedCounselorId?.userId) || 'Unknown'}
                   </span>
                 ) : (
                   <span className="text-gray-500 text-sm">Not assigned</span>

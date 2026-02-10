@@ -201,47 +201,47 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
       .populate({
         path: 'primaryOpsId',
         select: 'userId email specializations',
-        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName email' }
       })
       .populate({
         path: 'secondaryOpsId',
         select: 'userId email specializations',
-        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName email' }
       })
       .populate({
         path: 'activeOpsId',
         select: 'userId email specializations',
-        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName email' }
       })
       .populate({
         path: 'primaryIvyExpertId',
         select: 'userId email',
-        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName email' }
       })
       .populate({
         path: 'secondaryIvyExpertId',
         select: 'userId email',
-        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName email' }
       })
       .populate({
         path: 'activeIvyExpertId',
         select: 'userId email',
-        populate: { path: 'userId', select: 'firstName middleName lastName name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName email' }
       })
       .populate({
         path: 'primaryEduplanCoachId',
         select: 'userId email',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName email' }
       })
       .populate({
         path: 'secondaryEduplanCoachId',
         select: 'userId email',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName email' }
       })
       .populate({
         path: 'activeEduplanCoachId',
         select: 'userId email',
-        populate: { path: 'userId', select: 'name email' }
+        populate: { path: 'userId', select: 'firstName middleName lastName email' }
       })
       .sort({ createdAt: -1 })
       .lean()
@@ -436,7 +436,7 @@ export const getStudentsWithRegistrations = async (req: AuthRequest, res: Respon
     }
 
     const students = await Student.find(query)
-      .populate('userId', 'name email')
+      .populate('userId', 'firstName middleName lastName email')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({

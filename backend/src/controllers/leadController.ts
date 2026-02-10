@@ -120,7 +120,7 @@ export const getAdminInfoBySlug = async (req: Request, res: Response): Promise<R
     const { adminSlug } = req.params;
 
     const admin = await Admin.findOne({ enquiryFormSlug: adminSlug.toLowerCase() })
-      .populate("userId", "name");
+      .populate("userId", "firstName middleName lastName");
 
     if (!admin) {
       return res.status(404).json({
@@ -132,7 +132,7 @@ export const getAdminInfoBySlug = async (req: Request, res: Response): Promise<R
     return res.json({
       success: true,
       data: {
-        adminName: (admin.userId as any)?.name || "Kareer Studio",
+        adminName: [((admin.userId as any)?.firstName), ((admin.userId as any)?.middleName), ((admin.userId as any)?.lastName)].filter(Boolean).join(' ') || "Kareer Studio",
         companyName: admin.companyName || "Kareer Studio",
         companyLogo: admin.companyLogo || null,
         services: Object.values(SERVICE_TYPE),
@@ -183,7 +183,7 @@ export const getAdminLeads = async (req: AuthRequest, res: Response): Promise<Re
     const leads = await Lead.find(filter)
       .populate({
         path: "assignedCounselorId",
-        populate: { path: "userId", select: "name email" }
+        populate: { path: "userId", select: "firstName middleName lastName email" }
       })
       .sort({ createdAt: -1 });
 
@@ -228,9 +228,9 @@ export const getLeadDetail = async (req: AuthRequest, res: Response): Promise<Re
     const lead = await Lead.findById(leadId)
       .populate({
         path: "assignedCounselorId",
-        populate: { path: "userId", select: "name email" }
+        populate: { path: "userId", select: "firstName middleName lastName email" }
       })
-      .populate("adminId", "name email");
+      .populate("adminId", "firstName middleName lastName email");
 
     if (!lead) {
       return res.status(404).json({
@@ -312,7 +312,7 @@ export const assignLeadToCounselor = async (req: AuthRequest, res: Response): Pr
     const counselor = await Counselor.findOne({
       _id: new mongoose.Types.ObjectId(counselorId),
       adminId: new mongoose.Types.ObjectId(adminUserId),
-    }).populate("userId", "name email");
+    }).populate("userId", "firstName middleName lastName email");
 
     if (!counselor) {
       return res.status(400).json({
@@ -426,7 +426,7 @@ export const getAdminCounselors = async (req: AuthRequest, res: Response): Promi
     const adminUserId = req.user?.userId;
 
     const counselors = await Counselor.find({ adminId: adminUserId })
-      .populate("userId", "name email isActive");
+      .populate("userId", "firstName middleName lastName email isActive");
 
     const activeCounselors = counselors.filter(
       (c) => (c.userId as any)?.isActive
@@ -435,11 +435,14 @@ export const getAdminCounselors = async (req: AuthRequest, res: Response): Promi
     return res.json({
       success: true,
       data: {
-        counselors: activeCounselors.map((c) => ({
+        counselors: activeCounselors.map((c) => {
+          const u = c.userId as any;
+          return {
           _id: c._id,
-          name: (c.userId as any).name,
-          email: (c.userId as any).email,
-        })),
+          name: [u?.firstName, u?.middleName, u?.lastName].filter(Boolean).join(' '),
+          email: u?.email,
+        };
+        }),
       },
     });
   } catch (error: any) {
@@ -488,7 +491,7 @@ export const getCounselorLeads = async (req: AuthRequest, res: Response): Promis
     }
 
     const leads = await Lead.find(filter)
-      .populate("adminId", "name email")
+      .populate("adminId", "firstName middleName lastName email")
       .sort({ createdAt: -1 });
 
     // Get stats
@@ -611,8 +614,11 @@ export const getAllLeads = async (req: Request, res: Response): Promise<Response
     }
 
     const leads = await Lead.find(filter)
-      .populate("adminId", "name email")
-      .populate("assignedCounselorId", "name email")
+      .populate("adminId", "firstName middleName lastName email")
+      .populate({
+        path: "assignedCounselorId",
+        populate: { path: "userId", select: "firstName middleName lastName email" }
+      })
       .sort({ createdAt: -1 });
 
     // Get overall stats

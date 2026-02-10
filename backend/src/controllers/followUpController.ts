@@ -1,11 +1,13 @@
 import { Response } from "express";
 import { AuthRequest } from "../types/auth";
 import FollowUp, { FOLLOWUP_STATUS, MEETING_TYPE } from "../models/FollowUp";
-import Lead from "../models/Lead";
+import Lead, { LEAD_STAGE } from "../models/Lead";
 import Counselor from "../models/Counselor";
 import TeamMeet, { TEAMMEET_STATUS } from "../models/TeamMeet";
 import mongoose from "mongoose";
 import { USER_ROLE } from "../types/roles";
+import { createZohoMeeting } from "../utils/zohoMeeting";
+import { sendMeetingScheduledEmail } from "../utils/email";
 
 /**
  * Helper: Get start and end of a day
@@ -148,13 +150,14 @@ export const createFollowUp = async (
         $or: [{ requestedBy: counselor.userId }, { requestedTo: counselor.userId }],
         scheduledDate: { $gte: dayStart, $lte: dayEnd },
         status: { $in: [TEAMMEET_STATUS.PENDING_CONFIRMATION, TEAMMEET_STATUS.CONFIRMED, TEAMMEET_STATUS.COMPLETED] },
-      }).populate("requestedBy", "name").populate("requestedTo", "name");
+      }).populate("requestedBy", "firstName middleName lastName").populate("requestedTo", "firstName middleName lastName");
 
       for (const meet of existingTeamMeets) {
         if (doTimeSlotsOverlap(scheduledTime, duration, meet.scheduledTime, meet.duration)) {
-          const otherParty = meet.requestedBy._id.toString() === counselor.userId?.toString()
-            ? (meet.requestedTo as any)?.name
-            : (meet.requestedBy as any)?.name;
+          const otherUser = meet.requestedBy._id.toString() === counselor.userId?.toString()
+            ? (meet.requestedTo as any)
+            : (meet.requestedBy as any);
+          const otherParty = [otherUser?.firstName, otherUser?.middleName, otherUser?.lastName].filter(Boolean).join(' ');
           console.log('CONFLICT DETECTED with TeamMeet!');
           return res.status(400).json({
             success: false,
@@ -170,6 +173,11 @@ export const createFollowUp = async (
     const existingFollowUpsForLead = await FollowUp.countDocuments({ leadId });
     const followUpNumber = existingFollowUpsForLead + 1;
 
+    // Determine initial status - if lead is already converted, set status to CONVERTED_TO_STUDENT
+    const initialStatus = lead.stage === LEAD_STAGE.CONVERTED 
+      ? FOLLOWUP_STATUS.CONVERTED_TO_STUDENT 
+      : FOLLOWUP_STATUS.SCHEDULED;
+
     // Create the follow-up
     const followUp = new FollowUp({
       leadId,
@@ -178,17 +186,102 @@ export const createFollowUp = async (
       scheduledTime,
       duration,
       meetingType: meetingType || MEETING_TYPE.ONLINE,
-      status: FOLLOWUP_STATUS.SCHEDULED,
+      status: initialStatus,
       stageAtFollowUp: lead.stage,
       followUpNumber,
       notes: notes || "",
       createdBy: userId,
     });
 
+    // Set completedAt if already converted
+    if (initialStatus === FOLLOWUP_STATUS.CONVERTED_TO_STUDENT) {
+      followUp.completedAt = new Date();
+    }
+
+    // If meeting type is Online, create a Zoho Meeting
+    const effectiveMeetingType = meetingType || MEETING_TYPE.ONLINE;
+    if (effectiveMeetingType === MEETING_TYPE.ONLINE) {
+      try {
+        // Build the meeting start time from date + time
+        const [hours, mins] = scheduledTime.split(":").map(Number);
+        const meetingStartTime = new Date(scheduleDate);
+        meetingStartTime.setHours(hours, mins, 0, 0);
+
+        const participantEmails: string[] = [];
+        if (lead.email) participantEmails.push(lead.email);
+
+        // Get counselor's email
+        const counselorDoc = await Counselor.findById(counselorId).populate("userId", "email");
+        const counselorEmail = (counselorDoc?.userId as any)?.email;
+        if (counselorEmail) participantEmails.push(counselorEmail);
+
+        const zohoResult = await createZohoMeeting({
+          topic: `Follow-up #${followUpNumber} - ${lead.name}`,
+          startTime: meetingStartTime,
+          duration,
+          agenda: notes || `Follow-up meeting with ${lead.name}`,
+          participantEmails,
+        });
+
+        console.log("📋 Zoho Meeting result:", JSON.stringify(zohoResult, null, 2));
+        
+        if (zohoResult.meetingKey && zohoResult.meetingKey !== "not-configured") {
+          followUp.zohoMeetingKey = zohoResult.meetingKey;
+          followUp.zohoMeetingUrl = zohoResult.meetingUrl;
+          console.log(`✅ Assigned Zoho meeting to follow-up: key=${zohoResult.meetingKey}, url=${zohoResult.meetingUrl}`);
+        } else {
+          console.warn("⚠️  Zoho returned empty/not-configured meeting key");
+        }
+      } catch (zohoError: any) {
+        console.error("⚠️  Zoho Meeting creation failed (follow-up saved without link):");
+        console.error("   Error:", zohoError?.message || zohoError);
+        // Non-fatal: follow-up is still created, just without the meeting link
+      }
+    }
+
     await followUp.save();
 
     // Populate lead info for response
     await followUp.populate("leadId", "name email mobileNumber city serviceTypes stage conversionStatus");
+
+    // Send email notifications (non-blocking)
+    const formattedDate = scheduleDate.toLocaleDateString("en-US", {
+      weekday: "long", year: "numeric", month: "long", day: "numeric",
+    });
+
+    const meetingEmailDetails = {
+      subject: `Follow-up #${followUpNumber} - ${lead.name}`,
+      date: formattedDate,
+      time: scheduledTime,
+      duration,
+      meetingType: effectiveMeetingType,
+      meetingUrl: followUp.zohoMeetingUrl || undefined,
+      otherPartyName: "",
+      notes: notes || undefined,
+    };
+
+    // Get counselor user info for email
+    const counselorForEmail = await Counselor.findById(counselorId).populate("userId", "email firstName middleName lastName");
+    const counselorUser = counselorForEmail?.userId as any;
+    const counselorFullName = counselorUser
+      ? [counselorUser.firstName, counselorUser.middleName, counselorUser.lastName].filter(Boolean).join(" ")
+      : "Your Counselor";
+
+    // Email to lead
+    if (lead.email) {
+      sendMeetingScheduledEmail(lead.email, lead.name, {
+        ...meetingEmailDetails,
+        otherPartyName: counselorFullName,
+      }).catch((err) => console.error("Failed to send meeting email to lead:", err));
+    }
+
+    // Email to counselor
+    if (counselorUser?.email) {
+      sendMeetingScheduledEmail(counselorUser.email, counselorFullName, {
+        ...meetingEmailDetails,
+        otherPartyName: lead.name,
+      }).catch((err) => console.error("Failed to send meeting email to counselor:", err));
+    }
 
     return res.status(201).json({
       success: true,
@@ -543,13 +636,14 @@ export const updateFollowUp = async (
           $or: [{ requestedBy: counselorDoc.userId }, { requestedTo: counselorDoc.userId }],
           scheduledDate: { $gte: dayStart, $lte: dayEnd },
           status: { $in: [TEAMMEET_STATUS.PENDING_CONFIRMATION, TEAMMEET_STATUS.CONFIRMED, TEAMMEET_STATUS.COMPLETED] },
-        }).populate("requestedBy", "name").populate("requestedTo", "name");
+        }).populate("requestedBy", "firstName middleName lastName").populate("requestedTo", "firstName middleName lastName");
 
         for (const meet of existingTeamMeets) {
           if (doTimeSlotsOverlap(nextFollowUp.scheduledTime, nextFollowUp.duration || 30, meet.scheduledTime, meet.duration)) {
-            const otherParty = meet.requestedBy._id.toString() === counselorDoc.userId?.toString()
-              ? (meet.requestedTo as any)?.name
-              : (meet.requestedBy as any)?.name;
+            const otherUser = meet.requestedBy._id.toString() === counselorDoc.userId?.toString()
+              ? (meet.requestedTo as any)
+              : (meet.requestedBy as any);
+            const otherParty = [otherUser?.firstName, otherUser?.middleName, otherUser?.lastName].filter(Boolean).join(' ');
             console.log('CONFLICT DETECTED with TeamMeet for next follow-up!');
             return res.status(400).json({
               success: false,
@@ -568,6 +662,12 @@ export const updateFollowUp = async (
       const existingFollowUpsCount = await FollowUp.countDocuments({ leadId: followUp.leadId });
       const nextFollowUpNumber = existingFollowUpsCount + 1;
 
+      // Determine status - if lead is converted OR stageChangedTo is CONVERTED, use CONVERTED_TO_STUDENT
+      const effectiveStage = stageChangedTo || lead?.stage || followUp.stageAtFollowUp;
+      const nextFollowUpStatus = effectiveStage === LEAD_STAGE.CONVERTED 
+        ? FOLLOWUP_STATUS.CONVERTED_TO_STUDENT 
+        : FOLLOWUP_STATUS.SCHEDULED;
+
       newFollowUp = new FollowUp({
         leadId: followUp.leadId,
         counselorId,
@@ -575,12 +675,52 @@ export const updateFollowUp = async (
         scheduledTime: nextFollowUp.scheduledTime,
         duration: nextFollowUp.duration || 30,
         meetingType: nextFollowUp.meetingType || MEETING_TYPE.ONLINE,
-        status: FOLLOWUP_STATUS.SCHEDULED,
-        stageAtFollowUp: stageChangedTo || lead?.stage || followUp.stageAtFollowUp,
+        status: nextFollowUpStatus,
+        stageAtFollowUp: effectiveStage,
         followUpNumber: nextFollowUpNumber,
         notes: "",
         createdBy: userId,
+        ...(nextFollowUpStatus === FOLLOWUP_STATUS.CONVERTED_TO_STUDENT && { completedAt: new Date() }),
       });
+
+      // If next follow-up is Online, create a Zoho Meeting
+      const nextMeetingType = nextFollowUp.meetingType || MEETING_TYPE.ONLINE;
+      if (nextMeetingType === MEETING_TYPE.ONLINE) {
+        try {
+          const [hours, mins] = nextFollowUp.scheduledTime.split(":").map(Number);
+          const meetingStartTime = new Date(nextDate);
+          meetingStartTime.setHours(hours, mins, 0, 0);
+
+          const participantEmails: string[] = [];
+          if (lead?.email) participantEmails.push(lead.email);
+
+          // Get counselor's email
+          const counselorForMeeting = await Counselor.findById(counselorId).populate("userId", "email");
+          const counselorMeetEmail = (counselorForMeeting?.userId as any)?.email;
+          if (counselorMeetEmail) participantEmails.push(counselorMeetEmail);
+
+          const zohoResult = await createZohoMeeting({
+            topic: `Follow-up #${nextFollowUpNumber} - ${lead?.name || 'Lead'}`,
+            startTime: meetingStartTime,
+            duration: nextFollowUp.duration || 30,
+            agenda: `Follow-up meeting`,
+            participantEmails,
+          });
+
+          console.log("📋 Zoho Meeting result for next follow-up:", JSON.stringify(zohoResult, null, 2));
+          
+          if (zohoResult.meetingKey && zohoResult.meetingKey !== "not-configured") {
+            newFollowUp.zohoMeetingKey = zohoResult.meetingKey;
+            newFollowUp.zohoMeetingUrl = zohoResult.meetingUrl;
+            console.log(`✅ Assigned Zoho meeting to next follow-up: key=${zohoResult.meetingKey}, url=${zohoResult.meetingUrl}`);
+          } else {
+            console.warn("⚠️  Zoho returned empty/not-configured meeting key for next follow-up");
+          }
+        } catch (zohoError: any) {
+          console.error("⚠️  Zoho Meeting creation failed for next follow-up:");
+          console.error("   Error:", zohoError?.message || zohoError);
+        }
+      }
 
       await newFollowUp.save();
       await newFollowUp.populate("leadId", "name email mobileNumber city serviceTypes stage conversionStatus");
@@ -655,8 +795,8 @@ export const getLeadFollowUpHistory = async (
 
     // Get all follow-ups for this lead (newest first)
     const followUps = await FollowUp.find({ leadId })
-      .populate("createdBy", "name")
-      .populate("updatedBy", "name")
+      .populate("createdBy", "firstName middleName lastName")
+      .populate("updatedBy", "firstName middleName lastName")
       .sort({ createdAt: -1 });
 
     // Check if lead has an active/future follow-up
@@ -782,13 +922,14 @@ export const checkTimeSlotAvailability = async (
           $or: [{ requestedBy: counselorDoc.userId }, { requestedTo: counselorDoc.userId }],
           scheduledDate: { $gte: dayStart, $lte: dayEnd },
           status: { $in: [TEAMMEET_STATUS.PENDING_CONFIRMATION, TEAMMEET_STATUS.CONFIRMED, TEAMMEET_STATUS.COMPLETED] },
-        }).populate("requestedBy", "name").populate("requestedTo", "name");
+        }).populate("requestedBy", "firstName middleName lastName").populate("requestedTo", "firstName middleName lastName");
 
         for (const meet of existingTeamMeets) {
           if (doTimeSlotsOverlap(time as string, parseInt(duration as string), meet.scheduledTime, meet.duration)) {
-            const otherParty = meet.requestedBy._id.toString() === counselorDoc.userId?.toString()
-              ? (meet.requestedTo as any)?.name
-              : (meet.requestedBy as any)?.name;
+            const otherUser = meet.requestedBy._id.toString() === counselorDoc.userId?.toString()
+              ? (meet.requestedTo as any)
+              : (meet.requestedBy as any);
+            const otherParty = [otherUser?.firstName, otherUser?.middleName, otherUser?.lastName].filter(Boolean).join(' ');
             console.log('CONFLICT FOUND with TeamMeet!');
             isAvailable = false;
             conflictingTime = meet.scheduledTime;

@@ -4,13 +4,16 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI, adminStudentAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
+import { getFullName } from '@/utils/nameHelpers';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface StudentDetails {
   _id: string;
   userId: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
     role: string;
     isVerified: boolean;
@@ -22,7 +25,9 @@ interface StudentDetails {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
@@ -30,7 +35,9 @@ interface StudentDetails {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
@@ -47,15 +54,15 @@ interface Registration {
   };
   primaryOpsId?: {
     _id: string;
-    userId: { _id: string; name: string; email: string };
+    userId: { _id: string; firstName?: string; middleName?: string; lastName?: string; email: string };
   };
   secondaryOpsId?: {
     _id: string;
-    userId: { _id: string; name: string; email: string };
+    userId: { _id: string; firstName?: string; middleName?: string; lastName?: string; email: string };
   };
   activeOpsId?: {
     _id: string;
-    userId: { _id: string; name: string; email: string };
+    userId: { _id: string; firstName?: string; middleName?: string; lastName?: string; email: string };
   };
   status: string;
   createdAt: string;
@@ -168,7 +175,7 @@ export default function CounselorStudentDetailPage() {
               <div className="mb-8 flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-3">
-                    <h1 className="text-3xl font-bold text-gray-900">{student.userId?.name}</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">{getFullName(student.userId)}</h1>
                     <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${getStatusBadge(student.userId.isActive)}`}>
                       {student.userId.isActive ? 'Active' : 'Inactive'}
                     </span>
@@ -189,11 +196,11 @@ export default function CounselorStudentDetailPage() {
                   <div className="flex items-center">
                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                       <span className="text-blue-600 font-bold text-xl">
-                        {(student.userId.name || '?').charAt(0).toUpperCase()}
+                        {(getFullName(student.userId) || '?').charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <h1 className="text-2xl font-bold text-gray-900">{student.userId.name}</h1>
+                      <h1 className="text-2xl font-bold text-gray-900">{getFullName(student.userId)}</h1>
                       <p className="text-gray-600">{student.userId.email}</p>
                     </div>
                   </div>
@@ -229,7 +236,7 @@ export default function CounselorStudentDetailPage() {
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Counselor</p>
                     <p className="font-medium text-gray-900">
-                      {student.counselorId?.userId?.name || 'Not assigned'}
+                      {getFullName(student.counselorId?.userId) || 'Not assigned'}
                     </p>
                   </div>
                   <div>
@@ -275,17 +282,17 @@ export default function CounselorStudentDetailPage() {
                               <div className="mt-3 space-y-2">
                                 {registration.primaryOpsId && (
                                   <p className="text-xs text-gray-600">
-                                    <span className="font-medium">Primary OPS:</span> {registration.primaryOpsId.userId?.name || 'N/A'}
+                                    <span className="font-medium">Primary OPS:</span> {getFullName(registration.primaryOpsId.userId) || 'N/A'}
                                   </p>
                                 )}
                                 {registration.secondaryOpsId && (
                                   <p className="text-xs text-gray-600">
-                                    <span className="font-medium">Secondary OPS:</span> {registration.secondaryOpsId.userId?.name || 'N/A'}
+                                    <span className="font-medium">Secondary OPS:</span> {getFullName(registration.secondaryOpsId.userId) || 'N/A'}
                                   </p>
                                 )}
                                 {registration.activeOpsId && (
                                   <p className="text-xs font-medium text-blue-600">
-                                    ✓ Active: {registration.activeOpsId.userId?.name || 'N/A'}
+                                    ✓ Active: {getFullName(registration.activeOpsId.userId) || 'N/A'}
                                   </p>
                                 )}
                               </div>

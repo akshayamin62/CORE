@@ -331,4 +331,104 @@ export const sendServiceRegistrationEmailToSuperAdmin = async (
   });
 };
 
+/**
+ * Send meeting scheduled email with Zoho Meeting link
+ */
+export const sendMeetingScheduledEmail = async (
+  recipientEmail: string,
+  recipientName: string,
+  meetingDetails: {
+    subject: string;
+    date: string;        // formatted date string
+    time: string;        // e.g. "10:30"
+    duration: number;    // minutes
+    meetingType: string; // "Online" / "Face to Face"
+    meetingUrl?: string; // Zoho join link
+    otherPartyName: string;
+    notes?: string;
+  }
+): Promise<void> => {
+  const { subject, date, time, duration, meetingType, meetingUrl, otherPartyName, notes } = meetingDetails;
 
+  const meetingLinkSection = meetingUrl
+    ? `
+      <div style="margin: 20px 0; padding: 16px; background-color: #e8f5e9; border-radius: 8px; border-left: 4px solid #4caf50;">
+        <p style="margin: 0 0 8px 0; font-weight: bold; color: #2e7d32;">🔗 Join Meeting Online</p>
+        <a href="${meetingUrl}" 
+           style="display: inline-block; padding: 12px 24px; background-color: #1976d2; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px;">
+          Join Zoho Meeting
+        </a>
+        <p style="margin: 10px 0 0 0; font-size: 12px; color: #666;">
+          Or copy this link: <br/>
+          <a href="${meetingUrl}" style="color: #1976d2; word-break: break-all;">${meetingUrl}</a>
+        </p>
+      </div>`
+    : '';
+
+  const notesSection = notes
+    ? `<p style="margin-top: 10px;"><strong>Notes:</strong> ${notes}</p>`
+    : '';
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Meeting Scheduled</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; margin: 0; padding: 0;">
+      <div style="max-width: 600px; margin: 20px auto; background-color: white; padding: 30px; border: 1px solid #ddd; border-radius: 8px;">
+        <h2 style="color: #1976d2; margin-bottom: 20px;">📅 Meeting Scheduled</h2>
+        <p>Hi ${recipientName},</p>
+        <p>A meeting has been scheduled for you. Here are the details:</p>
+        
+        <div style="margin: 20px 0; padding: 16px; background-color: #f5f5f5; border-radius: 8px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; width: 130px; vertical-align: top;">Subject:</td>
+              <td style="padding: 8px 0;">${subject}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; vertical-align: top;">Date:</td>
+              <td style="padding: 8px 0;">${date}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; vertical-align: top;">Time:</td>
+              <td style="padding: 8px 0;">${time}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; vertical-align: top;">Duration:</td>
+              <td style="padding: 8px 0;">${duration} minutes</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; vertical-align: top;">Type:</td>
+              <td style="padding: 8px 0;">${meetingType}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-weight: bold; vertical-align: top;">With:</td>
+              <td style="padding: 8px 0;">${otherPartyName}</td>
+            </tr>
+          </table>
+        </div>
+
+        ${meetingLinkSection}
+        ${notesSection}
+
+        <p style="color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px;">
+          This is an automated notification from CORE-Community Platform.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `Meeting Scheduled\n\nHi ${recipientName},\n\nSubject: ${subject}\nDate: ${date}\nTime: ${time}\nDuration: ${duration} minutes\nType: ${meetingType}\nWith: ${otherPartyName}\n${meetingUrl ? `\nJoin Link: ${meetingUrl}` : ''}\n${notes ? `\nNotes: ${notes}` : ''}`;
+
+  await sendEmail({
+    to: recipientEmail,
+    subject: `Meeting Scheduled: ${subject}`,
+    html,
+    text,
+  });
+};

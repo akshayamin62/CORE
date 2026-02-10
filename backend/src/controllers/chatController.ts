@@ -78,11 +78,11 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
 
     // Find or create chat with chatType
     let chat = await ProgramChat.findOne({ programId, studentId, chatType })
-      .populate('participants.student', 'name email')
-      .populate('participants.OPS', 'name email')
-      .populate('participants.superAdmin', 'name email')
-      .populate('participants.admin', 'name email')
-      .populate('participants.counselor', 'name email');
+      .populate('participants.student', 'firstName middleName lastName email')
+      .populate('participants.OPS', 'firstName middleName lastName email')
+      .populate('participants.superAdmin', 'firstName middleName lastName email')
+      .populate('participants.admin', 'firstName middleName lastName email')
+      .populate('participants.counselor', 'firstName middleName lastName email');
 
     if (!chat) {
       // Get OPS info
@@ -109,11 +109,11 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
       });
 
       chat = await ProgramChat.findById(chat._id)
-        .populate('participants.student', 'name email')
-        .populate('participants.OPS', 'name email')
-        .populate('participants.superAdmin', 'name email')
-        .populate('participants.admin', 'name email')
-        .populate('participants.counselor', 'name email');
+        .populate('participants.student', 'firstName middleName lastName email')
+        .populate('participants.OPS', 'firstName middleName lastName email')
+        .populate('participants.superAdmin', 'firstName middleName lastName email')
+        .populate('participants.admin', 'firstName middleName lastName email')
+        .populate('participants.counselor', 'firstName middleName lastName email');
     } else {
       // Update participant based on role if not set
       let needsSave = false;
@@ -131,11 +131,11 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
       if (needsSave) {
         await chat.save();
         chat = await ProgramChat.findById(chat._id)
-          .populate('participants.student', 'name email')
-          .populate('participants.OPS', 'name email')
-          .populate('participants.superAdmin', 'name email')
-          .populate('participants.admin', 'name email')
-          .populate('participants.counselor', 'name email');
+          .populate('participants.student', 'firstName middleName lastName email')
+          .populate('participants.OPS', 'firstName middleName lastName email')
+          .populate('participants.superAdmin', 'firstName middleName lastName email')
+          .populate('participants.admin', 'firstName middleName lastName email')
+          .populate('participants.counselor', 'firstName middleName lastName email');
       }
     }
 
@@ -219,13 +219,13 @@ export const getChatMessages = async (req: AuthRequest, res: Response) => {
     const messages = await ChatMessage.find({ chatId: chat._id })
       .sort({ timestamp: 1 })
       .limit(500)
-      .populate('senderId', 'name');
+      .populate('senderId', 'firstName middleName lastName');
 
     // Map messages to include senderName from populated User
     const messagesWithNames = messages.map(msg => {
       const msgObj: any = msg.toObject();
       if (msgObj.senderId && typeof msgObj.senderId === 'object') {
-        msgObj.senderName = msgObj.senderId.name || 'Unknown';
+        msgObj.senderName = [msgObj.senderId.firstName, msgObj.senderId.middleName, msgObj.senderId.lastName].filter(Boolean).join(' ') || 'Unknown';
       } else {
         msgObj.senderName = 'Unknown';
       }
@@ -392,9 +392,10 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
     });
 
     // Populate sender info for response
-    await newMessage.populate('senderId', 'name');
+    await newMessage.populate('senderId', 'firstName middleName lastName');
     const messageResponse: any = newMessage.toObject();
-    messageResponse.senderName = (newMessage.senderId as any)?.name || userName;
+    const sender = newMessage.senderId as any;
+    messageResponse.senderName = [sender?.firstName, sender?.middleName, sender?.lastName].filter(Boolean).join(' ') || userName;
 
     return res.status(201).json({
       success: true,
@@ -436,11 +437,11 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
           path: 'programId',
           select: 'university programName campus country priority intake year',
         })
-        .populate('participants.student', 'name email')
-        .populate('participants.OPS', 'name email')
-        .populate('participants.superAdmin', 'name email')
-        .populate('participants.admin', 'name email')
-        .populate('participants.counselor', 'name email')
+        .populate('participants.student', 'firstName middleName lastName email')
+        .populate('participants.OPS', 'firstName middleName lastName email')
+        .populate('participants.superAdmin', 'firstName middleName lastName email')
+        .populate('participants.admin', 'firstName middleName lastName email')
+        .populate('participants.counselor', 'firstName middleName lastName email')
         .sort({ updatedAt: -1 });
     } else if (userRole === USER_ROLE.OPS) {
       query['participants.OPS'] = userId;
@@ -449,11 +450,11 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
           path: 'programId',
           select: 'university programName campus country priority intake year',
         })
-        .populate('participants.student', 'name email')
-        .populate('participants.OPS', 'name email')
-        .populate('participants.superAdmin', 'name email')
-        .populate('participants.admin', 'name email')
-        .populate('participants.counselor', 'name email')
+        .populate('participants.student', 'firstName middleName lastName email')
+        .populate('participants.OPS', 'firstName middleName lastName email')
+        .populate('participants.superAdmin', 'firstName middleName lastName email')
+        .populate('participants.admin', 'firstName middleName lastName email')
+        .populate('participants.counselor', 'firstName middleName lastName email')
         .sort({ updatedAt: -1 });
     } else if (userRole === USER_ROLE.SUPER_ADMIN || userRole === USER_ROLE.ADMIN || userRole === USER_ROLE.COUNSELOR) {
       chats = await ProgramChat.find(query)
@@ -461,11 +462,11 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
           path: 'programId',
           select: 'university programName campus country priority intake year',
         })
-        .populate('participants.student', 'name email')
-        .populate('participants.OPS', 'name email')
-        .populate('participants.superAdmin', 'name email')
-        .populate('participants.admin', 'name email')
-        .populate('participants.counselor', 'name email')
+        .populate('participants.student', 'firstName middleName lastName email')
+        .populate('participants.OPS', 'firstName middleName lastName email')
+        .populate('participants.superAdmin', 'firstName middleName lastName email')
+        .populate('participants.admin', 'firstName middleName lastName email')
+        .populate('participants.counselor', 'firstName middleName lastName email')
         .sort({ updatedAt: -1 })
         .limit(100);
     }

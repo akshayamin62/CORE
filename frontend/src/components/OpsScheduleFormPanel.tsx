@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { OpsSchedule, OPS_SCHEDULE_STATUS, OpsScheduleStudent } from '@/types';
 import { format } from 'date-fns';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface OpsScheduleFormPanelProps {
   schedule?: OpsSchedule | null;
@@ -138,7 +139,7 @@ export default function OpsScheduleFormPanel({
                 <optgroup label="Students">
                   {students.map((student) => (
                     <option key={student._id} value={student._id}>
-                      {student.userId?.name || 'Unknown'} - {student.userId?.email || ''}
+                      {getFullName(student.userId) || 'Unknown'} - {student.userId?.email || ''}
                     </option>
                   ))}
                 </optgroup>

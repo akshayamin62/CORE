@@ -7,6 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
+import { getFullName } from '@/utils/nameHelpers';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -14,7 +15,9 @@ interface StudentDetails {
   _id: string;
   userId: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
     role: string;
     isVerified: boolean;
@@ -26,7 +29,9 @@ interface StudentDetails {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
@@ -34,7 +39,9 @@ interface StudentDetails {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
@@ -45,7 +52,9 @@ interface OPS {
   _id: string;
   userId: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
   };
   email: string;
@@ -57,7 +66,9 @@ interface IvyExpert {
   _id: string;
   userId: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
   };
   email: string;
@@ -68,7 +79,9 @@ interface EduplanCoach {
   _id: string;
   userId: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
   };
   email: string;
@@ -349,11 +362,11 @@ export default function StudentDetailPage() {
               <div className="flex items-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                   <span className="text-blue-600 font-bold text-xl">
-                    {(student.userId.name || '?').charAt(0).toUpperCase()}
+                    {(getFullName(student.userId) || '?').charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{student.userId.name}</h1>
+                  <h1 className="text-2xl font-bold text-gray-900">{getFullName(student.userId)}</h1>
                   <p className="text-gray-600">{student.userId.email}</p>
                 </div>
               </div>
@@ -389,13 +402,13 @@ export default function StudentDetailPage() {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Admin</p>
                 <p className="font-medium text-gray-900">
-                  {student.adminId?.userId?.name || 'N/A'}
+                  {getFullName(student.adminId?.userId) || 'N/A'}
                 </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Counselor</p>
                 <p className="font-medium text-gray-900">
-                  {student.counselorId?.userId?.name || 'N/A'}
+                  {getFullName(student.counselorId?.userId) || 'N/A'}
                 </p>
               </div>
               <div>
@@ -458,7 +471,7 @@ export default function StudentDetailPage() {
                                       <option value="">Select Primary OPS</option>
                                       {ops.map((OPS) => (
                                         <option key={OPS._id} value={OPS._id}>
-                                          {OPS.userId?.name || OPS.email}
+                                          {getFullName(OPS.userId) || OPS.email}
                                           {OPS.specializations && OPS.specializations.length > 0 && 
                                             ` (${OPS.specializations.join(', ')})`
                                           }
@@ -467,7 +480,7 @@ export default function StudentDetailPage() {
                                     </select>
                                     {registration.primaryOpsId && (
                                       <p className="mt-1 text-xs text-gray-600">
-                                        {registration.primaryOpsId.userId?.name || registration.primaryOpsId.email}
+                                        {getFullName(registration.primaryOpsId.userId) || registration.primaryOpsId.email}
                                       </p>
                                     )}
                                   </div>
@@ -490,7 +503,7 @@ export default function StudentDetailPage() {
                                       <option value="">Select Secondary OPS</option>
                                       {ops.map((OPS) => (
                                         <option key={OPS._id} value={OPS._id}>
-                                          {OPS.userId?.name || OPS.email}
+                                          {getFullName(OPS.userId) || OPS.email}
                                           {OPS.specializations && OPS.specializations.length > 0 && 
                                             ` (${OPS.specializations.join(', ')})`
                                           }
@@ -499,7 +512,7 @@ export default function StudentDetailPage() {
                                     </select>
                                     {registration.secondaryOpsId && (
                                       <p className="mt-1 text-xs text-gray-600">
-                                        {registration.secondaryOpsId.userId?.name || registration.secondaryOpsId.email}
+                                        {getFullName(registration.secondaryOpsId.userId) || registration.secondaryOpsId.email}
                                       </p>
                                     )}
                                   </div>
@@ -521,12 +534,12 @@ export default function StudentDetailPage() {
                                         <option value="">Select Active OPS</option>
                                         {registration.primaryOpsId && (
                                           <option value={registration.primaryOpsId._id}>
-                                            Primary: {registration.primaryOpsId.userId?.name || registration.primaryOpsId.email}
+                                            Primary: {getFullName(registration.primaryOpsId.userId) || registration.primaryOpsId.email}
                                           </option>
                                         )}
                                         {registration.secondaryOpsId && (
                                           <option value={registration.secondaryOpsId._id}>
-                                            Secondary: {registration.secondaryOpsId.userId?.name || registration.secondaryOpsId.email}
+                                            Secondary: {getFullName(registration.secondaryOpsId.userId) || registration.secondaryOpsId.email}
                                           </option>
                                         )}
                                       </select>
@@ -540,7 +553,7 @@ export default function StudentDetailPage() {
                                           ✓ Active
                                         </span>
                                         <span className="ml-2 text-gray-700">
-                                          {registration.activeOpsId.userId?.name || registration.activeOpsId.email}
+                                          {getFullName(registration.activeOpsId.userId) || registration.activeOpsId.email}
                                         </span>
                                       </div>
                                     )}
@@ -570,13 +583,13 @@ export default function StudentDetailPage() {
                                       <option value="">Select Primary Ivy Expert</option>
                                       {ivyExperts.map((expert) => (
                                         <option key={expert._id} value={expert._id}>
-                                          {expert.userId?.name || expert.email}
+                                          {getFullName(expert.userId) || expert.email}
                                         </option>
                                       ))}
                                     </select>
                                     {registration.primaryIvyExpertId && (
                                       <p className="mt-1 text-xs text-gray-600">
-                                        {registration.primaryIvyExpertId.userId?.name || registration.primaryIvyExpertId.email}
+                                        {getFullName(registration.primaryIvyExpertId.userId) || registration.primaryIvyExpertId.email}
                                       </p>
                                     )}
                                   </div>
@@ -599,13 +612,13 @@ export default function StudentDetailPage() {
                                       <option value="">Select Secondary Ivy Expert</option>
                                       {ivyExperts.map((expert) => (
                                         <option key={expert._id} value={expert._id}>
-                                          {expert.userId?.name || expert.email}
+                                          {getFullName(expert.userId) || expert.email}
                                         </option>
                                       ))}
                                     </select>
                                     {registration.secondaryIvyExpertId && (
                                       <p className="mt-1 text-xs text-gray-600">
-                                        {registration.secondaryIvyExpertId.userId?.name || registration.secondaryIvyExpertId.email}
+                                        {getFullName(registration.secondaryIvyExpertId.userId) || registration.secondaryIvyExpertId.email}
                                       </p>
                                     )}
                                   </div>
@@ -627,12 +640,12 @@ export default function StudentDetailPage() {
                                         <option value="">Select Active Ivy Expert</option>
                                         {registration.primaryIvyExpertId && (
                                           <option value={registration.primaryIvyExpertId._id}>
-                                            Primary: {registration.primaryIvyExpertId.userId?.name || registration.primaryIvyExpertId.email}
+                                            Primary: {getFullName(registration.primaryIvyExpertId.userId) || registration.primaryIvyExpertId.email}
                                           </option>
                                         )}
                                         {registration.secondaryIvyExpertId && (
                                           <option value={registration.secondaryIvyExpertId._id}>
-                                            Secondary: {registration.secondaryIvyExpertId.userId?.name || registration.secondaryIvyExpertId.email}
+                                            Secondary: {getFullName(registration.secondaryIvyExpertId.userId) || registration.secondaryIvyExpertId.email}
                                           </option>
                                         )}
                                       </select>
@@ -646,7 +659,7 @@ export default function StudentDetailPage() {
                                           ✓ Active
                                         </span>
                                         <span className="ml-2 text-gray-700">
-                                          {registration.activeIvyExpertId.userId?.name || registration.activeIvyExpertId.email}
+                                          {getFullName(registration.activeIvyExpertId.userId) || registration.activeIvyExpertId.email}
                                         </span>
                                       </div>
                                     )}
@@ -676,13 +689,13 @@ export default function StudentDetailPage() {
                                       <option value="">Select Primary Eduplan Coach</option>
                                       {eduplanCoaches.map((coach) => (
                                         <option key={coach._id} value={coach._id}>
-                                          {coach.userId?.name || coach.email}
+                                          {getFullName(coach.userId) || coach.email}
                                         </option>
                                       ))}
                                     </select>
                                     {registration.primaryEduplanCoachId && (
                                       <p className="mt-1 text-xs text-gray-600">
-                                        {registration.primaryEduplanCoachId.userId?.name || registration.primaryEduplanCoachId.email}
+                                        {getFullName(registration.primaryEduplanCoachId.userId) || registration.primaryEduplanCoachId.email}
                                       </p>
                                     )}
                                   </div>
@@ -705,13 +718,13 @@ export default function StudentDetailPage() {
                                       <option value="">Select Secondary Eduplan Coach</option>
                                       {eduplanCoaches.map((coach) => (
                                         <option key={coach._id} value={coach._id}>
-                                          {coach.userId?.name || coach.email}
+                                          {getFullName(coach.userId) || coach.email}
                                         </option>
                                       ))}
                                     </select>
                                     {registration.secondaryEduplanCoachId && (
                                       <p className="mt-1 text-xs text-gray-600">
-                                        {registration.secondaryEduplanCoachId.userId?.name || registration.secondaryEduplanCoachId.email}
+                                        {getFullName(registration.secondaryEduplanCoachId.userId) || registration.secondaryEduplanCoachId.email}
                                       </p>
                                     )}
                                   </div>
@@ -733,12 +746,12 @@ export default function StudentDetailPage() {
                                         <option value="">Select Active Eduplan Coach</option>
                                         {registration.primaryEduplanCoachId && (
                                           <option value={registration.primaryEduplanCoachId._id}>
-                                            Primary: {registration.primaryEduplanCoachId.userId?.name || registration.primaryEduplanCoachId.email}
+                                            Primary: {getFullName(registration.primaryEduplanCoachId.userId) || registration.primaryEduplanCoachId.email}
                                           </option>
                                         )}
                                         {registration.secondaryEduplanCoachId && (
                                           <option value={registration.secondaryEduplanCoachId._id}>
-                                            Secondary: {registration.secondaryEduplanCoachId.userId?.name || registration.secondaryEduplanCoachId.email}
+                                            Secondary: {getFullName(registration.secondaryEduplanCoachId.userId) || registration.secondaryEduplanCoachId.email}
                                           </option>
                                         )}
                                       </select>
@@ -752,7 +765,7 @@ export default function StudentDetailPage() {
                                           ✓ Active
                                         </span>
                                         <span className="ml-2 text-gray-700">
-                                          {registration.activeEduplanCoachId.userId?.name || registration.activeEduplanCoachId.email}
+                                          {getFullName(registration.activeEduplanCoachId.userId) || registration.activeEduplanCoachId.email}
                                         </span>
                                       </div>
                                     )}
@@ -776,17 +789,17 @@ export default function StudentDetailPage() {
                               <>
                                 {registration.primaryOpsId && (
                                   <p className="text-xs text-gray-600">
-                                    <span className="font-medium">Primary OPS:</span> {registration.primaryOpsId.userId?.name || registration.primaryOpsId.email}
+                                    <span className="font-medium">Primary OPS:</span> {getFullName(registration.primaryOpsId.userId) || registration.primaryOpsId.email}
                                   </p>
                                 )}
                                 {registration.secondaryOpsId && (
                                   <p className="text-xs text-gray-600">
-                                    <span className="font-medium">Secondary OPS:</span> {registration.secondaryOpsId.userId?.name || registration.secondaryOpsId.email}
+                                    <span className="font-medium">Secondary OPS:</span> {getFullName(registration.secondaryOpsId.userId) || registration.secondaryOpsId.email}
                                   </p>
                                 )}
                                 {registration.activeOpsId && (
                                   <p className="text-xs font-medium text-green-600">
-                                    ✓ Active: {registration.activeOpsId.userId?.name || registration.activeOpsId.email}
+                                    ✓ Active: {getFullName(registration.activeOpsId.userId) || registration.activeOpsId.email}
                                   </p>
                                 )}
                               </>
@@ -796,17 +809,17 @@ export default function StudentDetailPage() {
                               <>
                                 {registration.primaryIvyExpertId && (
                                   <p className="text-xs text-gray-600">
-                                    <span className="font-medium">Primary Ivy Expert:</span> {registration.primaryIvyExpertId.userId?.name || registration.primaryIvyExpertId.email}
+                                    <span className="font-medium">Primary Ivy Expert:</span> {getFullName(registration.primaryIvyExpertId.userId) || registration.primaryIvyExpertId.email}
                                   </p>
                                 )}
                                 {registration.secondaryIvyExpertId && (
                                   <p className="text-xs text-gray-600">
-                                    <span className="font-medium">Secondary Ivy Expert:</span> {registration.secondaryIvyExpertId.userId?.name || registration.secondaryIvyExpertId.email}
+                                    <span className="font-medium">Secondary Ivy Expert:</span> {getFullName(registration.secondaryIvyExpertId.userId) || registration.secondaryIvyExpertId.email}
                                   </p>
                                 )}
                                 {registration.activeIvyExpertId && (
                                   <p className="text-xs font-medium text-green-600">
-                                    ✓ Active: {registration.activeIvyExpertId.userId?.name || registration.activeIvyExpertId.email}
+                                    ✓ Active: {getFullName(registration.activeIvyExpertId.userId) || registration.activeIvyExpertId.email}
                                   </p>
                                 )}
                               </>
@@ -816,17 +829,17 @@ export default function StudentDetailPage() {
                               <>
                                 {registration.primaryEduplanCoachId && (
                                   <p className="text-xs text-gray-600">
-                                    <span className="font-medium">Primary Eduplan Coach:</span> {registration.primaryEduplanCoachId.userId?.name || registration.primaryEduplanCoachId.email}
+                                    <span className="font-medium">Primary Eduplan Coach:</span> {getFullName(registration.primaryEduplanCoachId.userId) || registration.primaryEduplanCoachId.email}
                                   </p>
                                 )}
                                 {registration.secondaryEduplanCoachId && (
                                   <p className="text-xs text-gray-600">
-                                    <span className="font-medium">Secondary Eduplan Coach:</span> {registration.secondaryEduplanCoachId.userId?.name || registration.secondaryEduplanCoachId.email}
+                                    <span className="font-medium">Secondary Eduplan Coach:</span> {getFullName(registration.secondaryEduplanCoachId.userId) || registration.secondaryEduplanCoachId.email}
                                   </p>
                                 )}
                                 {registration.activeEduplanCoachId && (
                                   <p className="text-xs font-medium text-green-600">
-                                    ✓ Active: {registration.activeEduplanCoachId.userId?.name || registration.activeEduplanCoachId.email}
+                                    ✓ Active: {getFullName(registration.activeEduplanCoachId.userId) || registration.activeEduplanCoachId.email}
                                   </p>
                                 )}
                               </>

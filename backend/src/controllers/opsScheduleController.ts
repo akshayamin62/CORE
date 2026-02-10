@@ -43,7 +43,7 @@ export const getMySchedules = async (req: AuthRequest, res: Response): Promise<a
         path: "studentId",
         populate: {
           path: "userId",
-          select: "name email",
+          select: "firstName middleName lastName email",
         },
       })
       .sort({ scheduledDate: 1, scheduledTime: 1 });
@@ -91,7 +91,7 @@ export const getScheduleSummary = async (req: AuthRequest, res: Response): Promi
         path: "studentId",
         populate: {
           path: "userId",
-          select: "name email",
+          select: "firstName middleName lastName email",
         },
       })
       .sort({ scheduledTime: 1 });
@@ -106,7 +106,7 @@ export const getScheduleSummary = async (req: AuthRequest, res: Response): Promi
         path: "studentId",
         populate: {
           path: "userId",
-          select: "name email",
+          select: "firstName middleName lastName email",
         },
       })
       .sort({ scheduledDate: -1, scheduledTime: -1 })
@@ -122,7 +122,7 @@ export const getScheduleSummary = async (req: AuthRequest, res: Response): Promi
         path: "studentId",
         populate: {
           path: "userId",
-          select: "name email",
+          select: "firstName middleName lastName email",
         },
       })
       .sort({ scheduledTime: 1 });
@@ -180,7 +180,7 @@ export const getMyStudents = async (req: AuthRequest, res: Response): Promise<an
       _id: { $in: registrations },
     }).populate({
       path: "userId",
-      select: "name email",
+      select: "firstName middleName lastName email",
     });
 
     res.json({
@@ -248,7 +248,7 @@ export const createSchedule = async (req: AuthRequest, res: Response): Promise<a
       path: "studentId",
       populate: {
         path: "userId",
-        select: "name email",
+        select: "firstName middleName lastName email",
       },
     });
 
@@ -336,7 +336,7 @@ export const updateSchedule = async (req: AuthRequest, res: Response): Promise<a
       path: "studentId",
       populate: {
         path: "userId",
-        select: "name email",
+        select: "firstName middleName lastName email",
       },
     });
 
@@ -419,7 +419,7 @@ export const getScheduleById = async (req: AuthRequest, res: Response): Promise<
       path: "studentId",
       populate: {
         path: "userId",
-        select: "name email",
+        select: "firstName middleName lastName email",
       },
     });
 

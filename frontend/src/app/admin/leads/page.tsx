@@ -6,6 +6,7 @@ import { authAPI, leadAPI, leadConversionAPI } from '@/lib/api';
 import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import { getFullName } from '@/utils/nameHelpers';
 
 export default function AdminLeadsPage() {
   const router = useRouter();
@@ -477,7 +478,7 @@ export default function AdminLeadsPage() {
                   <option value="unassigned">Unassigned</option>
                   {counselors.map((counselor) => (
                     <option key={counselor._id} value={counselor._id}>
-                      {counselor.userId?.name || counselor.email}
+                      {getFullName(counselor.userId) || counselor.email}
                     </option>
                   ))}
                 </select>
@@ -554,7 +555,7 @@ export default function AdminLeadsPage() {
                         <td className="px-4 py-4">
                           {lead.assignedCounselorId ? (
                             <span className="text-sm text-gray-900 truncate block">
-                              {lead.assignedCounselorId.userId?.name || 'Unknown'}
+                              {getFullName(lead.assignedCounselorId?.userId) || 'Unknown'}
                             </span>
                           ) : (
                             <span className="text-sm text-gray-400 italic">Unassigned</span>
@@ -625,7 +626,7 @@ export default function AdminLeadsPage() {
                 <option value="">-- No Assignment --</option>
                 {counselors.map((counselor) => (
                   <option key={counselor._id} value={counselor._id}>
-                    {counselor.userId?.name || counselor.email}
+                    {getFullName(counselor.userId) || counselor.email}
                   </option>
                 ))}
               </select>

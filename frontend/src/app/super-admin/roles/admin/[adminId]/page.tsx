@@ -9,6 +9,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import TeamMeetCalendar from '@/components/TeamMeetCalendar';
 import TeamMeetSidebar from '@/components/TeamMeetSidebar';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface DashboardStats {
   totalCounselors: number;
@@ -19,7 +20,9 @@ interface DashboardStats {
   enquiryFormSlug: string;
   admin: {
     _id: string;
-    name: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
     email: string;
     isActive: boolean;
     isVerified: boolean;
@@ -157,16 +160,16 @@ export default function SuperAdminAdminDashboardPage() {
               ) : (
                 <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                   <span className="text-lg font-bold text-blue-600">
-                    {stats?.admin?.companyName?.charAt(0) || stats?.admin?.name?.charAt(0) || 'A'}
+                    {stats?.admin?.companyName?.charAt(0) || getFullName(stats?.admin)?.charAt(0) || 'A'}
                   </span>
                 </div>
               )}
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
-                  {stats?.admin?.companyName || stats?.admin?.name || 'Admin Dashboard'}
+                  {stats?.admin?.companyName || getFullName(stats?.admin) || 'Admin Dashboard'}
                 </h1>
                 <p className="text-sm text-gray-500">
-                  {stats?.admin?.name} &middot; {stats?.admin?.email}
+                  {getFullName(stats?.admin)} &middot; {stats?.admin?.email}
                 </p>
               </div>
             </div>

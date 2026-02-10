@@ -1,5 +1,7 @@
 'use client';
 
+import { getFullName } from '@/utils/nameHelpers';
+
 interface Program {
   _id: string;
   university: string;
@@ -23,7 +25,9 @@ interface Program {
   year?: string;
   createdBy?: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
     role: string;
   };
@@ -78,9 +82,9 @@ export default function ProgramCard({
             <h4 className="font-semibold text-gray-900">{program.programName}</h4>
           </div>
           <p className="text-sm text-gray-600 mb-2">{program.university}</p>
-          {program.createdBy?.name && (
+          {program.createdBy && getFullName(program.createdBy) && (
             <p className="text-xs text-blue-600 mb-2">
-              Created by: <span className="font-medium">{program.createdBy.name}</span>
+              Created by: <span className="font-medium">{getFullName(program.createdBy)}</span>
             </p>
           )}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">

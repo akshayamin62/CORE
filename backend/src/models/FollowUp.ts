@@ -37,6 +37,8 @@ export interface IFollowUp extends Document {
   scheduledTime: string; // Format: "HH:mm"
   duration: number; // Duration in minutes (15, 30, 45, 60)
   meetingType: MEETING_TYPE; // Online or Face to Face
+  zohoMeetingKey?: string; // Zoho meeting session key
+  zohoMeetingUrl?: string; // Zoho meeting join URL
   status: FOLLOWUP_STATUS;
   stageAtFollowUp: LEAD_STAGE; // Stage of lead at the time of follow-up
   stageChangedTo?: LEAD_STAGE; // If stage was changed during this follow-up
@@ -86,6 +88,14 @@ const followUpSchema = new Schema<IFollowUp>(
       enum: Object.values(MEETING_TYPE),
       required: true,
       default: MEETING_TYPE.ONLINE,
+    },
+    zohoMeetingKey: {
+      type: String,
+      default: null,
+    },
+    zohoMeetingUrl: {
+      type: String,
+      default: null,
     },
     status: {
       type: String,

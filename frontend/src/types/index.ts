@@ -204,20 +204,26 @@ export interface StudentDocument {
   uploadedAt: string;
   uploadedBy: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
   };
   uploadedByRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN';
   status: DocumentStatus;
   approvedBy?: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
   };
   approvedAt?: string;
   rejectedBy?: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
   };
   rejectedAt?: string;
@@ -260,7 +266,9 @@ export interface Lead {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
     enquiryFormSlug: string;
@@ -269,7 +277,9 @@ export interface Lead {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
@@ -330,6 +340,8 @@ export interface FollowUp {
   scheduledTime: string;
   duration: number;
   meetingType: MEETING_TYPE;
+  zohoMeetingKey?: string;
+  zohoMeetingUrl?: string;
   status: FOLLOWUP_STATUS;
   stageAtFollowUp: LEAD_STAGE;
   stageChangedTo?: LEAD_STAGE;
@@ -337,11 +349,15 @@ export interface FollowUp {
   notes?: string;
   createdBy: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
   };
   updatedBy?: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
   };
   completedAt?: string;
   createdAt: string;
@@ -400,16 +416,22 @@ export interface TeamMeet {
   scheduledTime: string;
   duration: number;
   meetingType: TEAMMEET_TYPE;
+  zohoMeetingKey?: string;
+  zohoMeetingUrl?: string;
   description?: string;
   requestedBy: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
     role: string;
   };
   requestedTo: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
     role: string;
   };
@@ -422,7 +444,9 @@ export interface TeamMeet {
 
 export interface TeamMeetParticipant {
   _id: string;
-  name: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   email: string;
   role: string;
 }
@@ -472,7 +496,9 @@ export interface OpsScheduleStudent {
   _id: string;
   userId: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
   };
 }
@@ -522,14 +548,18 @@ export interface LeadStudentConversion {
   leadId: Lead | string;
   requestedBy: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
   };
   adminId: {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
@@ -537,13 +567,17 @@ export interface LeadStudentConversion {
   rejectionReason?: string;
   approvedBy?: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
   };
   approvedAt?: string;
   rejectedBy?: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
   };
   rejectedAt?: string;
@@ -558,7 +592,9 @@ export interface StudentWithDetails extends Student {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
@@ -566,7 +602,9 @@ export interface StudentWithDetails extends Student {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
@@ -574,7 +612,9 @@ export interface StudentWithDetails extends Student {
   conversionDate?: string;
   user?: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
   };
 }

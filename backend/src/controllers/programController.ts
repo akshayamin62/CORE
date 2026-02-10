@@ -41,7 +41,7 @@ export const getStudentPrograms = async (req: AuthRequest, res: Response): Promi
     })
       .populate({
         path: 'createdBy',
-        select: 'name email role'
+        select: 'firstName middleName lastName email role'
       })
       .sort({ createdAt: -1 });
 
@@ -125,7 +125,7 @@ export const getOpsStudentPrograms = async (req: AuthRequest, res: Response): Pr
       const programs = await Program.find(query)
         .populate({
           path: 'createdBy',
-          select: 'name email role'
+          select: 'firstName middleName lastName email role'
         })
         .sort({ priority: 1, selectedAt: 1 });
       
@@ -144,7 +144,7 @@ export const getOpsStudentPrograms = async (req: AuthRequest, res: Response): Pr
       const programs = await Program.find(query)
         .populate({
           path: 'createdBy',
-          select: 'name email role'
+          select: 'firstName middleName lastName email role'
         })
         .sort({ createdAt: -1 });
       
@@ -552,7 +552,7 @@ export const getSuperAdminStudentPrograms = async (req: AuthRequest, res: Respon
       const programs = await Program.find(query)
         .populate({
           path: 'createdBy',
-          select: 'name email role'
+          select: 'firstName middleName lastName email role'
         })
         .sort({ priority: 1, selectedAt: 1 });
       
@@ -571,7 +571,7 @@ export const getSuperAdminStudentPrograms = async (req: AuthRequest, res: Respon
       const programs = await Program.find(query)
         .populate({
           path: 'createdBy',
-          select: 'name email role'
+          select: 'firstName middleName lastName email role'
         })
         .sort({ createdAt: -1 });
       
@@ -622,7 +622,7 @@ export const getStudentAppliedPrograms = async (req: AuthRequest, res: Response)
     })
       .populate({
         path: 'createdBy',
-        select: 'name email role'
+        select: 'firstName middleName lastName email role'
       })
       .sort({ priority: 1, selectedAt: 1 });
 

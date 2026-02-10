@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { OpsSchedule, OPS_SCHEDULE_STATUS, OpsScheduleSummary, OpsScheduleStudent } from '@/types';
 import { format, isToday, isTomorrow } from 'date-fns';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface OpsScheduleSidebarProps {
   summary: OpsScheduleSummary;
@@ -17,7 +18,7 @@ interface ScheduleItemProps {
 
 const ScheduleItem = ({ schedule, onClick, showDate = false }: ScheduleItemProps) => {
   const student = schedule.studentId as OpsScheduleStudent;
-  const displayName = student?.userId?.name ? student.userId.name : 'Me';
+  const displayName = student?.userId ? (getFullName(student.userId) || 'Me') : 'Me';
 
   const getStatusStyles = () => {
     switch (schedule.status) {

@@ -2,6 +2,7 @@
 
 import { TeamMeet, TEAMMEET_STATUS, TEAMMEET_TYPE } from '@/types';
 import { format, isToday, isTomorrow, isPast, isFuture, startOfDay } from 'date-fns';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface TeamMeetSidebarProps {
   teamMeets: TeamMeet[];
@@ -74,7 +75,7 @@ function TeamMeetItem({ teamMeet, onClick, showDate = false, currentUserId, isAc
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-1 truncate">
-            {isSender ? 'To: ' : 'From: '}{otherParty.name}
+            {isSender ? 'To: ' : 'From: '}{getFullName(otherParty)}
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">

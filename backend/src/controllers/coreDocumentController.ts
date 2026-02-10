@@ -34,7 +34,7 @@ export const getCOREDocumentFields = async (req: AuthRequest, res: Response) => 
     // Get CORE document fields for this student
     const fields = await COREDocumentField.find(query)
       .sort({ order: 1, createdAt: 1 })
-      .populate("createdBy", "name email");
+      .populate("createdBy", "firstName middleName lastName email");
 
     return res.status(200).json({
       success: true,

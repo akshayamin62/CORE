@@ -27,7 +27,9 @@ interface ChatMessage {
 
 interface Participant {
   _id: string;
-  name: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
   email: string;
 }
 

@@ -217,9 +217,9 @@ export const getDocuments = async (req: AuthRequest, res: Response) => {
 
     // Get all documents
     const documents = await StudentDocument.find({ registrationId })
-      .populate("uploadedBy", "name email")
-      .populate("approvedBy", "name email")
-      .populate("rejectedBy", "name email")
+      .populate("uploadedBy", "firstName middleName lastName email")
+      .populate("approvedBy", "firstName middleName lastName email")
+      .populate("rejectedBy", "firstName middleName lastName email")
       .sort({ documentCategory: 1, createdAt: 1 });
 
     // Group by category

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { getFullName } from '@/utils/nameHelpers';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -23,7 +24,7 @@ export default function Navbar() {
       if (user) {
         try {
           const userData = JSON.parse(user);
-          setUserName(userData.name || '');
+          setUserName(getFullName(userData) || '');
           setUserRole(userData.role || '');
         } catch (error) {
           console.error('Error parsing user data:', error);

@@ -13,6 +13,7 @@ import StudentFormHeader from '@/components/StudentFormHeader';
 import ProgramSection from '@/components/ProgramSection';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
+import { getFullName } from '@/utils/nameHelpers';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -317,7 +318,7 @@ export default function StudentFormEditPage() {
           {/* Student & Service Info */}
           {studentInfo && serviceInfo && (
             <StudentFormHeader
-              studentName={studentInfo.userId?.name || 'Student'}
+              studentName={getFullName(studentInfo?.userId) || 'Student'}
               serviceName={serviceInfo.name}
               editMode="admin"
             />

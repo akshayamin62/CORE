@@ -6,6 +6,7 @@ import { authAPI, superAdminAPI } from '@/lib/api';
 import { User, USER_ROLE, LEAD_STAGE, SERVICE_TYPE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface LeadData {
   _id: string;
@@ -19,13 +20,17 @@ interface LeadData {
     _id: string;
     userId: {
       _id: string;
-      name: string;
+      firstName?: string;
+      middleName?: string;
+      lastName?: string;
       email: string;
     };
   };
   adminId?: {
     _id: string;
-    name: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
     email: string;
     companyName?: string;
   };
@@ -293,7 +298,7 @@ export default function SuperAdminLeadsPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {lead.adminId?.companyName || lead.adminId?.name || 'N/A'}
+                          {lead.adminId?.companyName || getFullName(lead.adminId) || 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(lead.createdAt).toLocaleDateString('en-US', {

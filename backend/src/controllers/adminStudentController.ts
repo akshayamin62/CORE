@@ -342,9 +342,9 @@ export const getStudentByLeadId = async (req: AuthRequest, res: Response): Promi
     }).populate({
       path: 'createdStudentId',
       populate: [
-        { path: 'userId', select: 'name email isVerified isActive createdAt' },
-        { path: 'adminId', populate: { path: 'userId', select: 'name email' } },
-        { path: 'counselorId', populate: { path: 'userId', select: 'name email' } }
+        { path: 'userId', select: 'firstName middleName lastName email isVerified isActive createdAt' },
+        { path: 'adminId', populate: { path: 'userId', select: 'firstName middleName lastName email' } },
+        { path: 'counselorId', populate: { path: 'userId', select: 'firstName middleName lastName email' } }
       ]
     });
 

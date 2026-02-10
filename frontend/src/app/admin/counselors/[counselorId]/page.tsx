@@ -12,12 +12,15 @@ import LeadDetailPanel from '@/components/LeadDetailPanel';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import ScheduleCalendar from '@/components/ScheduleCalendar';
 import ScheduleOverview from '@/components/ScheduleOverview';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface CounselorDetail {
   _id: string;
   userId: {
     _id: string;
-    name: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
     email: string;
     isActive: boolean;
     isVerified: boolean;
@@ -324,7 +327,7 @@ export default function AdminCounselorDetailPage() {
             <div className="flex flex-col gap-6">
               <div>
                 <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-bold text-gray-900">{counselor.userId.name}</h1>
+                  <h1 className="text-3xl font-bold text-gray-900">{getFullName(counselor.userId)}</h1>
                   <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                     counselor.userId.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                   }`}>

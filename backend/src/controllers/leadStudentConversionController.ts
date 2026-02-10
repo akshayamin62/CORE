@@ -164,13 +164,13 @@ export const getPendingConversions = async (req: AuthRequest, res: Response): Pr
       })
       .populate({
         path: 'requestedBy',
-        select: 'name email'
+        select: 'firstName middleName lastName email'
       })
       .populate({
         path: 'adminId',
         populate: {
           path: 'userId',
-          select: 'name email'
+          select: 'firstName middleName lastName email'
         }
       })
       .sort({ createdAt: -1 });
@@ -518,15 +518,15 @@ export const getConversionHistory = async (req: AuthRequest, res: Response): Pro
     const conversions = await LeadStudentConversion.find({ leadId })
       .populate({
         path: 'requestedBy',
-        select: 'name email'
+        select: 'firstName middleName lastName email'
       })
       .populate({
         path: 'approvedBy',
-        select: 'name email'
+        select: 'firstName middleName lastName email'
       })
       .populate({
         path: 'rejectedBy',
-        select: 'name email'
+        select: 'firstName middleName lastName email'
       })
       .sort({ createdAt: -1 });
 
@@ -562,13 +562,13 @@ export const getAllConversions = async (req: AuthRequest, res: Response): Promis
       })
       .populate({
         path: 'requestedBy',
-        select: 'name email'
+        select: 'firstName middleName lastName email'
       })
       .populate({
         path: 'adminId',
         populate: {
           path: 'userId',
-          select: 'name email'
+          select: 'firstName middleName lastName email'
         }
       })
       .sort({ createdAt: -1 });

@@ -5,6 +5,7 @@ import { Lead, FollowUp, LEAD_STAGE, FOLLOWUP_STATUS, MEETING_TYPE, SERVICE_TYPE
 import { followUpAPI, leadAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface LeadDetailPanelProps {
   leadId: string;
@@ -445,9 +446,9 @@ export default function LeadDetailPanel({
                   )}
 
                   <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500">
-                    <span>Created by: {followUp.createdBy?.name || 'Unknown'}</span>
+                    <span>Created by: {getFullName(followUp.createdBy) || 'Unknown'}</span>
                     {followUp.updatedBy && (
-                      <span>Updated by: {followUp.updatedBy.name}</span>
+                      <span>Updated by: {getFullName(followUp.updatedBy)}</span>
                     )}
                     {followUp.completedAt && (
                       <span>Completed: {format(new Date(followUp.completedAt), 'MMM d, yyyy HH:mm')}</span>

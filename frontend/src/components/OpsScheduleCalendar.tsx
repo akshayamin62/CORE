@@ -6,6 +6,7 @@ import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { OpsSchedule, OPS_SCHEDULE_STATUS, OpsScheduleStudent } from '@/types';
 import { useState, useCallback, useMemo } from 'react';
+import { getFullName } from '@/utils/nameHelpers';
 
 const locales = {
   'en-US': enUS,
@@ -71,7 +72,7 @@ export default function OpsScheduleCalendar({
   const events: CalendarEvent[] = useMemo(() => {
     return schedules.map((schedule) => {
       const student = schedule.studentId as OpsScheduleStudent;
-      const displayName = student?.userId?.name ? student.userId.name : 'Me';
+      const displayName = student?.userId ? (getFullName(student.userId) || 'Me') : 'Me';
       
       const [hours, minutes] = schedule.scheduledTime.split(':').map(Number);
       const startDate = new Date(schedule.scheduledDate);

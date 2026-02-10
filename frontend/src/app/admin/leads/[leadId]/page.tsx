@@ -10,6 +10,7 @@ import { format } from 'date-fns';
 import FollowUpCalendar from '@/components/FollowUpCalendar';
 import FollowUpSidebar from '@/components/FollowUpSidebar';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
+import { getFullName } from '@/utils/nameHelpers';
 
 export default function AdminLeadDetailPage() {
   const router = useRouter();
@@ -419,7 +420,7 @@ export default function AdminLeadDetailPage() {
                 {lead.assignedCounselorId ? (
                   <div className="flex items-center justify-between">
                     <span className="text-gray-900 font-medium">
-                      {lead.assignedCounselorId.userId?.name || 'Unknown'}
+                      {getFullName(lead.assignedCounselorId?.userId) || 'Unknown'}
                     </span>
                     <button
                       onClick={openAssignModal}
@@ -555,7 +556,7 @@ export default function AdminLeadDetailPage() {
                 <option value="">-- No Assignment --</option>
                 {counselors.map((counselor) => (
                   <option key={counselor._id} value={counselor._id}>
-                    {counselor.userId?.name || counselor.email}
+                    {getFullName(counselor.userId) || counselor.email}
                   </option>
                 ))}
               </select>

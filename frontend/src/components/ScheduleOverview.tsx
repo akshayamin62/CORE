@@ -3,6 +3,7 @@
 import { FollowUp, FOLLOWUP_STATUS, Lead, LEAD_STAGE, TeamMeet, TEAMMEET_STATUS, TEAMMEET_TYPE, MEETING_TYPE } from '@/types';
 import { format, isToday, isTomorrow, isPast, startOfDay } from 'date-fns';
 import Link from 'next/link';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface ScheduleOverviewProps {
   // FollowUp data
@@ -194,7 +195,7 @@ function TeamMeetItem({ teamMeet, onClick, showDate = false, currentUserId, isAc
             </span>
           </div>
           <p className="text-xs text-gray-500 mt-1 truncate">
-            {isSender ? 'To: ' : 'From: '}{otherParty.name}
+            {isSender ? 'To: ' : 'From: '}{getFullName(otherParty)}
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">

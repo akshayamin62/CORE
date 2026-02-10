@@ -31,7 +31,6 @@ interface StudentData {
       firstName?: string;
       middleName?: string;
       lastName?: string;
-      name: string;
       email: string;
     };
   };
@@ -42,7 +41,6 @@ interface StudentData {
       firstName?: string;
       middleName?: string;
       lastName?: string;
-      name: string;
       email: string;
     };
   };

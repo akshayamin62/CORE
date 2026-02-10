@@ -6,6 +6,7 @@ import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { FollowUp, LEAD_STAGE, Lead, TeamMeet, TEAMMEET_STATUS } from '@/types';
 import { useState, useCallback, useMemo } from 'react';
+import { getFullName } from '@/utils/nameHelpers';
 
 const locales = {
   'en-US': enUS,
@@ -126,8 +127,8 @@ export default function ScheduleCalendar({
   const teamMeetEvents: CalendarEvent[] = useMemo(() => {
     return teamMeets.map((teamMeet) => {
       const otherParty = teamMeet.requestedBy._id === currentUserId
-        ? teamMeet.requestedTo.name
-        : teamMeet.requestedBy.name;
+        ? getFullName(teamMeet.requestedTo)
+        : getFullName(teamMeet.requestedBy);
       
       const [hours, minutes] = teamMeet.scheduledTime.split(':').map(Number);
       const startDate = new Date(teamMeet.scheduledDate);

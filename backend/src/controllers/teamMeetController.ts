@@ -7,6 +7,8 @@ import Counselor from "../models/Counselor";
 import Admin from "../models/Admin";
 import mongoose from "mongoose";
 import { USER_ROLE } from "../types/roles";
+import { createZohoMeeting, deleteZohoMeeting } from "../utils/zohoMeeting";
+import { sendMeetingScheduledEmail } from "../utils/email";
 
 /**
  * Helper: Get start and end of a day
@@ -84,14 +86,15 @@ const checkUserAvailability = async (
   }
 
   const existingTeamMeets = await TeamMeet.find(teamMeetQuery)
-    .populate("requestedBy", "name")
-    .populate("requestedTo", "name");
+    .populate("requestedBy", "firstName middleName lastName")
+    .populate("requestedTo", "firstName middleName lastName");
 
   for (const meet of existingTeamMeets) {
     if (doTimeSlotsOverlap(time, duration, meet.scheduledTime, meet.duration)) {
-      const otherParty = meet.requestedBy._id.toString() === userId
-        ? (meet.requestedTo as any)?.name
-        : (meet.requestedBy as any)?.name;
+      const otherUser = meet.requestedBy._id.toString() === userId
+        ? (meet.requestedTo as any)
+        : (meet.requestedBy as any);
+      const otherParty = [otherUser?.firstName, otherUser?.middleName, otherUser?.lastName].filter(Boolean).join(' ');
       return {
         isAvailable: false,
         conflict: {
@@ -258,12 +261,87 @@ export const createTeamMeet = async (
       status: TEAMMEET_STATUS.PENDING_CONFIRMATION,
     });
 
+    // If meeting type is Online, create a Zoho Meeting
+    const effectiveMeetingType = meetingType || TEAMMEET_TYPE.ONLINE;
+    if (effectiveMeetingType === TEAMMEET_TYPE.ONLINE) {
+      try {
+        // Build meeting start time from date + time
+        const [hours, mins] = scheduledTime.split(":").map(Number);
+        const meetingStartTime = new Date(scheduleDate);
+        meetingStartTime.setHours(hours, mins, 0, 0);
+
+        // Gather participant emails
+        const sender = await User.findById(userId).select("email");
+        const participantEmails: string[] = [];
+        if (sender?.email) participantEmails.push(sender.email);
+        if (recipient.email) participantEmails.push(recipient.email);
+
+        const zohoResult = await createZohoMeeting({
+          topic: subject,
+          startTime: meetingStartTime,
+          duration,
+          agenda: description || subject,
+          participantEmails,
+        });
+
+        console.log("📋 Zoho Meeting result for TeamMeet:", JSON.stringify(zohoResult, null, 2));
+        
+        if (zohoResult.meetingKey && zohoResult.meetingKey !== "not-configured") {
+          teamMeet.zohoMeetingKey = zohoResult.meetingKey;
+          teamMeet.zohoMeetingUrl = zohoResult.meetingUrl;
+          console.log(`✅ Assigned Zoho meeting to TeamMeet: key=${zohoResult.meetingKey}, url=${zohoResult.meetingUrl}`);
+        } else {
+          console.warn("⚠️  Zoho returned empty/not-configured meeting key for TeamMeet");
+        }
+      } catch (zohoError: any) {
+        console.error("⚠️  Zoho Meeting creation failed (meeting saved without link):");
+        console.error("   Error:", zohoError?.message || zohoError);
+      }
+    }
+
     await teamMeet.save();
 
     // Populate for response
     const populatedMeet = await TeamMeet.findById(teamMeet._id)
-      .populate("requestedBy", "name email role")
-      .populate("requestedTo", "name email role");
+      .populate("requestedBy", "firstName middleName lastName email role")
+      .populate("requestedTo", "firstName middleName lastName email role");
+
+    // Send email notifications (non-blocking)
+    const formattedDate = scheduleDate.toLocaleDateString("en-US", {
+      weekday: "long", year: "numeric", month: "long", day: "numeric",
+    });
+
+    const senderUser = await User.findById(userId).select("firstName middleName lastName email");
+    const senderFullName = senderUser
+      ? [senderUser.firstName, senderUser.middleName, senderUser.lastName].filter(Boolean).join(" ")
+      : "A team member";
+    const recipientFullName = [recipient.firstName, recipient.middleName, recipient.lastName].filter(Boolean).join(" ");
+
+    const meetingEmailBase = {
+      subject,
+      date: formattedDate,
+      time: scheduledTime,
+      duration,
+      meetingType: effectiveMeetingType === TEAMMEET_TYPE.ONLINE ? "Online" : "Face to Face",
+      meetingUrl: teamMeet.zohoMeetingUrl || undefined,
+      notes: description || undefined,
+    };
+
+    // Email to recipient
+    if (recipient.email) {
+      sendMeetingScheduledEmail(recipient.email, recipientFullName, {
+        ...meetingEmailBase,
+        otherPartyName: senderFullName,
+      }).catch((err) => console.error("Failed to send meeting email to recipient:", err));
+    }
+
+    // Email to sender
+    if (senderUser?.email) {
+      sendMeetingScheduledEmail(senderUser.email, senderFullName, {
+        ...meetingEmailBase,
+        otherPartyName: recipientFullName,
+      }).catch((err) => console.error("Failed to send meeting email to sender:", err));
+    }
 
     return res.status(201).json({
       success: true,
@@ -306,8 +384,8 @@ export const getTeamMeets = async (
     }
 
     const teamMeets = await TeamMeet.find(query)
-      .populate("requestedBy", "name email role")
-      .populate("requestedTo", "name email role")
+      .populate("requestedBy", "firstName middleName lastName email role")
+      .populate("requestedTo", "firstName middleName lastName email role")
       .sort({ scheduledDate: 1, scheduledTime: 1 });
 
     return res.status(200).json({
@@ -354,8 +432,8 @@ export const getTeamMeetsForCalendar = async (
       $or: [{ requestedBy: userId }, { requestedTo: userId }],
       scheduledDate: { $gte: startDate, $lte: endDate },
     })
-      .populate("requestedBy", "name email role")
-      .populate("requestedTo", "name email role")
+      .populate("requestedBy", "firstName middleName lastName email role")
+      .populate("requestedTo", "firstName middleName lastName email role")
       .sort({ scheduledDate: 1, scheduledTime: 1 });
 
     return res.status(200).json({
@@ -383,8 +461,8 @@ export const getTeamMeetById = async (
     const { teamMeetId } = req.params;
 
     const teamMeet = await TeamMeet.findById(teamMeetId)
-      .populate("requestedBy", "name email role")
-      .populate("requestedTo", "name email role");
+      .populate("requestedBy", "firstName middleName lastName email role")
+      .populate("requestedTo", "firstName middleName lastName email role");
 
     if (!teamMeet) {
       return res.status(404).json({
@@ -457,8 +535,8 @@ export const acceptTeamMeet = async (
     await teamMeet.save();
 
     const populatedMeet = await TeamMeet.findById(teamMeetId)
-      .populate("requestedBy", "name email role")
-      .populate("requestedTo", "name email role");
+      .populate("requestedBy", "firstName middleName lastName email role")
+      .populate("requestedTo", "firstName middleName lastName email role");
 
     return res.status(200).json({
       success: true,
@@ -523,8 +601,8 @@ export const rejectTeamMeet = async (
     await teamMeet.save();
 
     const populatedMeet = await TeamMeet.findById(teamMeetId)
-      .populate("requestedBy", "name email role")
-      .populate("requestedTo", "name email role");
+      .populate("requestedBy", "firstName middleName lastName email role")
+      .populate("requestedTo", "firstName middleName lastName email role");
 
     return res.status(200).json({
       success: true,
@@ -580,8 +658,8 @@ export const cancelTeamMeet = async (
     await teamMeet.save();
 
     const populatedMeet = await TeamMeet.findById(teamMeetId)
-      .populate("requestedBy", "name email role")
-      .populate("requestedTo", "name email role");
+      .populate("requestedBy", "firstName middleName lastName email role")
+      .populate("requestedTo", "firstName middleName lastName email role");
 
     return res.status(200).json({
       success: true,
@@ -689,11 +767,52 @@ export const rescheduleTeamMeet = async (
     teamMeet.status = TEAMMEET_STATUS.PENDING_CONFIRMATION;
     teamMeet.rejectionMessage = undefined;
 
+    // If meeting type is Online, recreate Zoho Meeting
+    if (teamMeet.meetingType === TEAMMEET_TYPE.ONLINE) {
+      try {
+        // Delete old Zoho meeting if exists
+        if (teamMeet.zohoMeetingKey) {
+          await deleteZohoMeeting(teamMeet.zohoMeetingKey);
+        }
+
+        // Create new Zoho meeting
+        const [hours, mins] = scheduledTime.split(":").map(Number);
+        const meetingStartTime = new Date(scheduleDate);
+        meetingStartTime.setHours(hours, mins, 0, 0);
+
+        const sender = await User.findById(userId).select("email");
+        const participantEmails: string[] = [];
+        if (sender?.email) participantEmails.push(sender.email);
+        if (recipient?.email) participantEmails.push(recipient.email);
+
+        const zohoResult = await createZohoMeeting({
+          topic: subject || teamMeet.subject,
+          startTime: meetingStartTime,
+          duration,
+          agenda: description || teamMeet.description || teamMeet.subject,
+          participantEmails,
+        });
+
+        console.log("📋 Zoho Meeting result for rescheduled TeamMeet:", JSON.stringify(zohoResult, null, 2));
+        
+        if (zohoResult.meetingKey && zohoResult.meetingKey !== "not-configured") {
+          teamMeet.zohoMeetingKey = zohoResult.meetingKey;
+          teamMeet.zohoMeetingUrl = zohoResult.meetingUrl;
+          console.log(`✅ Assigned Zoho meeting to rescheduled TeamMeet: key=${zohoResult.meetingKey}, url=${zohoResult.meetingUrl}`);
+        } else {
+          console.warn("⚠️  Zoho returned empty/not-configured meeting key for rescheduled TeamMeet");
+        }
+      } catch (zohoError: any) {
+        console.error("⚠️  Zoho Meeting recreation failed during reschedule:");
+        console.error("   Error:", zohoError?.message || zohoError);
+      }
+    }
+
     await teamMeet.save();
 
     const populatedMeet = await TeamMeet.findById(teamMeetId)
-      .populate("requestedBy", "name email role")
-      .populate("requestedTo", "name email role");
+      .populate("requestedBy", "firstName middleName lastName email role")
+      .populate("requestedTo", "firstName middleName lastName email role");
 
     return res.status(200).json({
       success: true,
@@ -753,8 +872,8 @@ export const completeTeamMeet = async (
     await teamMeet.save();
 
     const populatedMeet = await TeamMeet.findById(teamMeetId)
-      .populate("requestedBy", "name email role")
-      .populate("requestedTo", "name email role");
+      .populate("requestedBy", "firstName middleName lastName email role")
+      .populate("requestedTo", "firstName middleName lastName email role");
 
     return res.status(200).json({
       success: true,
@@ -860,11 +979,11 @@ export const getParticipants = async (
     }
 
     // Get the admin user
-    const admin = await User.findById(adminId).select("_id name email role");
+    const admin = await User.findById(adminId).select("_id firstName middleName lastName email role");
 
     // Get all counselors under this admin
     const counselors = await Counselor.find({ adminId })
-      .populate("userId", "_id name email role");
+      .populate("userId", "_id firstName middleName lastName email role");
 
     // Build participants list
     const participants: any[] = [];
@@ -887,7 +1006,9 @@ export const getParticipants = async (
       if (counselorUser && counselorUser._id.toString() !== userId) {
         participants.push({
           _id: counselorUser._id,
-          name: counselorUser.name,
+          firstName: counselorUser.firstName,
+          middleName: counselorUser.middleName,
+          lastName: counselorUser.lastName,
           email: counselorUser.email,
           role: counselorUser.role,
         });
@@ -929,7 +1050,7 @@ export const getTeamMeetsForCounselor = async (
     }
 
     // Get the counselor to verify they exist and belong to this admin
-    const counselor = await Counselor.findById(counselorId).populate("userId", "name email");
+    const counselor = await Counselor.findById(counselorId).populate("userId", "firstName middleName lastName email");
     if (!counselor) {
       return res.status(404).json({
         success: false,
@@ -961,8 +1082,8 @@ export const getTeamMeetsForCounselor = async (
       ],
       scheduledDate: { $gte: threeMonthsAgo, $lte: threeMonthsLater },
     })
-      .populate("requestedBy", "name email role")
-      .populate("requestedTo", "name email role")
+      .populate("requestedBy", "firstName middleName lastName email role")
+      .populate("requestedTo", "firstName middleName lastName email role")
       .sort({ scheduledDate: 1, scheduledTime: 1 });
 
     return res.status(200).json({
