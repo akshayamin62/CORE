@@ -6,7 +6,6 @@ import { authAPI, superAdminAPI } from '@/lib/api';
 import { User, USER_ROLE, LEAD_STAGE, SERVICE_TYPE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
-import { getFullName } from '@/utils/nameHelpers';
 
 interface LeadData {
   _id: string;
@@ -20,9 +19,7 @@ interface LeadData {
     _id: string;
     userId: {
       _id: string;
-      firstName?: string;
-      middleName?: string;
-      lastName?: string;
+      name: string;
       email: string;
     };
   };

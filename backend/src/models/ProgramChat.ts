@@ -67,5 +67,12 @@ const ProgramChatSchema = new Schema<IProgramChat>(
 // Compound index to ensure one chat per program-student-chatType combination
 ProgramChatSchema.index({ programId: 1, studentId: 1, chatType: 1 }, { unique: true });
 
-export default mongoose.model<IProgramChat>('ProgramChat', ProgramChatSchema);
+const ProgramChat = mongoose.model<IProgramChat>('ProgramChat', ProgramChatSchema);
+
+// Drop stale 2-field index if it exists (was replaced by 3-field index including chatType)
+ProgramChat.collection.dropIndex('programId_1_studentId_1').catch(() => {
+  // Index doesn't exist or already dropped — safe to ignore
+});
+
+export default ProgramChat;
 

@@ -246,7 +246,7 @@ export default function TeamMeetFormPanel({
 
     setSaving(true);
     try {
-      await teamMeetAPI.completeTeamMeet(teamMeet._id);
+      await teamMeetAPI.completeTeamMeet(teamMeet._id, { description: description.trim() || undefined });
       toast.success('Meeting marked as completed');
       onSave();
     } catch (error: any) {
@@ -466,7 +466,7 @@ export default function TeamMeetFormPanel({
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              disabled={mode !== 'create' && teamMeet?.status !== TEAMMEET_STATUS.REJECTED}
+              disabled={mode !== 'create' && teamMeet?.status !== TEAMMEET_STATUS.REJECTED && teamMeet?.status !== TEAMMEET_STATUS.CONFIRMED}
               placeholder="Add meeting details..."
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-transparent disabled:bg-gray-100 resize-none"

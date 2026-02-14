@@ -207,7 +207,7 @@ export default function ProgramFormModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Application Fee (GBP)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Application Fee</label>
               <input
                 type="number"
                 step="0.01"
@@ -219,7 +219,7 @@ export default function ProgramFormModal({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Yearly Tuition Fees (GBP)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Yearly Tuition Fees</label>
               <input
                 type="number"
                 step="0.01"

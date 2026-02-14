@@ -173,10 +173,11 @@ export const createFollowUp = async (
     const existingFollowUpsForLead = await FollowUp.countDocuments({ leadId });
     const followUpNumber = existingFollowUpsForLead + 1;
 
-    // Determine initial status - if lead is already converted, set status to CONVERTED_TO_STUDENT
-    const initialStatus = lead.stage === LEAD_STAGE.CONVERTED 
-      ? FOLLOWUP_STATUS.CONVERTED_TO_STUDENT 
-      : FOLLOWUP_STATUS.SCHEDULED;
+    // If lead is already converted to student, lock the follow-up status
+    const initialStatus =
+      lead.stage === LEAD_STAGE.CONVERTED
+        ? FOLLOWUP_STATUS.CONVERTED_TO_STUDENT
+        : FOLLOWUP_STATUS.SCHEDULED;
 
     // Create the follow-up
     const followUp = new FollowUp({
@@ -192,11 +193,6 @@ export const createFollowUp = async (
       notes: notes || "",
       createdBy: userId,
     });
-
-    // Set completedAt if already converted
-    if (initialStatus === FOLLOWUP_STATUS.CONVERTED_TO_STUDENT) {
-      followUp.completedAt = new Date();
-    }
 
     // If meeting type is Online, create a Zoho Meeting
     const effectiveMeetingType = meetingType || MEETING_TYPE.ONLINE;
@@ -223,18 +219,10 @@ export const createFollowUp = async (
           participantEmails,
         });
 
-        console.log("📋 Zoho Meeting result:", JSON.stringify(zohoResult, null, 2));
-        
-        if (zohoResult.meetingKey && zohoResult.meetingKey !== "not-configured") {
-          followUp.zohoMeetingKey = zohoResult.meetingKey;
-          followUp.zohoMeetingUrl = zohoResult.meetingUrl;
-          console.log(`✅ Assigned Zoho meeting to follow-up: key=${zohoResult.meetingKey}, url=${zohoResult.meetingUrl}`);
-        } else {
-          console.warn("⚠️  Zoho returned empty/not-configured meeting key");
-        }
-      } catch (zohoError: any) {
-        console.error("⚠️  Zoho Meeting creation failed (follow-up saved without link):");
-        console.error("   Error:", zohoError?.message || zohoError);
+        followUp.zohoMeetingKey = zohoResult.meetingKey;
+        followUp.zohoMeetingUrl = zohoResult.meetingUrl;
+      } catch (zohoError) {
+        console.error("⚠️  Zoho Meeting creation failed (follow-up saved without link):", zohoError);
         // Non-fatal: follow-up is still created, just without the meeting link
       }
     }
@@ -662,11 +650,12 @@ export const updateFollowUp = async (
       const existingFollowUpsCount = await FollowUp.countDocuments({ leadId: followUp.leadId });
       const nextFollowUpNumber = existingFollowUpsCount + 1;
 
-      // Determine status - if lead is converted OR stageChangedTo is CONVERTED, use CONVERTED_TO_STUDENT
+      // If lead is already converted to student, lock the follow-up status
       const effectiveStage = stageChangedTo || lead?.stage || followUp.stageAtFollowUp;
-      const nextFollowUpStatus = effectiveStage === LEAD_STAGE.CONVERTED 
-        ? FOLLOWUP_STATUS.CONVERTED_TO_STUDENT 
-        : FOLLOWUP_STATUS.SCHEDULED;
+      const nextStatus =
+        effectiveStage === LEAD_STAGE.CONVERTED
+          ? FOLLOWUP_STATUS.CONVERTED_TO_STUDENT
+          : FOLLOWUP_STATUS.SCHEDULED;
 
       newFollowUp = new FollowUp({
         leadId: followUp.leadId,
@@ -675,52 +664,12 @@ export const updateFollowUp = async (
         scheduledTime: nextFollowUp.scheduledTime,
         duration: nextFollowUp.duration || 30,
         meetingType: nextFollowUp.meetingType || MEETING_TYPE.ONLINE,
-        status: nextFollowUpStatus,
+        status: nextStatus,
         stageAtFollowUp: effectiveStage,
         followUpNumber: nextFollowUpNumber,
         notes: "",
         createdBy: userId,
-        ...(nextFollowUpStatus === FOLLOWUP_STATUS.CONVERTED_TO_STUDENT && { completedAt: new Date() }),
       });
-
-      // If next follow-up is Online, create a Zoho Meeting
-      const nextMeetingType = nextFollowUp.meetingType || MEETING_TYPE.ONLINE;
-      if (nextMeetingType === MEETING_TYPE.ONLINE) {
-        try {
-          const [hours, mins] = nextFollowUp.scheduledTime.split(":").map(Number);
-          const meetingStartTime = new Date(nextDate);
-          meetingStartTime.setHours(hours, mins, 0, 0);
-
-          const participantEmails: string[] = [];
-          if (lead?.email) participantEmails.push(lead.email);
-
-          // Get counselor's email
-          const counselorForMeeting = await Counselor.findById(counselorId).populate("userId", "email");
-          const counselorMeetEmail = (counselorForMeeting?.userId as any)?.email;
-          if (counselorMeetEmail) participantEmails.push(counselorMeetEmail);
-
-          const zohoResult = await createZohoMeeting({
-            topic: `Follow-up #${nextFollowUpNumber} - ${lead?.name || 'Lead'}`,
-            startTime: meetingStartTime,
-            duration: nextFollowUp.duration || 30,
-            agenda: `Follow-up meeting`,
-            participantEmails,
-          });
-
-          console.log("📋 Zoho Meeting result for next follow-up:", JSON.stringify(zohoResult, null, 2));
-          
-          if (zohoResult.meetingKey && zohoResult.meetingKey !== "not-configured") {
-            newFollowUp.zohoMeetingKey = zohoResult.meetingKey;
-            newFollowUp.zohoMeetingUrl = zohoResult.meetingUrl;
-            console.log(`✅ Assigned Zoho meeting to next follow-up: key=${zohoResult.meetingKey}, url=${zohoResult.meetingUrl}`);
-          } else {
-            console.warn("⚠️  Zoho returned empty/not-configured meeting key for next follow-up");
-          }
-        } catch (zohoError: any) {
-          console.error("⚠️  Zoho Meeting creation failed for next follow-up:");
-          console.error("   Error:", zohoError?.message || zohoError);
-        }
-      }
 
       await newFollowUp.save();
       await newFollowUp.populate("leadId", "name email mobileNumber city serviceTypes stage conversionStatus");

@@ -5,10 +5,11 @@ import { User, USER_ROLE } from '@/types';
 import { useState, useEffect } from 'react';
 import { authAPI } from '@/lib/api';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
+import { BACKEND_URL } from '@/lib/ivyApi';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  user: User;
+  user?: User;
 }
 
 interface AdminProfile {
@@ -16,11 +17,14 @@ interface AdminProfile {
   companyName?: string;
 }
 
-export default function AdminLayout({ children, user }: AdminLayoutProps) {
+export default function AdminLayout({ children, user: userProp }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
+  const [internalUser, setInternalUser] = useState<User | null>(null);
+
+  const user = userProp || internalUser;
 
   const navigationItems = [
     {
@@ -63,6 +67,11 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
       const response = await authAPI.getProfile();
       const profileData = response.data.data;
       
+      // Set user if not provided as prop
+      if (!userProp && profileData.user) {
+        setInternalUser(profileData.user);
+      }
+
       // Check if admin field exists with logo and company name
       if (profileData.admin) {
         setAdminProfile({
@@ -94,7 +103,7 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
             <div className="flex items-center gap-2">
               {adminProfile?.companyLogo ? (
                 <img
-                  src={`http://localhost:5000${adminProfile.companyLogo}`}
+                  src={`${BACKEND_URL}${adminProfile.companyLogo}`}
                   alt="Company Logo"
                   className="w-8 h-8 rounded-lg object-cover"
                   onError={(e) => {
@@ -164,15 +173,15 @@ export default function AdminLayout({ children, user }: AdminLayoutProps) {
           {sidebarOpen ? (
             <div className="mb-3">
               <p className="text-sm font-medium text-gray-900 truncate">
-                {getFullName(user)}
+                {user ? getFullName(user) : 'Admin'}
               </p>
-              <p className="text-xs text-gray-500 truncate">{user.email}</p>
+              <p className="text-xs text-gray-500 truncate">{user?.email || ''}</p>
             </div>
           ) : (
             <div className="mb-3 flex justify-center">
               <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                 <span className="text-blue-600 font-semibold text-sm">
-                  {getInitials(user)}
+                  {user ? getInitials(user) : 'A'}
                 </span>
               </div>
             </div>

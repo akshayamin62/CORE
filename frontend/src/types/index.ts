@@ -204,26 +204,26 @@ export interface StudentDocument {
   uploadedAt: string;
   uploadedBy: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
   };
   uploadedByRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN';
   status: DocumentStatus;
   approvedBy?: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
   };
   approvedAt?: string;
   rejectedBy?: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
   };
   rejectedAt?: string;
@@ -266,9 +266,9 @@ export interface Lead {
     _id: string;
     userId: {
       _id: string;
-      firstName?: string;
+      firstName: string;
       middleName?: string;
-      lastName?: string;
+      lastName: string;
       email: string;
     };
     enquiryFormSlug: string;
@@ -277,9 +277,9 @@ export interface Lead {
     _id: string;
     userId: {
       _id: string;
-      firstName?: string;
+      firstName: string;
       middleName?: string;
-      lastName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -349,15 +349,15 @@ export interface FollowUp {
   notes?: string;
   createdBy: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
   };
   updatedBy?: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
   };
   completedAt?: string;
   createdAt: string;
@@ -496,9 +496,9 @@ export interface OpsScheduleStudent {
   _id: string;
   userId: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
   };
 }
@@ -548,18 +548,18 @@ export interface LeadStudentConversion {
   leadId: Lead | string;
   requestedBy: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
   };
   adminId: {
     _id: string;
     userId: {
       _id: string;
-      firstName?: string;
+      firstName: string;
       middleName?: string;
-      lastName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -567,17 +567,17 @@ export interface LeadStudentConversion {
   rejectionReason?: string;
   approvedBy?: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
   };
   approvedAt?: string;
   rejectedBy?: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
   };
   rejectedAt?: string;
@@ -592,9 +592,9 @@ export interface StudentWithDetails extends Student {
     _id: string;
     userId: {
       _id: string;
-      firstName?: string;
+      firstName: string;
       middleName?: string;
-      lastName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -602,9 +602,9 @@ export interface StudentWithDetails extends Student {
     _id: string;
     userId: {
       _id: string;
-      firstName?: string;
+      firstName: string;
       middleName?: string;
-      lastName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -612,9 +612,9 @@ export interface StudentWithDetails extends Student {
   conversionDate?: string;
   user?: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
   };
 }

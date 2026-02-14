@@ -63,7 +63,4 @@ const adminSchema = new Schema<IAdmin>(
   { timestamps: true }
 );
 
-// Index for faster slug lookup
-adminSchema.index({ enquiryFormSlug: 1 });
-
 export default mongoose.model<IAdmin>("Admin", adminSchema);

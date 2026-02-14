@@ -107,7 +107,8 @@ function MyDetailsContent() {
 
     } catch (error: any) {
       console.error('Failed to fetch data:', error);
-      toast.error('Failed to load form data');
+      const msg = error.response?.data?.message || error.message || 'Failed to load form data';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

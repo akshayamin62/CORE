@@ -21,6 +21,25 @@ import teamMeetRoutes from "./routes/teamMeetRoutes";
 import opsScheduleRoutes from "./routes/opsScheduleRoutes";
 import leadStudentConversionRoutes from "./routes/leadStudentConversionRoutes";
 
+// Ivy League route imports
+import ivyServiceRoutes from "./routes/ivyService.routes";
+import ivyActivityRoutes from "./routes/activity.routes";
+import ivyAdminRoutes from "./routes/admin.routes";
+import ivyAgentSuggestionRoutes from "./routes/agentSuggestion.routes";
+import ivyExcelUploadRoutes from "./routes/excelUpload.routes";
+import ivyGrammarCheckRoutes from "./routes/grammarCheck.routes";
+import ivyScoreRoutes from "./routes/ivyScore.routes";
+import ivyPointer1Routes from "./routes/pointer1.routes";
+import ivyPointer234ActivityRoutes from "./routes/pointer234Activity.routes";
+import ivyPointer5Routes from "./routes/pointer5.routes";
+import ivyPointer6Routes from "./routes/pointer6.routes";
+import ivyPointerActivityRoutes from "./routes/pointerActivity.routes";
+import ivyStudentInterestRoutes from "./routes/studentInterest.routes";
+import ivyTaskConversationRoutes from "./routes/taskConversation.routes";
+import ivyUserRoutes from "./routes/user.routes";
+
+import { authenticate } from "./middleware/auth";
+
 // Import all models to register them with Mongoose
 import "./models/User";
 import "./models/Student";
@@ -46,6 +65,33 @@ import "./models/TeamMeet";
 import "./models/OpsSchedule";
 import "./models/LeadStudentConversion";
 
+// Import Ivy League models to register them with Mongoose
+import "./models/ivy/AcademicData";
+import "./models/ivy/AcademicDocument";
+import "./models/ivy/AcademicEvaluation";
+import "./models/ivy/Activity";
+import "./models/ivy/AgentSuggestion";
+import "./models/ivy/IvyExpertSelectedSuggestion";
+import "./models/ivy/StudentSubmission";
+import "./models/ivy/IvyExpertEvaluation";
+import "./models/ivy/IvyExpertDocument";
+import "./models/ivy/IvyPointer";
+import "./models/ivy/EssayGuideline";
+import "./models/ivy/EssaySubmission";
+import "./models/ivy/EssayEvaluation";
+import "./models/ivy/Pointer5Task";
+import "./models/ivy/Pointer5Submission";
+import "./models/ivy/Pointer5Evaluation";
+import "./models/ivy/Pointer6CourseList";
+import "./models/ivy/Pointer6Course";
+import "./models/ivy/Pointer6SelectedCourse";
+import "./models/ivy/Pointer6Certificate";
+import "./models/ivy/Pointer6CertificateEvaluation";
+import "./models/ivy/Pointer6Evaluation";
+import "./models/ivy/StudentIvyScoreCard";
+import "./models/ivy/StudentPointerScore";
+import "./models/ivy/TaskConversation";
+
 dotenv.config();
 
 const app = express();
@@ -56,7 +102,9 @@ app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
 // Serve uploaded files statically
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Use getUploadBaseDir() for Vercel compatibility (/tmp/uploads on Vercel, ./uploads locally)
+import { getUploadBaseDir } from './utils/uploadDir';
+app.use('/uploads', express.static(getUploadBaseDir()));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/super-admin/students", superAdminStudentRoutes); // More specific route must come first
@@ -75,6 +123,23 @@ app.use("/api/team-meets", teamMeetRoutes); // TeamMeet routes
 app.use("/api/ops-schedules", opsScheduleRoutes); // OPS Schedule routes
 app.use("/api/lead-conversions", leadStudentConversionRoutes); // Lead to Student conversion routes
 app.use("/api", leadRoutes); // Lead routes (includes public, admin, counselor endpoints)
+
+// Ivy League routes (all protected by authenticate middleware)
+app.use("/api/ivy/ivy-service", authenticate, ivyServiceRoutes);
+app.use("/api/ivy/activities", authenticate, ivyActivityRoutes);
+app.use("/api/ivy/admin", authenticate, ivyAdminRoutes);
+app.use("/api/ivy/agent-suggestions", authenticate, ivyAgentSuggestionRoutes);
+app.use("/api/ivy/excel-upload", authenticate, ivyExcelUploadRoutes);
+app.use("/api/ivy/grammar-check", authenticate, ivyGrammarCheckRoutes);
+app.use("/api/ivy/ivy-score", authenticate, ivyScoreRoutes);
+app.use("/api/ivy/pointer1", authenticate, ivyPointer1Routes);
+app.use("/api/ivy/pointer234", authenticate, ivyPointer234ActivityRoutes);
+app.use("/api/ivy/pointer5", authenticate, ivyPointer5Routes);
+app.use("/api/ivy/pointer6", authenticate, ivyPointer6Routes);
+app.use("/api/ivy/pointer/activity", authenticate, ivyPointerActivityRoutes);
+app.use("/api/ivy/student-interest", authenticate, ivyStudentInterestRoutes);
+app.use("/api/ivy/task", authenticate, ivyTaskConversationRoutes);
+app.use("/api/ivy/users", authenticate, ivyUserRoutes);
 
 // Basic test route
 app.get('/', (_req, res) => {

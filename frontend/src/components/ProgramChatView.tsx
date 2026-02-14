@@ -27,9 +27,7 @@ interface ChatMessage {
 
 interface Participant {
   _id: string;
-  firstName?: string;
-  middleName?: string;
-  lastName?: string;
+  name: string;
   email: string;
 }
 
@@ -184,17 +182,19 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    const isToday = date.toDateString() === now.toDateString();
     
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+
+    const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    if (isToday) return `Today, ${timeStr}`;
+    if (isYesterday) return `Yesterday, ${timeStr}`;
+    
+    const dateStr = date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+    return `${dateStr}, ${timeStr}`;
   };
 
   return (

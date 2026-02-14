@@ -5,7 +5,8 @@ import {
   toggleCounselorStatus,
   getCounselorDetail,
   getCounselorFollowUps,
-  getCounselorFollowUpSummary
+  getCounselorFollowUpSummary,
+  getAdminStats
 } from "../controllers/adminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
@@ -16,6 +17,13 @@ const router = Router();
 // All routes require authentication and admin role
 router.use(authenticate);
 router.use(authorize([USER_ROLE.ADMIN]));
+
+/**
+ * @route   GET /api/admin/stats
+ * @desc    Get admin dashboard stats
+ * @access  Admin only
+ */
+router.get("/stats", getAdminStats);
 
 /**
  * @route   POST /api/admin/counselor

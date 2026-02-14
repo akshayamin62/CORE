@@ -5,16 +5,16 @@ import { useRouter, useParams } from 'next/navigation';
 import { authAPI, adminStudentAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
-import { getFullName } from '@/utils/nameHelpers';
 import toast, { Toaster } from 'react-hot-toast';
+import { getFullName, getInitials } from '@/utils/nameHelpers';
 
 interface StudentDetails {
   _id: string;
   userId: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
     role: string;
     isVerified: boolean;
@@ -24,11 +24,12 @@ interface StudentDetails {
   mobileNumber?: string;
   adminId?: {
     _id: string;
+    companyName?: string;
     userId: {
       _id: string;
-      firstName?: string;
+      firstName: string;
       middleName?: string;
-      lastName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -36,9 +37,9 @@ interface StudentDetails {
     _id: string;
     userId: {
       _id: string;
-      firstName?: string;
+      firstName: string;
       middleName?: string;
-      lastName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -55,15 +56,15 @@ interface Registration {
   };
   primaryOpsId?: {
     _id: string;
-    userId: { _id: string; firstName?: string; middleName?: string; lastName?: string; email: string };
+    userId: { _id: string; firstName: string; middleName?: string; lastName: string; email: string };
   };
   secondaryOpsId?: {
     _id: string;
-    userId: { _id: string; firstName?: string; middleName?: string; lastName?: string; email: string };
+    userId: { _id: string; firstName: string; middleName?: string; lastName: string; email: string };
   };
   activeOpsId?: {
     _id: string;
-    userId: { _id: string; firstName?: string; middleName?: string; lastName?: string; email: string };
+    userId: { _id: string; firstName: string; middleName?: string; lastName: string; email: string };
   };
   status: string;
   createdAt: string;
@@ -187,7 +188,7 @@ export default function AdminStudentDetailPage() {
               <div className="flex items-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                   <span className="text-blue-600 font-bold text-xl">
-                    {(getFullName(student.userId) || '?').charAt(0).toUpperCase()}
+                    {getInitials(student.userId)}
                   </span>
                 </div>
                 <div>
@@ -227,14 +228,20 @@ export default function AdminStudentDetailPage() {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Admin</p>
                 <p className="font-medium text-gray-900">
-                  {getFullName(student.adminId?.userId) || 'N/A'}
+                  {student.adminId?.companyName || 'N/A'}
                 </p>
+                {student.adminId?.userId?.email && (
+                  <p className="text-sm text-gray-500">{student.adminId.userId.email}</p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Counselor</p>
                 <p className="font-medium text-green-600">
                   {getFullName(student.counselorId?.userId) || 'N/A'}
                 </p>
+                {student.counselorId?.userId?.email && (
+                  <p className="text-sm text-gray-500">{student.counselorId.userId.email}</p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Joined Date</p>
@@ -278,17 +285,17 @@ export default function AdminStudentDetailPage() {
                           <div className="mt-3 space-y-2">
                             {registration.primaryOpsId && (
                               <p className="text-xs text-gray-600">
-                                <span className="font-medium">Primary OPS:</span> {getFullName(registration.primaryOpsId.userId) || 'N/A'}
+                <span className="font-medium">Primary OPS:</span> {getFullName(registration.primaryOpsId.userId) || 'N/A'}
                               </p>
                             )}
                             {registration.secondaryOpsId && (
                               <p className="text-xs text-gray-600">
-                                <span className="font-medium">Secondary OPS:</span> {getFullName(registration.secondaryOpsId.userId) || 'N/A'}
+                <span className="font-medium">Secondary OPS:</span> {getFullName(registration.secondaryOpsId.userId) || 'N/A'}
                               </p>
                             )}
                             {registration.activeOpsId && (
                               <p className="text-xs font-medium text-blue-600">
-                                ✓ Active: {getFullName(registration.activeOpsId.userId) || 'N/A'}
+                ✓ Active: {getFullName(registration.activeOpsId.userId) || 'N/A'}
                               </p>
                             )}
                           </div>

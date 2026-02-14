@@ -7,12 +7,14 @@ import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
+import { BACKEND_URL } from '@/lib/ivyApi';
 
 interface RoleUserListPageProps {
   role: string;
   roleDisplayName: string;
   roleEnum: USER_ROLE;
   canAddUser?: boolean;
+  headerExtra?: React.ReactNode;
 }
 
 interface UserStats {
@@ -34,6 +36,7 @@ export default function RoleUserListPage({
   roleDisplayName,
   roleEnum,
   canAddUser = false,
+  headerExtra,
 }: RoleUserListPageProps) {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -330,15 +333,18 @@ export default function RoleUserListPage({
               <p className="text-gray-600 mt-1">Manage all {roleDisplayName.toLowerCase()} accounts</p>
             </div>
             {canAddUser && (
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Add {roleDisplayName}
-              </button>
+              <div className="flex items-center gap-3">
+                {headerExtra}
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add {roleDisplayName}
+                </button>
+              </div>
             )}
           </div>
 
@@ -415,7 +421,7 @@ export default function RoleUserListPage({
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Role</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Joined</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -425,7 +431,7 @@ export default function RoleUserListPage({
                           <div className="flex items-center">
                             {isAdminRole && user.companyLogo ? (
                               <img
-                                src={`http://localhost:5000${user.companyLogo}`}
+                                src={`${BACKEND_URL}${user.companyLogo}`}
                                 alt={user.companyName || 'Company Logo'}
                                 className="w-10 h-10 rounded-full object-cover"
                                 onError={(e) => {
@@ -482,8 +488,8 @@ export default function RoleUserListPage({
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-6 py-4 whitespace-nowrap text-left text-sm font-medium">
+                          <div className="flex items-center justify-start gap-2">
                             {isAdminRole && (
                               <button
                                 onClick={() => router.push(`/super-admin/roles/admin/${user._id || user.id}`)}
@@ -506,6 +512,22 @@ export default function RoleUserListPage({
                                 className="px-3 py-1.5 rounded-lg transition-colors text-xs bg-blue-600 text-white hover:bg-blue-700"
                               >
                                 View Detail
+                              </button>
+                            )}
+                            {roleEnum === USER_ROLE.IVY_EXPERT && (
+                              <button
+                                onClick={() => router.push(`/super-admin/roles/ivy-expert/${user._id || user.id}`)}
+                                className="px-3 py-1.5 rounded-lg transition-colors text-xs bg-blue-600 text-white hover:bg-blue-700"
+                              >
+                                View Details
+                              </button>
+                            )}
+                            {roleEnum === USER_ROLE.OPS && (
+                              <button
+                                onClick={() => router.push(`/super-admin/roles/ops/${user._id || user.id}`)}
+                                className="px-3 py-1.5 rounded-lg transition-colors text-xs bg-blue-600 text-white hover:bg-blue-700"
+                              >
+                                View Details
                               </button>
                             )}
                             <button

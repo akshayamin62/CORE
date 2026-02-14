@@ -478,7 +478,7 @@ export default function AdminLeadsPage() {
                   <option value="unassigned">Unassigned</option>
                   {counselors.map((counselor) => (
                     <option key={counselor._id} value={counselor._id}>
-                      {getFullName(counselor.userId) || counselor.email}
+                      {getFullName(counselor) || counselor.email}
                     </option>
                   ))}
                 </select>
@@ -555,7 +555,7 @@ export default function AdminLeadsPage() {
                         <td className="px-4 py-4">
                           {lead.assignedCounselorId ? (
                             <span className="text-sm text-gray-900 truncate block">
-                              {getFullName(lead.assignedCounselorId?.userId) || 'Unknown'}
+                              {lead.assignedCounselorId.userId ? getFullName(lead.assignedCounselorId.userId) : 'Unknown'}
                             </span>
                           ) : (
                             <span className="text-sm text-gray-400 italic">Unassigned</span>
@@ -583,12 +583,12 @@ export default function AdminLeadsPage() {
                                 >
                                   {approving === lead._id ? 'Approving...' : 'Approve'}
                                 </button>
-                                <button
+                                {/* <button
                                   onClick={() => openRejectModal(lead._id)}
                                   className="px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
                                 >
                                   Reject
-                                </button>
+                                </button> */}
                               </>
                             )}
                           </div>
@@ -626,7 +626,7 @@ export default function AdminLeadsPage() {
                 <option value="">-- No Assignment --</option>
                 {counselors.map((counselor) => (
                   <option key={counselor._id} value={counselor._id}>
-                    {getFullName(counselor.userId) || counselor.email}
+                    {getFullName(counselor) || counselor.email}
                   </option>
                 ))}
               </select>

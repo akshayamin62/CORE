@@ -10,6 +10,7 @@ import StudentFormAnswer from "../models/StudentFormAnswer";
 import FormPart from "../models/FormPart";
 import FormSection from "../models/FormSection";
 import FormSubSection from "../models/FormSubSection";
+import FollowUp, { FOLLOWUP_STATUS } from "../models/FollowUp";
 import { USER_ROLE } from "../types/roles";
 import mongoose from "mongoose";
 import { generateOTP } from "../utils/otp";
@@ -407,6 +408,27 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
     lead.conversionStatus = 'APPROVED';
     await lead.save();
     console.log('✅ Lead updated to CONVERTED');
+
+    // Update the latest follow-up status if it's "Scheduled"
+    try {
+      const latestFollowUp = await FollowUp.findOne({
+        leadId: lead._id,
+        status: FOLLOWUP_STATUS.SCHEDULED
+      }).sort({ scheduledDate: -1, scheduledTime: -1 });
+
+      if (latestFollowUp) {
+        latestFollowUp.status = FOLLOWUP_STATUS.CONVERTED_TO_STUDENT;
+        latestFollowUp.completedAt = new Date();
+        latestFollowUp.updatedBy = new mongoose.Types.ObjectId(userId);
+        await latestFollowUp.save();
+        console.log('✅ Latest scheduled follow-up updated to CONVERTED_TO_STUDENT:', latestFollowUp._id);
+      } else {
+        console.log('ℹ️ No scheduled follow-ups found for this lead');
+      }
+    } catch (followUpError) {
+      console.error("⚠️ Failed to update follow-up status:", followUpError);
+      // Continue with conversion even if follow-up update fails
+    }
 
     return res.status(200).json({
       success: true,

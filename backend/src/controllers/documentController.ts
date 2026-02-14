@@ -9,6 +9,7 @@ import User from "../models/User";
 import { sendDocumentRejectionEmail } from "../utils/email";
 import fs from "fs";
 import path from "path";
+import { getUploadBaseDir, ensureDir } from '../utils/uploadDir';
 
 // Upload document (auto-save)
 export const uploadDocument = async (req: AuthRequest, res: Response) => {
@@ -37,10 +38,8 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
     const studentId = registration.studentId;
 
     // Create student directory
-    const studentDir = path.join(__dirname, "../../uploads", studentId.toString());
-    if (!fs.existsSync(studentDir)) {
-      fs.mkdirSync(studentDir, { recursive: true });
-    }
+    const studentDir = path.join(getUploadBaseDir(), studentId.toString());
+    ensureDir(studentDir);
 
     // Generate final filename and move file to student folder
     const timestamp = Date.now();
@@ -72,7 +71,7 @@ export const uploadDocument = async (req: AuthRequest, res: Response) => {
 
       if (existingDoc) {
         // Delete old file
-        const oldFilePath = path.join(__dirname, "../../", existingDoc.filePath);
+        const oldFilePath = path.join(process.cwd(), existingDoc.filePath);
         if (fs.existsSync(oldFilePath)) {
           fs.unlinkSync(oldFilePath);
         }
@@ -303,7 +302,7 @@ export const downloadDocument = async (req: AuthRequest, res: Response) => {
     }
 
     // Stream file
-    const filePath = path.join(__dirname, "../../", document.filePath);
+    const filePath = path.join(process.cwd(), document.filePath);
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,
@@ -385,7 +384,7 @@ export const viewDocument = async (req: AuthRequest, res: Response): Promise<voi
     }
 
     // Stream file for viewing
-    const filePath = path.join(__dirname, "../../", document.filePath);
+    const filePath = path.join(process.cwd(), document.filePath);
     if (!fs.existsSync(filePath)) {
       res.status(404).json({
         success: false,
@@ -561,7 +560,7 @@ export const rejectDocument = async (req: AuthRequest, res: Response) => {
     }
 
     // Delete file from storage
-    const filePath = path.join(__dirname, "../../", document.filePath);
+    const filePath = path.join(process.cwd(), document.filePath);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
@@ -713,7 +712,7 @@ export const deleteDocument = async (req: AuthRequest, res: Response) => {
     }
 
     // Delete file from storage
-    const filePath = path.join(__dirname, "../../", document.filePath);
+    const filePath = path.join(process.cwd(), document.filePath);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }

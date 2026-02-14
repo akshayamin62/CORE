@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { leadAPI } from '@/lib/api';
+import { BACKEND_URL } from '@/lib/ivyApi';
 import { SERVICE_TYPE, AdminInfo } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import Link from 'next/link';
@@ -203,7 +204,7 @@ export default function PublicEnquiryFormPage() {
         <div className="text-center mb-8">
           {adminInfo?.companyLogo ? (
             <img
-              src={`http://localhost:5000${adminInfo.companyLogo}`}
+              src={`${BACKEND_URL}${adminInfo.companyLogo}`}
               alt={adminInfo.companyName || 'Company Logo'}
               className="w-24 h-24 rounded-2xl object-cover mx-auto mb-4 shadow-lg border border-gray-200"
               onError={(e) => {

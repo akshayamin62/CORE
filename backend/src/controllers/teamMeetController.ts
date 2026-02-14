@@ -7,7 +7,7 @@ import Counselor from "../models/Counselor";
 import Admin from "../models/Admin";
 import mongoose from "mongoose";
 import { USER_ROLE } from "../types/roles";
-import { createZohoMeeting, deleteZohoMeeting } from "../utils/zohoMeeting";
+import { createZohoMeeting } from "../utils/zohoMeeting";
 import { sendMeetingScheduledEmail } from "../utils/email";
 
 /**
@@ -91,10 +91,9 @@ const checkUserAvailability = async (
 
   for (const meet of existingTeamMeets) {
     if (doTimeSlotsOverlap(time, duration, meet.scheduledTime, meet.duration)) {
-      const otherUser = meet.requestedBy._id.toString() === userId
-        ? (meet.requestedTo as any)
-        : (meet.requestedBy as any);
-      const otherParty = [otherUser?.firstName, otherUser?.middleName, otherUser?.lastName].filter(Boolean).join(' ');
+      const otherParty = meet.requestedBy._id.toString() === userId
+        ? [((meet.requestedTo as any)?.firstName), ((meet.requestedTo as any)?.middleName), ((meet.requestedTo as any)?.lastName)].filter(Boolean).join(' ')
+        : [((meet.requestedBy as any)?.firstName), ((meet.requestedBy as any)?.middleName), ((meet.requestedBy as any)?.lastName)].filter(Boolean).join(' ');
       return {
         isAvailable: false,
         conflict: {
@@ -284,18 +283,10 @@ export const createTeamMeet = async (
           participantEmails,
         });
 
-        console.log("📋 Zoho Meeting result for TeamMeet:", JSON.stringify(zohoResult, null, 2));
-        
-        if (zohoResult.meetingKey && zohoResult.meetingKey !== "not-configured") {
-          teamMeet.zohoMeetingKey = zohoResult.meetingKey;
-          teamMeet.zohoMeetingUrl = zohoResult.meetingUrl;
-          console.log(`✅ Assigned Zoho meeting to TeamMeet: key=${zohoResult.meetingKey}, url=${zohoResult.meetingUrl}`);
-        } else {
-          console.warn("⚠️  Zoho returned empty/not-configured meeting key for TeamMeet");
-        }
-      } catch (zohoError: any) {
-        console.error("⚠️  Zoho Meeting creation failed (meeting saved without link):");
-        console.error("   Error:", zohoError?.message || zohoError);
+        teamMeet.zohoMeetingKey = zohoResult.meetingKey;
+        teamMeet.zohoMeetingUrl = zohoResult.meetingUrl;
+      } catch (zohoError) {
+        console.error("⚠️  Zoho Meeting creation failed (meeting saved without link):", zohoError);
       }
     }
 
@@ -767,47 +758,6 @@ export const rescheduleTeamMeet = async (
     teamMeet.status = TEAMMEET_STATUS.PENDING_CONFIRMATION;
     teamMeet.rejectionMessage = undefined;
 
-    // If meeting type is Online, recreate Zoho Meeting
-    if (teamMeet.meetingType === TEAMMEET_TYPE.ONLINE) {
-      try {
-        // Delete old Zoho meeting if exists
-        if (teamMeet.zohoMeetingKey) {
-          await deleteZohoMeeting(teamMeet.zohoMeetingKey);
-        }
-
-        // Create new Zoho meeting
-        const [hours, mins] = scheduledTime.split(":").map(Number);
-        const meetingStartTime = new Date(scheduleDate);
-        meetingStartTime.setHours(hours, mins, 0, 0);
-
-        const sender = await User.findById(userId).select("email");
-        const participantEmails: string[] = [];
-        if (sender?.email) participantEmails.push(sender.email);
-        if (recipient?.email) participantEmails.push(recipient.email);
-
-        const zohoResult = await createZohoMeeting({
-          topic: subject || teamMeet.subject,
-          startTime: meetingStartTime,
-          duration,
-          agenda: description || teamMeet.description || teamMeet.subject,
-          participantEmails,
-        });
-
-        console.log("📋 Zoho Meeting result for rescheduled TeamMeet:", JSON.stringify(zohoResult, null, 2));
-        
-        if (zohoResult.meetingKey && zohoResult.meetingKey !== "not-configured") {
-          teamMeet.zohoMeetingKey = zohoResult.meetingKey;
-          teamMeet.zohoMeetingUrl = zohoResult.meetingUrl;
-          console.log(`✅ Assigned Zoho meeting to rescheduled TeamMeet: key=${zohoResult.meetingKey}, url=${zohoResult.meetingUrl}`);
-        } else {
-          console.warn("⚠️  Zoho returned empty/not-configured meeting key for rescheduled TeamMeet");
-        }
-      } catch (zohoError: any) {
-        console.error("⚠️  Zoho Meeting recreation failed during reschedule:");
-        console.error("   Error:", zohoError?.message || zohoError);
-      }
-    }
-
     await teamMeet.save();
 
     const populatedMeet = await TeamMeet.findById(teamMeetId)
@@ -865,6 +815,11 @@ export const completeTeamMeet = async (
         success: false,
         message: "Only confirmed meetings can be marked as completed",
       });
+    }
+
+    // Update description if provided
+    if (req.body?.description !== undefined) {
+      teamMeet.description = req.body.description;
     }
 
     teamMeet.status = TEAMMEET_STATUS.COMPLETED;

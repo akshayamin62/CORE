@@ -22,6 +22,9 @@ export interface IStudentServiceRegistration extends Document {
   primaryEduplanCoachId?: mongoose.Types.ObjectId;
   secondaryEduplanCoachId?: mongoose.Types.ObjectId;
   activeEduplanCoachId?: mongoose.Types.ObjectId;
+  // Ivy League scoring
+  overallScore?: number;
+  studentInterest?: string;
   status: ServiceRegistrationStatus;
   registeredAt: Date;
   completedAt?: Date;
@@ -92,6 +95,15 @@ const studentServiceRegistrationSchema = new Schema<IStudentServiceRegistration>
       type: Schema.Types.ObjectId,
       ref: "EduplanCoach",
       required: false,
+    },
+    // Ivy League scoring
+    overallScore: {
+      type: Number,
+      default: undefined,
+    },
+    studentInterest: {
+      type: String,
+      default: undefined,
     },
     status: {
       type: String,

@@ -1,13 +1,13 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI, serviceAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
+import { getFullName, getInitials } from '@/utils/nameHelpers';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
-import { getFullName } from '@/utils/nameHelpers';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -15,9 +15,9 @@ interface StudentDetails {
   _id: string;
   userId: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
     role: string;
     isVerified: boolean;
@@ -27,11 +27,12 @@ interface StudentDetails {
   mobileNumber?: string;
   adminId?: {
     _id: string;
+    companyName?: string;
     userId: {
       _id: string;
-      firstName?: string;
+      firstName: string;
       middleName?: string;
-      lastName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -39,9 +40,9 @@ interface StudentDetails {
     _id: string;
     userId: {
       _id: string;
-      firstName?: string;
+      firstName: string;
       middleName?: string;
-      lastName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -52,9 +53,9 @@ interface OPS {
   _id: string;
   userId: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
   };
   email: string;
@@ -66,9 +67,9 @@ interface IvyExpert {
   _id: string;
   userId: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
   };
   email: string;
@@ -79,9 +80,9 @@ interface EduplanCoach {
   _id: string;
   userId: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
   };
   email: string;
@@ -160,58 +161,49 @@ export default function StudentDetailPage() {
   const fetchStudentDetails = async () => {
     try {
       const token = localStorage.getItem('token');
-      console.log('🔍 Fetching student details for ID:', studentId);
-      console.log('🔑 API URL:', `${API_URL}/super-admin/students/${studentId}`);
       
       const response = await axios.get(`${API_URL}/super-admin/students/${studentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
-      console.log('✅ Student response:', response.data);
       setStudent(response.data.data.student);
       setRegistrations(response.data.data.registrations);
       
       // Fetch ops
       try {
-        console.log('🔍 Fetching ops list...');
         const opsResponse = await axios.get(`${API_URL}/super-admin/ops`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log('✅ Ops response:', opsResponse.data);
         setOps(opsResponse.data.data.ops || []);
       } catch (err) {
-        console.error('❌ Failed to fetch ops:', err);
+        console.error('Failed to fetch ops:', err);
         setOps([]);
       }
       
       // Fetch ivy experts
       try {
-        console.log('🔍 Fetching ivy experts list...');
         const ivyExpertsResponse = await axios.get(`${API_URL}/super-admin/ivy-experts`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log('✅ Ivy Experts response:', ivyExpertsResponse.data);
         setIvyExperts(ivyExpertsResponse.data.data.ivyExperts || []);
       } catch (err) {
-        console.error('❌ Failed to fetch ivy experts:', err);
+        console.error('Failed to fetch ivy experts:', err);
         setIvyExperts([]);
       }
       
       // Fetch eduplan coaches
       try {
-        console.log('🔍 Fetching eduplan coaches list...');
         const eduplanCoachesResponse = await axios.get(`${API_URL}/super-admin/eduplan-coaches`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log('✅ Eduplan Coaches response:', eduplanCoachesResponse.data);
         setEduplanCoaches(eduplanCoachesResponse.data.data.eduplanCoaches || []);
       } catch (err) {
-        console.error('❌ Failed to fetch eduplan coaches:', err);
+        console.error('Failed to fetch eduplan coaches:', err);
         setEduplanCoaches([]);
       }
     } catch (error: any) {
-      console.error('❌ Fetch student details error:', error);
-      console.error('❌ Error response:', error.response?.data);
+      console.error('Fetch student details error:', error);
+      console.error('Error response:', error.response?.data);
       
       if (error.response?.status === 403) {
         toast.error('Access denied. You are not the active OPS for this student.');
@@ -309,7 +301,12 @@ export default function StudentDetailPage() {
     }
   };
 
-  const handleViewFormData = (registrationId: string) => {
+  const handleViewFormData = (registrationId: string, serviceName?: string) => {
+    // For Ivy League, open the student ivy-league view in read-only mode
+    if (serviceName === 'Ivy League Preparation' && student?.userId?._id) {
+      router.push(`/ivy-league/student?studentId=${student.userId._id}&readOnly=true`);
+      return;
+    }
     router.push(`/super-admin/roles/student/${studentId}/registration/${registrationId}`);
   };
 
@@ -362,7 +359,7 @@ export default function StudentDetailPage() {
               <div className="flex items-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                   <span className="text-blue-600 font-bold text-xl">
-                    {(getFullName(student.userId) || '?').charAt(0).toUpperCase()}
+                    {getInitials(student.userId)}
                   </span>
                 </div>
                 <div>
@@ -402,14 +399,20 @@ export default function StudentDetailPage() {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Admin</p>
                 <p className="font-medium text-gray-900">
-                  {getFullName(student.adminId?.userId) || 'N/A'}
+                  {student.adminId?.companyName || 'N/A'}
                 </p>
+                {student.adminId?.userId?.email && (
+                  <p className="text-sm text-gray-500">{student.adminId.userId.email}</p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Counselor</p>
                 <p className="font-medium text-gray-900">
                   {getFullName(student.counselorId?.userId) || 'N/A'}
                 </p>
+                {student.counselorId?.userId?.email && (
+                  <p className="text-sm text-gray-500">{student.counselorId.userId.email}</p>
+                )}
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Joined Date</p>
@@ -522,7 +525,7 @@ export default function StudentDetailPage() {
                                 {(registration.primaryOpsId || registration.secondaryOpsId) && (
                                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                     <label className="block text-sm font-semibold text-blue-900 mb-2">
-                                      🎯 Active OPS (Has Access)
+                                      Active OPS (Has Access)
                                     </label>
                                     <div className="flex items-center gap-3">
                                       <select
@@ -550,7 +553,7 @@ export default function StudentDetailPage() {
                                     {registration.activeOpsId && (
                                       <div className="mt-2 flex items-center text-sm">
                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                          ✓ Active
+                                          Active
                                         </span>
                                         <span className="ml-2 text-gray-700">
                                           {getFullName(registration.activeOpsId.userId) || registration.activeOpsId.email}
@@ -628,7 +631,7 @@ export default function StudentDetailPage() {
                                 {(registration.primaryIvyExpertId || registration.secondaryIvyExpertId) && (
                                   <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                                     <label className="block text-sm font-semibold text-purple-900 mb-2">
-                                      🎯 Active Ivy Expert (Has Access)
+                                      Active Ivy Expert (Has Access)
                                     </label>
                                     <div className="flex items-center gap-3">
                                       <select
@@ -656,7 +659,7 @@ export default function StudentDetailPage() {
                                     {registration.activeIvyExpertId && (
                                       <div className="mt-2 flex items-center text-sm">
                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                          ✓ Active
+                                          Active
                                         </span>
                                         <span className="ml-2 text-gray-700">
                                           {getFullName(registration.activeIvyExpertId.userId) || registration.activeIvyExpertId.email}
@@ -734,7 +737,7 @@ export default function StudentDetailPage() {
                                 {(registration.primaryEduplanCoachId || registration.secondaryEduplanCoachId) && (
                                   <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
                                     <label className="block text-sm font-semibold text-teal-900 mb-2">
-                                      🎯 Active Eduplan Coach (Has Access)
+                                      Active Eduplan Coach (Has Access)
                                     </label>
                                     <div className="flex items-center gap-3">
                                       <select
@@ -762,7 +765,7 @@ export default function StudentDetailPage() {
                                     {registration.activeEduplanCoachId && (
                                       <div className="mt-2 flex items-center text-sm">
                                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                          ✓ Active
+                                          Active
                                         </span>
                                         <span className="ml-2 text-gray-700">
                                           {getFullName(registration.activeEduplanCoachId.userId) || registration.activeEduplanCoachId.email}
@@ -799,7 +802,7 @@ export default function StudentDetailPage() {
                                 )}
                                 {registration.activeOpsId && (
                                   <p className="text-xs font-medium text-green-600">
-                                    ✓ Active: {getFullName(registration.activeOpsId.userId) || registration.activeOpsId.email}
+                                    Active: {getFullName(registration.activeOpsId.userId) || registration.activeOpsId.email}
                                   </p>
                                 )}
                               </>
@@ -819,7 +822,7 @@ export default function StudentDetailPage() {
                                 )}
                                 {registration.activeIvyExpertId && (
                                   <p className="text-xs font-medium text-green-600">
-                                    ✓ Active: {getFullName(registration.activeIvyExpertId.userId) || registration.activeIvyExpertId.email}
+                                    Active: {getFullName(registration.activeIvyExpertId.userId) || registration.activeIvyExpertId.email}
                                   </p>
                                 )}
                               </>
@@ -839,7 +842,7 @@ export default function StudentDetailPage() {
                                 )}
                                 {registration.activeEduplanCoachId && (
                                   <p className="text-xs font-medium text-green-600">
-                                    ✓ Active: {getFullName(registration.activeEduplanCoachId.userId) || registration.activeEduplanCoachId.email}
+                                    Active: {getFullName(registration.activeEduplanCoachId.userId) || registration.activeEduplanCoachId.email}
                                   </p>
                                 )}
                               </>
@@ -848,7 +851,7 @@ export default function StudentDetailPage() {
                         )}
                       </div>
                       <button
-                        onClick={() => handleViewFormData(registration._id)}
+                        onClick={() => handleViewFormData(registration._id, registration.serviceId.name)}
                         className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                       >
                         View/Edit Form

@@ -284,6 +284,16 @@ export const programAPI = {
 
 // Admin API (for ADMIN role)
 export const adminAPI = {
+  getStats: () => api.get('/admin/stats'),
+
+  // User management
+  getUsers: (params?: any) => api.get('/admin/users', { params }),
+  getPendingApprovals: () => api.get('/admin/users/pending'),
+  approveUser: (userId: string) => api.patch(`/admin/users/${userId}/approve`),
+  rejectUser: (userId: string) => api.patch(`/admin/users/${userId}/reject`),
+  toggleUserStatus: (userId: string) => api.patch(`/admin/users/${userId}/toggle-status`),
+  deleteUser: (userId: string) => api.delete(`/admin/users/${userId}`),
+  
   createCounselor: (data: {
     firstName: string;
     middleName?: string;
@@ -475,7 +485,7 @@ export const teamMeetAPI = {
   }) => api.patch(`/team-meets/${teamMeetId}/reschedule`, data),
 
   // Mark meeting as completed
-  completeTeamMeet: (teamMeetId: string) => api.patch(`/team-meets/${teamMeetId}/complete`),
+  completeTeamMeet: (teamMeetId: string, data?: { description?: string }) => api.patch(`/team-meets/${teamMeetId}/complete`, data),
 
   // Check availability for a time slot
   checkAvailability: (params: {
@@ -526,6 +536,21 @@ export const opsScheduleAPI = {
   
   // Delete schedule
   deleteSchedule: (scheduleId: string) => api.delete(`/ops-schedules/${scheduleId}`),
+};
+
+// Super Admin - OPS Dashboard API (read-only)
+export const superAdminOpsAPI = {
+  // Get ops user details
+  getOpsDetail: (opsUserId: string) => api.get(`/super-admin/ops/${opsUserId}/detail`),
+
+  // Get all schedules for an ops user
+  getOpsSchedules: (opsUserId: string) => api.get(`/super-admin/ops/${opsUserId}/schedules`),
+
+  // Get schedule summary for an ops user
+  getOpsSummary: (opsUserId: string) => api.get(`/super-admin/ops/${opsUserId}/schedule-summary`),
+
+  // Get students assigned to an ops user
+  getOpsStudents: (opsUserId: string) => api.get(`/super-admin/ops/${opsUserId}/students`),
 };
 
 // Lead Student Conversion API

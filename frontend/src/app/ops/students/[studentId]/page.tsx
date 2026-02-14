@@ -5,9 +5,9 @@ import { useRouter, useParams } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import OpsLayout from '@/components/OpsLayout';
-import { getFullName } from '@/utils/nameHelpers';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
+import { getFullName, getInitials } from '@/utils/nameHelpers';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -15,9 +15,9 @@ interface StudentDetails {
   _id: string;
   userId: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
     role: string;
     isVerified: boolean;
@@ -27,11 +27,12 @@ interface StudentDetails {
   mobileNumber?: string;
   adminId?: {
     _id: string;
+    companyName?: string;
     userId: {
       _id: string;
-      firstName?: string;
+      firstName: string;
       middleName?: string;
-      lastName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -39,9 +40,9 @@ interface StudentDetails {
     _id: string;
     userId: {
       _id: string;
-      firstName?: string;
+      firstName: string;
       middleName?: string;
-      lastName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -167,7 +168,7 @@ export default function StudentDetailPage() {
               <div className="flex items-center">
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                   <span className="text-blue-600 font-bold text-xl">
-                    {(getFullName(student.userId) || '?').charAt(0).toUpperCase()}
+                    {getInitials(student.userId)}
                   </span>
                 </div>
                 <div>
@@ -221,7 +222,7 @@ export default function StudentDetailPage() {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Admin</p>
                 <p className="font-medium text-gray-900">
-                  {getFullName(student.adminId?.userId) || 'Not assigned'}
+                  {student.adminId?.companyName || 'Not assigned'}
                 </p>
                 {student.adminId?.userId?.email && (
                   <p className="text-sm text-gray-500">{student.adminId.userId.email}</p>
@@ -242,12 +243,12 @@ export default function StudentDetailPage() {
           {/* Service Registrations */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Service Registrations ({registrations.length})
+              Service Registrations ({registrations.filter(r => r.serviceId.name === 'Study Abroad').length})
             </h2>
 
-            {registrations.length > 0 ? (
+            {registrations.filter(r => r.serviceId.name === 'Study Abroad').length > 0 ? (
               <div className="space-y-4">
-                {registrations.map((registration) => (
+                {registrations.filter(r => r.serviceId.name === 'Study Abroad').map((registration) => (
                   <div
                     key={registration._id}
                     className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"

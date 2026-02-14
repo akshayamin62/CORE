@@ -132,7 +132,7 @@ export const getAdminInfoBySlug = async (req: Request, res: Response): Promise<R
     return res.json({
       success: true,
       data: {
-        adminName: [((admin.userId as any)?.firstName), ((admin.userId as any)?.middleName), ((admin.userId as any)?.lastName)].filter(Boolean).join(' ') || "Kareer Studio",
+        adminName: [(admin.userId as any)?.firstName, (admin.userId as any)?.middleName, (admin.userId as any)?.lastName].filter(Boolean).join(' ') || "Kareer Studio",
         companyName: admin.companyName || "Kareer Studio",
         companyLogo: admin.companyLogo || null,
         services: Object.values(SERVICE_TYPE),
@@ -435,14 +435,13 @@ export const getAdminCounselors = async (req: AuthRequest, res: Response): Promi
     return res.json({
       success: true,
       data: {
-        counselors: activeCounselors.map((c) => {
-          const u = c.userId as any;
-          return {
+        counselors: activeCounselors.map((c) => ({
           _id: c._id,
-          name: [u?.firstName, u?.middleName, u?.lastName].filter(Boolean).join(' '),
-          email: u?.email,
-        };
-        }),
+          firstName: (c.userId as any)?.firstName,
+          middleName: (c.userId as any)?.middleName,
+          lastName: (c.userId as any)?.lastName,
+          email: (c.userId as any).email,
+        })),
       },
     });
   } catch (error: any) {
@@ -615,10 +614,7 @@ export const getAllLeads = async (req: Request, res: Response): Promise<Response
 
     const leads = await Lead.find(filter)
       .populate("adminId", "firstName middleName lastName email")
-      .populate({
-        path: "assignedCounselorId",
-        populate: { path: "userId", select: "firstName middleName lastName email" }
-      })
+      .populate("assignedCounselorId", "firstName middleName lastName email")
       .sort({ createdAt: -1 });
 
     // Get overall stats

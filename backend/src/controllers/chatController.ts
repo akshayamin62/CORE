@@ -58,17 +58,16 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
         return res.status(403).json({ message: 'Access denied' });
       }
     } else if (userRole === USER_ROLE.OPS) {
-      // OPS must be active or primary OPS for the student
-      const registration = await StudentServiceRegistration.findOne({ studentId })
+      // OPS must be active or primary OPS for the student (across any service)
+      const registrations = await StudentServiceRegistration.find({ studentId })
         .populate('activeOpsId', 'userId')
         .populate('primaryOpsId', 'userId');
 
-      const activeOpsUserId = (registration?.activeOpsId as any)?.userId;
-      const primaryOpsUserId = (registration?.primaryOpsId as any)?.userId;
-
-      const isAuthorized =
-        activeOpsUserId?.toString() === userId ||
-        primaryOpsUserId?.toString() === userId;
+      const isAuthorized = registrations.some((reg: any) => {
+        const activeOpsUserId = reg.activeOpsId?.userId;
+        const primaryOpsUserId = reg.primaryOpsId?.userId;
+        return activeOpsUserId?.toString() === userId || primaryOpsUserId?.toString() === userId;
+      });
 
       if (!isAuthorized) {
         return res.status(403).json({ message: 'You are not the OPS for this student' });
@@ -76,7 +75,7 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
     }
     // SUPER_ADMIN, ADMIN, and COUNSELOR can access all chats
 
-    // Find or create chat with chatType
+    // Find or create chat with chatType (atomic upsert to avoid E11000 duplicate key)
     let chat = await ProgramChat.findOne({ programId, studentId, chatType })
       .populate('participants.student', 'firstName middleName lastName email')
       .populate('participants.OPS', 'firstName middleName lastName email')
@@ -85,35 +84,44 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
       .populate('participants.counselor', 'firstName middleName lastName email');
 
     if (!chat) {
-      // Get OPS info
-      const registration = await StudentServiceRegistration.findOne({ studentId })
+      // Get OPS info (check all registrations)
+      const registrations = await StudentServiceRegistration.find({ studentId })
         .populate('activeOpsId', 'userId')
         .populate('primaryOpsId', 'userId');
 
-      const activeOps = registration?.activeOpsId as any;
-      const primaryOps = registration?.primaryOpsId as any;
-      const ops = activeOps || primaryOps;
+      let ops: any = null;
+      for (const reg of registrations) {
+        const activeOps = reg.activeOpsId as any;
+        const primaryOps = reg.primaryOpsId as any;
+        if (activeOps || primaryOps) { ops = activeOps || primaryOps; break; }
+      }
 
-      // Create new chat
-      chat = await ProgramChat.create({
-        programId,
-        studentId,
-        chatType,
-        participants: {
-          student: studentUserId,
-          OPS: ops?.userId || undefined,
-          superAdmin: userRole === USER_ROLE.SUPER_ADMIN ? userId : undefined,
-          admin: userRole === USER_ROLE.ADMIN ? userId : undefined,
-          counselor: userRole === USER_ROLE.COUNSELOR ? userId : undefined,
+      // Use findOneAndUpdate with upsert to avoid duplicate key errors from race conditions
+      chat = await ProgramChat.findOneAndUpdate(
+        { programId, studentId, chatType },
+        {
+          $setOnInsert: {
+            programId,
+            studentId,
+            chatType,
+            participants: {
+              student: studentUserId,
+              OPS: ops?.userId || undefined,
+              superAdmin: userRole === USER_ROLE.SUPER_ADMIN ? userId : undefined,
+              admin: userRole === USER_ROLE.ADMIN ? userId : undefined,
+              counselor: userRole === USER_ROLE.COUNSELOR ? userId : undefined,
+            },
+          },
         },
-      });
+        { upsert: true, new: true }
+      );
 
-      chat = await ProgramChat.findById(chat._id)
-        .populate('participants.student', 'firstName middleName lastName email')
-        .populate('participants.OPS', 'firstName middleName lastName email')
-        .populate('participants.superAdmin', 'firstName middleName lastName email')
-        .populate('participants.admin', 'firstName middleName lastName email')
-        .populate('participants.counselor', 'firstName middleName lastName email');
+      chat = await ProgramChat.findById(chat!._id)
+        .populate('participants.student', 'name email')
+        .populate('participants.OPS', 'name email')
+        .populate('participants.superAdmin', 'name email')
+        .populate('participants.admin', 'name email')
+        .populate('participants.counselor', 'name email');
     } else {
       // Update participant based on role if not set
       let needsSave = false;
@@ -131,11 +139,11 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
       if (needsSave) {
         await chat.save();
         chat = await ProgramChat.findById(chat._id)
-          .populate('participants.student', 'firstName middleName lastName email')
-          .populate('participants.OPS', 'firstName middleName lastName email')
-          .populate('participants.superAdmin', 'firstName middleName lastName email')
-          .populate('participants.admin', 'firstName middleName lastName email')
-          .populate('participants.counselor', 'firstName middleName lastName email');
+          .populate('participants.student', 'name email')
+          .populate('participants.OPS', 'name email')
+          .populate('participants.superAdmin', 'name email')
+          .populate('participants.admin', 'name email')
+          .populate('participants.counselor', 'name email');
       }
     }
 
@@ -192,16 +200,15 @@ export const getChatMessages = async (req: AuthRequest, res: Response) => {
         return res.status(403).json({ message: 'Access denied' });
       }
     } else if (userRole === USER_ROLE.OPS) {
-      const registration = await StudentServiceRegistration.findOne({ studentId })
+      const registrations = await StudentServiceRegistration.find({ studentId })
         .populate('activeOpsId', 'userId')
         .populate('primaryOpsId', 'userId');
 
-      const activeOpsUserId = (registration?.activeOpsId as any)?.userId;
-      const primaryOpsUserId = (registration?.primaryOpsId as any)?.userId;
-
-      const isAuthorized =
-        activeOpsUserId?.toString() === userId ||
-        primaryOpsUserId?.toString() === userId;
+      const isAuthorized = registrations.some((reg: any) => {
+        const activeOpsUserId = reg.activeOpsId?.userId;
+        const primaryOpsUserId = reg.primaryOpsId?.userId;
+        return activeOpsUserId?.toString() === userId || primaryOpsUserId?.toString() === userId;
+      });
 
       if (!isAuthorized) {
         return res.status(403).json({ message: 'You are not the OPS for this student' });
@@ -305,46 +312,55 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
         return res.status(403).json({ message: 'Access denied' });
       }
     } else if (userRole === USER_ROLE.OPS) {
-      const registration = await StudentServiceRegistration.findOne({ studentId })
+      const registrations = await StudentServiceRegistration.find({ studentId })
         .populate('activeOpsId', 'userId')
         .populate('primaryOpsId', 'userId');
 
-      const activeOpsUserId = (registration?.activeOpsId as any)?.userId;
-      const primaryOpsUserId = (registration?.primaryOpsId as any)?.userId;
-
-      const isAuthorized =
-        activeOpsUserId?.toString() === userId ||
-        primaryOpsUserId?.toString() === userId;
+      const isAuthorized = registrations.some((reg: any) => {
+        const activeOpsUserId = reg.activeOpsId?.userId;
+        const primaryOpsUserId = reg.primaryOpsId?.userId;
+        return activeOpsUserId?.toString() === userId || primaryOpsUserId?.toString() === userId;
+      });
 
       if (!isAuthorized) {
         return res.status(403).json({ message: 'You are not the OPS for this student' });
       }
     }
 
-    // Find or create chat with chatType
+    // Find or create chat with chatType (atomic upsert to avoid E11000 duplicate key)
     let chat = await ProgramChat.findOne({ programId, studentId, chatType });
     if (!chat) {
-      // Get OPS info
-      const registration = await StudentServiceRegistration.findOne({ studentId })
+      // Get OPS info (check all registrations)
+      const registrations = await StudentServiceRegistration.find({ studentId })
         .populate('activeOpsId', 'userId')
         .populate('primaryOpsId', 'userId');
 
-      const activeOps = registration?.activeOpsId as any;
-      const primaryOps = registration?.primaryOpsId as any;
-      const ops = activeOps || primaryOps;
+      let ops: any = null;
+      for (const reg of registrations) {
+        const activeOps = reg.activeOpsId as any;
+        const primaryOps = reg.primaryOpsId as any;
+        if (activeOps || primaryOps) { ops = activeOps || primaryOps; break; }
+      }
 
-      chat = await ProgramChat.create({
-        programId,
-        studentId,
-        chatType,
-        participants: {
-          student: studentUserId,
-          OPS: ops?.userId || undefined,
-          superAdmin: userRole === USER_ROLE.SUPER_ADMIN ? userId : undefined,
-          admin: userRole === USER_ROLE.ADMIN ? userId : undefined,
-          counselor: userRole === USER_ROLE.COUNSELOR ? userId : undefined,
+      // Use findOneAndUpdate with upsert to avoid duplicate key errors from race conditions
+      chat = await ProgramChat.findOneAndUpdate(
+        { programId, studentId, chatType },
+        {
+          $setOnInsert: {
+            programId,
+            studentId,
+            chatType,
+            participants: {
+              student: studentUserId,
+              OPS: ops?.userId || undefined,
+              superAdmin: userRole === USER_ROLE.SUPER_ADMIN ? userId : undefined,
+              admin: userRole === USER_ROLE.ADMIN ? userId : undefined,
+              counselor: userRole === USER_ROLE.COUNSELOR ? userId : undefined,
+            },
+          },
         },
-      });
+        { upsert: true, new: true }
+      );
     } else {
       // Update participant based on role if not set
       let needsSave = false;
@@ -366,23 +382,26 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
     // Determine OPS type if user is a OPS
     let opsType: 'PRIMARY' | 'ACTIVE' | undefined = undefined;
     if (userRole === USER_ROLE.OPS) {
-      const registration = await StudentServiceRegistration.findOne({ studentId })
+      const registrations = await StudentServiceRegistration.find({ studentId })
         .populate('activeOpsId', 'userId')
         .populate('primaryOpsId', 'userId');
 
-      const activeOpsUserId = (registration?.activeOpsId as any)?.userId;
-      const primaryOpsUserId = (registration?.primaryOpsId as any)?.userId;
-
-      if (primaryOpsUserId?.toString() === userId) {
-        opsType = 'PRIMARY';
-      } else if (activeOpsUserId?.toString() === userId) {
-        opsType = 'ACTIVE';
+      for (const reg of registrations) {
+        const activeOpsUserId = (reg.activeOpsId as any)?.userId;
+        const primaryOpsUserId = (reg.primaryOpsId as any)?.userId;
+        if (primaryOpsUserId?.toString() === userId) {
+          opsType = 'PRIMARY';
+          break;
+        } else if (activeOpsUserId?.toString() === userId) {
+          opsType = 'ACTIVE';
+          break;
+        }
       }
     }
 
     // Create message
     const newMessage = await ChatMessage.create({
-      chatId: chat._id,
+      chatId: chat!._id,
       senderId: userId,
       senderRole: userRole,
       opsType,
@@ -394,8 +413,7 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
     // Populate sender info for response
     await newMessage.populate('senderId', 'firstName middleName lastName');
     const messageResponse: any = newMessage.toObject();
-    const sender = newMessage.senderId as any;
-    messageResponse.senderName = [sender?.firstName, sender?.middleName, sender?.lastName].filter(Boolean).join(' ') || userName;
+    messageResponse.senderName = [((newMessage.senderId as any)?.firstName), ((newMessage.senderId as any)?.middleName), ((newMessage.senderId as any)?.lastName)].filter(Boolean).join(' ') || userName;
 
     return res.status(201).json({
       success: true,
@@ -437,11 +455,11 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
           path: 'programId',
           select: 'university programName campus country priority intake year',
         })
-        .populate('participants.student', 'firstName middleName lastName email')
-        .populate('participants.OPS', 'firstName middleName lastName email')
-        .populate('participants.superAdmin', 'firstName middleName lastName email')
-        .populate('participants.admin', 'firstName middleName lastName email')
-        .populate('participants.counselor', 'firstName middleName lastName email')
+        .populate('participants.student', 'name email')
+        .populate('participants.OPS', 'name email')
+        .populate('participants.superAdmin', 'name email')
+        .populate('participants.admin', 'name email')
+        .populate('participants.counselor', 'name email')
         .sort({ updatedAt: -1 });
     } else if (userRole === USER_ROLE.OPS) {
       query['participants.OPS'] = userId;
@@ -450,11 +468,11 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
           path: 'programId',
           select: 'university programName campus country priority intake year',
         })
-        .populate('participants.student', 'firstName middleName lastName email')
-        .populate('participants.OPS', 'firstName middleName lastName email')
-        .populate('participants.superAdmin', 'firstName middleName lastName email')
-        .populate('participants.admin', 'firstName middleName lastName email')
-        .populate('participants.counselor', 'firstName middleName lastName email')
+        .populate('participants.student', 'name email')
+        .populate('participants.OPS', 'name email')
+        .populate('participants.superAdmin', 'name email')
+        .populate('participants.admin', 'name email')
+        .populate('participants.counselor', 'name email')
         .sort({ updatedAt: -1 });
     } else if (userRole === USER_ROLE.SUPER_ADMIN || userRole === USER_ROLE.ADMIN || userRole === USER_ROLE.COUNSELOR) {
       chats = await ProgramChat.find(query)
@@ -462,11 +480,11 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
           path: 'programId',
           select: 'university programName campus country priority intake year',
         })
-        .populate('participants.student', 'firstName middleName lastName email')
-        .populate('participants.OPS', 'firstName middleName lastName email')
-        .populate('participants.superAdmin', 'firstName middleName lastName email')
-        .populate('participants.admin', 'firstName middleName lastName email')
-        .populate('participants.counselor', 'firstName middleName lastName email')
+        .populate('participants.student', 'name email')
+        .populate('participants.OPS', 'name email')
+        .populate('participants.superAdmin', 'name email')
+        .populate('participants.admin', 'name email')
+        .populate('participants.counselor', 'name email')
         .sort({ updatedAt: -1 })
         .limit(100);
     }

@@ -72,7 +72,7 @@ export default function OpsScheduleCalendar({
   const events: CalendarEvent[] = useMemo(() => {
     return schedules.map((schedule) => {
       const student = schedule.studentId as OpsScheduleStudent;
-      const displayName = student?.userId ? (getFullName(student.userId) || 'Me') : 'Me';
+      const displayName = getFullName(student?.userId) || 'Me';
       
       const [hours, minutes] = schedule.scheduledTime.split(':').map(Number);
       const startDate = new Date(schedule.scheduledDate);

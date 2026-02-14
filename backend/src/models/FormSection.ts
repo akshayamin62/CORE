@@ -6,6 +6,13 @@ export interface IFormSection extends Document {
   description?: string;
   order: number;
   isActive: boolean;
+  isRepeatable?: boolean;
+  minRepeats?: number;
+  maxRepeats?: number;
+  questions?: any[];
+  isGlobal?: boolean;
+  usedInServices?: any[];
+  createdBy?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

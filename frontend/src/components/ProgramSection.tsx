@@ -36,9 +36,9 @@ interface Program {
   selectedAt?: string;
   createdBy?: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
     role: string;
   };
@@ -389,7 +389,7 @@ export default function ProgramSection({
                             <h4 className="font-semibold text-gray-900">{program.programName}</h4>
                           </div>
                         <p className="text-sm text-gray-600 mb-2">{program.university}</p>
-                        {program.createdBy && getFullName(program.createdBy) && (
+                        {getFullName(program.createdBy) && (
                           <p className="text-xs text-blue-600 mb-2">
                             Created by: <span className="font-medium">{getFullName(program.createdBy)}</span>
                           </p>

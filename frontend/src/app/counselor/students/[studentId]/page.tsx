@@ -4,16 +4,16 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI, adminStudentAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
-import { getFullName } from '@/utils/nameHelpers';
 import toast, { Toaster } from 'react-hot-toast';
+import { getFullName, getInitials } from '@/utils/nameHelpers';
 
 interface StudentDetails {
   _id: string;
   userId: {
     _id: string;
-    firstName?: string;
+    firstName: string;
     middleName?: string;
-    lastName?: string;
+    lastName: string;
     email: string;
     role: string;
     isVerified: boolean;
@@ -25,9 +25,9 @@ interface StudentDetails {
     _id: string;
     userId: {
       _id: string;
-      firstName?: string;
+      firstName: string;
       middleName?: string;
-      lastName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -35,9 +35,9 @@ interface StudentDetails {
     _id: string;
     userId: {
       _id: string;
-      firstName?: string;
+      firstName: string;
       middleName?: string;
-      lastName?: string;
+      lastName: string;
       email: string;
     };
   };
@@ -54,15 +54,15 @@ interface Registration {
   };
   primaryOpsId?: {
     _id: string;
-    userId: { _id: string; firstName?: string; middleName?: string; lastName?: string; email: string };
+    userId: { _id: string; firstName: string; middleName?: string; lastName: string; email: string };
   };
   secondaryOpsId?: {
     _id: string;
-    userId: { _id: string; firstName?: string; middleName?: string; lastName?: string; email: string };
+    userId: { _id: string; firstName: string; middleName?: string; lastName: string; email: string };
   };
   activeOpsId?: {
     _id: string;
-    userId: { _id: string; firstName?: string; middleName?: string; lastName?: string; email: string };
+    userId: { _id: string; firstName: string; middleName?: string; lastName: string; email: string };
   };
   status: string;
   createdAt: string;
@@ -196,7 +196,7 @@ export default function CounselorStudentDetailPage() {
                   <div className="flex items-center">
                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                       <span className="text-blue-600 font-bold text-xl">
-                        {(getFullName(student.userId) || '?').charAt(0).toUpperCase()}
+                        {getInitials(student.userId)}
                       </span>
                     </div>
                     <div>
@@ -234,6 +234,12 @@ export default function CounselorStudentDetailPage() {
                     </p>
                   </div>
                   <div>
+                    <p className="text-sm text-gray-600 mb-1">Admin</p>
+                    <p className="font-medium text-gray-900">
+                      {getFullName(student.adminId?.userId) || 'Not assigned'}
+                    </p>
+                  </div>
+                  <div>
                     <p className="text-sm text-gray-600 mb-1">Counselor</p>
                     <p className="font-medium text-gray-900">
                       {getFullName(student.counselorId?.userId) || 'Not assigned'}
@@ -243,12 +249,6 @@ export default function CounselorStudentDetailPage() {
                     <p className="text-sm text-gray-600 mb-1">Joined Date</p>
                     <p className="font-medium text-gray-900">
                       {new Date(student.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Student ID</p>
-                    <p className="font-medium text-gray-900 font-mono text-xs">
-                      {student._id}
                     </p>
                   </div>
                 </div>

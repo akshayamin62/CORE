@@ -5,6 +5,7 @@ import { USER_ROLE } from "../types/roles";
 import Counselor from "../models/Counselor";
 import Lead from "../models/Lead";
 import FollowUp, { FOLLOWUP_STATUS } from "../models/FollowUp";
+import Student from "../models/Student";
 import { AuthRequest } from "../types/auth";
 
 /**
@@ -388,6 +389,46 @@ export const getCounselorFollowUpSummary = async (req: AuthRequest, res: Respons
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch follow-up summary',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get admin dashboard stats
+ */
+export const getAdminStats = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const adminUserId = req.user?.userId;
+
+    // Find the admin record
+    const admin = await Admin.findOne({ userId: adminUserId });
+    if (!admin) {
+      return res.status(404).json({ success: false, message: 'Admin not found' });
+    }
+
+    // Count students under this admin
+    const students = await Student.countDocuments({ adminId: admin._id });
+
+    // Count counselors under this admin
+    const counselors = await Counselor.countDocuments({ adminId: admin._id });
+
+    return res.json({
+      success: true,
+      data: {
+        total: students + counselors,
+        students,
+        counselors,
+        alumni: 0,
+        serviceProviders: 0,
+        admins: 1,
+      },
+    });
+  } catch (error: any) {
+    console.error('Get admin stats error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch stats',
       error: error.message,
     });
   }

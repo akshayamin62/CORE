@@ -31,6 +31,8 @@ export default function DashboardPage() {
         router.push('/ops/dashboard');
       } else if (user.role === 'COUNSELOR') {
         router.push('/counselor/dashboard');
+      } else if (user.role === 'IVY_EXPERT') {
+        router.push('/ivy-league/ivy-expert');
       } else {
         fetchMyServices();
       }
@@ -105,7 +107,7 @@ export default function DashboardPage() {
   const handleRegister = async (serviceId: string) => {
     // Check if service is configured (only study-abroad is currently configured)
     const service = otherServices.find(s => s._id === serviceId);
-    if (service && service.slug !== 'study-abroad') {
+    if (service && service.slug !== 'study-abroad' && service.slug !== 'ivy-league' && service.slug !== 'ivy-league-admission' && service.name !== 'Ivy League Preparation' && service.name !== 'Ivy League Admission') {
       toast('This service will be available soon for registration.');
       return;
     }
@@ -129,7 +131,14 @@ export default function DashboardPage() {
       return (typeof r.serviceId === 'object' ? r.serviceId._id : r.serviceId) === serviceId;
     });
     if (registration) {
-      router.push(`/student/registration/${registration._id}`);
+      // Check if this is the Ivy League service
+      const service = typeof registration.serviceId === 'object' ? registration.serviceId : null;
+      if (service && (service.slug === 'ivy-league' || service.slug === 'ivy-league-admission' || service.name === 'Ivy League Preparation' || service.name === 'Ivy League Admission')) {
+        // Route to the Ivy League student dashboard (auth-based, no params needed)
+        router.push('/ivy-league/student');
+      } else {
+        router.push(`/student/registration/${registration._id}`);
+      }
     } else {
       // Show service details modal or page
       toast('Service details coming soon!');

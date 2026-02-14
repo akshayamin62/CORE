@@ -1,15 +1,14 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { getUploadBaseDir, ensureDir } from '../utils/uploadDir';
 
 // Simple storage - files go to a common uploads folder
 // Controller will organize them into student folders
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    const uploadsDir = path.join(__dirname, "../../uploads");
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
+    const uploadsDir = getUploadBaseDir();
+    ensureDir(uploadsDir);
     cb(null, uploadsDir);
   },
   filename: (_req, file, cb) => {
@@ -47,10 +46,8 @@ export const upload = multer({
 // Admin logo upload - only images
 const adminLogoStorage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    const uploadsDir = path.join(__dirname, "../../uploads/admin");
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
+    const uploadsDir = path.join(getUploadBaseDir(), 'admin');
+    ensureDir(uploadsDir);
     cb(null, uploadsDir);
   },
   filename: (_req, file, cb) => {

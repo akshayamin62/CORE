@@ -1,17 +1,13 @@
 /**
  * Zoho Meeting Integration Utility
  *
- * Uses Zoho Meeting REST API v2 with OAuth2 auth.
+ * Uses Zoho Meeting REST API with OAuth2 Server-to-Server auth.
  *
  * Required ENV variables:
  *   ZOHO_CLIENT_ID       – from Zoho API Console
  *   ZOHO_CLIENT_SECRET   – from Zoho API Console
  *   ZOHO_REFRESH_TOKEN   – generated once via OAuth2 flow
  *   ZOHO_ACCOUNT_DOMAIN  – "com" | "in" | "eu" | "com.au" | "com.cn" (default "com")
- *
- * The Zoho Meeting API v2 requires:
- *  1. ZSOID (organization ID) in the URL path: /api/v2/{zsoid}/sessions.json
- *  2. Authorization header: Zoho-oauthtoken {accessToken}
  */
 
 import axios from "axios";
@@ -36,11 +32,10 @@ interface ZohoTokenCache {
 }
 
 // ──────────────────────────────────────────────────
-// Caches
+// Token Management (cached in-memory)
 // ──────────────────────────────────────────────────
 
 let tokenCache: ZohoTokenCache | null = null;
-let zsoidCache: string | null = null;
 
 const getAccountsDomain = (): string => {
   const domain = process.env.ZOHO_ACCOUNT_DOMAIN || "com";
@@ -51,10 +46,6 @@ const getMeetingApiBase = (): string => {
   const domain = process.env.ZOHO_ACCOUNT_DOMAIN || "com";
   return `https://meeting.zoho.${domain}/api/v2`;
 };
-
-// ──────────────────────────────────────────────────
-// Token Management (cached in-memory)
-// ──────────────────────────────────────────────────
 
 /**
  * Refresh the access token using the stored refresh token.
@@ -111,71 +102,6 @@ const getAccessToken = async (): Promise<string> => {
 };
 
 // ──────────────────────────────────────────────────
-// ZSOID (Organization ID) — required in all API paths
-// ──────────────────────────────────────────────────
-
-/**
- * Get the Zoho Service Organization ID (zsoid).
- * This is required in the URL path of all meeting API calls.
- *
- * Priority:
- *  1. ZOHO_ZSOID env var (if set manually) — NO API CALL NEEDED
- *  2. GET /api/v2/user.json endpoint (requires ZohoMeeting.manageOrg.READ scope)
- *
- * If you have the ZSOID, set ZOHO_ZSOID in .env and skip the OAuth scope requirement.
- */
-const getZsoid = async (): Promise<string> => {
-  // Check if ZSOID is set in env
-  const envZsoid = process.env.ZOHO_ZSOID;
-  if (envZsoid) {
-    console.log(`✅ Using ZOHO_ZSOID from env: ${envZsoid}`);
-    zsoidCache = envZsoid;
-    return envZsoid;
-  }
-
-  if (zsoidCache) return zsoidCache;
-
-  const accessToken = await getAccessToken();
-
-  try {
-    const response = await axios.get(
-      `${getMeetingApiBase()}/user.json`,
-      {
-        headers: {
-          Authorization: `Zoho-oauthtoken ${accessToken}`,
-        },
-      }
-    );
-
-    console.log("📋 Zoho user details response:", JSON.stringify(response.data, null, 2));
-
-    // Try multiple possible response structures
-    const zsoid =
-      response.data?.userDetails?.zsoid ||
-      response.data?.zsoid ||
-      response.data?.user?.zsoid ||
-      response.data?.orgId ||
-      response.data?.userDetails?.orgId;
-
-    if (!zsoid) {
-      console.error("❌ Could not extract zsoid from user response:", JSON.stringify(response.data, null, 2));
-      throw new Error("Could not extract zsoid from Zoho user details");
-    }
-
-    zsoidCache = String(zsoid);
-    console.log(`✅ Zoho ZSOID fetched from API: ${zsoidCache}`);
-    return zsoidCache;
-  } catch (error: any) {
-    console.error("❌ Failed to fetch Zoho ZSOID from API:");
-    console.error("   Status:", error?.response?.status);
-    console.error("   Data:", JSON.stringify(error?.response?.data, null, 2));
-    console.error("   Message:", error.message);
-    console.error("➡️  SOLUTION: Set ZOHO_ZSOID in .env with your Organization ID to skip this API call");
-    throw new Error(`Failed to get Zoho organization ID: ${error.message}`);
-  }
-};
-
-// ──────────────────────────────────────────────────
 // Create Meeting
 // ──────────────────────────────────────────────────
 
@@ -196,8 +122,8 @@ interface CreateMeetingParams {
 /**
  * Create a Zoho Meeting and return the join link.
  *
- * API: POST /api/v2/{zsoid}/sessions.json
- * Docs: https://www.zoho.com/meeting/api-integration/meeting-api/create-a-meeting.html
+ * API: POST /api/v2/session.json
+ * Docs: https://www.zoho.com/meeting/api-integration.html
  */
 export const createZohoMeeting = async (
   params: CreateMeetingParams
@@ -224,13 +150,10 @@ export const createZohoMeeting = async (
   }
 
   const accessToken = await getAccessToken();
-  const zsoid = await getZsoid();
-  console.log("🔑 Got access token & zsoid, preparing Zoho meeting request...");
 
-  // Format start time for Zoho: "MMM dd, yyyy hh:mm AM/PM"
+  // Format start time for Zoho: "MMM dd, yyyy HH:mm AM/PM" (e.g. "Feb 07, 2026 10:30 AM")
   const dateObj = new Date(startTime);
   const zohoStartTime = formatZohoDateTime(dateObj);
-  console.log(`📅 Formatted meeting time: ${zohoStartTime}`);
 
   const requestBody: any = {
     session: {
@@ -238,6 +161,7 @@ export const createZohoMeeting = async (
       startTime: zohoStartTime,
       duration: duration,
       timezone,
+      type: 2, // 2 = meeting (1 = webinar)
     },
   };
 
@@ -251,14 +175,9 @@ export const createZohoMeeting = async (
     }));
   }
 
-  // Correct URL: /api/v2/{zsoid}/sessions.json
-  const apiUrl = `${getMeetingApiBase()}/${zsoid}/sessions.json`;
-  console.log(`📤 Zoho API URL: ${apiUrl}`);
-  console.log(`📤 Zoho request body:`, JSON.stringify(requestBody, null, 2));
-
   try {
     const response = await axios.post(
-      apiUrl,
+      `${getMeetingApiBase()}/session.json`,
       requestBody,
       {
         headers: {
@@ -268,52 +187,32 @@ export const createZohoMeeting = async (
       }
     );
 
-    // Log full response for debugging
-    console.log("📋 Zoho Meeting API full response:", JSON.stringify(response.data, null, 2));
-
-    // Handle both object and array response formats
-    const rawSession = response.data?.session;
-    const session = Array.isArray(rawSession) ? rawSession[0] : rawSession;
+    const session = response.data?.session;
 
     if (!session) {
-      console.error("Zoho Meeting API response (no session):", JSON.stringify(response.data, null, 2));
+      console.error("Zoho Meeting API response:", JSON.stringify(response.data, null, 2));
       throw new Error("Unexpected Zoho Meeting API response structure");
     }
 
-    // Zoho Meeting API returns "startLink" for the meeting join/start URL
-    const meetingUrl =
-      session.startLink ||
-      session.joinUrl ||
-      session.joinLink ||
-      session.meetingURL ||
-      session.meetingUrl ||
-      "";
-
-    // Fallback: construct join URL from meeting key if no URL returned
-    const domain = process.env.ZOHO_ACCOUNT_DOMAIN || "com";
-    const fallbackUrl = session.meetingKey
-      ? `https://meeting.zoho.${domain}/meeting/${session.meetingKey}`
-      : "";
-
     const result: ZohoMeetingResult = {
-      meetingKey: String(session.meetingKey || session.sessionKey || ""),
-      meetingUrl: meetingUrl || fallbackUrl,
-      startUrl: session.startLink || session.startUrl || session.hostUrl || "",
-      meetingNumber: String(session.meetingNumber || session.sessionId || ""),
+      meetingKey: session.meetingKey || session.sessionKey || "",
+      meetingUrl: session.joinUrl || session.meetingURL || "",
+      startUrl: session.startUrl || session.hostUrl || "",
+      meetingNumber: session.meetingNumber || session.sessionId || "",
       topic: session.topic || topic,
       startTime: session.startTime || dateObj.toISOString(),
       duration: session.duration || duration,
     };
 
-    console.log(`✅ Zoho Meeting created: key=${result.meetingKey}, url=${result.meetingUrl}`);
+    console.log(`✅ Zoho Meeting created: ${result.meetingUrl}`);
     return result;
   } catch (error: any) {
-    console.error("❌ Failed to create Zoho Meeting:");
-    console.error("   Error message:", error.message);
-    console.error("   Response status:", error?.response?.status);
-    console.error("   Response data:", JSON.stringify(error?.response?.data, null, 2));
+    console.error(
+      "❌ Failed to create Zoho Meeting:",
+      error?.response?.data || error.message
+    );
     throw new Error(
-      `Failed to create Zoho Meeting: ${error?.response?.data?.message || error?.response?.data?.error || error.message}`
+      `Failed to create Zoho Meeting: ${error?.response?.data?.message || error.message}`
     );
   }
 };
@@ -324,7 +223,6 @@ export const createZohoMeeting = async (
 
 /**
  * Delete a Zoho meeting by its key.
- * API: DELETE /api/v2/{zsoid}/sessions/{meetingKey}.json
  */
 export const deleteZohoMeeting = async (meetingKey: string): Promise<void> => {
   if (!meetingKey || meetingKey === "not-configured") return;
@@ -336,16 +234,12 @@ export const deleteZohoMeeting = async (meetingKey: string): Promise<void> => {
 
   try {
     const accessToken = await getAccessToken();
-    const zsoid = await getZsoid();
 
-    await axios.delete(
-      `${getMeetingApiBase()}/${zsoid}/sessions/${meetingKey}.json`,
-      {
-        headers: {
-          Authorization: `Zoho-oauthtoken ${accessToken}`,
-        },
-      }
-    );
+    await axios.delete(`${getMeetingApiBase()}/${meetingKey}.json`, {
+      headers: {
+        Authorization: `Zoho-oauthtoken ${accessToken}`,
+      },
+    });
 
     console.log(`✅ Zoho Meeting ${meetingKey} deleted`);
   } catch (error: any) {
