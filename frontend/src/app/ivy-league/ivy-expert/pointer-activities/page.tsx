@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import ActivitySelector from '@/components/ActivitySelector';
 import { BACKEND_URL } from '@/lib/ivyApi';
 import { fetchBlobUrl, useBlobUrl, fileApi } from '@/lib/useBlobUrl';
+import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
 
 function BlobDocPanel({ url, type }: { url: string; type: 'pdf' | 'image' }) {
   const { blobUrl, loading, error } = useBlobUrl(url);
@@ -352,6 +353,11 @@ function IvyExpertPointerActivitiesContent() {
       <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-8 space-y-8">
         <h1 className="text-2xl font-bold text-gray-900">Pointers 2 / 3 / 4 - Activity Execution</h1>
 
+        {/* Ivy League Applicant Info Panel - Show based on selected pointer */}
+        {selectedPointer && [2, 3, 4].includes(Number(selectedPointer)) && (
+          <IvyLeagueApplicantInfoPanel pointerNo={Number(selectedPointer)} />
+        )}
+
         {/* Inputs */}
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -666,7 +672,7 @@ function IvyExpertPointerActivitiesContent() {
                       ))}
                     </ul>
                     <p className="text-xs text-brand-700">
-                      Submitted at: {new Date(act.submission.submittedAt).toLocaleString()}
+                      Submitted at: {new Date(act.submission.submittedAt).toLocaleString('en-GB')}
                     </p>
                   </div>
                 )}
@@ -693,7 +699,7 @@ function IvyExpertPointerActivitiesContent() {
                         </p>
                       )}
                       <p className="text-xs text-green-700">
-                        Last updated: {new Date(act.evaluation.evaluatedAt).toLocaleString()}
+                        Last updated: {new Date(act.evaluation.evaluatedAt).toLocaleString('en-GB')}
                       </p>
                     </div>
                   </div>

@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useStudentService } from '../useStudentService';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { fetchBlobUrl, useBlobUrl, fileApi } from '@/lib/useBlobUrl';
+import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
 
 interface Attachment {
     fileName: string;
@@ -197,7 +198,7 @@ function StudentPointer5Content() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
-                        <span className="text-sm font-bold text-amber-800 uppercase tracking-wide">Read-Only View — Super Admin</span>
+                        <span className="text-sm font-bold text-amber-800 uppercase tracking-wide">Read-Only View</span>
                     </div>
                 )}
 
@@ -207,9 +208,6 @@ function StudentPointer5Content() {
                         <h1 className="text-5xl font-black text-gray-900 tracking-tighter mb-4">
                             POINTER 5: AUTHENTIC & REFLECTIVE STORYTELLING
                         </h1>
-                        <p className="text-xl text-gray-400 font-medium max-w-xl">
-                            Complete assigned writing tasks and share your learnings
-                        </p>
                     </div>
 
                     {/* Pointer 5 Score Card */}
@@ -225,6 +223,9 @@ function StudentPointer5Content() {
                         </div>
                     )}
                 </div>
+
+                {/* Ivy League Applicant Info Panel */}
+                <IvyLeagueApplicantInfoPanel pointerNo={5} />
 
                 {/* Message */}
                 {message && (
@@ -428,7 +429,7 @@ function StudentPointer5Content() {
                                                             <div className="flex-1">
                                                                 <p className="text-gray-900">{taskStatus.evaluation.feedback}</p>
                                                                 <p className="text-sm text-gray-500 mt-2">
-                                                                    Evaluated: {new Date(taskStatus.evaluation.evaluatedAt).toLocaleString()}
+                                                                    Evaluated: {new Date(taskStatus.evaluation.evaluatedAt).toLocaleString('en-GB')}
                                                                 </p>
                                                             </div>
                                                         )}

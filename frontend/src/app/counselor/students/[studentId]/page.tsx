@@ -23,6 +23,8 @@ interface StudentDetails {
   mobileNumber?: string;
   adminId?: {
     _id: string;
+    companyName?: string;
+    mobileNumber?: string;
     userId: {
       _id: string;
       firstName: string;
@@ -33,6 +35,7 @@ interface StudentDetails {
   };
   counselorId?: {
     _id: string;
+    mobileNumber?: string;
     userId: {
       _id: string;
       firstName: string;
@@ -41,6 +44,8 @@ interface StudentDetails {
       email: string;
     };
   };
+  intake?: string;
+  year?: string;
   createdAt: string;
 }
 
@@ -54,14 +59,17 @@ interface Registration {
   };
   primaryOpsId?: {
     _id: string;
+    mobileNumber?: string;
     userId: { _id: string; firstName: string; middleName?: string; lastName: string; email: string };
   };
   secondaryOpsId?: {
     _id: string;
+    mobileNumber?: string;
     userId: { _id: string; firstName: string; middleName?: string; lastName: string; email: string };
   };
   activeOpsId?: {
     _id: string;
+    mobileNumber?: string;
     userId: { _id: string; firstName: string; middleName?: string; lastName: string; email: string };
   };
   status: string;
@@ -144,7 +152,12 @@ export default function CounselorStudentDetailPage() {
     }
   };
 
-  const handleViewFormData = (registrationId: string) => {
+  const handleViewFormData = (registrationId: string, serviceName?: string) => {
+    // For Ivy League, open the student ivy-league view in read-only mode
+    if (serviceName === 'Ivy League Preparation' && student?.userId?._id) {
+      router.push(`/ivy-league/student?studentId=${student.userId._id}&readOnly=true`);
+      return;
+    }
     router.push(`/counselor/students/${studentId}/registration/${registrationId}`);
   };
 
@@ -226,7 +239,7 @@ export default function CounselorStudentDetailPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 pt-4 border-t border-gray-200">
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Mobile Number</p>
                     <p className="font-medium text-gray-900">
@@ -236,21 +249,45 @@ export default function CounselorStudentDetailPage() {
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Admin</p>
                     <p className="font-medium text-gray-900">
-                      {getFullName(student.adminId?.userId) || 'Not assigned'}
+                      {student.adminId?.companyName || getFullName(student.adminId?.userId) || 'Not assigned'}
                     </p>
+                    {student.adminId?.userId?.email && (
+                      <p className="text-sm text-gray-500">{student.adminId.userId.email}</p>
+                    )}
+                    {student.adminId?.mobileNumber && (
+                      <p className="text-sm text-gray-500">{student.adminId.mobileNumber}</p>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Counselor</p>
                     <p className="font-medium text-gray-900">
                       {getFullName(student.counselorId?.userId) || 'Not assigned'}
                     </p>
+                    {student.counselorId?.userId?.email && (
+                      <p className="text-sm text-gray-500">{student.counselorId.userId.email}</p>
+                    )}
+                    {student.counselorId?.mobileNumber && (
+                      <p className="text-sm text-gray-500">{student.counselorId.mobileNumber}</p>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Joined Date</p>
                     <p className="font-medium text-gray-900">
-                      {new Date(student.createdAt).toLocaleDateString()}
+                      {new Date(student.createdAt).toLocaleDateString('en-GB')}
                     </p>
                   </div>
+                  {student.intake && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Intake</p>
+                      <p className="font-medium text-blue-600">{student.intake}</p>
+                    </div>
+                  )}
+                  {student.year && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Year</p>
+                      <p className="font-medium text-blue-600">{student.year}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -271,7 +308,7 @@ export default function CounselorStudentDetailPage() {
                               {registration.serviceId.shortDescription}
                             </p>
                             <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <span>Registered: {new Date(registration.createdAt).toLocaleDateString()}</span>
+                              <span>Registered: {new Date(registration.createdAt).toLocaleDateString('en-GB')}</span>
                               <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
                                 {registration.status}
                               </span>
@@ -279,15 +316,29 @@ export default function CounselorStudentDetailPage() {
                             
                             {/* OPS Info (Read-only) */}
                             {(registration.primaryOpsId || registration.secondaryOpsId) && (
-                              <div className="mt-3 space-y-2">
+                              <div className="mt-3 space-y-1">
                                 {registration.primaryOpsId && (
                                   <p className="text-xs text-gray-600">
-                                    <span className="font-medium">Primary OPS:</span> {getFullName(registration.primaryOpsId.userId) || 'N/A'}
+                                    <span className="font-medium">Primary OPS:</span>{' '}
+                                    {getFullName(registration.primaryOpsId.userId) || 'N/A'}
+                                    {registration.primaryOpsId.userId?.email && (
+                                      <span className="text-gray-500"> • {registration.primaryOpsId.userId.email}</span>
+                                    )}
+                                    {registration.primaryOpsId.mobileNumber && (
+                                      <span className="text-gray-500"> • {registration.primaryOpsId.mobileNumber}</span>
+                                    )}
                                   </p>
                                 )}
                                 {registration.secondaryOpsId && (
                                   <p className="text-xs text-gray-600">
-                                    <span className="font-medium">Secondary OPS:</span> {getFullName(registration.secondaryOpsId.userId) || 'N/A'}
+                                    <span className="font-medium">Secondary OPS:</span>{' '}
+                                    {getFullName(registration.secondaryOpsId.userId) || 'N/A'}
+                                    {registration.secondaryOpsId.userId?.email && (
+                                      <span className="text-gray-500"> • {registration.secondaryOpsId.userId.email}</span>
+                                    )}
+                                    {registration.secondaryOpsId.mobileNumber && (
+                                      <span className="text-gray-500"> • {registration.secondaryOpsId.mobileNumber}</span>
+                                    )}
                                   </p>
                                 )}
                                 {registration.activeOpsId && (
@@ -299,7 +350,7 @@ export default function CounselorStudentDetailPage() {
                             )}
                           </div>
                           <button
-                            onClick={() => handleViewFormData(registration._id)}
+                            onClick={() => handleViewFormData(registration._id, registration.serviceId.name)}
                             className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium inline-flex items-center gap-2"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

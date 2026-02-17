@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import axios from 'axios';
 import { useStudentService } from '../useStudentService';
 import { IVY_API_URL } from '@/lib/ivyApi';
+import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
 
 interface Course {
   _id: string;
@@ -279,7 +280,7 @@ function Pointer6Content() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            <span className="text-sm font-bold text-amber-800 uppercase tracking-wide">Read-Only View — Super Admin</span>
+            <span className="text-sm font-bold text-amber-800 uppercase tracking-wide">Read-Only View</span>
           </div>
         )}
 
@@ -290,7 +291,6 @@ function Pointer6Content() {
               <h1 className="text-5xl font-black text-gray-900 mb-2">
                 POINTER 6: ENGAGEMENT WITH LEARNING & INTELLECTUAL CURIOSITY
               </h1>
-              <p className="text-gray-600">Select courses you want to pursue</p>
             </div>
             {pointer6Score != null && (
               // <div className="bg-white p-10 rounded-[3rem] shadow-2xl border-4 border-brand-50 flex flex-col items-center justify-center text-center scale-110 md:mr-10">
@@ -304,6 +304,9 @@ function Pointer6Content() {
               </div>
             )}
           </div>
+
+          {/* Ivy League Applicant Info Panel */}
+          <IvyLeagueApplicantInfoPanel pointerNo={6} />
 
           {/* Success/Error Message */}
           {message && (
@@ -470,6 +473,8 @@ function Pointer6Content() {
                               value={dateInputs[course._id]?.startDate || ''}
                               onChange={(e) => handleDateChange(course._id, 'startDate', e.target.value)}
                               disabled={readOnly || course.selected}
+                              lang="en-GB"
+                              placeholder="dd/mm/yyyy"
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 disabled:text-gray-900"
                             />
                           </div>
@@ -482,6 +487,8 @@ function Pointer6Content() {
                               value={dateInputs[course._id]?.endDate || ''}
                               onChange={(e) => handleDateChange(course._id, 'endDate', e.target.value)}
                               disabled={readOnly || course.selected}
+                              lang="en-GB"
+                              placeholder="dd/mm/yyyy"
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 disabled:text-gray-900"
                             />
                           </div>
@@ -538,7 +545,7 @@ function Pointer6Content() {
                                   <p className="text-sm font-medium text-gray-900">{course.certificateFileName}</p>
                                   {course.certificateUploadedAt && (
                                     <p className="text-xs text-gray-500">
-                                      Uploaded on {new Date(course.certificateUploadedAt).toLocaleDateString()}
+                                      Uploaded on {new Date(course.certificateUploadedAt).toLocaleDateString('en-GB')}
                                     </p>
                                   )}
                                 </div>

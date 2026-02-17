@@ -7,6 +7,7 @@ import mammoth from 'mammoth';
 import { useStudentService } from '../useStudentService';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { useBlobUrl, fetchBlobUrl, fileApi } from '@/lib/useBlobUrl';
+import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
 
 function InlineDocViewer({ url, onClose }: { url: string, onClose: () => void }) {
   const { blobUrl, loading, error } = useBlobUrl(url);
@@ -980,10 +981,10 @@ function ActivitiesContent() {
   const filteredActivities = activities.filter(a => a.pointerNo === activePointer);
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="h-screen flex overflow-hidden bg-gray-50">
       {/* Tasks List Section */}
-      <div className={`transition-all duration-300 ${selectedTask ? 'w-[35%]' : 'w-full'} overflow-y-auto`}>
-        <div className="py-12 px-4 sm:px-6 lg:px-8">
+      <div className={`flex-1 overflow-y-auto transition-all duration-300 ${selectedTask ? 'w-[35%]' : 'w-full'}`}>
+        <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
       {/* Read-Only Banner */}
       {readOnly && (
         <div className="max-w-6xl mx-auto mb-4">
@@ -992,7 +993,7 @@ function ActivitiesContent() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            <span className="text-sm font-bold text-amber-800 uppercase tracking-wide">Read-Only View — Super Admin</span>
+            <span className="text-sm font-bold text-amber-800 uppercase tracking-wide">Read-Only View</span>
           </div>
         </div>
       )}
@@ -1000,7 +1001,6 @@ function ActivitiesContent() {
         <div className="mb-10 pb-6 border-b border-gray-100 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
             <h1 className="text-5xl font-black text-gray-900 tracking-tight uppercase">{getPointerLabel(activePointer)}</h1>
-            <p className="text-gray-500 font-medium mt-1">Proof submission and tracking.</p>
           </div>
           <div className="flex items-center gap-4">
             {/* <div className={`px-6 py-3 rounded-2xl border-2 flex items-center gap-3 ${activePointer === 2 ? 'border-brand-100 bg-brand-50 text-brand-700' : activePointer === 3 ? 'border-brand-100 bg-brand-50 text-brand-700' : 'border-brand-100 bg-brand-50 text-brand-700'}`}>
@@ -1018,6 +1018,9 @@ function ActivitiesContent() {
             )}
           </div>
         </div>
+
+        {/* Ivy League Applicant Info Panel */}
+        <IvyLeagueApplicantInfoPanel pointerNo={activePointer} />
 
         {/* Messages */}
         {message && (
@@ -1264,7 +1267,7 @@ function ActivitiesContent() {
                   <div className="mb-4 p-4 bg-brand-50 border border-brand-200 rounded-md">
                     <p className="text-sm font-medium text-brand-900 mb-2">Proof Files ({activity.submission!.files.length})</p>
                     <p className="text-xs text-brand-700 mb-3">
-                      Submitted: {new Date(activity.submission!.submittedAt).toLocaleString()}
+                      Submitted: {new Date(activity.submission!.submittedAt).toLocaleString('en-GB')}
                     </p>
                     <div className="grid grid-cols-1 gap-3 mb-3">
                       {activity.submission!.files.map((fileUrl, index) => {
@@ -1391,7 +1394,7 @@ function ActivitiesContent() {
                       </p>
                     )}
                     <p className="text-xs text-green-700 mt-2">
-                      Evaluated: {new Date(activity.evaluation!.evaluatedAt).toLocaleString()}
+                      Evaluated: {new Date(activity.evaluation!.evaluatedAt).toLocaleString('en-GB')}
                     </p>
                   </div>
                 )}
@@ -1402,11 +1405,11 @@ function ActivitiesContent() {
         )}
       {/* </div> */}
       </div>
-    </div>
+      </div>
 
       {/* Conversation Window Section */}
       {selectedTask && (
-        <div className="w-[65%] border-l border-gray-200 h-screen overflow-hidden">
+        <div className="w-[65%] border-l border-gray-200 flex-shrink-0 overflow-hidden">
           <ConversationWindow
             activityTitle={selectedTask.activityTitle}
             task={selectedTask.task}

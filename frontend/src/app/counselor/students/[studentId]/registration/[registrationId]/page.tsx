@@ -224,7 +224,8 @@ export default function CounselorStudentRegistrationPage() {
                   <ProgramSection
                     studentId={studentId}
                     sectionType={currentSection.title === 'Apply to Program' ? 'available' : 'applied'}
-                    userRole="OPS"
+                    registrationId={registrationId}
+                    userRole="COUNSELOR"
                     isReadOnly={true}
                   />
                 </div>
@@ -244,7 +245,7 @@ export default function CounselorStudentRegistrationPage() {
                   isAdminEdit={false}
                   registrationId={registrationId}
                   studentId={studentId}
-                  userRole="ADMIN"
+                  userRole="COUNSELOR"
                   readOnly={true}
                 />
               )}

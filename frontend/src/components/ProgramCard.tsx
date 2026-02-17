@@ -18,11 +18,12 @@ interface Program {
   studyLevel: string;
   duration?: number;
   ieltsScore?: number;
-  applicationFee?: number;
-  yearlyTuitionFees?: number;
+  applicationFee?: string;
+  yearlyTuitionFees?: string;
   priority?: number;
   intake?: string;
   year?: string;
+  status?: string;
   createdBy?: {
     _id: string;
     firstName: string;
@@ -40,6 +41,7 @@ interface ProgramCardProps {
   onEdit?: (programId: string) => void;
   editingProgramId?: string | null;
   index?: number;
+  topRow?: React.ReactNode; // Rendered inside card, above program name
 }
 
 export default function ProgramCard({
@@ -49,11 +51,14 @@ export default function ProgramCard({
   onEdit,
   editingProgramId,
   index,
+  topRow,
 }: ProgramCardProps) {
   return (
     <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors bg-white">
       <div className="flex items-start justify-between">
         <div className="flex-1">
+          {/* Custom top row (status badges + action buttons) */}
+          {topRow && <div className="mb-2">{topRow}</div>}
           {showPriority && (program.priority || program.intake || program.year) && (
             <div className="flex items-center gap-3 mb-2 flex-wrap">
               {program.priority && (
@@ -111,12 +116,12 @@ export default function ProgramCard({
             )}
             {program.yearlyTuitionFees && (
               <div>
-                <span className="font-medium">Tuition:</span> £{program.yearlyTuitionFees.toLocaleString()}
+                <span className="font-medium">Tuition:</span> {program.yearlyTuitionFees}
               </div>
             )}
             {program.applicationFee && (
               <div>
-                <span className="font-medium">Application Fee:</span> £{program.applicationFee.toLocaleString()}
+                <span className="font-medium">Application Fee:</span> {program.applicationFee}
               </div>
             )}
             {program.programUrl && (

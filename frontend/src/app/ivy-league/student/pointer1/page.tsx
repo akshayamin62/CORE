@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import axios from 'axios';
 import { useStudentService } from '../useStudentService';
 import { IVY_API_URL } from '@/lib/ivyApi';
+import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
 
 interface Subject {
     _id?: string;
@@ -413,7 +414,7 @@ function Pointer1Content() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
-                    <span className="text-sm font-bold text-amber-800 uppercase tracking-wide">Read-Only View — Super Admin</span>
+                    <span className="text-sm font-bold text-amber-800 uppercase tracking-wide">Read-Only View</span>
                 </div>
             )}
             <div className="mb-8 flex justify-between items-start">
@@ -421,9 +422,6 @@ function Pointer1Content() {
                     <h1 className="text-5xl font-black text-gray-900 mb-4 tracking-tight">
                         POINTER 1: ACADEMIC EXCELLENCE
                     </h1>
-                    <p className="text-xl text-gray-500 max-w-2xl leading-relaxed">
-                        Manage your academic performance records and evaluations.
-                    </p>
                 </div>
 
                 {/* Academic Excellence Score Card */}
@@ -439,6 +437,9 @@ function Pointer1Content() {
                     </div>
                 )}
             </div>
+
+            {/* Ivy League Applicant Info Panel */}
+            <IvyLeagueApplicantInfoPanel pointerNo={1} />
 
             {/* Tabs */}
             <div className="flex gap-2 mb-8 border-b border-gray-200">
@@ -623,58 +624,12 @@ function Pointer1Content() {
                                             {activeTab === 'informal' && subSection.testType === 'project' ? (
                                                 <div className="space-y-3">
                                                     {subSection.projects?.map((project, projectIndex) => (
-                                                        <div key={project._id || projectIndex} className="grid grid-cols-2 gap-3 items-start p-4 bg-gray-50 rounded-xl">
-                                                            <div>
-                                                                <label className="block text-xs font-bold text-gray-600 mb-1">Project Title</label>
-                                                                <input
-                                                                    type="text"
-                                                                    value={project.title}
-                                                                    onChange={(e) => updateProject(section._id!, subSection._id!, project._id!, 'title', e.target.value)}
-                                                                    readOnly={readOnly}
-                                                                    placeholder="Project title"
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-brand-500 outline-none text-sm text-black placeholder:text-gray-400 read-only:opacity-60 read-only:cursor-not-allowed"
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-xs font-bold text-gray-600 mb-1">Organization (if any)</label>
-                                                                <input
-                                                                    type="text"
-                                                                    value={project.organizationName || ''}
-                                                                    onChange={(e) => updateProject(section._id!, subSection._id!, project._id!, 'organizationName', e.target.value)}
-                                                                    readOnly={readOnly}
-                                                                    placeholder="Organization name"
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-brand-500 outline-none text-sm text-black placeholder:text-gray-400 read-only:opacity-60 read-only:cursor-not-allowed"
-                                                                />
-                                                            </div>
-                                                            <div className="col-span-2">
-                                                                <label className="block text-xs font-bold text-gray-600 mb-1">Project Description</label>
-                                                                <textarea
-                                                                    rows={3}
-                                                                    value={project.description}
-                                                                    onChange={(e) => updateProject(section._id!, subSection._id!, project._id!, 'description', e.target.value)}
-                                                                    readOnly={readOnly}
-                                                                    placeholder="Describe the project"
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-brand-500 outline-none text-sm text-black placeholder:text-gray-400 resize-none read-only:opacity-60 read-only:cursor-not-allowed"
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-xs font-bold text-gray-600 mb-1">Project URL (if any)</label>
-                                                                <input
-                                                                    type="url"
-                                                                    value={project.projectUrl || ''}
-                                                                    onChange={(e) => updateProject(section._id!, subSection._id!, project._id!, 'projectUrl', e.target.value)}
-                                                                    readOnly={readOnly}
-                                                                    placeholder="https://..."
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-brand-500 outline-none text-sm text-black placeholder:text-gray-400 read-only:opacity-60 read-only:cursor-not-allowed"
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-xs font-bold text-gray-600 mb-1">Feedback</label>
-                                                                <div className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm min-h-[40px] italic">
-                                                                    {project.feedback || 'Awaiting feedback'}
-                                                                </div>
-                                                            </div>
-                                                            <div className="flex items-end justify-center h-full pb-1">
+                                                        <div key={project._id || projectIndex} className="bg-gray-50 rounded-xl border border-gray-200">
+                                                            {/* Project Header */}
+                                                            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white rounded-t-xl">
+                                                                <h3 className="text-sm font-bold text-gray-900">
+                                                                    {project.title || `Project ${projectIndex + 1}`}
+                                                                </h3>
                                                                 {!readOnly && (
                                                                 <button
                                                                     onClick={() => deleteProjectHandler(section._id!, subSection._id!, project._id!)}
@@ -686,6 +641,59 @@ function Pointer1Content() {
                                                                     </svg>
                                                                 </button>
                                                                 )}
+                                                            </div>
+                                                            {/* Project Content */}
+                                                            <div className="grid grid-cols-2 gap-3 p-4">
+                                                                <div>
+                                                                    <label className="block text-xs font-bold text-gray-600 mb-1">Project Title</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={project.title}
+                                                                        onChange={(e) => updateProject(section._id!, subSection._id!, project._id!, 'title', e.target.value)}
+                                                                        readOnly={readOnly}
+                                                                        placeholder="Project title"
+                                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-brand-500 outline-none text-sm text-black placeholder:text-gray-400 read-only:opacity-60 read-only:cursor-not-allowed"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-xs font-bold text-gray-600 mb-1">Organization (if any)</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={project.organizationName || ''}
+                                                                        onChange={(e) => updateProject(section._id!, subSection._id!, project._id!, 'organizationName', e.target.value)}
+                                                                        readOnly={readOnly}
+                                                                        placeholder="Organization name"
+                                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-brand-500 outline-none text-sm text-black placeholder:text-gray-400 read-only:opacity-60 read-only:cursor-not-allowed"
+                                                                    />
+                                                                </div>
+                                                                <div className="col-span-2">
+                                                                    <label className="block text-xs font-bold text-gray-600 mb-1">Project Description</label>
+                                                                    <textarea
+                                                                        rows={3}
+                                                                        value={project.description}
+                                                                        onChange={(e) => updateProject(section._id!, subSection._id!, project._id!, 'description', e.target.value)}
+                                                                        readOnly={readOnly}
+                                                                        placeholder="Describe the project"
+                                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-brand-500 outline-none text-sm text-black placeholder:text-gray-400 resize-none read-only:opacity-60 read-only:cursor-not-allowed"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-xs font-bold text-gray-600 mb-1">Project URL (if any)</label>
+                                                                    <input
+                                                                        type="url"
+                                                                        value={project.projectUrl || ''}
+                                                                        onChange={(e) => updateProject(section._id!, subSection._id!, project._id!, 'projectUrl', e.target.value)}
+                                                                        readOnly={readOnly}
+                                                                        placeholder="https://..."
+                                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-brand-500 outline-none text-sm text-black placeholder:text-gray-400 read-only:opacity-60 read-only:cursor-not-allowed"
+                                                                    />
+                                                                </div>
+                                                                <div>
+                                                                    <label className="block text-xs font-bold text-gray-600 mb-1">Feedback</label>
+                                                                    <div className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm min-h-[40px] italic">
+                                                                        {project.feedback || 'Awaiting feedback'}
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     ))}
