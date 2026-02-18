@@ -133,13 +133,6 @@ export default function DocumentUploadSection({
     allowMultiple: boolean = false,
     documentIdToReplace?: string
   ) => {
-    // Validate file
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Only PDF, JPG, and PNG files are allowed');
-      return;
-    }
-
     if (file.size > 10 * 1024 * 1024) {
       toast.error('File size must be less than 10MB');
       return;
@@ -411,7 +404,6 @@ export default function DocumentUploadSection({
                   <input
                     type="file"
                     className="hidden"
-                    accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) handleFileSelect(documentKey, documentName, category, file, allowMultiple);
@@ -481,7 +473,6 @@ export default function DocumentUploadSection({
                             <input
                               type="file"
                               className="hidden"
-                              accept=".pdf,.jpg,.jpeg,.png"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) handleFileSelect(documentKey, documentName, category, file, allowMultiple, document._id);

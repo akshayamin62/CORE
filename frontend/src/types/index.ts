@@ -315,7 +315,7 @@ export interface ServiceProviderProfile {
 // Lead Types
 export enum SERVICE_TYPE {
   EDUCATION_PLANNING = "Education Planning",
-  CARRER_FOCUS_STUDY_ABROAD = "Carrer Focus Study Abroad ",
+  CAREER_FOCUS_STUDY_ABROAD = "Career Focus Study Abroad",
   IVY_LEAGUE_ADMISSION = "Ivy League Admission",
   IELTS_GRE_LANGUAGE_COACHING = "IELTS/GRE/Language Coaching",
 }
