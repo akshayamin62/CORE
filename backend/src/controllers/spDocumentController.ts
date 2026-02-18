@@ -49,7 +49,7 @@ export const uploadSPDocument = async (req: AuthRequest, res: Response) => {
     }
 
     // Create SP directory
-    const spDir = path.join(getUploadBaseDir(), `sp_${serviceProvider._id.toString()}`);
+    const spDir = path.join(getUploadBaseDir(), `service-provider/${serviceProvider._id.toString()}`);
     ensureDir(spDir);
 
     // Generate final filename and move file
@@ -84,7 +84,7 @@ export const uploadSPDocument = async (req: AuthRequest, res: Response) => {
 
       // Update with new file
       existingDoc.fileName = finalFilename;
-      existingDoc.filePath = `uploads/sp_${serviceProvider._id}/${finalFilename}`;
+      existingDoc.filePath = `uploads/service-provider/${serviceProvider._id}/${finalFilename}`;
       existingDoc.fileSize = file.size;
       existingDoc.mimeType = file.mimetype;
       existingDoc.uploadedAt = new Date();
@@ -109,7 +109,7 @@ export const uploadSPDocument = async (req: AuthRequest, res: Response) => {
         documentName,
         documentKey,
         fileName: finalFilename,
-        filePath: `uploads/sp_${serviceProvider._id}/${finalFilename}`,
+        filePath: `uploads/service-provider/${serviceProvider._id}/${finalFilename}`,
         fileSize: file.size,
         mimeType: file.mimetype,
         uploadedBy: new mongoose.Types.ObjectId(userId),
@@ -176,7 +176,7 @@ export const uploadCompanyLogo = async (req: AuthRequest, res: Response) => {
     }
 
     // Create SP directory
-    const spDir = path.join(getUploadBaseDir(), `sp_${serviceProvider._id.toString()}`);
+    const spDir = path.join(getUploadBaseDir(), `service-provider/${serviceProvider._id.toString()}`);
     ensureDir(spDir);
 
     // Delete old logo if exists
@@ -195,7 +195,7 @@ export const uploadCompanyLogo = async (req: AuthRequest, res: Response) => {
     fs.renameSync(file.path, finalPath);
 
     // Update service provider
-    serviceProvider.companyLogo = `uploads/sp_${serviceProvider._id}/${finalFilename}`;
+    serviceProvider.companyLogo = `uploads/service-provider/${serviceProvider._id}/${finalFilename}`;
     await serviceProvider.save();
 
     return res.status(200).json({

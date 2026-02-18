@@ -431,7 +431,7 @@ export default function RoleUserListPage({
                           <div className="flex items-center">
                             {((isAdminRole || roleEnum === USER_ROLE.SERVICE_PROVIDER) && user.companyLogo) ? (
                               <img
-                                src={`${BACKEND_URL}/${user.companyLogo}`}
+                                src={`${BACKEND_URL}/${user.companyLogo.replace(/^\//, '')}`}
                                 alt={user.companyName || 'Company Logo'}
                                 className="w-10 h-10 rounded-full object-cover"
                                 onError={(e) => {

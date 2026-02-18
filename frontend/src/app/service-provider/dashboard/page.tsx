@@ -165,7 +165,7 @@ export default function ServiceProviderDashboard() {
 
   const fullName = getFullName(user);
   const initials = getInitials(user);
-  const logoUrl = spProfile?.companyLogo ? `${BASE_URL}/${spProfile.companyLogo}` : null;
+  const logoUrl = spProfile?.companyLogo ? `${BASE_URL}/${spProfile.companyLogo.replace(/^\//, '')}` : null;
 
   return (
     <div className="min-h-screen bg-gray-50">

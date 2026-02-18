@@ -239,7 +239,7 @@ export default function PublicEnquiryFormPage() {
         <div className="text-center mb-8">
           {adminInfo?.companyLogo ? (
             <img
-              src={`${BACKEND_URL}${adminInfo.companyLogo}`}
+              src={`${BACKEND_URL}/${adminInfo.companyLogo.replace(/^\//, '')}`}
               alt={adminInfo.companyName || 'Company Logo'}
               className="w-24 h-24 rounded-2xl object-cover mx-auto mb-4 shadow-lg border border-gray-200"
               onError={(e) => {

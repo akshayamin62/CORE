@@ -201,7 +201,7 @@ export default function ServiceProviderDetailPage() {
   }
 
   const fullName = getFullName(user);
-  const logoUrl = serviceProvider.companyLogo ? `${BASE_URL}/${serviceProvider.companyLogo}` : null;
+  const logoUrl = serviceProvider.companyLogo ? `${BASE_URL}/${serviceProvider.companyLogo.replace(/^\//, '')}` : null;
 
   return (
     <>
