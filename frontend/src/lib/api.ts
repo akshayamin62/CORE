@@ -45,10 +45,26 @@ api.interceptors.response.use(
 
 // API functions
 export const authAPI = {
-  signup: (data: { firstName: string; middleName?: string; lastName: string; email: string; role: string; captcha: string; captchaInput: string }) =>
+  signup: (data: { firstName: string; middleName?: string; lastName: string; email: string; mobileNumber?: string; role: string; captcha: string; captchaInput: string }) =>
     api.post('/auth/signup', data),
   
-  verifySignupOTP: (data: { email: string; otp: string }) =>
+  verifySignupOTP: (data: { 
+    email: string; 
+    otp: string; 
+    mobileNumber?: string;
+    companyName?: string;
+    businessType?: string;
+    registrationNumber?: string;
+    gstNumber?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    pincode?: string;
+    website?: string;
+    servicesOffered?: string;
+    coachingTests?: string[];
+  }) =>
     api.post('/auth/verify-signup-otp', data),
   
   login: (data: { email: string; captcha: string; captchaInput: string }) =>
@@ -88,7 +104,7 @@ export const superAdminAPI = {
     middleName?: string;
     lastName: string;
     email: string;
-    phoneNumber?: string;
+    mobileNumber?: string;
   }) => api.post('/super-admin/ops', data),
   
   createAdmin: (data: {
@@ -96,7 +112,7 @@ export const superAdminAPI = {
     middleName?: string;
     lastName: string;
     email: string;
-    phoneNumber?: string;
+    mobileNumber?: string;
   }) => api.post('/super-admin/admin', data),
   
   createUserByRole: (data: FormData | {
@@ -104,7 +120,7 @@ export const superAdminAPI = {
     middleName?: string;
     lastName: string;
     email: string;
-    phoneNumber?: string;
+    mobileNumber?: string;
     role: string;
     adminId?: string;
     customSlug?: string;
@@ -155,6 +171,9 @@ export const superAdminAPI = {
   
   // All leads for super admin
   getAllLeads: (params?: any) => api.get('/super-admin/leads', { params }),
+  
+  // Service Provider details
+  getServiceProviderDetail: (providerId: string) => api.get(`/super-admin/service-providers/${providerId}`),
   
   assignOps: (registrationId: string, data: {
     primaryOpsId?: string;
