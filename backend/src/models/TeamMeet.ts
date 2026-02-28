@@ -23,12 +23,18 @@ export interface ITeamMeet extends Document {
   meetingType: TEAMMEET_TYPE;
   zohoMeetingKey?: string; // Zoho meeting session key
   zohoMeetingUrl?: string; // Zoho meeting join URL
+  zohoMeetingId?: string; // Zoho meeting ID (e.g. "1036588582")
+  zohoMeetingPassword?: string; // Zoho meeting password (e.g. "nsPd75")
   description?: string;
+  attachmentUrl?: string;   // Relative path: uploads/team-meets/<filename>
+  attachmentName?: string;  // Original file name
+  attachmentSize?: number;  // File size in bytes
   requestedBy: mongoose.Types.ObjectId; // User who created the meeting
   requestedTo: mongoose.Types.ObjectId; // User who receives the invitation
   adminId: mongoose.Types.ObjectId; // Admin organization context
   status: TEAMMEET_STATUS;
   rejectionMessage?: string; // Required when status is REJECTED
+  notes?: string; // Creator's notes (saved on mark complete)
   completedAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -71,10 +77,30 @@ const teamMeetSchema = new Schema<ITeamMeet>(
       type: String,
       default: null,
     },
+    zohoMeetingId: {
+      type: String,
+      default: null,
+    },
+    zohoMeetingPassword: {
+      type: String,
+      default: null,
+    },
     description: {
       type: String,
       trim: true,
       maxlength: 1000,
+    },
+    attachmentUrl: {
+      type: String,
+      default: null,
+    },
+    attachmentName: {
+      type: String,
+      default: null,
+    },
+    attachmentSize: {
+      type: Number,
+      default: null,
     },
     requestedBy: {
       type: Schema.Types.ObjectId,
@@ -100,6 +126,11 @@ const teamMeetSchema = new Schema<ITeamMeet>(
       type: String,
       trim: true,
       maxlength: 500,
+    },
+    notes: {
+      type: String,
+      trim: true,
+      maxlength: 2000,
     },
     completedAt: {
       type: Date,

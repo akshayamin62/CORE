@@ -5,6 +5,8 @@ import User from '../models/User';
 import Ops from '../models/Ops';
 import IvyExpert from '../models/IvyExpert';
 import EduplanCoach from '../models/EduplanCoach';
+import { sendCustomMessageToStudent } from '../utils/email';
+import { sendStaffMessageSms } from '../utils/sms';
 // import Service from '../models/Service';
 // import Admin from '../models/Admin';
 // import Counselor from '../models/Counselor';
@@ -43,6 +45,40 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
           { activeOpsId: ops._id },
           { activeOpsId: { $exists: false }, primaryOpsId: ops._id },
           { activeOpsId: null, primaryOpsId: ops._id }
+        ]
+      }).select('studentId');
+      
+      const studentIds = [...new Set(registrations.map(r => r.studentId.toString()))];
+      
+      if (studentIds.length === 0) {
+        return res.status(200).json({
+          success: true,
+          message: 'Students fetched successfully',
+          data: {
+            students: [],
+            total: 0,
+          },
+        });
+      }
+      
+      studentQuery = { _id: { $in: studentIds } };
+    }
+
+    // If user is an Eduplan Coach, filter by active assignments only
+    if (userRole === USER_ROLE.EDUPLAN_COACH) {
+      const coach = await EduplanCoach.findOne({ userId });
+      if (!coach) {
+        return res.status(404).json({
+          success: false,
+          message: 'Eduplan Coach record not found',
+        });
+      }
+      
+      const registrations = await StudentServiceRegistration.find({
+        $or: [
+          { activeEduplanCoachId: coach._id },
+          { activeEduplanCoachId: { $exists: false }, primaryEduplanCoachId: coach._id },
+          { activeEduplanCoachId: null, primaryEduplanCoachId: coach._id }
         ]
       }).select('studentId');
       
@@ -278,6 +314,31 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
       }
     }
 
+    // If user is EDUPLAN_COACH, verify they are active coach for at least one registration
+    if (user?.role === USER_ROLE.EDUPLAN_COACH) {
+      const coach = await EduplanCoach.findOne({ userId });
+
+      if (!coach) {
+        return res.status(404).json({
+          success: false,
+          message: 'Eduplan Coach record not found',
+        });
+      }
+
+      const hasAccess = registrations.some(reg => {
+        const activeCoachIdValue = reg.activeEduplanCoachId || reg.primaryEduplanCoachId;
+        const activeCoachIdString = activeCoachIdValue?._id?.toString() || activeCoachIdValue?.toString();
+        return activeCoachIdString === coach._id.toString();
+      });
+
+      if (!hasAccess) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. You are not the active Eduplan Coach for this student.',
+        });
+      }
+    }
+
     return res.status(200).json({
       success: true,
       message: 'Student details fetched successfully',
@@ -347,6 +408,33 @@ export const getStudentFormAnswers = async (req: AuthRequest, res: Response): Pr
         return res.status(403).json({
           success: false,
           message: 'Access denied. You are not the active OPS for this registration.',
+        });
+      }
+    }
+
+    // If user is EDUPLAN_COACH, verify they are the active coach for this registration
+    if (user?.role === USER_ROLE.EDUPLAN_COACH) {
+      const coach = await EduplanCoach.findOne({ userId }).lean().exec();
+      if (!coach) {
+        return res.status(404).json({
+          success: false,
+          message: 'Eduplan Coach record not found',
+        });
+      }
+
+      const fullRegistration = await StudentServiceRegistration.findById(registrationId)
+        .populate('primaryEduplanCoachId')
+        .populate('activeEduplanCoachId')
+        .lean()
+        .exec();
+      
+      const activeCoachIdValue = fullRegistration?.activeEduplanCoachId || fullRegistration?.primaryEduplanCoachId;
+      const activeCoachIdString = activeCoachIdValue?._id?.toString() || activeCoachIdValue?.toString();
+      
+      if (activeCoachIdString !== coach._id.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. You are not the active Eduplan Coach for this registration.',
         });
       }
     }
@@ -742,6 +830,121 @@ export const switchActiveOps = async (req: AuthRequest, res: Response): Promise<
     return res.status(500).json({
       success: false,
       message: 'Failed to switch active role',
+    });
+  }
+};
+
+/**
+ * Send a custom message email to a student
+ */
+export const sendMessageToStudent = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const userId = req.user?.userId;
+    const { studentId } = req.params;
+    const { message, serviceName, sendVia } = req.body;
+    // sendVia: 'email' | 'sms' | 'both' (default: 'email')
+    const channel: string = sendVia || 'email';
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message is required',
+      });
+    }
+
+    // Get sender info
+    const sender = await User.findById(userId).select('firstName middleName lastName role');
+    if (!sender) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sender not found',
+      });
+    }
+
+    // Get student info with user details
+    const student = await Student.findById(studentId)
+      .populate('userId', 'firstName middleName lastName email');
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Student not found',
+      });
+    }
+
+    const studentUser = student.userId as any;
+    if (!studentUser?.email && (channel === 'email' || channel === 'both')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Student email not found',
+      });
+    }
+
+    const senderName = [sender.firstName, sender.middleName, sender.lastName].filter(Boolean).join(' ');
+    const studentName = [studentUser.firstName, studentUser.middleName, studentUser.lastName].filter(Boolean).join(' ') || 'Student';
+
+    // Map role to display name
+    const roleDisplayMap: Record<string, string> = {
+      SUPER_ADMIN: 'Super Admin',
+      ADMIN: 'Admin',
+      COUNSELOR: 'Counselor',
+      OPS: 'OPS',
+      EDUPLAN_COACH: 'Education Planning Coach',
+    };
+    const senderRole = roleDisplayMap[sender.role] || sender.role;
+
+    const results: string[] = [];
+
+    // Send Email
+    if (channel === 'email' || channel === 'both') {
+      await sendCustomMessageToStudent(
+        studentUser.email,
+        studentName,
+        senderName,
+        senderRole,
+        message.trim(),
+        serviceName
+      );
+      results.push('Email sent');
+    }
+
+    // Send SMS
+    if (channel === 'sms' || channel === 'both') {
+      const mobile = student.mobileNumber;
+      if (!mobile) {
+        if (channel === 'sms') {
+          return res.status(400).json({
+            success: false,
+            message: 'Student mobile number not found',
+          });
+        }
+        // If 'both', email already sent, just note SMS was skipped
+        results.push('SMS skipped (no mobile number)');
+      } else {
+        try {
+          await sendStaffMessageSms({ mobile, senderName, senderRole, serviceName: serviceName || 'CORE Platform' });
+          results.push('SMS sent');
+        } catch (smsErr: any) {
+          console.error('SMS send error:', smsErr?.message || smsErr);
+          if (channel === 'sms') {
+            return res.status(500).json({
+              success: false,
+              message: 'Failed to send SMS',
+            });
+          }
+          results.push('SMS failed');
+        }
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: results.join(', '),
+    });
+  } catch (error: any) {
+    console.error('Send message to student error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to send message',
     });
   }
 };

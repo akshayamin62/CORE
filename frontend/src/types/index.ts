@@ -413,6 +413,8 @@ export interface FollowUp {
   meetingType: MEETING_TYPE;
   zohoMeetingKey?: string;
   zohoMeetingUrl?: string;
+  zohoMeetingId?: string;
+  zohoMeetingPassword?: string;
   status: FOLLOWUP_STATUS;
   stageAtFollowUp: LEAD_STAGE;
   stageChangedTo?: LEAD_STAGE;
@@ -489,7 +491,12 @@ export interface TeamMeet {
   meetingType: TEAMMEET_TYPE;
   zohoMeetingKey?: string;
   zohoMeetingUrl?: string;
+  zohoMeetingId?: string;
+  zohoMeetingPassword?: string;
   description?: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
+  attachmentSize?: number;
   requestedBy: {
     _id: string;
     firstName?: string;
@@ -508,6 +515,7 @@ export interface TeamMeet {
   };
   status: TEAMMEET_STATUS;
   rejectionMessage?: string;
+  notes?: string;
   completedAt?: string;
   createdAt: string;
   updatedAt: string;

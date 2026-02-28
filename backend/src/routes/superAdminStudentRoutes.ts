@@ -10,13 +10,14 @@ import {
   getStudentsWithRegistrations,
   assignOps,
   switchActiveOps,
+  sendMessageToStudent,
 } from '../controllers/superAdminStudentController';
 
 const router = express.Router();
 
-// All routes require authentication and super admin/ops role
+// All routes require authentication and super admin/ops/eduplan-coach role
 router.use(authenticate);
-router.use(authorize([USER_ROLE.SUPER_ADMIN, USER_ROLE.OPS]));
+router.use(authorize([USER_ROLE.SUPER_ADMIN, USER_ROLE.OPS, USER_ROLE.EDUPLAN_COACH]));
 
 // Get all students
 router.get('/', getAllStudents);
@@ -38,6 +39,9 @@ router.post('/registrations/:registrationId/assign-ops', authorize([USER_ROLE.SU
 
 // Switch active ops (super admin only)
 router.post('/registrations/:registrationId/switch-active-ops', authorize([USER_ROLE.SUPER_ADMIN]), switchActiveOps);
+
+// Send message to student (all roles)
+router.post('/:studentId/send-message', sendMessageToStudent);
 
 export default router;
 

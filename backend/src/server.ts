@@ -1,7 +1,9 @@
+import dotenv from 'dotenv';
+dotenv.config(); // MUST be first — loads .env before any other module reads process.env
+
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
 import authRoutes from "./routes/authRoutes";
 import superAdminRoutes from "./routes/superAdminRoutes";
@@ -21,6 +23,11 @@ import teamMeetRoutes from "./routes/teamMeetRoutes";
 import opsScheduleRoutes from "./routes/opsScheduleRoutes";
 import leadStudentConversionRoutes from "./routes/leadStudentConversionRoutes";
 import spDocumentRoutes from "./routes/spDocumentRoutes";
+import brainographyRoutes from "./routes/brainographyRoutes";
+import portfolioRoutes from "./routes/portfolioRoutes";
+import activityRoutes from "./routes/activityRoutes";
+import ivyLeagueRegistrationRoutes from "./routes/ivyLeagueRegistrationRoutes";
+import ivyLeagueAdminRoutes from "./routes/ivyLeagueAdmin.routes";
 
 // Ivy League route imports
 import ivyServiceRoutes from "./routes/ivyService.routes";
@@ -38,6 +45,9 @@ import ivyPointerActivityRoutes from "./routes/pointerActivity.routes";
 import ivyStudentInterestRoutes from "./routes/studentInterest.routes";
 import ivyTaskConversationRoutes from "./routes/taskConversation.routes";
 import ivyUserRoutes from "./routes/user.routes";
+import ivyTestQuestionRoutes from "./routes/ivyTestQuestion.routes";
+import ivyTestSessionRoutes from "./routes/ivyTestSession.routes";
+import ivyExpertCandidateRoutes from "./routes/ivyExpertCandidate.routes";
 
 import { authenticate } from "./middleware/auth";
 
@@ -66,6 +76,11 @@ import "./models/TeamMeet";
 import "./models/OpsSchedule";
 import "./models/LeadStudentConversion";
 import "./models/ServiceProviderDocument";
+import "./models/BrainographyData";
+import "./models/Portfolio";
+import "./models/MonthlyFocus";
+import "./models/DailyPlanner";
+import "./models/IvyLeagueRegistration";
 
 // Import Ivy League models to register them with Mongoose
 import "./models/ivy/AcademicData";
@@ -93,8 +108,10 @@ import "./models/ivy/Pointer6Evaluation";
 import "./models/ivy/StudentIvyScoreCard";
 import "./models/ivy/StudentPointerScore";
 import "./models/ivy/TaskConversation";
+import "./models/ivy/IvyTestQuestion";
+import "./models/ivy/IvyTestSession";
 
-dotenv.config();
+dotenv.config(); // already called at top — this line is now redundant, kept for safety
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -110,6 +127,7 @@ app.use('/uploads', express.static(getUploadBaseDir()));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/super-admin/students", superAdminStudentRoutes); // More specific route must come first
+app.use("/api/super-admin/ivy-league", authenticate, ivyLeagueAdminRoutes); // Ivy League admin routes
 app.use("/api/super-admin", superAdminRoutes);
 app.use("/api/admin/students", adminStudentRoutes); // Admin students routes (read-only)
 app.use("/api/admin", adminRoutes);
@@ -125,6 +143,10 @@ app.use("/api/team-meets", teamMeetRoutes); // TeamMeet routes
 app.use("/api/ops-schedules", opsScheduleRoutes); // OPS Schedule routes
 app.use("/api/lead-conversions", leadStudentConversionRoutes); // Lead to Student conversion routes
 app.use("/api/sp-documents", spDocumentRoutes); // Service Provider document routes
+app.use("/api/brainography", brainographyRoutes); // Brainography report routes
+app.use("/api/portfolio", portfolioRoutes); // Portfolio generation routes
+app.use("/api/activity", activityRoutes); // Activity management routes
+app.use("/api/ivy-league-registration", ivyLeagueRegistrationRoutes); // Ivy League registration form routes
 app.use("/api", leadRoutes); // Lead routes (includes public, admin, counselor endpoints)
 
 // Ivy League routes (all protected by authenticate middleware)
@@ -143,6 +165,9 @@ app.use("/api/ivy/pointer/activity", authenticate, ivyPointerActivityRoutes);
 app.use("/api/ivy/student-interest", authenticate, ivyStudentInterestRoutes);
 app.use("/api/ivy/task", authenticate, ivyTaskConversationRoutes);
 app.use("/api/ivy/users", authenticate, ivyUserRoutes);
+app.use("/api/ivy/test-questions", authenticate, ivyTestQuestionRoutes);
+app.use("/api/ivy/test-session", authenticate, ivyTestSessionRoutes);
+app.use("/api/ivy/ivy-expert-candidates", authenticate, ivyExpertCandidateRoutes);
 
 // Basic test route
 app.get('/', (_req, res) => {

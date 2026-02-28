@@ -216,6 +216,27 @@ export const serviceAPI = {
     api.get(`/services/registrations/${registrationId}`),
 };
 
+// Ivy League Registration API
+export const ivyLeagueRegistrationAPI = {
+  getPrefill: () => api.get('/ivy-league-registration/prefill'),
+  
+  submit: (data: {
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    parentFirstName: string;
+    parentMiddleName?: string;
+    parentLastName: string;
+    parentMobile: string;
+    parentEmail: string;
+    schoolName: string;
+    curriculum: string;
+    currentGrade: string;
+  }) => api.post('/ivy-league-registration', data),
+
+  getStatus: () => api.get('/ivy-league-registration/status'),
+};
+
 // Form Answer API
 export const formAnswerAPI = {
   saveFormAnswers: (data: {
@@ -484,7 +505,7 @@ export const chatAPI = {
 
 // TeamMeet API
 export const teamMeetAPI = {
-  // Create a new team meeting request
+  // Create a new team meeting request (supports optional file attachment via FormData)
   createTeamMeet: (data: {
     subject: string;
     scheduledDate: string;
@@ -493,7 +514,23 @@ export const teamMeetAPI = {
     meetingType: string;
     description?: string;
     requestedTo: string;
-  }) => api.post('/team-meets', data),
+    attachmentFile?: File;
+  }) => {
+    if (data.attachmentFile) {
+      const formData = new FormData();
+      formData.append('subject', data.subject);
+      formData.append('scheduledDate', data.scheduledDate);
+      formData.append('scheduledTime', data.scheduledTime);
+      formData.append('duration', String(data.duration));
+      formData.append('meetingType', data.meetingType);
+      if (data.description) formData.append('description', data.description);
+      formData.append('requestedTo', data.requestedTo);
+      formData.append('attachment', data.attachmentFile);
+      return api.post('/team-meets', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+    }
+    const { attachmentFile, ...rest } = data;
+    return api.post('/team-meets', rest);
+  },
 
   // Get all team meetings for current user
   getTeamMeets: (params?: {
@@ -531,7 +568,7 @@ export const teamMeetAPI = {
   }) => api.patch(`/team-meets/${teamMeetId}/reschedule`, data),
 
   // Mark meeting as completed
-  completeTeamMeet: (teamMeetId: string, data?: { description?: string }) => api.patch(`/team-meets/${teamMeetId}/complete`, data),
+  completeTeamMeet: (teamMeetId: string, data?: { notes?: string }) => api.patch(`/team-meets/${teamMeetId}/complete`, data),
 
   // Check availability for a time slot
   checkAvailability: (params: {
@@ -619,6 +656,37 @@ export const leadConversionAPI = {
   
   // Get all conversions (Super Admin)
   getAllConversions: (status?: string) => api.get('/lead-conversions/all', { params: { status } }),
+};
+
+// Activity Management API
+export const activityAPI = {
+  // Monthly Focus
+  getMonthlyFocus: (registrationId: string, month: string) =>
+    api.get(`/activity/${registrationId}/monthly-focus`, { params: { month } }),
+  upsertMonthlyFocus: (registrationId: string, data: any) =>
+    api.put(`/activity/${registrationId}/monthly-focus`, data),
+
+  // Daily Planner
+  getDailyPlanner: (registrationId: string, date: string) =>
+    api.get(`/activity/${registrationId}/planner`, { params: { date } }),
+  upsertDailyPlanner: (registrationId: string, data: any) =>
+    api.put(`/activity/${registrationId}/planner`, data),
+
+  // Month summary for calendar
+  getMonthSummary: (registrationId: string, month: string) =>
+    api.get(`/activity/${registrationId}/month-summary`, { params: { month } }),
+
+  // Analytics
+  getActivityAnalytics: (registrationId: string, months?: number) =>
+    api.get(`/activity/${registrationId}/analytics`, { params: { months: months || 3 } }),
+
+  // Feedback
+  getFeedback: (registrationId: string, type?: string, period?: string) =>
+    api.get(`/activity/${registrationId}/feedback`, { params: { type, period } }),
+  upsertFeedback: (registrationId: string, data: { type: 'monthly' | 'weekly'; period: string; periodEnd?: string; feedback: string }) =>
+    api.put(`/activity/${registrationId}/feedback`, data),
+  deleteFeedback: (registrationId: string, feedbackId: string) =>
+    api.delete(`/activity/${registrationId}/feedback/${feedbackId}`),
 };
 
 export default api;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { serviceAPI, formAnswerAPI } from '@/lib/api';
 import { FormStructure, StudentServiceRegistration, Service } from '@/types';
@@ -9,6 +9,22 @@ import FormSectionRenderer from '@/components/FormSectionRenderer';
 import StudentLayout from '@/components/StudentLayout';
 import ProgramSection from '@/components/ProgramSection';
 import { getFullName } from '@/utils/nameHelpers';
+import axios from 'axios';
+import BrainographyDataDisplay, { BrainographyDataType } from '@/components/BrainographyDataDisplay';
+import PortfolioSection, { PortfolioItem, PortfolioRow, usePortfolioDownload } from '@/components/PortfolioSection';
+import ActivityAnalyticsDashboard from '@/components/ActivityAnalyticsDashboard';
+
+const BRAINOGRAPHY_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+interface BrainographyDoc {
+  _id: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedAt: string;
+  version: number;
+}
 
 // Extended interface for registration with populated fields
 interface ExtendedRegistration extends Omit<StudentServiceRegistration, 'studentId' | 'primaryOpsId' | 'secondaryOpsId' | 'activeOpsId'> {
@@ -41,40 +57,28 @@ interface ExtendedRegistration extends Omit<StudentServiceRegistration, 'student
       };
     };
   };
-  primaryOpsId?: {
+  primaryOpsId?: PopulatedRoleUser;
+  secondaryOpsId?: PopulatedRoleUser;
+  activeOpsId?: PopulatedRoleUser;
+  primaryEduplanCoachId?: PopulatedRoleUser;
+  secondaryEduplanCoachId?: PopulatedRoleUser;
+  activeEduplanCoachId?: PopulatedRoleUser;
+}
+
+interface PopulatedRoleUser {
+  _id: string;
+  mobileNumber?: string;
+  email?: string;
+  userId: {
     _id: string;
-    mobileNumber?: string;
-    userId: {
-      _id: string;
-      firstName: string;
-      middleName?: string;
-      lastName: string;
-      email: string;
-    };
-  };
-  secondaryOpsId?: {
-    _id: string;
-    mobileNumber?: string;
-    userId: {
-      _id: string;
-      firstName: string;
-      middleName?: string;
-      lastName: string;
-      email: string;
-    };
-  };
-  activeOpsId?: {
-    _id: string;
-    mobileNumber?: string;
-    userId: {
-      _id: string;
-      firstName: string;
-      middleName?: string;
-      lastName: string;
-      email: string;
-    };
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email: string;
   };
 }
+
+type ActiveView = 'analytics' | 'brainography' | 'portfolio' | 'form';
 
 function MyDetailsContent() {
   const router = useRouter();
@@ -89,6 +93,15 @@ function MyDetailsContent() {
   const [selectedSectionIndex, setSelectedSectionIndex] = useState(0);
   const [formValues, setFormValues] = useState<any>({});
   const [errors, setErrors] = useState<any>({});
+  const [brainographyDoc, setBrainographyDoc] = useState<BrainographyDoc | null>(null);
+
+  // Extracted data & Portfolio
+  const [brainographyData, setBrainographyData] = useState<BrainographyDataType | null>(null);
+  const [portfolios, setPortfolios] = useState<PortfolioItem[]>([]);
+  const handlePortfolioDownload = usePortfolioDownload();
+
+  // Active view: analytics (default) | brainography | portfolio | form
+  const [activeView, setActiveView] = useState<ActiveView>('analytics');
 
   useEffect(() => {
     if (!registrationId) {
@@ -98,6 +111,84 @@ function MyDetailsContent() {
     }
     fetchData();
   }, [registrationId]);
+
+  // Fetch Education Planning specific data & set correct default view after registration loads
+  useEffect(() => {
+    if (!registration) return;
+    const svc = typeof registration.serviceId === 'object' ? registration.serviceId : null;
+    const isEduPlan = svc?.slug === 'education-planning' || svc?.name === 'Education Planning';
+    if (isEduPlan) {
+      fetchBrainography();
+      fetchBrainographyData();
+      fetchPortfolios();
+    } else {
+      // Non-EduPlan services (e.g. Study Abroad) should default to form view
+      setActiveView('form');
+    }
+  }, [registration]);
+
+  const fetchBrainography = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${BRAINOGRAPHY_API_URL}/brainography/${registrationId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setBrainographyDoc(response.data.data.document || null);
+    } catch (error) {
+      // Silently fail - brainography may not exist for this service
+    }
+  };
+
+  const handleBrainographyView = () => {
+    if (!brainographyDoc) return;
+    const baseUrl = BRAINOGRAPHY_API_URL.replace('/api', '') || 'http://localhost:5000';
+    window.open(`${baseUrl}/${brainographyDoc.filePath}`, '_blank');
+  };
+
+  const handleBrainographyDownload = async () => {
+    if (!brainographyDoc) return;
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${BRAINOGRAPHY_API_URL}/brainography/${registrationId}/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', brainographyDoc.fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error('Failed to download brainography report');
+    }
+  };
+
+  const fetchBrainographyData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${BRAINOGRAPHY_API_URL}/portfolio/${registrationId}/data`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setBrainographyData(response.data.data.brainographyData || null);
+    } catch (error) {
+      // Silently fail
+    }
+  };
+
+  const fetchPortfolios = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${BRAINOGRAPHY_API_URL}/portfolio/${registrationId}/portfolios`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPortfolios(response.data.data.portfolios || []);
+    } catch (error) {
+      // Silently fail
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -423,11 +514,11 @@ function MyDetailsContent() {
     );
   }
 
-  if (!registration || formStructure.length === 0) {
+  if (!registration) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <p className="text-gray-600">No form data available</p>
+          <p className="text-gray-600">No registration data available</p>
           <button
             onClick={() => router.push('/dashboard')}
             className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -439,17 +530,295 @@ function MyDetailsContent() {
     );
   }
 
-  const currentPart = formStructure[selectedPartIndex];
-  const currentSection = currentPart.sections.sort((a, b) => a.order - b.order)[selectedSectionIndex];
   const service = typeof registration.serviceId === 'object' 
     ? registration.serviceId 
     : null;
+  const isEducationPlanning = service?.slug === 'education-planning' || service?.name === 'Education Planning';
 
+  /* ─── Navigation Buttons (Education Planning only) ─── */
+  const navButtons = isEducationPlanning ? [
+    { key: 'analytics' as ActiveView, label: 'Activity Analysis', icon: '📊' },
+    { key: 'brainography' as ActiveView, label: 'Brainography Analysis', icon: '🧠' },
+    { key: 'portfolio' as ActiveView, label: 'Education Portfolio Generator', icon: '📁' },
+  ] : [];
+
+    /* ─── Shared: Support Team Section ─── */
+    const eduplanCoach = registration.activeEduplanCoachId || registration.primaryEduplanCoachId;
+    const opsLabel = service?.name === 'Ivy League Preparation' ? 'Ivy Expert' : service?.name === 'Education Planning' ? 'Eduplan Coach' : 'OPS';
+    const opsUser = registration.activeOpsId || registration.primaryOpsId;
+
+    const renderSupportTeam = () => {
+      if (!registration.studentId) return null;
+      const hasTeam = registration.studentId.adminId || registration.studentId.counselorId || opsUser || (isEducationPlanning && eduplanCoach);
+      if (!hasTeam) return null;
+      return (
+        <div className="bg-white border-b border-gray-200 mb-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Your Support Team</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {registration.studentId.adminId && (
+                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <p className="text-xs font-medium text-gray-700 mb-1">Admin</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {registration.studentId.adminId.companyName || getFullName(registration.studentId.adminId.userId)}
+                  </p>
+                  {registration.studentId.adminId.userId?.email && (
+                    <p className="text-xs text-gray-600">{registration.studentId.adminId.userId.email}</p>
+                  )}
+                  {registration.studentId.adminId.mobileNumber && (
+                    <p className="text-xs text-gray-600">{registration.studentId.adminId.mobileNumber}</p>
+                  )}
+                </div>
+              )}
+              {registration.studentId.counselorId && (
+                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <p className="text-xs font-medium text-gray-700 mb-1">Counselor</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {getFullName(registration.studentId.counselorId.userId)}
+                  </p>
+                  {registration.studentId.counselorId.userId?.email && (
+                    <p className="text-xs text-gray-600">{registration.studentId.counselorId.userId.email}</p>
+                  )}
+                  {registration.studentId.counselorId.mobileNumber && (
+                    <p className="text-xs text-gray-600">{registration.studentId.counselorId.mobileNumber}</p>
+                  )}
+                </div>
+              )}
+              {opsUser && (
+                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <p className="text-xs font-medium text-gray-700 mb-1">{opsLabel}</p>
+                  <p className="text-sm font-semibold text-gray-900">{getFullName(opsUser.userId)}</p>
+                  {opsUser.userId?.email && <p className="text-xs text-gray-600">{opsUser.userId.email}</p>}
+                  {opsUser.mobileNumber && <p className="text-xs text-gray-600">{opsUser.mobileNumber}</p>}
+                </div>
+              )}
+              {isEducationPlanning && eduplanCoach && (
+                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <p className="text-xs font-medium text-gray-700 mb-1">Eduplan Coach</p>
+                  <p className="text-sm font-semibold text-gray-900">{getFullName(eduplanCoach.userId)}</p>
+                  {eduplanCoach.userId?.email && <p className="text-xs text-gray-600">{eduplanCoach.userId.email}</p>}
+                  {(eduplanCoach.mobileNumber || eduplanCoach.email) && (
+                    <p className="text-xs text-gray-600">{eduplanCoach.mobileNumber || eduplanCoach.email}</p>
+                  )}
+                </div>
+              )}
+              {(registration.studentId.intake || registration.studentId.year) && (
+                <div className="border border-blue-200 rounded-lg p-3 bg-blue-50">
+                  {registration.studentId.intake && (
+                    <div className="mb-2">
+                      <p className="text-xs font-medium text-gray-700 mb-1">Intake</p>
+                      <p className="text-sm font-semibold text-blue-700">{registration.studentId.intake}</p>
+                    </div>
+                  )}
+                  {registration.studentId.year && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-700 mb-1">Year</p>
+                      <p className="text-sm font-semibold text-blue-700">{registration.studentId.year}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    /* ─── Shared: Navigation Bar ─── */
+    const renderNavBar = (showFormTab: boolean) => (
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {navButtons.map(btn => (
+              <button
+                key={btn.key}
+                onClick={() => setActiveView(btn.key)}
+                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  activeView === btn.key
+                    ? 'bg-brand-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                }`}
+              >
+                <span>{btn.icon}</span> {btn.label}
+              </button>
+            ))}
+            {showFormTab && (
+              <button
+                onClick={() => setActiveView('form')}
+                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  activeView === 'form'
+                    ? 'bg-brand-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+                }`}
+              >
+                <span>📋</span> My Form
+              </button>
+            )}
+            {isEducationPlanning && (
+              <button
+                onClick={() => router.push(`/student/registration/${registrationId}/activity`)}
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-all duration-200 ml-auto"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                My Activity
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+
+    /* ─── Shared: Brainography / Portfolio Content ─── */
+    const renderBrainographyContent = () => (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Reports section */}
+        <div className="border border-teal-200 rounded-xl p-5 bg-teal-50/50">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Brainography Report</h3>
+              <p className="text-xs text-gray-500">Your personalized brainography analysis</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {brainographyDoc ? (
+              <div className="border border-gray-200 rounded-lg p-4 bg-white flex-1 min-w-[220px]">
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 bg-teal-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <svg className="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 text-sm truncate">{brainographyDoc.fileName}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {(brainographyDoc.fileSize / 1024).toFixed(1)} KB &middot; Uploaded: {new Date(brainographyDoc.uploadedAt).toLocaleDateString('en-GB')}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <button onClick={handleBrainographyView} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">View</button>
+                      <button onClick={handleBrainographyDownload} className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs font-medium">Download</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex-1 min-w-[260px]">
+                <svg className="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p className="text-sm text-gray-500">No brainography report uploaded yet</p>
+                <p className="text-xs text-gray-400 mt-1">Your Eduplan Coach will upload this report</p>
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Extracted Brainography Data */}
+        {brainographyData && <BrainographyDataDisplay data={brainographyData} />}
+      </div>
+    );
+
+    const renderPortfolioContent = () => (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Generated Reports */}
+        {portfolios.length > 0 && (
+          <div className="border border-teal-200 rounded-xl p-5 bg-teal-50/50">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">Generated Reports</h3>
+                <p className="text-xs text-gray-500">Download your portfolio reports</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {portfolios.map(p => (
+                <div key={p._id} className="flex-1 min-w-[260px]">
+                  <PortfolioRow portfolio={p} onDownload={handlePortfolioDownload} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* Portfolio Section (Career Goal Selection + Reports) */}
+        {brainographyData && (
+          <PortfolioSection
+            registrationId={registrationId}
+            brainographyData={brainographyData}
+            portfolios={portfolios}
+            onPortfoliosChange={fetchPortfolios}
+            allowGenerate={true}
+          />
+        )}
+        {!brainographyData && portfolios.length === 0 && (
+          <div className="text-center py-16">
+            <p className="text-sm text-gray-500">Brainography data is required to generate portfolios. Upload it via Brainography Analysis first.</p>
+          </div>
+        )}
+      </div>
+    );
+
+    // Education Planning has no form parts — render a dedicated view showing only the Brainography Report
+    if (formStructure.length === 0) {
+      const isEducationPlanning = service?.slug === 'education-planning' || service?.name === 'Education Planning';
+      if (!isEducationPlanning) {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <p className="text-gray-600">No form data available</p>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Back to Dashboard
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+    // ═══ Education Planning — dedicated view (no form) ═══
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Toaster position="top-right" />
+        <StudentLayout
+          formStructure={[]}
+          currentPartIndex={0}
+          currentSectionIndex={0}
+          onPartChange={() => {}}
+          onSectionChange={() => {}}
+          serviceName={service?.name || 'Education Planning'}
+        >
+          {renderSupportTeam()}
+          {renderNavBar(false)}
+
+          {/* Dynamic Content Area */}
+          {activeView === 'analytics' && (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+              <ActivityAnalyticsDashboard registrationId={registrationId} />
+            </div>
+          )}
+          {activeView === 'brainography' && renderBrainographyContent()}
+          {activeView === 'portfolio' && renderPortfolioContent()}
+        </StudentLayout>
+      </div>
+    );
+  } // end if (formStructure.length === 0)
+
+  const currentPart = formStructure[selectedPartIndex];
+  const currentSection = currentPart.sections.sort((a, b) => a.order - b.order)[selectedSectionIndex];
+
+  // ═══ Regular Form View ═══
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-right" />
 
-      {/* Student Layout with Vertical Sidebar */}
       <StudentLayout
         formStructure={formStructure}
         currentPartIndex={selectedPartIndex}
@@ -457,180 +826,117 @@ function MyDetailsContent() {
         onPartChange={(index) => {
           setSelectedPartIndex(index);
           setSelectedSectionIndex(0);
+          setActiveView('form');
         }}
-        onSectionChange={setSelectedSectionIndex}
+        onSectionChange={(index) => {
+          setSelectedSectionIndex(index);
+          setActiveView('form');
+        }}
         serviceName={service?.name || 'Service'}
       >
-        {/* Team Information Header */}
-        {registration.studentId && (registration.studentId.adminId || registration.studentId.counselorId || registration.primaryOpsId) && (
-          <div className="bg-white border-b border-gray-200 mb-6">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Your Support Team</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {registration.studentId.adminId && (
-                  <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                    <p className="text-xs font-medium text-gray-700 mb-1">Admin</p>
-                    <p className="text-sm font-semibold text-gray-900">
-                      {registration.studentId.adminId.companyName || getFullName(registration.studentId.adminId.userId)}
-                    </p>
-                    {registration.studentId.adminId.userId?.email && (
-                      <p className="text-xs text-gray-600">{registration.studentId.adminId.userId.email}</p>
-                    )}
-                    {registration.studentId.adminId.mobileNumber && (
-                      <p className="text-xs text-gray-600">{registration.studentId.adminId.mobileNumber}</p>
-                    )}
-                  </div>
-                )}
-                
-                {registration.studentId.counselorId && (
-                  <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                    <p className="text-xs font-medium text-gray-700 mb-1">Counselor</p>
-                    <p className="text-sm font-semibold text-gray-900">
-                      {getFullName(registration.studentId.counselorId.userId)}
-                    </p>
-                    {registration.studentId.counselorId.userId?.email && (
-                      <p className="text-xs text-gray-600">{registration.studentId.counselorId.userId.email}</p>
-                    )}
-                    {registration.studentId.counselorId.mobileNumber && (
-                      <p className="text-xs text-gray-600">{registration.studentId.counselorId.mobileNumber}</p>
-                    )}
-                  </div>
-                )}
-                
-                {(registration.primaryOpsId || registration.activeOpsId) && (
-                  <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                    <p className="text-xs font-medium text-gray-700 mb-1">
-                      {service?.name === 'Ivy League Preparation' ? 'Ivy Expert' : service?.name === 'Education Planning' ? 'Eduplan Coach' : 'OPS'}
-                    </p>
-                    <p className="text-sm font-semibold text-gray-900">
-                      {getFullName((registration.activeOpsId || registration.primaryOpsId)?.userId)}
-                    </p>
-                    {(registration.activeOpsId || registration.primaryOpsId)?.userId?.email && (
-                      <p className="text-xs text-gray-600">
-                        {(registration.activeOpsId || registration.primaryOpsId)?.userId.email}
-                      </p>
-                    )}
-                    {(registration.activeOpsId || registration.primaryOpsId)?.mobileNumber && (
-                      <p className="text-xs text-gray-600">
-                        {(registration.activeOpsId || registration.primaryOpsId)?.mobileNumber}
-                      </p>
-                    )}
-                  </div>
-                )}
+        {renderSupportTeam()}
+        {isEducationPlanning && renderNavBar(true)}
 
-                {/* Intake & Year - Single Box on Right Side */}
-                {(registration.studentId.intake || registration.studentId.year) && (
-                  <div className="border border-blue-200 rounded-lg p-3 bg-blue-50">
-                    {registration.studentId.intake && (
-                      <div className="mb-2">
-                        <p className="text-xs font-medium text-gray-700 mb-1">Intake</p>
-                        <p className="text-sm font-semibold text-blue-700">{registration.studentId.intake}</p>
-                      </div>
-                    )}
-                    {registration.studentId.year && (
-                      <div>
-                        <p className="text-xs font-medium text-gray-700 mb-1">Year</p>
-                        <p className="text-sm font-semibold text-blue-700">{registration.studentId.year}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
+        {/* Dynamic Content Area */}
+        {isEducationPlanning && activeView === 'analytics' && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <ActivityAnalyticsDashboard registrationId={registrationId} />
           </div>
         )}
+        {isEducationPlanning && activeView === 'brainography' && renderBrainographyContent()}
+        {isEducationPlanning && activeView === 'portfolio' && renderPortfolioContent()}
 
-        {/* Section Navigation (Horizontal Tabs) */}
-        {currentPart && currentPart.sections && currentPart.sections.length > 0 && (
-          <div className="bg-white border-b border-gray-200">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-              <div className="inline-flex bg-gray-100 rounded-lg p-1 border border-gray-200 overflow-x-auto">
-                {[...currentPart.sections]
-                  .sort((a, b) => a.order - b.order)
-                  .map((section, index) => (
-                    <button
-                      key={section._id}
-                      onClick={() => setSelectedSectionIndex(index)}
-                      className={`px-4 py-2 rounded-md font-medium transition-all whitespace-nowrap text-sm ${
-                        selectedSectionIndex === index
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'text-gray-700 hover:text-gray-900'
-                      }`}
-                    >
-                      {section.title}
-                    </button>
-                  ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Form Content - Single Section */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-8">
-          <div className="space-y-5">
-            {currentSection && (
-              <div>
-                {/* Check if this is Application section with program management */}
-                {currentPart.part.key === 'APPLICATION' && 
-                 (currentSection.title === 'Apply to Program' || currentSection.title === 'Applied Program') ? (
-                  <ProgramSection
-                    sectionType={currentSection.title === 'Apply to Program' ? 'available' : 'applied'}
-                    studentId={registration?.studentId?._id || ''}
-                    registrationId={registrationId}
-                    userRole="STUDENT"
-                  />
-                ) : currentPart.part.key === 'DOCUMENT' ? (
-                  // Document sections - no save button, auto-save on upload
-                  <FormSectionRenderer
-                    section={currentSection}
-                    values={formValues[currentPart.part.key]?.[currentSection._id] || {}}
-                    onChange={(subSectionId, index, key, value) =>
-                      handleFieldChange(currentPart.part.key, currentSection._id, subSectionId, index, key, value)
-                    }
-                    onAddInstance={(subSectionId) =>
-                      handleAddInstance(currentPart.part.key, currentSection._id, subSectionId)
-                    }
-                    onRemoveInstance={(subSectionId, index) =>
-                      handleRemoveInstance(currentPart.part.key, currentSection._id, subSectionId, index)
-                    }
-                    errors={errors}
-                    registrationId={registrationId!}
-                    studentId={registration?.studentId?.toString()}
-                    userRole="STUDENT"
-                  />
-                ) : (
-                  <>
-                    <FormSectionRenderer
-                      section={currentSection}
-                      values={formValues[currentPart.part.key]?.[currentSection._id] || {}}
-                      onChange={(subSectionId, index, key, value) =>
-                        handleFieldChange(currentPart.part.key, currentSection._id, subSectionId, index, key, value)
-                      }
-                      onAddInstance={(subSectionId) =>
-                        handleAddInstance(currentPart.part.key, currentSection._id, subSectionId)
-                      }
-                      onRemoveInstance={(subSectionId, index) =>
-                        handleRemoveInstance(currentPart.part.key, currentSection._id, subSectionId, index)
-                      }
-                      errors={errors}
-                    />
-                    
-                    {/* Save Button */}
-                    <div className="flex justify-end gap-3 mt-5">
-                      <button
-                        onClick={handleSaveSection}
-                        disabled={saving}
-                        className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {saving ? 'Saving...' : 'Save'}
-                      </button>
-                    </div>
-                  </>
-                )}
+        {activeView === 'form' && (
+          <>
+            {/* Section Navigation (Horizontal Tabs) */}
+            {currentPart && currentPart.sections && currentPart.sections.length > 0 && (
+              <div className="bg-white border-b border-gray-200">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                  <div className="inline-flex bg-gray-100 rounded-lg p-1 border border-gray-200 overflow-x-auto">
+                    {[...currentPart.sections]
+                      .sort((a, b) => a.order - b.order)
+                      .map((section, index) => (
+                        <button
+                          key={section._id}
+                          onClick={() => setSelectedSectionIndex(index)}
+                          className={`px-4 py-2 rounded-md font-medium transition-all whitespace-nowrap text-sm ${
+                            selectedSectionIndex === index
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'text-gray-700 hover:text-gray-900'
+                          }`}
+                        >
+                          {section.title}
+                        </button>
+                      ))}
+                  </div>
+                </div>
               </div>
             )}
-          </div>
-        </div>
+
+            {/* Form Content - Single Section */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-8">
+              <div className="space-y-5">
+                {currentSection && (
+                  <div>
+                    {currentPart.part.key === 'APPLICATION' && 
+                     (currentSection.title === 'Apply to Program' || currentSection.title === 'Applied Program') ? (
+                      <ProgramSection
+                        sectionType={currentSection.title === 'Apply to Program' ? 'available' : 'applied'}
+                        studentId={registration?.studentId?._id || ''}
+                        registrationId={registrationId}
+                        userRole="STUDENT"
+                      />
+                    ) : currentPart.part.key === 'DOCUMENT' ? (
+                      <FormSectionRenderer
+                        section={currentSection}
+                        values={formValues[currentPart.part.key]?.[currentSection._id] || {}}
+                        onChange={(subSectionId, index, key, value) =>
+                          handleFieldChange(currentPart.part.key, currentSection._id, subSectionId, index, key, value)
+                        }
+                        onAddInstance={(subSectionId) =>
+                          handleAddInstance(currentPart.part.key, currentSection._id, subSectionId)
+                        }
+                        onRemoveInstance={(subSectionId, index) =>
+                          handleRemoveInstance(currentPart.part.key, currentSection._id, subSectionId, index)
+                        }
+                        errors={errors}
+                        registrationId={registrationId!}
+                        studentId={registration?.studentId?.toString()}
+                        userRole="STUDENT"
+                      />
+                    ) : (
+                      <>
+                        <FormSectionRenderer
+                          section={currentSection}
+                          values={formValues[currentPart.part.key]?.[currentSection._id] || {}}
+                          onChange={(subSectionId, index, key, value) =>
+                            handleFieldChange(currentPart.part.key, currentSection._id, subSectionId, index, key, value)
+                          }
+                          onAddInstance={(subSectionId) =>
+                            handleAddInstance(currentPart.part.key, currentSection._id, subSectionId)
+                          }
+                          onRemoveInstance={(subSectionId, index) =>
+                            handleRemoveInstance(currentPart.part.key, currentSection._id, subSectionId, index)
+                          }
+                          errors={errors}
+                        />
+                        <div className="flex justify-end gap-3 mt-5">
+                          <button
+                            onClick={handleSaveSection}
+                            disabled={saving}
+                            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {saving ? 'Saving...' : 'Save'}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </StudentLayout>
     </div>
   );
