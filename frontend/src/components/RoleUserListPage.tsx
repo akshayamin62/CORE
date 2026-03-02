@@ -311,6 +311,8 @@ export default function RoleUserListPage({
     };
     return colors[userRole] || 'bg-gray-100 text-gray-800';
   };
+  console.log(roleDisplayName);
+  const pluralSuffix = roleDisplayName.toLowerCase() === 'eduplan coach' ? 'es' : 's';
 
   if (loading && !currentUser) {
     return (
@@ -333,7 +335,7 @@ export default function RoleUserListPage({
           {/* Header with Add Button */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{roleDisplayName}s</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{roleDisplayName}{pluralSuffix}</h1>
               <p className="text-gray-600 mt-1">Manage all {roleDisplayName.toLowerCase()} accounts</p>
             </div>
             {canAddUser && (
@@ -354,7 +356,7 @@ export default function RoleUserListPage({
 
           {/* Stats Cards */}
           <div className={`grid grid-cols-1 ${extraStats ? 'md:grid-cols-3' : showVerifiedStats ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-6 mb-6`}>
-            <StatCard title={`Total ${roleDisplayName}s`} value={stats.total.toString()} color="blue" />
+            <StatCard title={`Total ${roleDisplayName}${pluralSuffix}`} value={stats.total.toString()} color="blue" />
             {!hideActiveUsers && (
               <StatCard title="Active Users" value={stats.active.toString()} color="green" />
             )}
@@ -407,7 +409,7 @@ export default function RoleUserListPage({
                   <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                   </svg>
-                  <p className="mt-2 text-gray-900 font-medium">No {roleDisplayName.toLowerCase()}s found</p>
+                  <p className="mt-2 text-gray-900 font-medium">No {roleDisplayName.toLowerCase()}{pluralSuffix} found</p>
                   {canAddUser && (
                     <button
                       onClick={() => setShowAddModal(true)}
@@ -571,7 +573,7 @@ export default function RoleUserListPage({
             {users.length > 0 && (
               <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
                 <p className="text-sm text-gray-600">
-                  Showing {users.length} {roleDisplayName.toLowerCase()}{users.length !== 1 ? 's' : ''}
+                  Showing {users.length} {roleDisplayName.toLowerCase()}{users.length !== 1 ? pluralSuffix : ''}
                 </p>
               </div>
             )}
