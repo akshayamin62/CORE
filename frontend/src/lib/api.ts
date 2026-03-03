@@ -658,6 +658,19 @@ export const superAdminOpsAPI = {
     api.get(`/super-admin/ops/${opsUserId}/team-meets`, { params }),
 };
 
+// Super Admin Eduplan Coach API (read-only dashboard)
+export const superAdminEduplanCoachAPI = {
+  // Get eduplan coach user details
+  getCoachDetail: (coachUserId: string) => api.get(`/super-admin/eduplan-coaches/${coachUserId}/detail`),
+
+  // Get students assigned to an eduplan coach
+  getCoachStudents: (coachUserId: string) => api.get(`/super-admin/eduplan-coaches/${coachUserId}/students`),
+
+  // Get team meets for an eduplan coach
+  getCoachTeamMeets: (coachUserId: string, params?: { month?: number; year?: number }) => 
+    api.get(`/super-admin/eduplan-coaches/${coachUserId}/team-meets`, { params }),
+};
+
 // Lead Student Conversion API
 export const leadConversionAPI = {
   // Request conversion (Counselor)

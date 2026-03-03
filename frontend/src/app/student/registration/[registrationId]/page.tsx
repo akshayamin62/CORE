@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { serviceAPI, formAnswerAPI, teamMeetAPI, programAPI, opsScheduleAPI, authAPI } from '@/lib/api';
+import { serviceAPI, formAnswerAPI, teamMeetAPI, programAPI, opsScheduleAPI, authAPI, activityAPI } from '@/lib/api';
 import { FormStructure, StudentServiceRegistration, Service, TeamMeet, TEAMMEET_STATUS, OpsSchedule } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import FormSectionRenderer from '@/components/FormSectionRenderer';
@@ -105,6 +105,30 @@ function MyDetailsContent() {
   const [portfolios, setPortfolios] = useState<PortfolioItem[]>([]);
   const handlePortfolioDownload = usePortfolioDownload();
 
+  // Education Planning Dashboard stats
+  const [eduPlanStats, setEduPlanStats] = useState<{
+    streak: { current: number; longest: number; totalDays: number };
+    wordCount: { total: number; thisMonth: number };
+    domainBalance: Record<string, { planned: number; completed: number }>;
+  } | null>(null);
+
+  const fetchEduPlanStats = useCallback(async () => {
+    if (!registrationId) return;
+    try {
+      const res = await activityAPI.getActivityAnalytics(registrationId, 3);
+      const d = res.data.data;
+      if (d) {
+        setEduPlanStats({
+          streak: d.streak,
+          wordCount: d.wordCount,
+          domainBalance: d.domainBalance,
+        });
+      }
+    } catch {
+      // silent
+    }
+  }, [registrationId]);
+
   // Fetch TeamMeets for calendar
   const fetchTeamMeets = useCallback(async () => {
     try {
@@ -206,9 +230,13 @@ function MyDetailsContent() {
     const svc = typeof registration.serviceId === 'object' ? registration.serviceId : null;
     const isEduPlan = svc?.slug === 'education-planning' || svc?.name === 'Education Planning';
     if (isEduPlan) {
+      setActiveView('dashboard');
       fetchBrainography();
       fetchBrainographyData();
       fetchPortfolios();
+      fetchTeamMeets();
+      fetchOpsTasks();
+      fetchEduPlanStats();
     } else {
       // Non-EduPlan services (e.g. Study Abroad) should default to dashboard view
       setActiveView('dashboard');
@@ -681,9 +709,9 @@ function MyDetailsContent() {
 
   /* ─── Navigation Buttons (Education Planning only) ─── */
   const navButtons = isEducationPlanning ? [
-    { key: 'analytics' as ActiveView, label: 'Activity Analysis', icon: '📊' },
-    { key: 'brainography' as ActiveView, label: 'Brainography Analysis', icon: '🧠' },
-    { key: 'portfolio' as ActiveView, label: 'Education Portfolio Generator', icon: '📁' },
+    { key: 'analytics' as ActiveView, label: 'Activity Analysis' },
+    { key: 'brainography' as ActiveView, label: 'Brainography Analysis' },
+    { key: 'portfolio' as ActiveView, label: 'Portfolio Generator' },
   ] : [];
 
   const isStudyAbroad = !isEducationPlanning;
@@ -739,6 +767,91 @@ function MyDetailsContent() {
         </div>
 
         {/* Schedule Calendar Section (Combined OPS Tasks + Team Meet) */}
+        <div>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="lg:col-span-3">
+              <OpsScheduleCalendar
+                schedules={opsTasks}
+                onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
+                onDateSelect={handleTeamMeetDateSelect}
+                teamMeets={teamMeets}
+                onTeamMeetSelect={handleTeamMeetSelect}
+                currentUserId={currentUserId}
+              />
+            </div>
+            <div className="lg:col-span-1">
+              <TeamMeetSidebar
+                teamMeets={teamMeets}
+                onTeamMeetClick={handleTeamMeetSelect}
+                onScheduleClick={handleScheduleTeamMeet}
+                currentUserId={currentUserId}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  /* ─── Education Planning Dashboard Renderer ─── */
+  const renderEduPlanDashboard = () => {
+    const stats = eduPlanStats;
+    const entries = stats ? Object.values(stats.domainBalance) : [];
+    const totalPlanned = entries.reduce((s, e) => s + e.planned, 0);
+    const totalCompleted = entries.reduce((s, e) => s + e.completed, 0);
+    const overall = totalPlanned > 0 ? Math.round((totalCompleted / totalPlanned) * 50) / 10 : 0;
+
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+        {/* Activity Stats */}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Activity Overview <span className="text-sm font-normal text-gray-500">(Last 3 Months)</span></h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center text-lg">🔥</div>
+                <h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.current ?? 0}</h3>
+              </div>
+              <p className="text-sm font-semibold text-gray-700 mt-3">Current Streak (days)</p>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center text-lg">🏆</div>
+                <h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.longest ?? 0}</h3>
+              </div>
+              <p className="text-sm font-semibold text-gray-700 mt-3">Longest Streak (days)</p>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-lg">📅</div>
+                <h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.totalDays ?? 0}</h3>
+              </div>
+              <p className="text-sm font-semibold text-gray-700 mt-3">Total Days</p>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-lg">📝</div>
+                <h3 className="text-3xl font-extrabold text-gray-900">{stats?.wordCount.total ?? 0}</h3>
+              </div>
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-sm font-semibold text-gray-700">New Words</p>
+                <p className="text-xs text-gray-500">{stats?.wordCount.thisMonth ?? 0} this month</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-lg">⭐</div>
+                <h3 className="text-3xl font-extrabold text-gray-900">{overall} / 5</h3>
+              </div>
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-sm font-semibold text-gray-700">Overall Performance</p>
+                <p className="text-xs text-gray-500">{totalCompleted}/{totalPlanned}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Schedule Calendar Section */}
         <div>
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-3">
@@ -862,7 +975,7 @@ function MyDetailsContent() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
                 }`}
               >
-                <span>{btn.icon}</span> {btn.label}
+                <span>{btn.label}</span>
               </button>
             ))}
             {showFormTab && (
@@ -1018,8 +1131,13 @@ function MyDetailsContent() {
           onSectionChange={() => {}}
           serviceName={service?.name || 'Education Planning'}
           user={currentUser}
+          isEducationPlanning={true}
+          activeEduPlanView={activeView}
+          onEduPlanViewChange={(view) => setActiveView(view as ActiveView)}
+          onMyActivityClick={() => router.push(`/student/registration/${registrationId}/activity`)}
         >
-          {renderNavBar(false)}
+          {/* Dashboard */}
+          {activeView === 'dashboard' && renderEduPlanDashboard()}
 
           {/* Dynamic Content Area */}
           {activeView === 'analytics' && (
@@ -1032,6 +1150,27 @@ function MyDetailsContent() {
 
           {renderSupportTeam()}
         </StudentLayout>
+
+        {/* TeamMeet Slide-in Panel */}
+        <TeamMeetFormPanel
+          teamMeet={selectedTeamMeet}
+          isOpen={showTeamMeetPanel}
+          onClose={handleTeamMeetPanelClose}
+          onSave={handleTeamMeetSave}
+          selectedDate={selectedTeamMeetDate}
+          mode={teamMeetPanelMode}
+          currentUserId={currentUserId}
+        />
+
+        {/* OpsSchedule Task Detail Panel */}
+        <OpsScheduleFormPanel
+          schedule={selectedOpsTask}
+          students={[]}
+          isOpen={showOpsTaskPanel}
+          onClose={() => { setShowOpsTaskPanel(false); setSelectedOpsTask(null); }}
+          onSubmit={async () => {}}
+          readOnly={true}
+        />
       </div>
     );
   } // end if (formStructure.length === 0)
@@ -1062,8 +1201,13 @@ function MyDetailsContent() {
         isDashboardActive={activeView === 'dashboard'}
         onDashboardClick={() => setActiveView('dashboard')}
         user={currentUser}
+        isEducationPlanning={isEducationPlanning}
+        activeEduPlanView={activeView}
+        onEduPlanViewChange={(view) => setActiveView(view as ActiveView)}
+        onMyActivityClick={() => router.push(`/student/registration/${registrationId}/activity`)}
       >
-        {isEducationPlanning && renderNavBar(true)}
+        {/* Education Planning Dashboard */}
+        {isEducationPlanning && activeView === 'dashboard' && renderEduPlanDashboard()}
 
         {/* Study Abroad Dashboard */}
         {isStudyAbroad && activeView === 'dashboard' && renderStudentDashboard()}
@@ -1172,18 +1316,16 @@ function MyDetailsContent() {
         {renderSupportTeam()}
       </StudentLayout>
 
-      {/* TeamMeet Slide-in Panel (Study Abroad) */}
-      {isStudyAbroad && (
-        <TeamMeetFormPanel
-          teamMeet={selectedTeamMeet}
-          isOpen={showTeamMeetPanel}
-          onClose={handleTeamMeetPanelClose}
-          onSave={handleTeamMeetSave}
-          selectedDate={selectedTeamMeetDate}
-          mode={teamMeetPanelMode}
-          currentUserId={currentUserId}
-        />
-      )}
+      {/* TeamMeet Slide-in Panel */}
+      <TeamMeetFormPanel
+        teamMeet={selectedTeamMeet}
+        isOpen={showTeamMeetPanel}
+        onClose={handleTeamMeetPanelClose}
+        onSave={handleTeamMeetSave}
+        selectedDate={selectedTeamMeetDate}
+        mode={teamMeetPanelMode}
+        currentUserId={currentUserId}
+      />
 
       {/* OpsSchedule Task Detail Panel */}
       <OpsScheduleFormPanel

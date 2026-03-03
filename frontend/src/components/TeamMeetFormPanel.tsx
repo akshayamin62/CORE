@@ -8,6 +8,13 @@ import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { getFullName } from '@/utils/nameHelpers';
 
+// Format role for display: "SUPER_ADMIN" → "Super Admin", "EDUPLAN_COACH" → "Eduplan Coach"
+const formatRole = (role: string) =>
+  role
+    .toLowerCase()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
 interface TeamMeetFormPanelProps {
   teamMeet: TeamMeet | null;
   isOpen: boolean;
@@ -360,11 +367,11 @@ export default function TeamMeetFormPanel({
             <div className="bg-gray-50 rounded-lg p-3 mb-4">
               <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
                 <span className="font-medium">From:</span>
-                <span>{getFullName(teamMeet.requestedBy)} ({teamMeet.requestedBy.role})</span>
+                <span>{getFullName(teamMeet.requestedBy)} ({formatRole(teamMeet.requestedBy.role)})</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span className="font-medium">To:</span>
-                <span>{getFullName(teamMeet.requestedTo)} ({teamMeet.requestedTo.role})</span>
+                <span>{getFullName(teamMeet.requestedTo)} ({formatRole(teamMeet.requestedTo.role)})</span>
               </div>
             </div>
           )}
@@ -431,7 +438,7 @@ export default function TeamMeetFormPanel({
                 <option value="">Select participant...</option>
                 {participants.map((p) => (
                   <option key={p._id} value={p._id}>
-                    {getFullName(p)} ({p.role})
+                    {getFullName(p)} ({formatRole(p.role)})
                   </option>
                 ))}
               </select>

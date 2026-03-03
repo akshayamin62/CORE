@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { authAPI, serviceAPI, adminStudentAPI, programAPI, teamMeetAPI, opsScheduleAPI } from '@/lib/api';
+import { authAPI, serviceAPI, adminStudentAPI, programAPI, teamMeetAPI, opsScheduleAPI, activityAPI } from '@/lib/api';
 import { User, USER_ROLE, FormStructure, FormSection, FormSubSection, TeamMeet, TEAMMEET_STATUS, OpsSchedule } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import FormSectionRenderer from '@/components/FormSectionRenderer';
@@ -74,6 +74,22 @@ export default function AdminStudentFormViewPage() {
   const [selectedOpsTask, setSelectedOpsTask] = useState<OpsSchedule | null>(null);
   const [showOpsTaskPanel, setShowOpsTaskPanel] = useState(false);
   const currentUserId = user?._id || '';
+
+  // Education Planning Dashboard stats
+  const [eduPlanStats, setEduPlanStats] = useState<{
+    streak: { current: number; longest: number; totalDays: number };
+    wordCount: { total: number; thisMonth: number };
+    domainBalance: Record<string, { planned: number; completed: number }>;
+  } | null>(null);
+
+  const fetchEduPlanStats = useCallback(async () => {
+    if (!registrationId) return;
+    try {
+      const res = await activityAPI.getActivityAnalytics(registrationId, 3);
+      const d = res.data.data;
+      if (d) setEduPlanStats({ streak: d.streak, wordCount: d.wordCount, domainBalance: d.domainBalance });
+    } catch { /* silent */ }
+  }, [registrationId]);
 
   const fetchTeamMeetsForStudent = useCallback(async () => {
     if (!studentId) return;
@@ -214,7 +230,10 @@ export default function AdminStudentFormViewPage() {
         fetchTeamMeetsForStudent();
         fetchOpsTasksForStudent();
       } else {
-        setActiveView('analytics');
+        setActiveView('dashboard');
+        fetchTeamMeetsForStudent();
+        fetchOpsTasksForStudent();
+        fetchEduPlanStats();
       }
 
       if (isEduPlan) {
@@ -275,6 +294,7 @@ export default function AdminStudentFormViewPage() {
 
   const navButtons: { key: ActiveView; label: string; icon: string }[] = isEducationPlanning
     ? [
+        { key: 'dashboard', label: 'Dashboard', icon: '🏠' },
         { key: 'analytics', label: 'Activity Analysis', icon: '📊' },
         { key: 'brainography', label: 'Brainography Analysis', icon: '🧠' },
         { key: 'portfolio', label: 'Education Portfolio Generator', icon: '📁' },
@@ -312,28 +332,54 @@ export default function AdminStudentFormViewPage() {
 
           {/* Education Planning Navigation */}
           {isEducationPlanning && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-              <div className="px-4 py-3 flex flex-wrap items-center gap-2">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
+              <div className="flex border-b border-gray-200">
                 {navButtons.map((btn) => (
                   <button key={btn.key} onClick={() => setActiveView(btn.key)}
-                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${activeView === btn.key ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'}`}>
-                    <span>{btn.icon}</span> {btn.label}
+                    className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-4 text-sm font-semibold transition-colors border-b-2 ${activeView === btn.key ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50'}`}>
+                    {btn.label}
                   </button>
                 ))}
-                {formStructure.length > 0 && (
-                  <button onClick={() => setActiveView('form')}
-                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${activeView === 'form' ? 'bg-indigo-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'}`}>
-                    <span>📋</span> Form
-                  </button>
-                )}
                 <button onClick={() => router.push(`/admin/students/${studentId}/registration/${registrationId}/activity`)}
-                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-all duration-200 ml-auto">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-4 text-sm font-semibold transition-colors border-b-2 border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50">
                   Student Activity
                 </button>
               </div>
             </div>
           )}
+
+          {/* Education Planning Dashboard */}
+          {isEducationPlanning && activeView === 'dashboard' && (() => {
+            const stats = eduPlanStats;
+            const entries = stats ? Object.values(stats.domainBalance) : [];
+            const totalPlanned = entries.reduce((s, e) => s + e.planned, 0);
+            const totalCompleted = entries.reduce((s, e) => s + e.completed, 0);
+            const overall = totalPlanned > 0 ? Math.round((totalCompleted / totalPlanned) * 50) / 10 : 0;
+            return (
+              <div className="mb-6 space-y-8">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Activity Overview <span className="text-sm font-normal text-gray-500">(Last 3 Months)</span></h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center text-lg">🔥</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.current ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Current Streak (days)</p></div>
+                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center text-lg">🏆</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.longest ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Longest Streak (days)</p></div>
+                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-lg">📅</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.totalDays ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Total Days</p></div>
+                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-lg">📝</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.wordCount.total ?? 0}</h3></div><div className="flex items-center justify-between mt-3"><p className="text-sm font-semibold text-gray-700">New Words</p><p className="text-xs text-gray-500">{stats?.wordCount.thisMonth ?? 0} this month</p></div></div>
+                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-lg">⭐</div><h3 className="text-3xl font-extrabold text-gray-900">{overall} / 5</h3></div><div className="flex items-center justify-between mt-3"><p className="text-sm font-semibold text-gray-700">Overall Performance</p><p className="text-xs text-gray-500">{totalCompleted}/{totalPlanned}</p></div></div>
+                  </div>
+                </div>
+                <div>
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div className="lg:col-span-3">
+                      <OpsScheduleCalendar schedules={opsTasks} onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }} onDateSelect={() => {}} teamMeets={teamMeets} onTeamMeetSelect={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }} currentUserId={currentUserId} />
+                    </div>
+                    <div className="lg:col-span-1">
+                      <TeamMeetSidebar teamMeets={teamMeets} onTeamMeetClick={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }} currentUserId={currentUserId} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Activity Analytics */}
           {isEducationPlanning && activeView === 'analytics' && (
@@ -472,19 +518,7 @@ export default function AdminStudentFormViewPage() {
                   </div>
                 </div>
 
-                {/* Schedule Calendar Section */}
                 <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-semibold text-gray-900">Schedule</h2>
-                      <p className="text-sm text-gray-500">Student meetings and tasks</p>
-                    </div>
-                  </div>
                   <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     <div className="lg:col-span-3">
                       <OpsScheduleCalendar

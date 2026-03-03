@@ -1837,3 +1837,149 @@ export const getServiceProviderDetail = async (req: Request, res: Response): Pro
     });
   }
 };
+
+// ============= EDUPLAN COACH DASHBOARD ROUTES (Read-Only) =============
+
+/**
+ * Get eduplan coach details for super admin
+ */
+export const getEduplanCoachDetailForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { coachUserId } = req.params;
+
+    const coachUser = await User.findById(coachUserId).select('-password');
+    if (!coachUser || coachUser.role !== USER_ROLE.EDUPLAN_COACH) {
+      return res.status(404).json({ success: false, message: 'Eduplan Coach user not found' });
+    }
+
+    const coachRecord = await EduplanCoach.findOne({ userId: coachUserId });
+    if (!coachRecord) {
+      return res.status(404).json({ success: false, message: 'Eduplan Coach record not found' });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        user: coachUser,
+        coach: coachRecord,
+      },
+    });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: 'Failed to fetch eduplan coach details', error: error.message });
+  }
+};
+
+/**
+ * Get students assigned to a specific eduplan coach for super admin
+ */
+export const getEduplanCoachStudentsForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { coachUserId } = req.params;
+
+    const coachRecord = await EduplanCoach.findOne({ userId: coachUserId });
+    if (!coachRecord) {
+      return res.status(404).json({ success: false, message: 'Eduplan Coach record not found' });
+    }
+
+    const registrationDocs = await StudentServiceRegistration.find({
+      $or: [
+        { activeEduplanCoachId: coachRecord._id },
+        { activeEduplanCoachId: { $exists: false }, primaryEduplanCoachId: coachRecord._id },
+        { activeEduplanCoachId: null, primaryEduplanCoachId: coachRecord._id },
+      ],
+    });
+
+    const studentIds = [...new Set(registrationDocs.map(r => r.studentId.toString()))];
+
+    const students = await Student.find({
+      _id: { $in: studentIds },
+    })
+      .populate({
+        path: 'userId',
+        select: 'firstName middleName lastName email isActive isVerified createdAt',
+      })
+      .populate({
+        path: 'adminId',
+        select: 'companyName',
+        populate: {
+          path: 'userId',
+          select: 'firstName middleName lastName email',
+        },
+      });
+
+    // Enrich with service names
+    const studentsWithServices = await Promise.all(
+      students.map(async (student: any) => {
+        const regs = await StudentServiceRegistration.find({
+          studentId: student._id,
+        }).populate('serviceId', 'name');
+
+        const serviceNames = regs
+          .map((r: any) => r.serviceId?.name)
+          .filter(Boolean);
+
+        return {
+          _id: student._id,
+          userId: student.userId,
+          mobileNumber: student.mobileNumber,
+          adminId: student.adminId,
+          registrationCount: regs.length,
+          serviceNames,
+          createdAt: student.createdAt,
+        };
+      })
+    );
+
+    return res.json({
+      success: true,
+      data: { students: studentsWithServices },
+    });
+  } catch (error: any) {
+    return res.status(500).json({ success: false, message: 'Failed to fetch eduplan coach students', error: error.message });
+  }
+};
+
+/**
+ * Get team meets for a specific eduplan coach for super admin
+ */
+export const getEduplanCoachTeamMeetsForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { coachUserId } = req.params;
+    const { month, year } = req.query;
+
+    const coachUser = await User.findById(coachUserId);
+    if (!coachUser || coachUser.role !== USER_ROLE.EDUPLAN_COACH) {
+      return res.status(404).json({ success: false, message: 'Eduplan Coach user not found' });
+    }
+
+    let startDate: Date;
+    let endDate: Date;
+
+    if (month && year) {
+      const monthNum = parseInt(month as string);
+      const yearNum = parseInt(year as string);
+      startDate = new Date(yearNum, monthNum - 1, -6);
+      endDate = new Date(yearNum, monthNum, 7, 23, 59, 59, 999);
+    } else {
+      const now = new Date();
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59, 999);
+    }
+
+    const teamMeets = await TeamMeet.find({
+      $or: [{ requestedBy: coachUserId }, { requestedTo: coachUserId }],
+      scheduledDate: { $gte: startDate, $lte: endDate },
+    })
+      .populate('requestedBy', 'firstName middleName lastName email role')
+      .populate('requestedTo', 'firstName middleName lastName email role')
+      .sort({ scheduledDate: 1, scheduledTime: 1 });
+
+    return res.status(200).json({
+      success: true,
+      data: { teamMeets },
+    });
+  } catch (error: any) {
+    console.error('Get eduplan coach team meets for super admin error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch eduplan coach team meets', error: error.message });
+  }
+};

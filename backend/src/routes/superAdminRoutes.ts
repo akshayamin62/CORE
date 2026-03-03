@@ -31,6 +31,9 @@ import {
   getOpsStudentsForSuperAdmin,
   getOpsTeamMeetsForSuperAdmin,
   getServiceProviderDetail,
+  getEduplanCoachDetailForSuperAdmin,
+  getEduplanCoachStudentsForSuperAdmin,
+  getEduplanCoachTeamMeetsForSuperAdmin,
 } from "../controllers/superAdminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
@@ -272,6 +275,29 @@ router.get("/ops/:opsUserId/team-meets", getOpsTeamMeetsForSuperAdmin);
  * @access  Super Admin only
  */
 router.get("/service-providers/:providerId", getServiceProviderDetail);
+
+// ============= EDUPLAN COACH DASHBOARD ROUTES (Read-Only) =============
+
+/**
+ * @route   GET /api/super-admin/eduplan-coaches/:coachUserId/detail
+ * @desc    Get eduplan coach user details
+ * @access  Super Admin only
+ */
+router.get("/eduplan-coaches/:coachUserId/detail", getEduplanCoachDetailForSuperAdmin);
+
+/**
+ * @route   GET /api/super-admin/eduplan-coaches/:coachUserId/students
+ * @desc    Get students assigned to a specific eduplan coach
+ * @access  Super Admin only
+ */
+router.get("/eduplan-coaches/:coachUserId/students", getEduplanCoachStudentsForSuperAdmin);
+
+/**
+ * @route   GET /api/super-admin/eduplan-coaches/:coachUserId/team-meets
+ * @desc    Get team meets for a specific eduplan coach
+ * @access  Super Admin only
+ */
+router.get("/eduplan-coaches/:coachUserId/team-meets", getEduplanCoachTeamMeetsForSuperAdmin);
 
 export default router;
 

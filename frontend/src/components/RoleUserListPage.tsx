@@ -541,6 +541,14 @@ export default function RoleUserListPage({
                                 View Details
                               </button>
                             )}
+                            {roleEnum === USER_ROLE.EDUPLAN_COACH && (
+                              <button
+                                onClick={() => router.push(`/super-admin/roles/eduplan-coach/${user._id || user.id}`)}
+                                className="px-3 py-1.5 rounded-lg transition-colors text-xs bg-blue-600 text-white hover:bg-blue-700"
+                              >
+                                View Details
+                              </button>
+                            )}
                             {roleEnum === USER_ROLE.SERVICE_PROVIDER && (
                               <button
                                 onClick={() => router.push(`/super-admin/roles/service-provider/${user._id || user.id}`)}
