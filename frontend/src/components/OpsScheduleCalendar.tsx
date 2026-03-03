@@ -292,11 +292,11 @@ export default function OpsScheduleCalendar({
                 <span className="w-2 h-2 rounded bg-green-500"></span>
                 <span className="w-2 h-2 rounded bg-pink-500"></span>
                 <span className="w-2 h-2 rounded bg-amber-500"></span>
-                <span className="text-xs text-gray-500">Legend</span>
+                <span className="text-xs text-gray-500">Team Meet</span>
               </div>
               {/* Hover Tooltip */}
               <div className="absolute top-full right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <p className="text-xs font-semibold text-gray-700 mb-2">📋 OPS Schedule</p>
+                <p className="text-xs font-semibold text-gray-700 mb-2">📋 Task</p>
                 <div className="space-y-1.5 mb-3">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded bg-blue-500"></span>
@@ -311,7 +311,7 @@ export default function OpsScheduleCalendar({
                     <span className="text-xs text-gray-600">Missed</span>
                   </div>
                 </div>
-                <p className="text-xs font-semibold text-gray-700 mb-2">👥 TeamMeet</p>
+                <p className="text-xs font-semibold text-gray-700 mb-2">👥 Team Meet</p>
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded bg-amber-400"></span>

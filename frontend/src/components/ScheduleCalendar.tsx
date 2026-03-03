@@ -370,11 +370,11 @@ export default function ScheduleCalendar({
                 <span className="w-2 h-2 rounded bg-red-800"></span>
                 <span className="w-2 h-2 rounded bg-slate-400"></span>
                 <span className="w-2 h-2 rounded bg-teal-500"></span>
-                <span className="text-xs text-gray-500 ml-1">TeamMeets</span>
+                <span className="text-xs text-gray-500 ml-1">Team Meets</span>
               </div>
               {/* Tooltip */}
               <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <p className="text-xs font-semibold text-gray-700 mb-2">TeamMeet Colors (Status)</p>
+                <p className="text-xs font-semibold text-gray-700 mb-2">Team Meet Colors (Status)</p>
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded bg-amber-400"></span>

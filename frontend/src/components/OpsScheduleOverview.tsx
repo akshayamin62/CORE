@@ -267,7 +267,7 @@ export default function OpsScheduleOverview({
           {onScheduleTeamMeet && (
             <button
               onClick={onScheduleTeamMeet}
-              title="New TeamMeet"
+              title="New Team Meet"
               className="p-1 rounded hover:bg-violet-100 text-violet-600"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
