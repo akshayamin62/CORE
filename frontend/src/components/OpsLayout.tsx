@@ -53,7 +53,7 @@ export default function OpsLayout({ children, user }: OpsLayoutProps) {
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4">
           {sidebarOpen && (
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">O</span>
               </div>
               <span className="font-semibold text-gray-900">Ops Panel</span>
@@ -88,7 +88,7 @@ export default function OpsLayout({ children, user }: OpsLayoutProps) {
                 onClick={() => router.push(item.path)}
                 className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
                   isActive
-                    ? 'bg-green-50 text-green-600'
+                    ? 'bg-blue-50 text-blue-600'
                     : 'text-gray-700 hover:bg-gray-100'
                 } ${!sidebarOpen && 'justify-center'}`}
                 title={!sidebarOpen ? item.name : undefined}
@@ -113,8 +113,8 @@ export default function OpsLayout({ children, user }: OpsLayoutProps) {
             </div>
           ) : (
             <div className="mb-3 flex justify-center">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <span className="text-green-600 font-semibold text-sm">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 font-semibold text-sm">
                   {getInitials(user)}
                 </span>
               </div>

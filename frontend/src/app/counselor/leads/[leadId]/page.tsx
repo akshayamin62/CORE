@@ -9,6 +9,7 @@ import { format } from 'date-fns';
 import FollowUpCalendar from '@/components/FollowUpCalendar';
 import FollowUpSidebar from '@/components/FollowUpSidebar';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
+import CounselorLayout from '@/components/CounselorLayout';
 
 export default function CounselorLeadDetailPage() {
   const router = useRouter();
@@ -377,7 +378,7 @@ export default function CounselorLeadDetailPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <div className="min-h-screen bg-gray-50">
+      <CounselorLayout user={user}>
         <div className="p-8">
         {/* Back Button & Header */}
         <div className="mb-6">
@@ -863,7 +864,7 @@ export default function CounselorLeadDetailPage() {
             </div>
           </div>
         </div>
-      </div>
+      </CounselorLayout>
 
       {/* Follow-up Edit Panel */}
       <FollowUpFormPanel

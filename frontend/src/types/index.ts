@@ -582,9 +582,19 @@ export interface OpsScheduleStudent {
   };
 }
 
+export interface OpsScheduleOps {
+  _id: string;
+  userId: {
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email: string;
+  };
+}
+
 export interface OpsSchedule {
   _id: string;
-  opsId: string;
+  opsId: string | OpsScheduleOps;
   studentId?: OpsScheduleStudent | string | null; // Optional for "Me" tasks
   scheduledDate: string;
   scheduledTime: string;

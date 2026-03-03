@@ -6,6 +6,7 @@ import { authAPI, adminStudentAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
+import CounselorLayout from '@/components/CounselorLayout';
 
 
 interface StudentDetails {
@@ -167,6 +168,7 @@ export default function CounselorStudentDetailPage() {
   return (
     <>
       <Toaster position="top-right" />
+      <CounselorLayout user={user}>
         <div className="p-8">
           {/* Back Button */}
           <button
@@ -400,6 +402,7 @@ export default function CounselorStudentDetailPage() {
             </div>
           )}
         </div>
+      </CounselorLayout>
     </>
   );
 }

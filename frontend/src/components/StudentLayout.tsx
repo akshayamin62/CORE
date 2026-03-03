@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { getFullName, getInitials } from '@/utils/nameHelpers';
 
 interface StudentLayoutProps {
   children: React.ReactNode;
@@ -11,6 +12,10 @@ interface StudentLayoutProps {
   onPartChange: (index: number) => void;
   onSectionChange: (index: number) => void;
   serviceName?: string;
+  showDashboard?: boolean;
+  isDashboardActive?: boolean;
+  onDashboardClick?: () => void;
+  user?: { firstName?: string; middleName?: string; lastName?: string; email: string } | null;
 }
 
 export default function StudentLayout({
@@ -21,11 +26,20 @@ export default function StudentLayout({
   onPartChange,
   onSectionChange,
   serviceName = 'Form',
+  showDashboard = false,
+  isDashboardActive = false,
+  onDashboardClick,
+  user,
 }: StudentLayoutProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  if (formStructure.length === 0) {
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    router.push('/login');
+  };
+
+  if (formStructure.length === 0 && !showDashboard) {
     return <div>{children}</div>;
   }
 
@@ -44,11 +58,6 @@ export default function StudentLayout({
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4">
           {sidebarOpen && (
             <div className="flex items-center gap-2">
-              {/* <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xs truncate">
-                  {serviceName.charAt(0).toUpperCase()}
-                </span>
-              </div> */}
               <span className="font-semibold text-gray-900 truncate">{serviceName}</span>
             </div>
           )}
@@ -73,8 +82,28 @@ export default function StudentLayout({
 
         {/* Navigation - Parts */}
         <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+          {/* Dashboard Nav Item */}
+          {showDashboard && (
+            <div className="mb-4">
+              <button
+                onClick={onDashboardClick}
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
+                  isDashboardActive
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-700 hover:bg-gray-100'
+                } ${!sidebarOpen && 'justify-center'}`}
+                title={!sidebarOpen ? 'Dashboard' : undefined}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                {sidebarOpen && <span className="font-medium">Dashboard</span>}
+              </button>
+            </div>
+          )}
+
           {formStructure.map((part, partIndex) => {
-            const isPartActive = currentPartIndex === partIndex;
+            const isPartActive = currentPartIndex === partIndex && !isDashboardActive;
             const hasSections = part.sections && part.sections.length > 0;
 
             return (
@@ -127,6 +156,50 @@ export default function StudentLayout({
             );
           })}
         </nav>
+
+        {/* User Info & Logout */}
+        {user && (
+          <div className="border-t border-gray-200 p-4">
+            {sidebarOpen ? (
+              <div className="mb-3">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {getFullName(user)}
+                </p>
+                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+              </div>
+            ) : (
+              <div className="mb-3 flex justify-center">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600 font-semibold text-sm">
+                    {getInitials(user)}
+                  </span>
+                </div>
+              </div>
+            )}
+            <button
+              onClick={handleLogout}
+              className={`w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors ${
+                !sidebarOpen && 'justify-center'
+              }`}
+              title={!sidebarOpen ? 'Logout' : undefined}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+              {sidebarOpen && <span className="font-medium">Logout</span>}
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* Main Content */}

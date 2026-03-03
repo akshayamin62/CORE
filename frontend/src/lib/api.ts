@@ -298,6 +298,15 @@ export const programAPI = {
     if (registrationId) params.registrationId = registrationId;
     return api.get(`/programs/ops/student/${studentId}/programs`, { params });
   },
+  // Fetch both available + applied programs for dashboard stats (works for all admin-like roles)
+  getStudentProgramStats: (studentId: string, registrationId?: string) => {
+    const baseParams: any = {};
+    if (registrationId) baseParams.registrationId = registrationId;
+    return Promise.all([
+      api.get(`/programs/ops/student/${studentId}/programs`, { params: { ...baseParams } }),
+      api.get(`/programs/ops/student/${studentId}/programs`, { params: { ...baseParams, section: 'applied' } }),
+    ]);
+  },
   createOpsStudentProgram: (studentId: string, data: any) => api.post(`/programs/ops/student/${studentId}/programs`, data),
   uploadOpsStudentProgramsExcel: (studentId: string, file: File) => {
     const formData = new FormData();
@@ -583,6 +592,9 @@ export const teamMeetAPI = {
 
   // Admin-only: Get counselor's TeamMeets (read-only)
   getCounselorTeamMeets: (counselorId: string) => api.get(`/team-meets/counselor/${counselorId}`),
+
+  // Get team meets for a specific student (for admin/counselor/super-admin/ops dashboard)
+  getStudentTeamMeets: (studentId: string) => api.get(`/team-meets/student/${studentId}`),
 };
 
 // OPS Schedule API
@@ -619,6 +631,12 @@ export const opsScheduleAPI = {
   
   // Delete schedule
   deleteSchedule: (scheduleId: string) => api.delete(`/ops-schedules/${scheduleId}`),
+
+  // Student: get OPS tasks assigned to me
+  getMyTasksAsStudent: () => api.get('/ops-schedules/my-tasks'),
+
+  // Get OPS tasks for a specific student (for admin/counselor/super-admin/ops dashboard)
+  getStudentTasks: (studentId: string) => api.get(`/ops-schedules/student/${studentId}`),
 };
 
 // Super Admin - OPS Dashboard API (read-only)
@@ -634,6 +652,10 @@ export const superAdminOpsAPI = {
 
   // Get students assigned to an ops user
   getOpsStudents: (opsUserId: string) => api.get(`/super-admin/ops/${opsUserId}/students`),
+
+  // Get team meets for an ops user
+  getOpsTeamMeets: (opsUserId: string, params?: { month?: number; year?: number }) => 
+    api.get(`/super-admin/ops/${opsUserId}/team-meets`, { params }),
 };
 
 // Lead Student Conversion API

@@ -12,6 +12,7 @@ import FollowUpFormPanel from '@/components/FollowUpFormPanel';
 import LeadDetailPanel from '@/components/LeadDetailPanel';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import { getFullName } from '@/utils/nameHelpers';
+import CounselorLayout from '@/components/CounselorLayout';
 
 interface DashboardStats {
   totalLeads: number;
@@ -316,7 +317,7 @@ export default function CounselorDashboardPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <div className="min-h-screen bg-gray-50">
+      <CounselorLayout user={user}>
         <div className="p-8">
           {/* Header */}
           <div className="mb-8 flex items-start justify-between">
@@ -672,7 +673,7 @@ export default function CounselorDashboardPage() {
             </div>
           )}
         </div>
-      </div>
+      </CounselorLayout>
 
       {/* Follow-up Slide-in Panel */}
       <FollowUpFormPanel

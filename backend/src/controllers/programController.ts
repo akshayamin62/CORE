@@ -94,8 +94,8 @@ export const getOpsStudentPrograms = async (req: AuthRequest, res: Response): Pr
     const userId = req.user?.userId;
     const user = await User.findById(userId);
     
-    // Allow OPS, ADMIN, and COUNSELOR roles
-    if (!user || (user.role !== USER_ROLE.OPS && user.role !== USER_ROLE.ADMIN && user.role !== USER_ROLE.COUNSELOR)) {
+    // Allow OPS, ADMIN, COUNSELOR, and SUPER_ADMIN roles
+    if (!user || (user.role !== USER_ROLE.OPS && user.role !== USER_ROLE.ADMIN && user.role !== USER_ROLE.COUNSELOR && user.role !== USER_ROLE.SUPER_ADMIN)) {
       return res.status(403).json({
         success: false,
         message: 'Access denied',

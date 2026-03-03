@@ -13,6 +13,7 @@ import {
   completeTeamMeet,
   getTeamMeetsForCounselor,
   downloadTeamMeetAttachment,
+  getTeamMeetsForStudent,
 } from "../controllers/teamMeetController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
@@ -25,7 +26,7 @@ const router = Router();
 router.use(authenticate);
 
 // ADMIN, COUNSELOR, and SUPER_ADMIN can access TeamMeet features
-router.use(authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN]));
+router.use(authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN, USER_ROLE.STUDENT, USER_ROLE.OPS]));
 
 /**
  * @route   POST /api/team-meets
@@ -66,6 +67,13 @@ router.get("/check-availability", checkTeamMeetAvailability);
  * @access  Admin, Counselor
  */
 router.get("/participants", getParticipants);
+
+/**
+ * @route   GET /api/team-meets/student/:studentId
+ * @desc    Get team meetings for a specific student (for admin/counselor/super-admin/ops dashboard)
+ * @access  Admin, Counselor, Super Admin, OPS
+ */
+router.get("/student/:studentId", authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN, USER_ROLE.OPS]), getTeamMeetsForStudent);
 
 /**
  * @route   GET /api/team-meets/:teamMeetId/attachment

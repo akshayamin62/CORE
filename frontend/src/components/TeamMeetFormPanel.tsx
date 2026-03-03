@@ -17,6 +17,7 @@ interface TeamMeetFormPanelProps {
   mode: 'create' | 'view' | 'respond';
   currentUserId?: string;
   readOnly?: boolean; // If true, hides all action buttons (for admin viewing counselor's TeamMeets)
+  onSwitchToTask?: () => void;
 }
 
 // TeamMeet theme colors (Updated theme)
@@ -42,6 +43,7 @@ export default function TeamMeetFormPanel({
   mode,
   currentUserId,
   readOnly = false,
+  onSwitchToTask,
 }: TeamMeetFormPanelProps) {
   // Form state
   const [subject, setSubject] = useState('');
@@ -290,8 +292,16 @@ export default function TeamMeetFormPanel({
   if (!isOpen) return null;
 
   // Determine user role in this meeting
-  const isSender = teamMeet && teamMeet.requestedBy._id === currentUserId;
-  const isRecipient = teamMeet && teamMeet.requestedTo._id === currentUserId;
+  const senderIdMatch = teamMeet && currentUserId && (
+    String(teamMeet.requestedBy._id) === String(currentUserId) ||
+    String((teamMeet.requestedBy as any).id) === String(currentUserId)
+  );
+  const recipientIdMatch = teamMeet && currentUserId && (
+    String(teamMeet.requestedTo._id) === String(currentUserId) ||
+    String((teamMeet.requestedTo as any).id) === String(currentUserId)
+  );
+  const isSender = !!senderIdMatch;
+  const isRecipient = !!recipientIdMatch;
   const statusColors = teamMeet ? TEAMMEET_COLORS[teamMeet.status] : null;
 
   return (
@@ -313,14 +323,27 @@ export default function TeamMeetFormPanel({
               {mode === 'create' ? 'Schedule TeamMeet' : mode === 'respond' ? 'Meeting Invitation' : 'Meeting Details'}
             </span>
           </div>
-          <button
-            onClick={onClose}
-            className="text-white/80 hover:text-white transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-1">
+            {onSwitchToTask && (
+              <button
+                type="button"
+                onClick={onSwitchToTask}
+                className="bg-blue-500 hover:bg-blue-600 text-white transition-colors px-2 py-1 rounded text-xs font-medium flex items-center gap-1"
+                title="Switch to OPS Task"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+                Task
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-white/80 hover:text-white transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -661,7 +684,7 @@ export default function TeamMeetFormPanel({
           )}
 
           {/* Respond Mode Actions (for recipient with pending status) */}
-          {!readOnly && mode === 'respond' && isRecipient && teamMeet?.status === TEAMMEET_STATUS.PENDING_CONFIRMATION && (
+          {!readOnly && mode === 'respond' && teamMeet?.status === TEAMMEET_STATUS.PENDING_CONFIRMATION && (
             <div className="flex gap-2">
               {showRejectInput ? (
                 <>
@@ -767,7 +790,17 @@ export default function TeamMeetFormPanel({
           )}
 
           {/* Close for recipient viewing non-pending meetings */}
-          {!readOnly && mode === 'respond' && isRecipient && teamMeet?.status !== TEAMMEET_STATUS.PENDING_CONFIRMATION && (
+          {!readOnly && mode === 'respond' && teamMeet?.status !== TEAMMEET_STATUS.PENDING_CONFIRMATION && (
+            <button
+              onClick={onClose}
+              className="w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Close
+            </button>
+          )}
+
+          {/* Close for recipient viewing meetings in view mode (non-completed/non-cancelled) */}
+          {!readOnly && mode === 'view' && !isSender && teamMeet?.status !== TEAMMEET_STATUS.COMPLETED && teamMeet?.status !== TEAMMEET_STATUS.CANCELLED && (
             <button
               onClick={onClose}
               className="w-full px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"

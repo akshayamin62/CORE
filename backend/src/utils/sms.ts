@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const SMS_API_URL = 'https://unify.smsgateway.center/SMSApi/send';
-// const SMS_API_URL = 'https://unify.smsgateway.center/S';
+// const SMS_API_URL = 'https://unify.smsgateway.center/SMSApi/send';
+const SMS_API_URL = 'https://unify.smsgateway.center/S';
 const url = 'https://core.admitra.io/'
 
 // Credentials loaded from environment

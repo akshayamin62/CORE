@@ -7,6 +7,9 @@ import FollowUp, { } from "../models/FollowUp";
 import User from "../models/User";
 import Counselor from "../models/Counselor";
 import Admin from "../models/Admin";
+import Student from "../models/Student";
+import Ops from "../models/Ops";
+import StudentServiceRegistration from "../models/StudentServiceRegistration";
 import mongoose from "mongoose";
 import { USER_ROLE } from "../types/roles";
 import { createZohoMeeting, deleteZohoMeeting } from "../utils/zohoMeeting";
@@ -60,6 +63,26 @@ const getAdminIdForUser = async (userId: string, userRole: string): Promise<mong
   } else if (userRole === USER_ROLE.COUNSELOR) {
     const counselor = await Counselor.findOne({ userId });
     return counselor ? counselor.adminId : null;
+  } else if (userRole === USER_ROLE.STUDENT) {
+    const student = await Student.findOne({ userId });
+    if (!student?.adminId) return null;
+    const admin = await Admin.findOne({ _id: student.adminId });
+    return admin ? admin.userId : null;
+  } else if (userRole === USER_ROLE.OPS) {
+    // OPS may serve multiple admins; find from their registrations
+    const ops = await Ops.findOne({ userId });
+    if (!ops) return null;
+    const reg = await StudentServiceRegistration.findOne({
+      $or: [{ primaryOpsId: ops._id }, { secondaryOpsId: ops._id }, { activeOpsId: ops._id }]
+    }).populate({ path: 'studentId', select: 'adminId' });
+    if (!reg) return null;
+    const student = reg.studentId as any;
+    if (!student?.adminId) return null;
+    const admin = await Admin.findOne({ _id: student.adminId });
+    return admin ? admin.userId : null;
+  } else if (userRole === USER_ROLE.SUPER_ADMIN) {
+    // Super admin doesn't belong to an org; return a sentinel
+    return new mongoose.Types.ObjectId(userId);
   }
   return null;
 };
@@ -195,10 +218,14 @@ export const createTeamMeet = async (
       });
     }
 
-    if (![USER_ROLE.ADMIN, USER_ROLE.COUNSELOR].includes(recipient.role as USER_ROLE)) {
+    const allowedRecipientRoles = [
+      USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN,
+      USER_ROLE.STUDENT, USER_ROLE.OPS,
+    ];
+    if (!allowedRecipientRoles.includes(recipient.role as USER_ROLE)) {
       return res.status(400).json({
         success: false,
-        message: "Recipient must be an admin or counselor",
+        message: "Recipient role is not eligible for meetings",
       });
     }
 
@@ -1003,7 +1030,25 @@ export const checkTeamMeetAvailability = async (
 };
 
 /**
- * Get list of participants (admins and counselors) available for meetings
+ * Helper: Format a user object for the participants list
+ */
+const formatParticipant = (user: any) => ({
+  _id: user._id,
+  firstName: user.firstName,
+  middleName: user.middleName,
+  lastName: user.lastName,
+  email: user.email,
+  role: user.role,
+});
+
+/**
+ * Get list of participants available for meetings (role-aware)
+ *
+ * STUDENT  → their counselor + ops assigned to their registrations
+ * COUNSELOR → their admin + their students + ops on those students
+ * ADMIN    → their counselors + super admins + their students + ops on those students
+ * SUPER_ADMIN → all users (ADMIN, COUNSELOR, STUDENT, OPS)
+ * OPS      → students they are assigned to + those students' counselors + admin
  */
 export const getParticipants = async (
   req: AuthRequest,
@@ -1012,56 +1057,162 @@ export const getParticipants = async (
   try {
     const userId = req.user?.userId;
     const userRole = req.user?.role;
-
-    // Get admin ID for organization context
-    const adminId = await getAdminIdForUser(userId!, userRole!);
-    if (!adminId) {
-      return res.status(400).json({
-        success: false,
-        message: "Could not determine organization context",
-      });
-    }
-
-    // Get the admin user
-    const admin = await User.findById(adminId).select("_id firstName middleName lastName email role");
-
-    // Get all counselors under this admin
-    const counselors = await Counselor.find({ adminId })
-      .populate("userId", "_id firstName middleName lastName email role");
-
-    // Build participants list
+    const seen = new Set<string>();
     const participants: any[] = [];
 
-    // Add admin (if not the current user)
-    if (admin && admin._id.toString() !== userId) {
-      participants.push({
-        _id: admin._id,
-        firstName: admin.firstName,
-        middleName: admin.middleName,
-        lastName: admin.lastName,
-        email: admin.email,
-        role: admin.role,
-      });
+    const addUser = (u: any) => {
+      if (!u) return;
+      const id = u._id.toString();
+      if (id === userId || seen.has(id)) return;
+      seen.add(id);
+      participants.push(formatParticipant(u));
+    };
+
+    // ── SUPER_ADMIN: all users with meeting-eligible roles ──
+    if (userRole === USER_ROLE.SUPER_ADMIN) {
+      const users = await User.find({
+        role: { $in: [USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.STUDENT, USER_ROLE.OPS] },
+        _id: { $ne: userId },
+      }).select("_id firstName middleName lastName email role");
+      users.forEach(addUser);
+
+      return res.status(200).json({ success: true, data: { participants } });
     }
 
-    // Add counselors (if not the current user)
-    for (const counselor of counselors) {
-      const counselorUser = counselor.userId as any;
-      if (counselorUser && counselorUser._id.toString() !== userId) {
-        participants.push({
-          _id: counselorUser._id,
-          firstName: counselorUser.firstName,
-          middleName: counselorUser.middleName,
-          lastName: counselorUser.lastName,
-          email: counselorUser.email,
-          role: counselorUser.role,
-        });
+    // ── STUDENT: counselor + ops ──
+    if (userRole === USER_ROLE.STUDENT) {
+      const student = await Student.findOne({ userId });
+      if (!student) return res.status(404).json({ success: false, message: "Student record not found" });
+
+      // Counselor
+      if (student.counselorId) {
+        const counselor = await Counselor.findById(student.counselorId).populate("userId", "_id firstName middleName lastName email role");
+        if (counselor) addUser((counselor.userId as any));
       }
+
+      // OPS assigned to this student's registrations
+      const regs = await StudentServiceRegistration.find({ studentId: student._id })
+        .populate({ path: 'activeOpsId', populate: { path: 'userId', select: '_id firstName middleName lastName email role' } })
+        .populate({ path: 'primaryOpsId', populate: { path: 'userId', select: '_id firstName middleName lastName email role' } })
+        .populate({ path: 'secondaryOpsId', populate: { path: 'userId', select: '_id firstName middleName lastName email role' } });
+      for (const reg of regs) {
+        if ((reg as any).activeOpsId?.userId) addUser((reg as any).activeOpsId.userId);
+        if ((reg as any).primaryOpsId?.userId) addUser((reg as any).primaryOpsId.userId);
+        if ((reg as any).secondaryOpsId?.userId) addUser((reg as any).secondaryOpsId.userId);
+      }
+
+      return res.status(200).json({ success: true, data: { participants } });
     }
 
-    return res.status(200).json({
-      success: true,
-      data: { participants },
+    // ── ADMIN: counselors + super admins + students + ops ──
+    if (userRole === USER_ROLE.ADMIN) {
+      const admin = await Admin.findOne({ userId });
+      if (!admin) return res.status(404).json({ success: false, message: "Admin record not found" });
+
+      // Counselors under this admin
+      const counselors = await Counselor.find({ adminId: admin.userId })
+        .populate("userId", "_id firstName middleName lastName email role");
+      for (const c of counselors) addUser((c.userId as any));
+
+      // Super admins
+      const superAdmins = await User.find({ role: USER_ROLE.SUPER_ADMIN })
+        .select("_id firstName middleName lastName email role");
+      superAdmins.forEach(addUser);
+
+      // Students under this admin
+      const students = await Student.find({ adminId: admin._id })
+        .populate("userId", "_id firstName middleName lastName email role");
+      for (const s of students) addUser((s.userId as any));
+
+      // OPS assigned to those students
+      const studentIds = students.map(s => s._id);
+      const regs = await StudentServiceRegistration.find({ studentId: { $in: studentIds } })
+        .populate({ path: 'activeOpsId', populate: { path: 'userId', select: '_id firstName middleName lastName email role' } })
+        .populate({ path: 'primaryOpsId', populate: { path: 'userId', select: '_id firstName middleName lastName email role' } })
+        .populate({ path: 'secondaryOpsId', populate: { path: 'userId', select: '_id firstName middleName lastName email role' } });
+      for (const reg of regs) {
+        if ((reg as any).activeOpsId?.userId) addUser((reg as any).activeOpsId.userId);
+        if ((reg as any).primaryOpsId?.userId) addUser((reg as any).primaryOpsId.userId);
+        if ((reg as any).secondaryOpsId?.userId) addUser((reg as any).secondaryOpsId.userId);
+      }
+
+      return res.status(200).json({ success: true, data: { participants } });
+    }
+
+    // ── COUNSELOR: admin + students + ops ──
+    if (userRole === USER_ROLE.COUNSELOR) {
+      const counselor = await Counselor.findOne({ userId });
+      if (!counselor) return res.status(404).json({ success: false, message: "Counselor record not found" });
+
+      // Admin
+      const adminUser = await User.findById(counselor.adminId)
+        .select("_id firstName middleName lastName email role");
+      addUser(adminUser);
+
+      // Students assigned to this counselor
+      const students = await Student.find({ counselorId: counselor._id })
+        .populate("userId", "_id firstName middleName lastName email role");
+      for (const s of students) addUser((s.userId as any));
+
+      // OPS assigned to those students
+      const studentIds = students.map(s => s._id);
+      const regs = await StudentServiceRegistration.find({ studentId: { $in: studentIds } })
+        .populate({ path: 'activeOpsId', populate: { path: 'userId', select: '_id firstName middleName lastName email role' } })
+        .populate({ path: 'primaryOpsId', populate: { path: 'userId', select: '_id firstName middleName lastName email role' } })
+        .populate({ path: 'secondaryOpsId', populate: { path: 'userId', select: '_id firstName middleName lastName email role' } });
+      for (const reg of regs) {
+        if ((reg as any).activeOpsId?.userId) addUser((reg as any).activeOpsId.userId);
+        if ((reg as any).primaryOpsId?.userId) addUser((reg as any).primaryOpsId.userId);
+        if ((reg as any).secondaryOpsId?.userId) addUser((reg as any).secondaryOpsId.userId);
+      }
+
+      return res.status(200).json({ success: true, data: { participants } });
+    }
+
+    // ── OPS: assigned students + their counselors + admin ──
+    if (userRole === USER_ROLE.OPS) {
+      const ops = await Ops.findOne({ userId });
+      if (!ops) return res.status(404).json({ success: false, message: "Ops record not found" });
+
+      const regs = await StudentServiceRegistration.find({
+        $or: [{ primaryOpsId: ops._id }, { secondaryOpsId: ops._id }, { activeOpsId: ops._id }]
+      }).populate({ path: 'studentId', populate: { path: 'userId', select: '_id firstName middleName lastName email role' } });
+
+      for (const reg of regs) {
+        const student = reg.studentId as any;
+        if (student?.userId) addUser(student.userId);
+      }
+
+      // Get admins and counselors for those students
+      const studentDocs = await Student.find({
+        _id: { $in: regs.map(r => r.studentId) }
+      }).populate("userId", "_id firstName middleName lastName email role");
+
+      const adminIds = new Set<string>();
+      const counselorIds = new Set<string>();
+      for (const s of studentDocs) {
+        if (s.adminId) adminIds.add(s.adminId.toString());
+        if (s.counselorId) counselorIds.add(s.counselorId.toString());
+      }
+
+      // Admin users
+      for (const aId of adminIds) {
+        const adminDoc = await Admin.findById(aId).populate("userId", "_id firstName middleName lastName email role");
+        if (adminDoc) addUser((adminDoc.userId as any));
+      }
+
+      // Counselor users
+      for (const cId of counselorIds) {
+        const counselorDoc = await Counselor.findById(cId).populate("userId", "_id firstName middleName lastName email role");
+        if (counselorDoc) addUser((counselorDoc.userId as any));
+      }
+
+      return res.status(200).json({ success: true, data: { participants } });
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: "Could not determine participants for your role",
     });
   } catch (error) {
     console.error("Error fetching participants:", error);
@@ -1169,5 +1320,53 @@ export const downloadTeamMeetAttachment = async (
   } catch (error) {
     console.error("Error downloading team meet attachment:", error);
     res.status(500).json({ success: false, message: "Failed to download attachment" });
+  }
+};
+
+/**
+ * Get team meetings for a specific student (by student model ID).
+ * Used by admin/counselor/super-admin/ops to view student dashboard calendar.
+ */
+export const getTeamMeetsForStudent = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { studentId } = req.params;
+
+    // Find the student record to get the userId
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
+
+    const studentUserId = student.userId;
+
+    // Default to 3 months range
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59, 999);
+
+    const teamMeets = await TeamMeet.find({
+      $or: [{ requestedBy: studentUserId }, { requestedTo: studentUserId }],
+      scheduledDate: { $gte: startDate, $lte: endDate },
+    })
+      .populate("requestedBy", "firstName middleName lastName email role")
+      .populate("requestedTo", "firstName middleName lastName email role")
+      .sort({ scheduledDate: 1, scheduledTime: 1 });
+
+    return res.status(200).json({
+      success: true,
+      data: { teamMeets },
+    });
+  } catch (error) {
+    console.error("Error fetching team meets for student:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch student team meets",
+    });
   }
 };
