@@ -2028,3 +2028,202 @@ export const getEduplanCoachTeamMeetsForSuperAdmin = async (req: Request, res: R
     return res.status(500).json({ success: false, message: 'Failed to fetch eduplan coach team meets', error: error.message });
   }
 };
+
+/**
+ * Edit a user's profile (User fields + role-specific profile fields)
+ * Super Admin can update: firstName, middleName, lastName, email, mobileNumber
+ * Also updates the email/mobileNumber on the role-specific profile (Ops, IvyExpert, EduplanCoach, Counselor, Student, Admin)
+ */
+export const editUserByRole = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { userId } = req.params;
+    const body = req.body;
+    const { firstName, middleName, lastName, email, mobileNumber } = body;
+
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'User ID is required' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // If email is changing, check for duplicates
+    if (email && email.toLowerCase().trim() !== user.email) {
+      const existingUser = await User.findOne({ email: email.toLowerCase().trim(), _id: { $ne: userId } });
+      if (existingUser) {
+        return res.status(400).json({ success: false, message: 'Another user with this email already exists' });
+      }
+    }
+
+    // Validate phone number if provided
+    if (mobileNumber && mobileNumber.trim()) {
+      const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,5}[-\s.]?[0-9]{1,5}$/;
+      if (!phoneRegex.test(mobileNumber.trim())) {
+        return res.status(400).json({ success: false, message: 'Invalid phone number format' });
+      }
+    }
+
+    // Build User update
+    const userUpdate: any = {};
+    if (firstName !== undefined) userUpdate.firstName = firstName.trim();
+    if (middleName !== undefined) userUpdate.middleName = middleName.trim(); // empty string is valid (clears middle name)
+    if (lastName !== undefined) userUpdate.lastName = lastName.trim();
+    if (email !== undefined) userUpdate.email = email.toLowerCase().trim();
+
+    // Update User document
+    if (Object.keys(userUpdate).length > 0) {
+      await User.findByIdAndUpdate(userId, userUpdate, { new: true, runValidators: false });
+    }
+
+    // Update role-specific profile
+    const role = user.role;
+    if (role === USER_ROLE.OPS) {
+      const profileUpdate: any = {};
+      if (email !== undefined) profileUpdate.email = email.toLowerCase().trim();
+      if (mobileNumber !== undefined) profileUpdate.mobileNumber = mobileNumber.trim();
+      if (Object.keys(profileUpdate).length > 0) {
+        await Ops.findOneAndUpdate({ userId }, profileUpdate, { new: true, runValidators: false });
+      }
+    } else if (role === USER_ROLE.IVY_EXPERT) {
+      const profileUpdate: any = {};
+      if (email !== undefined) profileUpdate.email = email.toLowerCase().trim();
+      if (mobileNumber !== undefined) profileUpdate.mobileNumber = mobileNumber.trim();
+      if (Object.keys(profileUpdate).length > 0) {
+        await IvyExpert.findOneAndUpdate({ userId }, profileUpdate, { new: true, runValidators: false });
+      }
+    } else if (role === USER_ROLE.EDUPLAN_COACH) {
+      const profileUpdate: any = {};
+      if (email !== undefined) profileUpdate.email = email.toLowerCase().trim();
+      if (mobileNumber !== undefined) profileUpdate.mobileNumber = mobileNumber.trim();
+      if (Object.keys(profileUpdate).length > 0) {
+        await EduplanCoach.findOneAndUpdate({ userId }, profileUpdate, { new: true, runValidators: false });
+      }
+    } else if (role === USER_ROLE.COUNSELOR) {
+      const profileUpdate: any = {};
+      if (email !== undefined) profileUpdate.email = email.toLowerCase().trim();
+      if (mobileNumber !== undefined) profileUpdate.mobileNumber = mobileNumber.trim();
+      if (Object.keys(profileUpdate).length > 0) {
+        await Counselor.findOneAndUpdate({ userId }, profileUpdate, { new: true, runValidators: false });
+      }
+    } else if (role === USER_ROLE.STUDENT) {
+      const studentUpdate: any = {};
+      if (mobileNumber !== undefined) studentUpdate.mobileNumber = mobileNumber.trim();
+      if (email !== undefined) studentUpdate.email = email.toLowerCase().trim();
+      if (body.intake !== undefined) studentUpdate.intake = body.intake.trim();
+      if (body.year !== undefined) studentUpdate.year = body.year.trim();
+      if (Object.keys(studentUpdate).length > 0) {
+        await Student.findOneAndUpdate({ userId }, studentUpdate, { new: true, runValidators: false });
+      }
+      // Also update lead if student was converted and lead fields provided
+      if (body.leadData) {
+        const student = await Student.findOne({ userId });
+        if (student?.convertedFromLeadId) {
+          const leadUpdate: any = {};
+          const ld = body.leadData;
+          if (ld.name !== undefined) leadUpdate.name = ld.name.trim();
+          if (ld.email !== undefined) leadUpdate.email = ld.email.toLowerCase().trim();
+          if (ld.mobileNumber !== undefined) leadUpdate.mobileNumber = ld.mobileNumber.trim();
+          if (ld.city !== undefined) leadUpdate.city = ld.city.trim();
+          if (ld.serviceTypes !== undefined && Array.isArray(ld.serviceTypes) && ld.serviceTypes.length > 0) {
+            leadUpdate.serviceTypes = ld.serviceTypes;
+          }
+          if (ld.intake !== undefined) leadUpdate.intake = ld.intake.trim();
+          if (ld.year !== undefined) leadUpdate.year = ld.year.trim();
+          if (ld.stage !== undefined) leadUpdate.stage = ld.stage;
+          if (ld.source !== undefined) leadUpdate.source = ld.source.trim();
+          if (Object.keys(leadUpdate).length > 0) {
+            await Lead.findByIdAndUpdate(student.convertedFromLeadId, leadUpdate, { new: true, runValidators: false });
+          }
+        }
+      }
+    } else if (role === USER_ROLE.ADMIN) {
+      const adminUpdate: any = {};
+      if (email !== undefined) adminUpdate.email = email.toLowerCase().trim();
+      if (mobileNumber !== undefined) adminUpdate.mobileNumber = mobileNumber.trim();
+      if (body.companyName !== undefined) adminUpdate.companyName = body.companyName.trim();
+      if (body.address !== undefined) adminUpdate.address = body.address.trim();
+      if (body.enquiryFormSlug !== undefined) adminUpdate.enquiryFormSlug = body.enquiryFormSlug.toLowerCase().trim();
+      if (Object.keys(adminUpdate).length > 0) {
+        await Admin.findOneAndUpdate({ userId }, adminUpdate, { new: true, runValidators: false });
+      }
+    } else if (role === USER_ROLE.SERVICE_PROVIDER) {
+      const spUpdate: any = {};
+      if (email !== undefined) spUpdate.email = email.toLowerCase().trim();
+      if (mobileNumber !== undefined) spUpdate.mobileNumber = mobileNumber.trim();
+      if (body.companyName !== undefined) spUpdate.companyName = body.companyName.trim();
+      if (body.businessType !== undefined) spUpdate.businessType = body.businessType;
+      if (body.registrationNumber !== undefined) spUpdate.registrationNumber = body.registrationNumber.trim();
+      if (body.gstNumber !== undefined) spUpdate.gstNumber = body.gstNumber.trim();
+      if (body.address !== undefined) spUpdate.address = body.address.trim();
+      if (body.city !== undefined) spUpdate.city = body.city.trim();
+      if (body.state !== undefined) spUpdate.state = body.state.trim();
+      if (body.country !== undefined) spUpdate.country = body.country.trim();
+      if (body.pincode !== undefined) spUpdate.pincode = body.pincode.trim();
+      if (body.website !== undefined) spUpdate.website = body.website.trim();
+      if (Object.keys(spUpdate).length > 0) {
+        await ServiceProvider.findOneAndUpdate({ userId }, spUpdate, { new: true, runValidators: false });
+      }
+    }
+
+    // Fetch updated user
+    const updatedUser = await User.findById(userId).select('-otp -otpExpires');
+
+    return res.status(200).json({
+      success: true,
+      message: 'User updated successfully',
+      data: { user: updatedUser },
+    });
+  } catch (error: any) {
+    console.error('Edit user by role error:', error);
+    if (error.code === 11000) {
+      return res.status(400).json({ success: false, message: 'Email already exists in role profile' });
+    }
+    return res.status(500).json({ success: false, message: 'Failed to update user', error: error.message });
+  }
+};
+
+/**
+ * Get user details with role-specific profile for editing
+ */
+export const getUserWithProfile = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).select('-otp -otpExpires');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    let profile: any = null;
+    let lead: any = null;
+    const role = user.role;
+    if (role === USER_ROLE.OPS) {
+      profile = await Ops.findOne({ userId });
+    } else if (role === USER_ROLE.IVY_EXPERT) {
+      profile = await IvyExpert.findOne({ userId });
+    } else if (role === USER_ROLE.EDUPLAN_COACH) {
+      profile = await EduplanCoach.findOne({ userId });
+    } else if (role === USER_ROLE.COUNSELOR) {
+      profile = await Counselor.findOne({ userId }).populate('adminId', 'firstName middleName lastName email');
+    } else if (role === USER_ROLE.STUDENT) {
+      profile = await Student.findOne({ userId });
+      // Also fetch associated lead if converted
+      if (profile?.convertedFromLeadId) {
+        lead = await Lead.findById(profile.convertedFromLeadId);
+      }
+    } else if (role === USER_ROLE.ADMIN) {
+      profile = await Admin.findOne({ userId });
+    } else if (role === USER_ROLE.SERVICE_PROVIDER) {
+      profile = await ServiceProvider.findOne({ userId });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: { user, profile, lead },
+    });
+  } catch (error: any) {
+    console.error('Get user with profile error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch user profile', error: error.message });
+  }
+};

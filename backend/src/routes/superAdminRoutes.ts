@@ -35,6 +35,8 @@ import {
   getEduplanCoachStudentsForSuperAdmin,
   getEduplanCoachTeamMeetsForSuperAdmin,
   getIvyExpertTeamMeetsForSuperAdmin,
+  editUserByRole,
+  getUserWithProfile,
 } from "../controllers/superAdminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
@@ -90,6 +92,20 @@ router.post("/users/:userId/reject", rejectUser);
  * @access  Super Admin only
  */
 router.patch("/users/:userId/toggle-status", toggleUserStatus);
+
+/**
+ * @route   GET /api/super-admin/users/:userId/profile
+ * @desc    Get user with role-specific profile for editing
+ * @access  Super Admin only
+ */
+router.get("/users/:userId/profile", getUserWithProfile);
+
+/**
+ * @route   PUT /api/super-admin/users/:userId/edit
+ * @desc    Edit user profile + role-specific fields
+ * @access  Super Admin only
+ */
+router.put("/users/:userId/edit", editUserByRole);
 
 /**
  * @route   DELETE /api/super-admin/users/:userId

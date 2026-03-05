@@ -97,6 +97,12 @@ export const superAdminAPI = {
   toggleUserStatus: (userId: string) => 
     api.patch(`/super-admin/users/${userId}/toggle-status`),
   
+  getUserWithProfile: (userId: string) =>
+    api.get(`/super-admin/users/${userId}/profile`),
+
+  editUserByRole: (userId: string, data: Record<string, any>) =>
+    api.put(`/super-admin/users/${userId}/edit`, data),
+
   deleteUser: (userId: string) => api.delete(`/super-admin/users/${userId}`),
   
   createOps: (data: {
