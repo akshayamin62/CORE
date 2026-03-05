@@ -26,7 +26,7 @@ const router = Router();
 router.use(authenticate);
 
 // ADMIN, COUNSELOR, and SUPER_ADMIN can access TeamMeet features
-router.use(authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN, USER_ROLE.STUDENT, USER_ROLE.OPS, USER_ROLE.EDUPLAN_COACH]));
+router.use(authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN, USER_ROLE.STUDENT, USER_ROLE.OPS, USER_ROLE.EDUPLAN_COACH, USER_ROLE.IVY_EXPERT]));
 
 /**
  * @route   POST /api/team-meets
@@ -73,7 +73,7 @@ router.get("/participants", getParticipants);
  * @desc    Get team meetings for a specific student (for admin/counselor/super-admin/ops dashboard)
  * @access  Admin, Counselor, Super Admin, OPS
  */
-router.get("/student/:studentId", authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN, USER_ROLE.OPS, USER_ROLE.EDUPLAN_COACH]), getTeamMeetsForStudent);
+router.get("/student/:studentId", authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN, USER_ROLE.OPS, USER_ROLE.EDUPLAN_COACH, USER_ROLE.IVY_EXPERT]), getTeamMeetsForStudent);
 
 /**
  * @route   GET /api/team-meets/:teamMeetId/attachment

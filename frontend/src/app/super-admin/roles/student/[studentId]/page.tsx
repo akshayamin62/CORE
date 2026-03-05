@@ -296,7 +296,11 @@ export default function StudentDetailPage() {
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success('Active OPS switched successfully');
+      const switchLabel =
+        serviceName === 'Ivy League Preparation' ? 'Active Ivy Expert switched successfully' :
+        serviceName === 'Education Planning' ? 'Active Eduplan Coach switched successfully' :
+        'Active OPS switched successfully';
+      toast.success(switchLabel);
       fetchStudentDetails(); // Refresh data
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to switch active OPS');

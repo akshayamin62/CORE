@@ -34,6 +34,7 @@ import {
   getEduplanCoachDetailForSuperAdmin,
   getEduplanCoachStudentsForSuperAdmin,
   getEduplanCoachTeamMeetsForSuperAdmin,
+  getIvyExpertTeamMeetsForSuperAdmin,
 } from "../controllers/superAdminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
@@ -118,6 +119,13 @@ router.get("/ops", getAllOps);
  * @access  Super Admin only
  */
 router.get("/ivy-experts", getAllIvyExperts);
+
+/**
+ * @route   GET /api/super-admin/ivy-experts/:ivyExpertUserId/team-meets
+ * @desc    Get team meets for a specific ivy expert
+ * @access  Super Admin only
+ */
+router.get("/ivy-experts/:ivyExpertUserId/team-meets", getIvyExpertTeamMeetsForSuperAdmin);
 
 /**
  * @route   GET /api/super-admin/eduplan-coaches

@@ -634,6 +634,51 @@ export const getAllIvyExperts = async (_req: Request, res: Response): Promise<Re
 };
 
 /**
+ * Get team meets for a specific Ivy Expert (for super admin dashboard)
+ */
+export const getIvyExpertTeamMeetsForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { ivyExpertUserId } = req.params;
+    const { month, year } = req.query;
+
+    const ivyUser = await User.findById(ivyExpertUserId);
+    if (!ivyUser || ivyUser.role !== USER_ROLE.IVY_EXPERT) {
+      return res.status(404).json({ success: false, message: 'Ivy Expert not found' });
+    }
+
+    let startDate: Date;
+    let endDate: Date;
+
+    if (month && year) {
+      const monthNum = parseInt(month as string);
+      const yearNum = parseInt(year as string);
+      startDate = new Date(yearNum, monthNum - 1, -6);
+      endDate = new Date(yearNum, monthNum, 7, 23, 59, 59, 999);
+    } else {
+      const now = new Date();
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59, 999);
+    }
+
+    const teamMeets = await TeamMeet.find({
+      $or: [{ requestedBy: ivyExpertUserId }, { requestedTo: ivyExpertUserId }],
+      scheduledDate: { $gte: startDate, $lte: endDate },
+    })
+      .populate('requestedBy', 'firstName middleName lastName email role')
+      .populate('requestedTo', 'firstName middleName lastName email role')
+      .sort({ scheduledDate: 1, scheduledTime: 1 });
+
+    return res.status(200).json({
+      success: true,
+      data: { teamMeets },
+    });
+  } catch (error: any) {
+    console.error('Get Ivy Expert team meets for super admin error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch Ivy Expert team meets', error: error.message });
+  }
+};
+
+/**
  * Get all Eduplan Coaches
  */
 export const getAllEduplanCoaches = async (_req: Request, res: Response): Promise<Response> => {
