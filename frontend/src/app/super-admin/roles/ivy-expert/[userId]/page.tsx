@@ -289,58 +289,6 @@ export default function IvyExpertDashboardReadOnlyPage() {
           </div>
         </div>
 
-        {/* Student List */}
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Assigned Students</h2>
-          <p className="text-gray-400 text-sm">
-            {students.length} student{students.length !== 1 ? 's' : ''} assigned
-          </p>
-        </div>
-        <div className="bg-white shadow-sm overflow-hidden sm:rounded-xl border border-gray-200">
-          <ul className="divide-y divide-gray-200">
-            {students.length === 0 ? (
-              <li className="px-6 py-8 text-center text-gray-500">
-                No students assigned to this Ivy Expert yet.
-              </li>
-            ) : (
-              students.map((service) => (
-                <li key={service._id}>
-                  <button
-                    onClick={() => handleStudentClick(service)}
-                    className="w-full text-left block hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="px-6 py-5 flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="shrink-0 h-12 w-12">
-                          <div className="h-12 w-12 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold text-lg">
-                            {service.studentId.firstName
-                              ? service.studentId.firstName.charAt(0).toUpperCase()
-                              : '?'}
-                          </div>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-base font-semibold text-gray-900">
-                            {service.studentId.firstName
-                              ? `${service.studentId.firstName} ${service.studentId.lastName}`
-                              : 'Unknown Student'}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {service.studentId.email}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="px-3 py-1.5 rounded-lg text-xs bg-brand-600 text-white pointer-events-none">
-                          View Details
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                </li>
-              ))
-            )}
-          </ul>
-        </div>
       </div>
 
       {/* Team Meet View-Only Panel */}
