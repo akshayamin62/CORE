@@ -94,9 +94,35 @@ export default function TeamMeetCalendar({
     });
   }, [teamMeets, currentUserId]);
 
+  // Check if user is an invited participant (not sender or receiver)
+  const isInvitedOnly = useCallback((teamMeet: TeamMeet) => {
+    if (!currentUserId) return false;
+    const isSender = teamMeet.requestedBy._id === currentUserId;
+    const isReceiver = teamMeet.requestedTo._id === currentUserId;
+    if (isSender || isReceiver) return false;
+    return teamMeet.invitedUsers?.some((u) => u._id === currentUserId) || false;
+  }, [currentUserId]);
+
   // Custom event styling based on status
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
     const status = event.resource.status;
+
+    // If user is only an invited participant, show in light brown
+    if (isInvitedOnly(event.resource)) {
+      return {
+        style: {
+          backgroundColor: '#FDE8CD',
+          borderLeft: '4px solid #D97706',
+          color: '#92400E',
+          borderRadius: '4px',
+          padding: '2px 6px',
+          fontSize: '12px',
+          fontWeight: 500,
+          cursor: 'pointer',
+        },
+      };
+    }
+
     const colors = getStatusColor(status);
     
     return {
@@ -111,7 +137,7 @@ export default function TeamMeetCalendar({
         cursor: 'pointer',
       },
     };
-  }, []);
+  }, [isInvitedOnly]);
 
   const handleEventSelect = useCallback((event: CalendarEvent) => {
     onTeamMeetSelect(event.resource);
@@ -228,6 +254,7 @@ export default function TeamMeetCalendar({
                 <span className="w-2 h-2 rounded bg-red-800"></span>
                 <span className="w-2 h-2 rounded bg-slate-400"></span>
                 <span className="w-2 h-2 rounded bg-teal-500"></span>
+                <span className="w-2 h-2 rounded" style={{ backgroundColor: '#D97706' }}></span>
                 <span className="text-xs text-gray-500">Team Meet</span>
               </div>
               {/* Hover Tooltip */}
@@ -253,6 +280,10 @@ export default function TeamMeetCalendar({
                   <div className="flex items-center gap-2">
                     <span className="w-3 h-3 rounded bg-teal-500"></span>
                     <span className="text-xs text-gray-600">Completed</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded" style={{ backgroundColor: '#D97706' }}></span>
+                    <span className="text-xs text-gray-600">Invited</span>
                   </div>
                 </div>
               </div>

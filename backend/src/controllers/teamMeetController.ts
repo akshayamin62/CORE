@@ -402,7 +402,7 @@ export const getTeamMeets = async (
     const { status, startDate, endDate } = req.query;
 
     const query: any = {
-      $or: [{ requestedBy: userId }, { requestedTo: userId }],
+      $or: [{ requestedBy: userId }, { requestedTo: userId }, { invitedUsers: userId }],
     };
 
     if (status) {
@@ -419,6 +419,7 @@ export const getTeamMeets = async (
     const teamMeets = await TeamMeet.find(query)
       .populate("requestedBy", "firstName middleName lastName email role")
       .populate("requestedTo", "firstName middleName lastName email role")
+      .populate("invitedUsers", "firstName middleName lastName email role")
       .sort({ scheduledDate: 1, scheduledTime: 1 });
 
     return res.status(200).json({
@@ -462,11 +463,12 @@ export const getTeamMeetsForCalendar = async (
     }
 
     const teamMeets = await TeamMeet.find({
-      $or: [{ requestedBy: userId }, { requestedTo: userId }],
+      $or: [{ requestedBy: userId }, { requestedTo: userId }, { invitedUsers: userId }],
       scheduledDate: { $gte: startDate, $lte: endDate },
     })
       .populate("requestedBy", "firstName middleName lastName email role")
       .populate("requestedTo", "firstName middleName lastName email role")
+      .populate("invitedUsers", "firstName middleName lastName email role")
       .sort({ scheduledDate: 1, scheduledTime: 1 });
 
     return res.status(200).json({
@@ -495,7 +497,8 @@ export const getTeamMeetById = async (
 
     const teamMeet = await TeamMeet.findById(teamMeetId)
       .populate("requestedBy", "firstName middleName lastName email role")
-      .populate("requestedTo", "firstName middleName lastName email role");
+      .populate("requestedTo", "firstName middleName lastName email role")
+      .populate("invitedUsers", "firstName middleName lastName email role");
 
     if (!teamMeet) {
       return res.status(404).json({
@@ -504,10 +507,14 @@ export const getTeamMeetById = async (
       });
     }
 
-    // Check if user is a participant
+    // Check if user is a participant or invited
+    const isInvited = teamMeet.invitedUsers?.some(
+      (u: any) => u._id?.toString() === userId || u.toString() === userId
+    );
     if (
       teamMeet.requestedBy.toString() !== userId &&
-      teamMeet.requestedTo.toString() !== userId
+      teamMeet.requestedTo.toString() !== userId &&
+      !isInvited
     ) {
       return res.status(403).json({
         success: false,
@@ -1415,11 +1422,13 @@ export const getTeamMeetsForCounselor = async (
       $or: [
         { requestedBy: (counselorUserId as any)._id },
         { requestedTo: (counselorUserId as any)._id },
+        { invitedUsers: (counselorUserId as any)._id },
       ],
       scheduledDate: { $gte: threeMonthsAgo, $lte: threeMonthsLater },
     })
       .populate("requestedBy", "firstName middleName lastName email role")
       .populate("requestedTo", "firstName middleName lastName email role")
+      .populate("invitedUsers", "firstName middleName lastName email role")
       .sort({ scheduledDate: 1, scheduledTime: 1 });
 
     return res.status(200).json({
@@ -1492,11 +1501,12 @@ export const getTeamMeetsForStudent = async (
     const endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59, 999);
 
     const teamMeets = await TeamMeet.find({
-      $or: [{ requestedBy: studentUserId }, { requestedTo: studentUserId }],
+      $or: [{ requestedBy: studentUserId }, { requestedTo: studentUserId }, { invitedUsers: studentUserId }],
       scheduledDate: { $gte: startDate, $lte: endDate },
     })
       .populate("requestedBy", "firstName middleName lastName email role")
       .populate("requestedTo", "firstName middleName lastName email role")
+      .populate("invitedUsers", "firstName middleName lastName email role")
       .sort({ scheduledDate: 1, scheduledTime: 1 });
 
     return res.status(200).json({
@@ -1508,6 +1518,159 @@ export const getTeamMeetsForStudent = async (
     return res.status(500).json({
       success: false,
       message: "Failed to fetch student team meets",
+    });
+  }
+};
+
+/**
+ * Invite users to a team meeting
+ * Only sender or receiver can invite from their participants list
+ */
+export const inviteToTeamMeet = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const userId = req.user?.userId;
+    const { teamMeetId } = req.params;
+    const { userIds } = req.body; // Array of user IDs to invite
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide user IDs to invite",
+      });
+    }
+
+    const teamMeet = await TeamMeet.findById(teamMeetId);
+    if (!teamMeet) {
+      return res.status(404).json({
+        success: false,
+        message: "Meeting not found",
+      });
+    }
+
+    // Only sender or receiver can invite
+    if (
+      teamMeet.requestedBy.toString() !== userId &&
+      teamMeet.requestedTo.toString() !== userId
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the meeting sender or receiver can invite participants",
+      });
+    }
+
+    // Don't allow inviting the sender or receiver themselves
+    const filteredIds = userIds.filter(
+      (id: string) =>
+        id !== teamMeet.requestedBy.toString() &&
+        id !== teamMeet.requestedTo.toString()
+    );
+
+    if (filteredIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot invite the meeting sender or receiver",
+      });
+    }
+
+    // Add unique user IDs to invitedUsers
+    const existingIds = (teamMeet.invitedUsers || []).map((id: any) => id.toString());
+    const newIds = filteredIds.filter((id: string) => !existingIds.includes(id));
+
+    if (newIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "All selected users are already invited",
+      });
+    }
+
+    teamMeet.invitedUsers = [
+      ...(teamMeet.invitedUsers || []),
+      ...newIds.map((id: string) => new mongoose.Types.ObjectId(id)),
+    ];
+    await teamMeet.save();
+
+    // Return the updated team meet with populated fields
+    const updatedTeamMeet = await TeamMeet.findById(teamMeetId)
+      .populate("requestedBy", "firstName middleName lastName email role")
+      .populate("requestedTo", "firstName middleName lastName email role")
+      .populate("invitedUsers", "firstName middleName lastName email role");
+
+    return res.status(200).json({
+      success: true,
+      message: `${newIds.length} user(s) invited successfully`,
+      data: { teamMeet: updatedTeamMeet },
+    });
+  } catch (error) {
+    console.error("Error inviting to team meet:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to invite users",
+    });
+  }
+};
+
+/**
+ * Remove an invited user from a team meeting
+ * Only sender or receiver can remove invitees
+ */
+export const removeInviteFromTeamMeet = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const userId = req.user?.userId;
+    const { teamMeetId } = req.params;
+    const { invitedUserId } = req.body;
+
+    if (!invitedUserId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide the user ID to remove",
+      });
+    }
+
+    const teamMeet = await TeamMeet.findById(teamMeetId);
+    if (!teamMeet) {
+      return res.status(404).json({
+        success: false,
+        message: "Meeting not found",
+      });
+    }
+
+    // Only sender or receiver can remove invitees
+    if (
+      teamMeet.requestedBy.toString() !== userId &&
+      teamMeet.requestedTo.toString() !== userId
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the meeting sender or receiver can remove invitees",
+      });
+    }
+
+    teamMeet.invitedUsers = (teamMeet.invitedUsers || []).filter(
+      (id: any) => id.toString() !== invitedUserId
+    );
+    await teamMeet.save();
+
+    const updatedTeamMeet = await TeamMeet.findById(teamMeetId)
+      .populate("requestedBy", "firstName middleName lastName email role")
+      .populate("requestedTo", "firstName middleName lastName email role")
+      .populate("invitedUsers", "firstName middleName lastName email role");
+
+    return res.status(200).json({
+      success: true,
+      message: "User removed from invitation",
+      data: { teamMeet: updatedTeamMeet },
+    });
+  } catch (error) {
+    console.error("Error removing invite from team meet:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to remove invitation",
     });
   }
 };

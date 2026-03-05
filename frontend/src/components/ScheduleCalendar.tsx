@@ -182,6 +182,32 @@ export default function ScheduleCalendar({
     } else {
       // TeamMeet
       const teamMeet = event.resource as TeamMeet;
+
+      // If user is only an invited participant, show in light brown
+      const isSender = teamMeet.requestedBy._id === currentUserId;
+      const isReceiver = teamMeet.requestedTo._id === currentUserId;
+      const isOnlyInvited = !isSender && !isReceiver && teamMeet.invitedUsers?.some((u) => u._id === currentUserId);
+
+      if (isOnlyInvited) {
+        return {
+          style: {
+            backgroundColor: '#FDE8CD',
+            borderLeft: '4px solid #D97706',
+            color: '#92400E',
+            borderRadius: '4px',
+            padding: '4px 8px',
+            fontSize: '11px',
+            fontWeight: 500,
+            cursor: 'pointer',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            minHeight: '22px',
+            lineHeight: '1.3',
+          },
+        };
+      }
+
       const colors = getTeamMeetStatusColor(teamMeet.status);
       
       return {
@@ -202,7 +228,7 @@ export default function ScheduleCalendar({
         },
       };
     }
-  }, []);
+  }, [currentUserId]);
 
   const handleEventSelect = useCallback((event: CalendarEvent) => {
     if (event.type === 'followup') {

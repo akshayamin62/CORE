@@ -147,7 +147,32 @@ export default function OpsScheduleCalendar({
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
     let colors;
     if (event.type === 'teamMeet' && event.teamMeetResource) {
-      colors = getTeamMeetStatusColor(event.teamMeetResource.status);
+      // If user is only an invited participant, show in light brown
+      const tm = event.teamMeetResource;
+      const isSender = tm.requestedBy._id === currentUserId || (tm.requestedBy as any).id === currentUserId;
+      const isReceiver = tm.requestedTo._id === currentUserId || (tm.requestedTo as any).id === currentUserId;
+      const isOnlyInvited = !isSender && !isReceiver && tm.invitedUsers?.some((u) => u._id === currentUserId);
+
+      if (isOnlyInvited) {
+        return {
+          style: {
+            backgroundColor: '#FDE8CD',
+            borderLeft: '4px solid #D97706',
+            color: '#92400E',
+            borderRadius: '4px',
+            padding: '4px 8px',
+            fontSize: '11px',
+            fontWeight: 500,
+            cursor: 'pointer',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap' as const,
+            minHeight: '22px',
+            lineHeight: '1.3',
+          },
+        };
+      }
+      colors = getTeamMeetStatusColor(tm.status);
     } else if (event.resource) {
       const schedule = event.resource;
       const isPastDate = isPast(new Date(schedule.scheduledDate)) && !isToday(new Date(schedule.scheduledDate));

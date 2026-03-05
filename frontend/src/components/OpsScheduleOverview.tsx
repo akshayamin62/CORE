@@ -236,6 +236,18 @@ export default function OpsScheduleOverview({
       getUserId(tm.requestedBy) === currentUserId
   );
 
+  // Meetings where the user is only an invited participant (not sender or receiver)
+  const invitedMeetings = teamMeets.filter(
+    (tm) => {
+      const isSender = getUserId(tm.requestedBy) === currentUserId;
+      const isReceiver = getUserId(tm.requestedTo) === currentUserId;
+      if (isSender || isReceiver) return false;
+      return tm.invitedUsers?.some((u) => getUserId(u) === currentUserId) || false;
+    }
+  ).filter(
+    (tm) => tm.status !== TEAMMEET_STATUS.CANCELLED && tm.status !== TEAMMEET_STATUS.COMPLETED
+  );
+
   // ── Counts ──
   const todayCount = todayTasks.length + todayTMs.length;
   const missedCount = missedTasks.length + missedTMs.length;
@@ -393,6 +405,24 @@ export default function OpsScheduleOverview({
             </div>
             <div className="space-y-2 max-h-32 overflow-y-auto">
               {needsReschedule.map((tm) => (
+                <TeamMeetItem key={`tm-${tm._id}`} teamMeet={tm} onClick={() => onTeamMeetClick(tm)} showDate currentUserId={currentUserId} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Invitations (meetings where user is invited, not sender/receiver) ── */}
+        {invitedMeetings.length > 0 && (
+          <div className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#D97706' }} />
+              <h4 className="text-sm font-semibold text-gray-700">Invitations</h4>
+              <span className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FDE8CD', color: '#92400E' }}>
+                {invitedMeetings.length}
+              </span>
+            </div>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {invitedMeetings.map((tm) => (
                 <TeamMeetItem key={`tm-${tm._id}`} teamMeet={tm} onClick={() => onTeamMeetClick(tm)} showDate currentUserId={currentUserId} />
               ))}
             </div>

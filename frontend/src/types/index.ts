@@ -513,6 +513,14 @@ export interface TeamMeet {
     email: string;
     role: string;
   };
+  invitedUsers?: {
+    _id: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
+    email: string;
+    role: string;
+  }[];
   status: TEAMMEET_STATUS;
   rejectionMessage?: string;
   notes?: string;

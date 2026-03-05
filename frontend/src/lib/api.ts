@@ -601,6 +601,14 @@ export const teamMeetAPI = {
 
   // Get team meets for a specific student (for admin/counselor/super-admin/ops dashboard)
   getStudentTeamMeets: (studentId: string) => api.get(`/team-meets/student/${studentId}`),
+
+  // Invite users to a team meeting
+  inviteToTeamMeet: (teamMeetId: string, userIds: string[]) =>
+    api.patch(`/team-meets/${teamMeetId}/invite`, { userIds }),
+
+  // Remove an invited user from a team meeting
+  removeInviteFromTeamMeet: (teamMeetId: string, invitedUserId: string) =>
+    api.patch(`/team-meets/${teamMeetId}/remove-invite`, { invitedUserId }),
 };
 
 // OPS Schedule API

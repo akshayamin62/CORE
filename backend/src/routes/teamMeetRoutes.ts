@@ -14,6 +14,8 @@ import {
   getTeamMeetsForCounselor,
   downloadTeamMeetAttachment,
   getTeamMeetsForStudent,
+  inviteToTeamMeet,
+  removeInviteFromTeamMeet,
 } from "../controllers/teamMeetController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
@@ -125,6 +127,22 @@ router.patch("/:teamMeetId/reschedule", rescheduleTeamMeet);
  * @access  Either sender or recipient
  */
 router.patch("/:teamMeetId/complete", completeTeamMeet);
+
+/**
+ * @route   PATCH /api/team-meets/:teamMeetId/invite
+ * @desc    Invite users to a team meeting
+ * @access  Only sender or receiver
+ * @body    userIds (array of user IDs)
+ */
+router.patch("/:teamMeetId/invite", inviteToTeamMeet);
+
+/**
+ * @route   PATCH /api/team-meets/:teamMeetId/remove-invite
+ * @desc    Remove an invited user from a team meeting
+ * @access  Only sender or receiver
+ * @body    invitedUserId
+ */
+router.patch("/:teamMeetId/remove-invite", removeInviteFromTeamMeet);
 
 /**
  * @route   GET /api/team-meets/counselor/:counselorId
