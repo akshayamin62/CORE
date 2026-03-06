@@ -570,8 +570,9 @@ export default function StudentUsersPage() {
                         type="text"
                         value={editFormData.firstName || ''}
                         onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
                         required
+                        disabled
                       />
                     </div>
                     <div>
@@ -580,7 +581,8 @@ export default function StudentUsersPage() {
                         type="text"
                         value={editFormData.middleName || ''}
                         onChange={(e) => setEditFormData({ ...editFormData, middleName: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                        disabled
                       />
                     </div>
                     <div>
@@ -589,8 +591,9 @@ export default function StudentUsersPage() {
                         type="text"
                         value={editFormData.lastName || ''}
                         onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
                         required
+                        disabled
                       />
                     </div>
                     <div>
@@ -656,7 +659,8 @@ export default function StudentUsersPage() {
                             type="text"
                             value={editLeadData.name || ''}
                             onChange={(e) => setEditLeadData({ ...editLeadData, name: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           />
                         </div>
                         <div>
@@ -665,7 +669,8 @@ export default function StudentUsersPage() {
                             type="email"
                             value={editLeadData.email || ''}
                             onChange={(e) => setEditLeadData({ ...editLeadData, email: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           />
                         </div>
                         <div>
@@ -674,7 +679,8 @@ export default function StudentUsersPage() {
                             type="tel"
                             value={editLeadData.mobileNumber || ''}
                             onChange={(e) => setEditLeadData({ ...editLeadData, mobileNumber: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           />
                         </div>
                         <div>
@@ -683,7 +689,8 @@ export default function StudentUsersPage() {
                             type="text"
                             value={editLeadData.city || ''}
                             onChange={(e) => setEditLeadData({ ...editLeadData, city: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           />
                         </div>
                         <div>
@@ -691,7 +698,8 @@ export default function StudentUsersPage() {
                           <select
                             value={editLeadData.stage || ''}
                             onChange={(e) => setEditLeadData({ ...editLeadData, stage: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           >
                             <option value="">Select</option>
                             <option value="New">New</option>
@@ -708,7 +716,8 @@ export default function StudentUsersPage() {
                             type="text"
                             value={editLeadData.source || ''}
                             onChange={(e) => setEditLeadData({ ...editLeadData, source: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           />
                         </div>
                         <div>
@@ -733,19 +742,13 @@ export default function StudentUsersPage() {
                           <label className="block text-sm font-semibold text-gray-700 mb-1">Service Types</label>
                           <div className="flex flex-wrap gap-2">
                             {['Education Planning', 'Career Focus Study Abroad', 'Ivy League Admission', 'IELTS/GRE/Language Coaching'].map((st) => (
-                              <label key={st} className="flex items-center gap-1.5 text-xs bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100">
+                              <label key={st} className="flex items-center gap-1.5 text-xs bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200 opacity-60 cursor-not-allowed">
                                 <input
                                   type="checkbox"
                                   checked={editLeadData.serviceTypes?.includes(st) || false}
-                                  onChange={(e) => {
-                                    const current = editLeadData.serviceTypes || [];
-                                    if (e.target.checked) {
-                                      setEditLeadData({ ...editLeadData, serviceTypes: [...current, st] });
-                                    } else {
-                                      setEditLeadData({ ...editLeadData, serviceTypes: current.filter((s: string) => s !== st) });
-                                    }
-                                  }}
+                                  onChange={() => {}}
                                   className="rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                                  disabled
                                 />
                                 {st}
                               </label>

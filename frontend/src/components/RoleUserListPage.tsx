@@ -965,8 +965,9 @@ export default function RoleUserListPage({
                         type="text"
                         value={editFormData.firstName || ''}
                         onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
                         required
+                        disabled
                       />
                     </div>
                     <div>
@@ -977,7 +978,8 @@ export default function RoleUserListPage({
                         type="text"
                         value={editFormData.middleName || ''}
                         onChange={(e) => setEditFormData({ ...editFormData, middleName: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                        disabled
                       />
                     </div>
                     <div>
@@ -988,8 +990,9 @@ export default function RoleUserListPage({
                         type="text"
                         value={editFormData.lastName || ''}
                         onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
                         required
+                        disabled
                       />
                     </div>
                     <div>
@@ -1036,8 +1039,9 @@ export default function RoleUserListPage({
                             type="text"
                             value={editFormData.companyName || ''}
                             onChange={(e) => setEditFormData({ ...editFormData, companyName: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
                             required
+                            disabled
                           />
                         </div>
                         <div>
@@ -1048,7 +1052,8 @@ export default function RoleUserListPage({
                             type="text"
                             value={editFormData.enquiryFormSlug || ''}
                             onChange={(e) => setEditFormData({ ...editFormData, enquiryFormSlug: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           />
                         </div>
                         <div className="sm:col-span-2">
@@ -1077,7 +1082,8 @@ export default function RoleUserListPage({
                             type="text"
                             value={editFormData.companyName || ''}
                             onChange={(e) => setEditFormData({ ...editFormData, companyName: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           />
                         </div>
                         <div>
@@ -1085,7 +1091,8 @@ export default function RoleUserListPage({
                           <select
                             value={editFormData.businessType || ''}
                             onChange={(e) => setEditFormData({ ...editFormData, businessType: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           >
                             <option value="">Select</option>
                             <option value="Individual">Individual</option>
@@ -1104,7 +1111,8 @@ export default function RoleUserListPage({
                             type="text"
                             value={editFormData.registrationNumber || ''}
                             onChange={(e) => setEditFormData({ ...editFormData, registrationNumber: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           />
                         </div>
                         <div>
@@ -1113,7 +1121,8 @@ export default function RoleUserListPage({
                             type="text"
                             value={editFormData.gstNumber || ''}
                             onChange={(e) => setEditFormData({ ...editFormData, gstNumber: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           />
                         </div>
                         <div className="sm:col-span-2">
@@ -1131,7 +1140,8 @@ export default function RoleUserListPage({
                             type="text"
                             value={editFormData.city || ''}
                             onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           />
                         </div>
                         <div>
@@ -1140,7 +1150,8 @@ export default function RoleUserListPage({
                             type="text"
                             value={editFormData.state || ''}
                             onChange={(e) => setEditFormData({ ...editFormData, state: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           />
                         </div>
                         <div>
@@ -1149,7 +1160,8 @@ export default function RoleUserListPage({
                             type="text"
                             value={editFormData.country || ''}
                             onChange={(e) => setEditFormData({ ...editFormData, country: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           />
                         </div>
                         <div>
@@ -1158,7 +1170,8 @@ export default function RoleUserListPage({
                             type="text"
                             value={editFormData.pincode || ''}
                             onChange={(e) => setEditFormData({ ...editFormData, pincode: e.target.value })}
-                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            disabled
                           />
                         </div>
                         <div>
