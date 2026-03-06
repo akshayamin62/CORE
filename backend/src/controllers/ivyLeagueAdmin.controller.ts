@@ -103,7 +103,10 @@ export const getIvyCandidates = async (req: AuthRequest, res: Response): Promise
           const IvyExpert = require('../models/IvyExpert').default;
           const expert = await IvyExpert.findById(reg.assignedIvyExpertId).lean();
           if (expert) {
-            assignedExpertName = [expert.firstName, expert.middleName, expert.lastName].filter(Boolean).join(' ');
+            const expertUser = await User.findById((expert as any).userId).select('firstName middleName lastName').lean();
+            if (expertUser) {
+              assignedExpertName = [(expertUser as any).firstName, (expertUser as any).middleName, (expertUser as any).lastName].filter(Boolean).join(' ');
+            }
           }
         }
 
