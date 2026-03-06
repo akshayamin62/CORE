@@ -2,8 +2,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy â€“ CORE by ADMITra',
-  description: 'Cookie Policy for CORE â€“ Student Application and Admission Management System by ADMITra.',
+  title: 'Cookie Policy – CORE by ADMITra',
+  description: 'Cookie Policy for CORE – Student Application and Admission Management System by ADMITra.',
 };
 
 export default function CookiePolicyPage() {
@@ -18,10 +18,10 @@ export default function CookiePolicyPage() {
             <span>Cookie Policy</span>
           </div>
           <h1 className="text-4xl font-bold mb-3">Cookie Policy</h1>
-          <p className="text-amber-200 text-lg">CORE â€“ Student Application and Admission Management System</p>
+          <p className="text-amber-200 text-lg">CORE – Student Application and Admission Management System</p>
           <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-400">
             <span>Effective Date: 01 January 2026</span>
-            <span>â€¢</span>
+            <span>•</span>
             <span>Website: https://core.admitra.io</span>
           </div>
         </div>
@@ -53,7 +53,7 @@ export default function CookiePolicyPage() {
               Introduction
             </h2>
             <p>
-              This Cookie Policy explains how CORE â€“ Student Application and Admission Management System ("CORE", "Platform") uses cookies and similar technologies when you visit{' '}
+              This Cookie Policy explains how CORE – Student Application and Admission Management System ("CORE", "Platform") uses cookies and similar technologies when you visit{' '}
               <a href="https://core.admitra.io" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">https://core.admitra.io</a>.
             </p>
             <p className="mt-3">
@@ -297,7 +297,7 @@ export default function CookiePolicyPage() {
         </div>
 
         {/* Related links */}
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link href="/privacy-policy" className="flex items-center justify-between bg-white border border-gray-200 rounded-xl p-5 hover:border-amber-300 hover:shadow-sm transition-all group">
             <div>
               <p className="text-xs text-gray-500 mb-1">Legal</p>
@@ -310,7 +310,7 @@ export default function CookiePolicyPage() {
               <p className="font-semibold text-gray-900 group-hover:text-amber-700 transition-colors">Terms of Service â†’</p>
             </div>
           </Link>
-        </div>
+        </div> */}
       </div>
     </div>
   );

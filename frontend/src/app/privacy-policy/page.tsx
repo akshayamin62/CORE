@@ -2,8 +2,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy â€“ CORE by ADMITra',
-  description: 'Privacy Policy for CORE â€“ Student Application and Admission Management System by ADMITra.',
+  title: 'Privacy Policy – CORE by ADMITra',
+  description: 'Privacy Policy for CORE – Student Application and Admission Management System by ADMITra.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -18,10 +18,10 @@ export default function PrivacyPolicyPage() {
             <span>Privacy Policy</span>
           </div>
           <h1 className="text-4xl font-bold mb-3">Privacy Policy</h1>
-          <p className="text-blue-200 text-lg">CORE â€“ Student Application and Admission Management System</p>
+          <p className="text-blue-200 text-lg">CORE – Student Application and Admission Management System</p>
           <div className="flex flex-wrap gap-4 mt-4 text-sm text-gray-400">
             <span>Effective Date: 01 January 2026</span>
-            <span>â€¢</span>
+            <span>•</span>
             <span>Operated by ADMITra</span>
           </div>
         </div>
@@ -55,7 +55,7 @@ export default function PrivacyPolicyPage() {
               Introduction
             </h2>
             <p>
-              CORE â€“ Student Application and Admission Management System ("CORE", "Platform", "System") is a centralized digital ecosystem developed and managed by ADMITra for structured education planning, study abroad consulting, IVY league application consulting, IELTS / GRE / Language Coaching and admission management.
+              CORE – Student Application and Admission Management System ("CORE", "Platform", "System") is a centralized digital ecosystem developed and managed by ADMITra for structured education planning, study abroad consulting, IVY league application consulting, IELTS / GRE / Language Coaching and admission management.
             </p>
             <p className="mt-3">
               This Privacy Policy explains how CORE collects, uses, stores, protects, and processes personal data of students, parents, schools, counselors, alumni, and service providers who access or use the platform available at{' '}
@@ -388,7 +388,7 @@ export default function PrivacyPolicyPage() {
         </div>
 
         {/* Related links */}
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link href="/terms-of-service" className="flex items-center justify-between bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-sm transition-all group">
             <div>
               <p className="text-xs text-gray-500 mb-1">Legal</p>
@@ -401,7 +401,7 @@ export default function PrivacyPolicyPage() {
               <p className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">Cookie Policy â†’</p>
             </div>
           </Link>
-        </div>
+        </div> */}
       </div>
     </div>
   );
