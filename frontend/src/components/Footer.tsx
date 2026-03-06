@@ -60,13 +60,13 @@ export default function Footer() {
             <h3 className="text-white font-semibold mb-4 text-lg">Services</h3>
             <ul className="space-y-3">
               <li>
-                <a href="https://www.kareerstudio.com/education-n-career-planning.html" className="group flex items-center hover:text-white transition-all duration-300 hover:translate-x-1">
+                <a href="https://www.kareerrstudio.com/education-n-career-planning.html" className="group flex items-center hover:text-white transition-all duration-300 hover:translate-x-1">
                   <span className="w-0 h-0.5 bg-purple-500 group-hover:w-4 transition-all duration-300 mr-0 group-hover:mr-2"></span>
                   Education Planning
                 </a>
               </li>
               <li>
-                <a href="https://www.kareerstudio.com/study-abroad.html" className="group flex items-center hover:text-white transition-all duration-300 hover:translate-x-1">
+                <a href="https://www.kareerrstudio.com/study-abroad.html" className="group flex items-center hover:text-white transition-all duration-300 hover:translate-x-1">
                   <span className="w-0 h-0.5 bg-purple-500 group-hover:w-4 transition-all duration-300 mr-0 group-hover:mr-2"></span>
                   Study Abroad
                 </a>
@@ -78,13 +78,13 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="https://www.kareerstudio.com/ielts.html" className="group flex items-center hover:text-white transition-all duration-300 hover:translate-x-1">
+                <a href="https://www.kareerrstudio.com/ielts.html" className="group flex items-center hover:text-white transition-all duration-300 hover:translate-x-1">
                   <span className="w-0 h-0.5 bg-purple-500 group-hover:w-4 transition-all duration-300 mr-0 group-hover:mr-2"></span>
                   IELTS Coaching
                 </a>
               </li>
               <li>
-                <a href="https://www.kareerstudio.com/gre.html" className="group flex items-center hover:text-white transition-all duration-300 hover:translate-x-1">
+                <a href="https://www.kareerrstudio.com/gre.html" className="group flex items-center hover:text-white transition-all duration-300 hover:translate-x-1">
                   <span className="w-0 h-0.5 bg-purple-500 group-hover:w-4 transition-all duration-300 mr-0 group-hover:mr-2"></span>
                   GRE Coaching
                 </a>
@@ -122,15 +122,15 @@ export default function Footer() {
               <span className="text-gray-500">for the community</span>
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="/Privacy Policy.docx" download className="text-gray-400 hover:text-white text-sm transition-all duration-300 hover:underline hover:underline-offset-4">
+              <Link href="/privacy-policy" className="text-gray-400 hover:text-white text-sm transition-all duration-300 hover:underline hover:underline-offset-4">
                 Privacy Policy
-              </a>
-              <a href="/Terms of Service.docx" download className="text-gray-400 hover:text-white text-sm transition-all duration-300 hover:underline hover:underline-offset-4">
+              </Link>
+              <Link href="/terms-of-service" className="text-gray-400 hover:text-white text-sm transition-all duration-300 hover:underline hover:underline-offset-4">
                 Terms of Service
-              </a>
-              <a href="/Cookie Policy.docx" download className="text-gray-400 hover:text-white text-sm transition-all duration-300 hover:underline hover:underline-offset-4">
+              </Link>
+              <Link href="/cookie-policy" className="text-gray-400 hover:text-white text-sm transition-all duration-300 hover:underline hover:underline-offset-4">
                 Cookie Policy
-              </a>
+              </Link>
             </div>
           </div>
         </div>
