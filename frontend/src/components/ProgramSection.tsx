@@ -45,6 +45,7 @@ interface Program {
     usNews?: number;
     qs?: number;
   };
+  universityStatus?: string;
   programName: string;
   programUrl?: string;
   campus?: string;
@@ -550,9 +551,9 @@ export default function ProgramSection({
                             </div>
                           )}
                         </div>
-                        {program.universityRanking && (Object.keys(program.universityRanking).some(key => program.universityRanking[key as keyof typeof program.universityRanking])) && (
+                        {(program.universityRanking && (Object.keys(program.universityRanking).some(key => program.universityRanking[key as keyof typeof program.universityRanking])) || program.universityStatus) && (
                           <div className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-600">
-                            <div className="flex flex-wrap gap-4">
+                            <div className="flex flex-wrap gap-4 items-center">
                               {program.universityRanking.webometricsWorld && (
                                 <span>Webometrics World: {program.universityRanking.webometricsWorld}</span>
                               )}
@@ -564,6 +565,11 @@ export default function ProgramSection({
                               )}
                               {program.universityRanking.qs && (
                                 <span>QS: {program.universityRanking.qs}</span>
+                              )}
+                              {program.universityStatus && (
+                                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                  {program.universityStatus} University
+                                </span>
                               )}
                             </div>
                           </div>

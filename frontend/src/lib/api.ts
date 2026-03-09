@@ -349,6 +349,15 @@ export const programAPI = {
       },
     });
   },
+  uploadQsRankingExcel: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post('/programs/super-admin/upload-qs-ranking', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };
 
 // Admin API (for ADMIN role)

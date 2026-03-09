@@ -15,6 +15,7 @@ import {
   updateProgramStatus,
   getStudentAppliedPrograms,
   getSuperAdminStudentPrograms,
+  uploadQsRankingExcel,
 } from '../controllers/programController';
 
 // Configure multer for file uploads
@@ -63,6 +64,9 @@ router.post('/super-admin/programs/create', authorize([USER_ROLE.SUPER_ADMIN]), 
 router.post('/super-admin/programs/upload-excel', authorize([USER_ROLE.SUPER_ADMIN]), upload.single('file'), uploadProgramsFromExcel);
 router.put('/super-admin/programs/:programId/selection', authorize([USER_ROLE.SUPER_ADMIN]), updateProgramSelection);
 router.put('/super-admin/programs/:programId/status', authorize([USER_ROLE.SUPER_ADMIN]), updateProgramStatus);
+
+// Super Admin - QS ranking upload
+router.post('/super-admin/upload-qs-ranking', authorize([USER_ROLE.SUPER_ADMIN]), upload.single('file'), uploadQsRankingExcel);
 
 export default router;
 
