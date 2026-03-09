@@ -487,6 +487,15 @@ export default function AdminStudentFormViewPage() {
               { title: 'Application Closed', value: programStats.closed, color: 'gray' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg> },
             ];
             const totalPrograms = programStats.suggested + programStats.selected;
+            const navigateToApplicationSection = (sectionTitle: 'Apply to Program' | 'Applied Program') => {
+              const appPartIndex = formStructure.findIndex((p: any) => p.part?.key === 'APPLICATION');
+              if (appPartIndex < 0) return;
+              const sections = formStructure[appPartIndex].sections || [];
+              const sectionIdx = sections.findIndex((s: any) => s.title === sectionTitle);
+              setCurrentPartIndex(appPartIndex);
+              setCurrentSectionIndex(sectionIdx >= 0 ? sectionIdx : 0);
+              setActiveView('form');
+            };
             return (
               <div className="mb-6 space-y-8">
                 {/* Application Stats */}
@@ -500,8 +509,13 @@ export default function AdminStudentFormViewPage() {
                         red: 'bg-red-100 text-red-600', gray: 'bg-gray-200 text-gray-600',
                       };
                       const pct = totalPrograms > 0 ? (card.value / totalPrograms) * 100 : 0;
+                      const targetSection = card.title === 'Suggested Program' ? 'Apply to Program' : 'Applied Program';
                       return (
-                        <div key={card.title} className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all">
+                        <div
+                          key={card.title}
+                          onClick={() => navigateToApplicationSection(targetSection)}
+                          className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all cursor-pointer hover:border-blue-400 hover:shadow-md"
+                        >
                           <div className="flex items-center justify-between">
                             <div className={`w-10 h-10 ${colorMap[card.color]} rounded-lg flex items-center justify-center`}>
                               {card.icon}

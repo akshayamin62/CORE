@@ -135,6 +135,16 @@ export default function ProgramSection({
     fetchPrograms();
   }, [userRole, sectionType, studentId, registrationId]);
 
+  const sortAvailablePrograms = (progs: any[]) => {
+    const priority = (university: string) => {
+      const cls = classifyUniversity(university);
+      if (cls === 'ivy-league') return 0;
+      if (cls === 'russell-group') return 1;
+      return 2;
+    };
+    return [...progs].sort((a, b) => priority(a.university) - priority(b.university));
+  };
+
   const fetchPrograms = async () => {
     try {
       setLoading(true);
@@ -145,7 +155,7 @@ export default function ProgramSection({
       if (userRole === 'STUDENT') {
         response = await programAPI.getStudentPrograms(registrationId);
         if (sectionType === 'available') {
-          setPrograms(response.data.data.availablePrograms || []);
+          setPrograms(sortAvailablePrograms(response.data.data.availablePrograms || []));
         } else {
           setPrograms(response.data.data.appliedPrograms || []);
         }
@@ -154,16 +164,19 @@ export default function ProgramSection({
           `${API_URL}/programs/ops/student/${studentId}/programs?section=${sectionType === 'applied' ? 'applied' : 'all'}${regParam}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setPrograms(response.data.data.programs || []);
+        const progs = response.data.data.programs || [];
+        setPrograms(sectionType === 'available' ? sortAvailablePrograms(progs) : progs);
       } else if (userRole === 'SUPER_ADMIN' && studentId) {
         response = await programAPI.getSuperAdminStudentPrograms(studentId, sectionType === 'applied' ? 'applied' : 'all', registrationId);
-        setPrograms(response.data.data.programs || []);
+        const progs = response.data.data.programs || [];
+        setPrograms(sectionType === 'available' ? sortAvailablePrograms(progs) : progs);
       } else if ((userRole === 'ADMIN' || userRole === 'COUNSELOR') && studentId) {
         response = await axios.get(
           `${API_URL}/programs/ops/student/${studentId}/programs?section=${sectionType === 'applied' ? 'applied' : 'all'}${regParam}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setPrograms(response.data.data.programs || []);
+        const progs = response.data.data.programs || [];
+        setPrograms(sectionType === 'available' ? sortAvailablePrograms(progs) : progs);
       }
     } catch (error: any) {
       console.error('Failed to fetch programs:', error);

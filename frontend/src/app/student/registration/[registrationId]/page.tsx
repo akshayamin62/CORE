@@ -732,6 +732,17 @@ function MyDetailsContent() {
   /* ─── Study Abroad Dashboard Renderer ─── */
   const renderStudentDashboard = () => {
     const totalPrograms = programStats.suggested + programStats.selected;
+
+    const navigateToApplicationSection = (sectionTitle: 'Apply to Program' | 'Applied Program') => {
+      const appPartIndex = formStructure.findIndex((p: any) => p.part?.key === 'APPLICATION');
+      if (appPartIndex < 0) return;
+      const sortedSections = [...(formStructure[appPartIndex].sections || [])].sort((a: any, b: any) => a.order - b.order);
+      const sectionIdx = sortedSections.findIndex((s: any) => s.title === sectionTitle);
+      setSelectedPartIndex(appPartIndex);
+      setSelectedSectionIndex(sectionIdx >= 0 ? sectionIdx : 0);
+      setActiveView('form');
+    };
+
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         {/* Application Stats */}
@@ -748,8 +759,13 @@ function MyDetailsContent() {
                 gray: 'bg-gray-200 text-gray-600',
               };
               const pct = totalPrograms > 0 ? (card.value / totalPrograms) * 100 : 0;
+              const targetSection = card.title === 'Suggested Program' ? 'Apply to Program' : 'Applied Program';
               return (
-                <div key={card.title} className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all">
+                <div
+                  key={card.title}
+                  onClick={() => navigateToApplicationSection(targetSection)}
+                  className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all cursor-pointer hover:border-blue-400 hover:shadow-md"
+                >
                   <div className="flex items-center justify-between">
                     <div className={`w-10 h-10 ${colorMap[card.color]} rounded-lg flex items-center justify-center`}>
                       {card.icon}
