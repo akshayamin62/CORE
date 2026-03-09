@@ -1036,9 +1036,10 @@ export const uploadQsRankingExcel = async (req: AuthRequest & { file?: Express.M
     }
 
     // Save the file to backend/data/
+    // Use process.cwd() so path works in both dev and production (compiled dist/)
     const fs = await import('fs');
     const path = await import('path');
-    const filePath = path.join(__dirname, '..', '..', 'data', 'qs-world-university-ranking.xlsx');
+    const filePath = path.join(process.cwd(), 'data', 'qs-world-university-ranking.xlsx');
 
     // Ensure data directory exists
     const dataDir = path.dirname(filePath);

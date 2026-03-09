@@ -10,7 +10,9 @@ interface QsData {
 // Cached map: normalized university name → QS data (rank + status)
 let qsRankingMap: Map<string, QsData> | null = null;
 
-const QS_FILE_PATH = path.join(__dirname, '..', '..', 'data', 'qs-world-university-ranking.xlsx');
+// Use process.cwd() so the path works in both development (ts-node) and production (compiled dist/)
+// process.cwd() always points to the backend root directory when the server starts
+const QS_FILE_PATH = path.join(process.cwd(), 'data', 'qs-world-university-ranking.xlsx');
 
 /**
  * Normalize a university name for fuzzy matching:
