@@ -357,7 +357,7 @@ export interface SPEnquiryItem {
   studentEmail: string;
   studentMobile?: string;
   message: string;
-  status: 'New' | 'Contacted' | 'Closed';
+  status: 'New' | 'Contacted' | 'Closed' | 'Converted';
   createdAt?: string;
   updatedAt?: string;
 }

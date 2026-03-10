@@ -77,12 +77,14 @@ export default function SPStudentsPage() {
   const statusColors: Record<string, string> = {
     New: 'bg-blue-100 text-blue-800',
     Contacted: 'bg-yellow-100 text-yellow-800',
-    Closed: 'bg-green-100 text-green-800',
+    Closed: 'bg-gray-100 text-gray-600',
+    Converted: 'bg-green-100 text-green-800',
   };
 
   const newCount = enquiries.filter(e => e.status === 'New').length;
   const contactedCount = enquiries.filter(e => e.status === 'Contacted').length;
   const closedCount = enquiries.filter(e => e.status === 'Closed').length;
+  const convertedCount = enquiries.filter(e => e.status === 'Converted').length;
 
   return (
     <ServiceProviderLayout user={user}>
@@ -95,12 +97,13 @@ export default function SPStudentsPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
           {[
             { label: 'Total Enquiries', count: enquiries.length, filter: 'All', activeColor: 'border-blue-500 bg-blue-50', iconBg: 'bg-blue-100 text-blue-600', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /> },
             { label: 'New', count: newCount, filter: 'New', activeColor: 'border-blue-500 bg-blue-50', iconBg: 'bg-blue-100 text-blue-600', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /> },
             { label: 'Contacted', count: contactedCount, filter: 'Contacted', activeColor: 'border-yellow-500 bg-yellow-50', iconBg: 'bg-yellow-100 text-yellow-600', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /> },
-            { label: 'Closed', count: closedCount, filter: 'Closed', activeColor: 'border-green-500 bg-green-50', iconBg: 'bg-green-100 text-green-600', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /> },
+            { label: 'Converted', count: convertedCount, filter: 'Converted', activeColor: 'border-green-500 bg-green-50', iconBg: 'bg-green-100 text-green-600', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /> },
+            { label: 'Closed', count: closedCount, filter: 'Closed', activeColor: 'border-gray-500 bg-gray-50', iconBg: 'bg-gray-100 text-gray-600', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> },
           ].map((stat) => (
             <button
               key={stat.filter}
@@ -146,6 +149,7 @@ export default function SPStudentsPage() {
               <option value="New">New</option>
               <option value="Contacted">Contacted</option>
               <option value="Closed">Closed</option>
+              <option value="Converted">Converted</option>
             </select>
             {(statusFilter !== 'All' || searchQuery) && (
               <button
@@ -216,6 +220,7 @@ export default function SPStudentsPage() {
                           <option value="New">New</option>
                           <option value="Contacted">Contacted</option>
                           <option value="Closed">Closed</option>
+                          <option value="Converted">Converted</option>
                         </select>
                       </td>
                     </tr>

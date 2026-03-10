@@ -134,13 +134,16 @@ export default function ServiceProviderDashboard() {
       <Toaster position="top-right" />
       <div className="p-6 lg:p-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Welcome back, {getFullName(user)}
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Here&apos;s an overview of your service provider account
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Welcome back, {getFullName(user)}
+            </h1>
+            <p className="text-gray-500 mt-1">
+              Here&apos;s an overview of your service provider account
+            </p>
+          </div>
+          {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="text-right"><p className="text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></div>); })()}
         </div>
 
         {/* Stats Grid */}

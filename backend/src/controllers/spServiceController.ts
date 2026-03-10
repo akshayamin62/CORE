@@ -137,7 +137,7 @@ export const updateSPEnquiryStatus = async (req: AuthRequest, res: Response): Pr
     const { enquiryId } = req.params;
     const { status } = req.body;
 
-    if (!['New', 'Contacted', 'Closed'].includes(status)) {
+    if (!['New', 'Contacted', 'Closed', 'Converted'].includes(status)) {
       res.status(400).json({ success: false, message: 'Invalid status' });
       return;
     }

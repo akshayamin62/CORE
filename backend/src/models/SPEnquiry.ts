@@ -8,7 +8,7 @@ export interface ISPEnquiry extends Document {
   studentEmail: string;
   studentMobile?: string;
   message: string;
-  status: 'New' | 'Contacted' | 'Closed';
+  status: 'New' | 'Contacted' | 'Closed' | 'Converted';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -50,7 +50,7 @@ const SPEnquirySchema = new Schema<ISPEnquiry>(
     },
     status: {
       type: String,
-      enum: ['New', 'Contacted', 'Closed'],
+      enum: ['New', 'Contacted', 'Closed', 'Converted'],
       default: 'New',
     },
   },

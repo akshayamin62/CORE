@@ -132,9 +132,12 @@ export default function EduplanCoachDashboardPage() {
       <EduplanCoachLayout user={user}>
         <div className="p-8">
           {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">{getFullName(user)}</h1>
-            <p className="text-gray-600 mt-1">Welcome to Eduplan Coach Panel</p>
+          <div className="mb-8 flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{getFullName(user)}</h1>
+              <p className="text-gray-600 mt-1">Welcome to Eduplan Coach Panel</p>
+            </div>
+            {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="text-right"><p className="text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></div>); })()}
           </div>
 
           {/* Stats Cards */}

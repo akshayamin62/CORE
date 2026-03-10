@@ -12,7 +12,8 @@ const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/a
 const statusColors: Record<string, { bg: string; text: string }> = {
   New: { bg: 'bg-blue-100', text: 'text-blue-700' },
   Contacted: { bg: 'bg-yellow-100', text: 'text-yellow-700' },
-  Closed: { bg: 'bg-green-100', text: 'text-green-700' },
+  Closed: { bg: 'bg-gray-100', text: 'text-gray-600' },
+  Converted: { bg: 'bg-green-100', text: 'text-green-700' },
 };
 
 export default function StudentServiceProvidersPage() {
