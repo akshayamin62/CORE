@@ -23,6 +23,7 @@ import teamMeetRoutes from "./routes/teamMeetRoutes";
 import opsScheduleRoutes from "./routes/opsScheduleRoutes";
 import leadStudentConversionRoutes from "./routes/leadStudentConversionRoutes";
 import spDocumentRoutes from "./routes/spDocumentRoutes";
+import spServiceRoutes from "./routes/spServiceRoutes";
 import brainographyRoutes from "./routes/brainographyRoutes";
 import portfolioRoutes from "./routes/portfolioRoutes";
 import activityRoutes from "./routes/activityRoutes";
@@ -76,6 +77,8 @@ import "./models/TeamMeet";
 import "./models/OpsSchedule";
 import "./models/LeadStudentConversion";
 import "./models/ServiceProviderDocument";
+import "./models/SPService";
+import "./models/SPEnquiry";
 import "./models/BrainographyData";
 import "./models/Portfolio";
 import "./models/MonthlyFocus";
@@ -143,6 +146,7 @@ app.use("/api/team-meets", teamMeetRoutes); // TeamMeet routes
 app.use("/api/ops-schedules", opsScheduleRoutes); // OPS Schedule routes
 app.use("/api/lead-conversions", leadStudentConversionRoutes); // Lead to Student conversion routes
 app.use("/api/sp-documents", spDocumentRoutes); // Service Provider document routes
+app.use("/api/sp-services", spServiceRoutes); // Service Provider services & enquiry routes
 app.use("/api/brainography", brainographyRoutes); // Brainography report routes
 app.use("/api/portfolio", portfolioRoutes); // Portfolio generation routes
 app.use("/api/activity", activityRoutes); // Activity management routes

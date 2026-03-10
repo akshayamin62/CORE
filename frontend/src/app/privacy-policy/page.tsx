@@ -392,13 +392,13 @@ export default function PrivacyPolicyPage() {
           <Link href="/terms-of-service" className="flex items-center justify-between bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-sm transition-all group">
             <div>
               <p className="text-xs text-gray-500 mb-1">Legal</p>
-              <p className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">Terms of Service â†’</p>
+              <p className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">Terms of Service →</p>
             </div>
           </Link>
           <Link href="/cookie-policy" className="flex items-center justify-between bg-white border border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-sm transition-all group">
             <div>
               <p className="text-xs text-gray-500 mb-1">Legal</p>
-              <p className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">Cookie Policy â†’</p>
+              <p className="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">Cookie Policy →</p>
             </div>
           </Link>
         </div> */}

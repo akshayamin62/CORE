@@ -2156,12 +2156,19 @@ export const editUserByRole = async (req: Request, res: Response): Promise<Respo
       if (body.businessType !== undefined) spUpdate.businessType = body.businessType;
       if (body.registrationNumber !== undefined) spUpdate.registrationNumber = body.registrationNumber.trim();
       if (body.gstNumber !== undefined) spUpdate.gstNumber = body.gstNumber.trim();
+      if (body.businessPan !== undefined) spUpdate.businessPan = body.businessPan.trim().toUpperCase();
       if (body.address !== undefined) spUpdate.address = body.address.trim();
       if (body.city !== undefined) spUpdate.city = body.city.trim();
       if (body.state !== undefined) spUpdate.state = body.state.trim();
       if (body.country !== undefined) spUpdate.country = body.country.trim();
       if (body.pincode !== undefined) spUpdate.pincode = body.pincode.trim();
       if (body.website !== undefined) spUpdate.website = body.website.trim();
+      if (body.bankName !== undefined) spUpdate.bankName = body.bankName.trim();
+      if (body.bankAccountNumber !== undefined) spUpdate.bankAccountNumber = body.bankAccountNumber.trim();
+      if (body.bankIfscCode !== undefined) spUpdate.bankIfscCode = body.bankIfscCode.trim().toUpperCase();
+      if (body.bankAccountType !== undefined) spUpdate.bankAccountType = body.bankAccountType;
+      if (body.bankSwiftCode !== undefined) spUpdate.bankSwiftCode = body.bankSwiftCode.trim().toUpperCase();
+      if (body.bankUpiId !== undefined) spUpdate.bankUpiId = body.bankUpiId.trim();
       if (Object.keys(spUpdate).length > 0) {
         await ServiceProvider.findOneAndUpdate({ userId }, spUpdate, { new: true, runValidators: false });
       }

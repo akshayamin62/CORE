@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import ComingSoon from '@/components/ComingSoon';
+import StudentLayout from '@/components/StudentLayout';
 
 export default function StudentAlumniPage() {
   const router = useRouter();
@@ -29,8 +30,19 @@ export default function StudentAlumniPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <ComingSoon title="Alumni" />
-    </div>
+    <StudentLayout
+      formStructure={[]}
+      currentPartIndex={0}
+      currentSectionIndex={0}
+      onPartChange={() => {}}
+      onSectionChange={() => {}}
+      isOuterNav={true}
+      serviceName="Study Abroad"
+      user={user}
+    >
+      <div className="p-8">
+        <ComingSoon title="Alumni" />
+      </div>
+    </StudentLayout>
   );
 }

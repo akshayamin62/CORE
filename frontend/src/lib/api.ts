@@ -56,6 +56,7 @@ export const authAPI = {
     businessType?: string;
     registrationNumber?: string;
     gstNumber?: string;
+    businessPan?: string;
     address?: string;
     city?: string;
     state?: string;
@@ -75,6 +76,9 @@ export const authAPI = {
   
   getProfile: () =>
     api.get('/auth/profile'),
+
+  updateSPProfile: (data: Record<string, string>) =>
+    api.put('/auth/sp-profile', data),
 };
 
 export const superAdminAPI = {
@@ -745,6 +749,22 @@ export const activityAPI = {
     api.put(`/activity/${registrationId}/feedback`, data),
   deleteFeedback: (registrationId: string, feedbackId: string) =>
     api.delete(`/activity/${registrationId}/feedback/${feedbackId}`),
+};
+
+// SP Service & Enquiry API
+export const spServiceAPI = {
+  // SP-facing
+  createService: (data: any) => api.post('/sp-services/my-services', data),
+  getMyServices: () => api.get('/sp-services/my-services'),
+  updateService: (serviceId: string, data: any) => api.put(`/sp-services/my-services/${serviceId}`, data),
+  deleteService: (serviceId: string) => api.delete(`/sp-services/my-services/${serviceId}`),
+  getMyEnquiries: () => api.get('/sp-services/my-enquiries'),
+  updateEnquiryStatus: (enquiryId: string, status: string) => api.patch(`/sp-services/my-enquiries/${enquiryId}/status`, { status }),
+
+  // Student-facing
+  browseServices: (params?: { category?: string; search?: string }) => api.get('/sp-services/browse', { params }),
+  sendEnquiry: (data: { spServiceId: string; serviceProviderId: string; message: string }) => api.post('/sp-services/enquiry', data),
+  getStudentEnquiries: () => api.get('/sp-services/student-enquiries'),
 };
 
 export default api;

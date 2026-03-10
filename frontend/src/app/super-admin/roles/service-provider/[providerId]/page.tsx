@@ -22,6 +22,7 @@ interface ServiceProviderDetail {
   businessType?: string;
   registrationNumber?: string;
   gstNumber?: string;
+  businessPan?: string;
   address?: string;
   city?: string;
   state?: string;
@@ -30,6 +31,12 @@ interface ServiceProviderDetail {
   website?: string;
   companyLogo?: string;
   servicesOffered?: string[];
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankIfscCode?: string;
+  bankAccountType?: string;
+  bankSwiftCode?: string;
+  bankUpiId?: string;
   createdAt: string;
 }
 
@@ -265,7 +272,7 @@ export default function ServiceProviderDetailPage() {
             </div>
           </div>
 
-          {/* Company Information */}
+          {/* Company Information (includes address) */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-900">Company Information</h2>
@@ -277,20 +284,27 @@ export default function ServiceProviderDetailPage() {
               <InfoField label="Company Name" value={serviceProvider.companyName || 'N/A'} />
               <InfoField label="Business Type" value={serviceProvider.businessType || 'N/A'} />
               <InfoField label="Registration Number" value={serviceProvider.registrationNumber || 'N/A'} />
-              <InfoField label="GST Number" value={serviceProvider.gstNumber || 'N/A'} />
               <InfoField label="Website" value={serviceProvider.website || 'N/A'} link={serviceProvider.website} />
-            </div>
-          </div>
-
-          {/* Address Information */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Address Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <InfoField label="Address" value={serviceProvider.address || 'N/A'} fullWidth />
+              <InfoField label="Address" value={serviceProvider.address || 'N/A'} />
               <InfoField label="City" value={serviceProvider.city || 'N/A'} />
               <InfoField label="State" value={serviceProvider.state || 'N/A'} />
               <InfoField label="Country" value={serviceProvider.country || 'N/A'} />
               <InfoField label="Pincode" value={serviceProvider.pincode || 'N/A'} />
+            </div>
+          </div>
+
+          {/* Bank & Tax Details */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Bank & Tax Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <InfoField label="GST Number" value={serviceProvider.gstNumber || 'N/A'} />
+              <InfoField label="Business PAN" value={serviceProvider.businessPan || 'N/A'} />
+              <InfoField label="Bank Name" value={serviceProvider.bankName || 'N/A'} />
+              <InfoField label="Account Number" value={serviceProvider.bankAccountNumber || 'N/A'} />
+              <InfoField label="IFSC Code" value={serviceProvider.bankIfscCode || 'N/A'} />
+              <InfoField label="Account Type" value={serviceProvider.bankAccountType || 'N/A'} />
+              <InfoField label="Swift Code" value={serviceProvider.bankSwiftCode || 'N/A'} />
+              <InfoField label="UPI ID" value={serviceProvider.bankUpiId || 'N/A'} />
             </div>
           </div>
 

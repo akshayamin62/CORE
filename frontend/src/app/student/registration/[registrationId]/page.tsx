@@ -318,6 +318,9 @@ function MyDetailsContent() {
       const reg = regResponse.data.data.registration;
       setRegistration(reg);
 
+      // Remember active registration for outer pages (parents, alumni, service-providers)
+      sessionStorage.setItem('activeRegistrationId', registrationId!);
+
       // Fetch form structure
       const serviceId = typeof reg.serviceId === 'object' ? reg.serviceId._id : reg.serviceId;
       const formResponse = await serviceAPI.getServiceForm(serviceId);

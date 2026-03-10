@@ -300,6 +300,7 @@ export interface ServiceProviderProfile {
   businessType?: string;
   registrationNumber?: string;
   gstNumber?: string;
+  businessPan?: string;
   address?: string;
   city?: string;
   state?: string;
@@ -308,6 +309,55 @@ export interface ServiceProviderProfile {
   website?: string;
   companyLogo?: string;
   servicesOffered?: string[];
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankIfscCode?: string;
+  bankAccountType?: string;
+  bankSwiftCode?: string;
+  bankUpiId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SPServiceListing {
+  _id: string;
+  serviceProviderId: string | {
+    _id: string;
+    companyName?: string;
+    companyLogo?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    servicesOffered?: string[];
+    website?: string;
+  };
+  title: string;
+  description: string;
+  category: string;
+  price?: number;
+  priceType: 'Fixed' | 'Starting From' | 'Contact for Price';
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SPEnquiryItem {
+  _id: string;
+  studentId: string;
+  serviceProviderId: string | {
+    _id: string;
+    companyName?: string;
+    companyLogo?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+  };
+  spServiceId: string | { _id: string; title: string; category: string; price?: number; priceType?: string };
+  studentName: string;
+  studentEmail: string;
+  studentMobile?: string;
+  message: string;
+  status: 'New' | 'Contacted' | 'Closed';
   createdAt?: string;
   updatedAt?: string;
 }

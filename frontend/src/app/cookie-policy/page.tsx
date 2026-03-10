@@ -301,13 +301,13 @@ export default function CookiePolicyPage() {
           <Link href="/privacy-policy" className="flex items-center justify-between bg-white border border-gray-200 rounded-xl p-5 hover:border-amber-300 hover:shadow-sm transition-all group">
             <div>
               <p className="text-xs text-gray-500 mb-1">Legal</p>
-              <p className="font-semibold text-gray-900 group-hover:text-amber-700 transition-colors">Privacy Policy â†’</p>
+              <p className="font-semibold text-gray-900 group-hover:text-amber-700 transition-colors">Privacy Policy →</p>
             </div>
           </Link>
           <Link href="/terms-of-service" className="flex items-center justify-between bg-white border border-gray-200 rounded-xl p-5 hover:border-amber-300 hover:shadow-sm transition-all group">
             <div>
               <p className="text-xs text-gray-500 mb-1">Legal</p>
-              <p className="font-semibold text-gray-900 group-hover:text-amber-700 transition-colors">Terms of Service â†’</p>
+              <p className="font-semibold text-gray-900 group-hover:text-amber-700 transition-colors">Terms of Service →</p>
             </div>
           </Link>
         </div> */}
