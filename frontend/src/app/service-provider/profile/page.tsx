@@ -25,6 +25,16 @@ export default function ServiceProviderProfilePage() {
   const [viewBlobUrl, setViewBlobUrl] = useState<string | null>(null);
   const [editingBank, setEditingBank] = useState(false);
   const [savingBank, setSavingBank] = useState(false);
+  const [editingCompany, setEditingCompany] = useState(false);
+  const [savingCompany, setSavingCompany] = useState(false);
+  const [companyForm, setCompanyForm] = useState({
+    website: '',
+    address: '',
+    city: '',
+    state: '',
+    country: '',
+    pincode: '',
+  });
   const [bankForm, setBankForm] = useState({
     bankName: '',
     bankAccountNumber: '',
@@ -54,6 +64,14 @@ export default function ServiceProviderProfilePage() {
       if (response.data.data.serviceProvider) {
         const sp = response.data.data.serviceProvider;
         setSpProfile(sp);
+        setCompanyForm({
+          website: sp.website || '',
+          address: sp.address || '',
+          city: sp.city || '',
+          state: sp.state || '',
+          country: sp.country || '',
+          pincode: sp.pincode || '',
+        });
         setBankForm({
           bankName: sp.bankName || '',
           bankAccountNumber: sp.bankAccountNumber || '',
@@ -132,6 +150,22 @@ export default function ServiceProviderProfilePage() {
       toast.error(error.response?.data?.message || 'Failed to save bank details');
     } finally {
       setSavingBank(false);
+    }
+  };
+
+  const handleSaveCompanyDetails = async () => {
+    setSavingCompany(true);
+    try {
+      const response = await authAPI.updateSPProfile(companyForm);
+      if (response.data.data?.serviceProvider) {
+        setSpProfile(response.data.data.serviceProvider);
+      }
+      toast.success('Company details saved successfully');
+      setEditingCompany(false);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to save company details');
+    } finally {
+      setSavingCompany(false);
     }
   };
 
@@ -230,22 +264,103 @@ export default function ServiceProviderProfilePage() {
             <InfoField label="Email" value={user.email} />
             <InfoField label="Mobile" value={spProfile?.mobileNumber || 'N/A'} />
           </div>
+          {spProfile?.servicesOffered && spProfile.servicesOffered.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Services Offered</label>
+              <div className="flex flex-wrap gap-2">
+                {spProfile.servicesOffered.map((service, index) => (
+                  <span key={index} className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                    {service}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Company Information (includes address) */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-6">Company Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-bold text-gray-900">Company Information</h2>
+            {!editingCompany ? (
+              <button
+                onClick={() => setEditingCompany(true)}
+                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Edit
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setEditingCompany(false);
+                    setCompanyForm({
+                      website: spProfile?.website || '',
+                      address: spProfile?.address || '',
+                      city: spProfile?.city || '',
+                      state: spProfile?.state || '',
+                      country: spProfile?.country || '',
+                      pincode: spProfile?.pincode || '',
+                    });
+                  }}
+                  className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveCompanyDetails}
+                  disabled={savingCompany}
+                  className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
+                  {savingCompany ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            )}
+          </div>
+          {/* Non-editable fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             <InfoField label="Company Name" value={spProfile?.companyName || 'N/A'} />
             <InfoField label="Business Type" value={spProfile?.businessType || 'N/A'} />
             <InfoField label="Registration Number" value={spProfile?.registrationNumber || 'N/A'} />
-            <InfoField label="Website" value={spProfile?.website || 'N/A'} />
-            <InfoField label="Address" value={spProfile?.address || 'N/A'} />
-            <InfoField label="City" value={spProfile?.city || 'N/A'} />
-            <InfoField label="State" value={spProfile?.state || 'N/A'} />
-            <InfoField label="Country" value={spProfile?.country || 'N/A'} />
-            <InfoField label="Pincode" value={spProfile?.pincode || 'N/A'} />
           </div>
+          {/* Editable fields */}
+          {editingCompany ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Website</label>
+                <input type="text" value={companyForm.website} onChange={(e) => setCompanyForm({ ...companyForm, website: e.target.value })} className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900" placeholder="e.g. https://example.com" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Address</label>
+                <input type="text" value={companyForm.address} onChange={(e) => setCompanyForm({ ...companyForm, address: e.target.value })} className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900" placeholder="Enter address" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">City</label>
+                <input type="text" value={companyForm.city} onChange={(e) => setCompanyForm({ ...companyForm, city: e.target.value })} className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900" placeholder="Enter city" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">State</label>
+                <input type="text" value={companyForm.state} onChange={(e) => setCompanyForm({ ...companyForm, state: e.target.value })} className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900" placeholder="Enter state" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Country</label>
+                <input type="text" value={companyForm.country} onChange={(e) => setCompanyForm({ ...companyForm, country: e.target.value })} className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900" placeholder="Enter country" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Pincode</label>
+                <input type="text" value={companyForm.pincode} onChange={(e) => setCompanyForm({ ...companyForm, pincode: e.target.value })} className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900" placeholder="Enter pincode" />
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <InfoField label="Website" value={spProfile?.website || 'N/A'} />
+              <InfoField label="Address" value={spProfile?.address || 'N/A'} />
+              <InfoField label="City" value={spProfile?.city || 'N/A'} />
+              <InfoField label="State" value={spProfile?.state || 'N/A'} />
+              <InfoField label="Country" value={spProfile?.country || 'N/A'} />
+              <InfoField label="Pincode" value={spProfile?.pincode || 'N/A'} />
+            </div>
+          )}
         </div>
 
         {/* Bank & Tax Details */}
@@ -368,20 +483,6 @@ export default function ServiceProviderProfilePage() {
             </div>
           )}
         </div>
-
-        {/* Services Offered */}
-        {spProfile?.servicesOffered && spProfile.servicesOffered.length > 0 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Services Offered</h2>
-            <div className="flex flex-wrap gap-2">
-              {spProfile.servicesOffered.map((service, index) => (
-                <span key={index} className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                  {service}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Documents Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

@@ -44,7 +44,7 @@ export default function ServiceProviderDetailPage() {
   const router = useRouter();
   const params = useParams();
   const providerId = params.providerId as string;
-  
+
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [serviceProvider, setServiceProvider] = useState<ServiceProviderDetail | null>(null);
@@ -86,10 +86,10 @@ export default function ServiceProviderDetailPage() {
     try {
       const response = await superAdminAPI.getServiceProviderDetail(providerId);
       const data = response.data.data;
-      
+
       setUser(data.user);
       setServiceProvider(data.serviceProvider);
-      
+
       // Fetch documents
       if (data.serviceProvider?._id) {
         fetchDocuments(data.serviceProvider._id);
@@ -238,14 +238,12 @@ export default function ServiceProviderDetailPage() {
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                user.isVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-              }`}>
+              <span className={`px-4 py-2 rounded-full text-sm font-semibold ${user.isVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                }`}>
                 {user.isVerified ? 'Verified' : 'Unverified'}
               </span>
-              <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                user.isActive ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
-              }`}>
+              <span className={`px-4 py-2 rounded-full text-sm font-semibold ${user.isActive ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
+                }`}>
                 {user.isActive ? 'Active' : 'Inactive'}
               </span>
               {!user.isVerified && (
@@ -269,6 +267,19 @@ export default function ServiceProviderDetailPage() {
               <InfoField label="Mobile Number" value={serviceProvider.mobileNumber || 'N/A'} />
               <InfoField label="Account Created" value={new Date(user.createdAt || '').toLocaleDateString('en-GB')} />
               <InfoField label="Role" value="Service Provider" />
+
+              {serviceProvider.servicesOffered && serviceProvider.servicesOffered.length > 0 && (
+                <div className=" border-gray-200">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Services Offered</label>
+                  <div className="flex flex-wrap gap-2">
+                    {serviceProvider.servicesOffered.map((service, index) => (
+                      <span key={index} className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                        {service}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -308,22 +319,6 @@ export default function ServiceProviderDetailPage() {
             </div>
           </div>
 
-          {/* Services Offered */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Services Offered</h2>
-            {serviceProvider.servicesOffered && serviceProvider.servicesOffered.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {serviceProvider.servicesOffered.map((service, index) => (
-                  <span key={index} className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                    {service}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">No services listed</p>
-            )}
-          </div>
-
           {/* Documents Section */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
             <h2 className="text-xl font-bold text-gray-900 mb-2">Documents</h2>
@@ -344,15 +339,14 @@ export default function ServiceProviderDetailPage() {
                 return (
                   <div
                     key={field.documentKey}
-                    className={`border-2 rounded-xl p-5 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-gray-50 ${
-                      doc
+                    className={`border-2 rounded-xl p-5 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-gray-50 ${doc
                         ? doc.status === 'APPROVED'
                           ? 'border-green-300'
                           : doc.status === 'PENDING'
-                          ? 'border-yellow-300'
-                          : 'border-red-300'
+                            ? 'border-yellow-300'
+                            : 'border-red-300'
                         : 'border-gray-200'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between gap-4">
                       {/* Left: doc icon + name + required + helptext */}

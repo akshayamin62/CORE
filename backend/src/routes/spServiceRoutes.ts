@@ -7,12 +7,14 @@ import {
   getMySPServices,
   updateSPService,
   deleteSPService,
+  uploadSPServiceThumbnail,
   getMySPEnquiries,
   updateSPEnquiryStatus,
   getAllSPServicesForStudents,
   createSPEnquiry,
   getStudentMyEnquiries,
 } from '../controllers/spServiceController';
+import { upload, handleMulterError } from '../middleware/upload';
 
 const router = Router();
 
@@ -21,6 +23,7 @@ router.post('/my-services', authenticate, authorize(USER_ROLE.SERVICE_PROVIDER),
 router.get('/my-services', authenticate, authorize(USER_ROLE.SERVICE_PROVIDER), getMySPServices);
 router.put('/my-services/:serviceId', authenticate, authorize(USER_ROLE.SERVICE_PROVIDER), updateSPService);
 router.delete('/my-services/:serviceId', authenticate, authorize(USER_ROLE.SERVICE_PROVIDER), deleteSPService);
+router.post('/my-services/:serviceId/thumbnail', authenticate, authorize(USER_ROLE.SERVICE_PROVIDER), upload.single('thumbnail'), handleMulterError, uploadSPServiceThumbnail);
 
 // SP enquiry routes (SP views/manages enquiries)
 router.get('/my-enquiries', authenticate, authorize(USER_ROLE.SERVICE_PROVIDER), getMySPEnquiries);

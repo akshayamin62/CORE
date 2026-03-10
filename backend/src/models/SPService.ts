@@ -7,6 +7,7 @@ export interface ISPService extends Document {
   category: string;
   price?: number;
   priceType: 'Fixed' | 'Starting From' | 'Contact for Price';
+  thumbnail?: string;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -42,6 +43,10 @@ const SPServiceSchema = new Schema<ISPService>(
       type: String,
       enum: ['Fixed', 'Starting From', 'Contact for Price'],
       default: 'Contact for Price',
+    },
+    thumbnail: {
+      type: String,
+      default: '',
     },
     isActive: {
       type: Boolean,

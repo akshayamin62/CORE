@@ -758,6 +758,13 @@ export const spServiceAPI = {
   getMyServices: () => api.get('/sp-services/my-services'),
   updateService: (serviceId: string, data: any) => api.put(`/sp-services/my-services/${serviceId}`, data),
   deleteService: (serviceId: string) => api.delete(`/sp-services/my-services/${serviceId}`),
+  uploadThumbnail: (serviceId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('thumbnail', file);
+    return api.post(`/sp-services/my-services/${serviceId}/thumbnail`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
   getMyEnquiries: () => api.get('/sp-services/my-enquiries'),
   updateEnquiryStatus: (enquiryId: string, status: string) => api.patch(`/sp-services/my-enquiries/${enquiryId}/status`, { status }),
 

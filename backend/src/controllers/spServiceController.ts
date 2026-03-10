@@ -3,6 +3,9 @@ import { AuthRequest } from '../middleware/auth';
 import SPService from '../models/SPService';
 import SPEnquiry from '../models/SPEnquiry';
 import ServiceProvider from '../models/ServiceProvider';
+import path from 'path';
+import fs from 'fs';
+import { getUploadBaseDir, ensureDir } from '../utils/uploadDir';
 
 // ============ SP-facing endpoints ============
 
@@ -106,6 +109,61 @@ export const deleteSPService = async (req: AuthRequest, res: Response): Promise<
   }
 };
 
+// Upload thumbnail for a service listing
+export const uploadSPServiceThumbnail = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const file = req.file;
+    if (!file) {
+      res.status(400).json({ success: false, message: 'No file uploaded' });
+      return;
+    }
+
+    const sp = await ServiceProvider.findOne({ userId: req.user?.userId });
+    if (!sp) {
+      fs.unlinkSync(file.path);
+      res.status(404).json({ success: false, message: 'Service Provider profile not found' });
+      return;
+    }
+
+    const { serviceId } = req.params;
+    const service = await SPService.findOne({ _id: serviceId, serviceProviderId: sp._id });
+    if (!service) {
+      fs.unlinkSync(file.path);
+      res.status(404).json({ success: false, message: 'Service not found' });
+      return;
+    }
+
+    // Store in service-provider/<spId>/ directory
+    const spDir = path.join(getUploadBaseDir(), `service-provider/${sp._id.toString()}`);
+    ensureDir(spDir);
+
+    // Delete old thumbnail if exists
+    if (service.thumbnail) {
+      const oldPath = path.join(process.cwd(), service.thumbnail);
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+
+    // Move file
+    const timestamp = Date.now();
+    const ext = path.extname(file.originalname);
+    const finalFilename = `service_thumb_${serviceId}_${timestamp}${ext}`;
+    const finalPath = path.join(spDir, finalFilename);
+    fs.renameSync(file.path, finalPath);
+
+    service.thumbnail = `uploads/service-provider/${sp._id}/${finalFilename}`;
+    await service.save();
+
+    res.json({ success: true, data: { service } });
+  } catch (error: any) {
+    if (req.file) {
+      try { fs.unlinkSync(req.file.path); } catch {}
+    }
+    res.status(500).json({ success: false, message: error.message || 'Failed to upload thumbnail' });
+  }
+};
+
 // Get enquiries for the logged-in SP
 export const getMySPEnquiries = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -116,7 +174,7 @@ export const getMySPEnquiries = async (req: AuthRequest, res: Response): Promise
     }
 
     const enquiries = await SPEnquiry.find({ serviceProviderId: sp._id })
-      .populate('spServiceId', 'title category')
+      .populate('spServiceId', 'title category thumbnail')
       .sort({ createdAt: -1 });
 
     res.json({ success: true, data: { enquiries } });
@@ -242,8 +300,8 @@ export const getStudentMyEnquiries = async (req: AuthRequest, res: Response): Pr
     }
 
     const enquiries = await SPEnquiry.find({ studentId: student._id })
-      .populate('spServiceId', 'title category price priceType')
-      .populate('serviceProviderId', 'companyName companyLogo city state country')
+      .populate('spServiceId', 'title category description price priceType thumbnail')
+      .populate('serviceProviderId', 'companyName companyLogo city state country website')
       .sort({ createdAt: -1 });
 
     res.json({ success: true, data: { enquiries } });

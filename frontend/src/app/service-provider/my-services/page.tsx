@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { authAPI, spServiceAPI } from '@/lib/api';
 import { User, USER_ROLE, SPServiceListing } from '@/types';
 import ServiceProviderLayout from '@/components/ServiceProviderLayout';
 import toast, { Toaster } from 'react-hot-toast';
+
+const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
 
 export default function SPMyServicesPage() {
   const router = useRouter();
@@ -22,6 +24,9 @@ export default function SPMyServicesPage() {
     price: '',
     priceType: 'Contact for Price' as string,
   });
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchData();
@@ -61,9 +66,16 @@ export default function SPMyServicesPage() {
 
       if (editingService) {
         await spServiceAPI.updateService(editingService._id, payload);
+        if (thumbnailFile) {
+          await spServiceAPI.uploadThumbnail(editingService._id, thumbnailFile);
+        }
         toast.success('Service updated successfully');
       } else {
-        await spServiceAPI.createService(payload);
+        const createRes = await spServiceAPI.createService(payload);
+        const newServiceId = createRes.data.data.service._id;
+        if (thumbnailFile) {
+          await spServiceAPI.uploadThumbnail(newServiceId, thumbnailFile);
+        }
         toast.success('Service created successfully');
       }
 
@@ -87,6 +99,9 @@ export default function SPMyServicesPage() {
 
   const resetForm = () => {
     setFormData({ title: '', description: '', category: '', price: '', priceType: 'Contact for Price' });
+    setThumbnailFile(null);
+    setThumbnailPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
     setEditingService(null);
     setShowForm(false);
   };
@@ -100,7 +115,25 @@ export default function SPMyServicesPage() {
       price: service.price?.toString() || '',
       priceType: service.priceType,
     });
+    setThumbnailFile(null);
+    setThumbnailPreview(service.thumbnail ? `${BACKEND_URL}/${service.thumbnail.replace(/^\//, '')}` : null);
     setShowForm(true);
+  };
+
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image must be less than 5MB');
+        return;
+      }
+      setThumbnailFile(file);
+      setThumbnailPreview(URL.createObjectURL(file));
+    }
   };
 
   if (loading) {
@@ -212,6 +245,52 @@ export default function SPMyServicesPage() {
                   </div>
                 )}
               </div>
+              {/* Thumbnail Upload */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Thumbnail Image</label>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleThumbnailChange}
+                  className="hidden"
+                />
+                <div className="flex items-center gap-4">
+                  {thumbnailPreview ? (
+                    <div className="relative w-32 h-20 rounded-lg overflow-hidden border border-gray-300">
+                      <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => { setThumbnailFile(null); setThumbnailPreview(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                        className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-32 h-20 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-colors"
+                    >
+                      <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span className="text-xs text-gray-500 mt-1">Upload</span>
+                    </div>
+                  )}
+                  {thumbnailPreview && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      Change Image
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-gray-400 mt-1">Max 5MB. JPG, PNG, or WebP recommended.</p>
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button
                   type="submit"
@@ -232,7 +311,7 @@ export default function SPMyServicesPage() {
         )}
 
         {/* Service Listings */}
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {services.length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
                 <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -249,44 +328,56 @@ export default function SPMyServicesPage() {
               </div>
             ) : (
               services.map((service) => (
-                <div key={service._id} className={`bg-white rounded-xl shadow-sm border-2 p-6 transition-all ${service.isActive ? 'border-gray-200' : 'border-red-200 bg-red-50/30'}`}>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-bold text-gray-900">{service.title}</h3>
-                        <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                          {service.category}
-                        </span>
-                        {!service.isActive && (
-                          <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
-                            Inactive
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-gray-600 text-sm mb-3">{service.description}</p>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {service.priceType === 'Contact for Price'
-                          ? 'Contact for Price'
-                          : `${service.priceType}: ₹${service.price?.toLocaleString()}`}
-                      </p>
+                <div key={service._id} className={`bg-white rounded-xl shadow-sm border-2 overflow-hidden transition-all ${service.isActive ? 'border-gray-200' : 'border-red-200 bg-red-50/30'}`}>
+                  {service.thumbnail && (
+                    <div className="h-40 w-full overflow-hidden bg-gray-100">
+                      <img
+                        src={`${BACKEND_URL}/${service.thumbnail.replace(/^\//, '')}`}
+                        alt={service.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                      />
                     </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      <button
-                        onClick={() => handleToggleActive(service)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                          service.isActive
-                            ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                            : 'bg-green-100 text-green-700 hover:bg-green-200'
-                        }`}
-                      >
-                        {service.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
-                      <button
-                        onClick={() => startEdit(service)}
-                        className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-200 transition-colors"
-                      >
-                        Edit
-                      </button>
+                  )}
+                  <div className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-bold text-gray-900">{service.title}</h3>
+                          <span className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                            {service.category}
+                          </span>
+                          {!service.isActive && (
+                            <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
+                              Inactive
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-gray-600 text-sm mb-3">{service.description}</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {service.priceType === 'Contact for Price'
+                            ? 'Contact for Price'
+                            : `${service.priceType}: ₹${service.price?.toLocaleString()}`}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <button
+                          onClick={() => handleToggleActive(service)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                            service.isActive
+                              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                        >
+                          {service.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => startEdit(service)}
+                          className="px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold hover:bg-blue-200 transition-colors"
+                        >
+                          Edit
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

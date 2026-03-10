@@ -16,6 +16,7 @@ export default function ServiceProviderDashboard() {
   const [newCount, setNewCount] = useState(0);
   const [contactedCount, setContactedCount] = useState(0);
   const [closedCount, setClosedCount] = useState(0);
+  const [convertedCount, setConvertedCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export default function ServiceProviderDashboard() {
       setNewCount(enquiries.filter((e: any) => e.status === 'New').length);
       setContactedCount(enquiries.filter((e: any) => e.status === 'Contacted').length);
       setClosedCount(enquiries.filter((e: any) => e.status === 'Closed').length);
+      setConvertedCount(enquiries.filter((e: any) => e.status === 'Converted').length);
     } catch (error: any) {
       toast.error('Please login to continue');
       router.push('/login');
@@ -110,7 +112,19 @@ export default function ServiceProviderDashboard() {
     {
       title: 'Closed',
       value: closedCount.toString(),
-      subtitle: closedCount > 0 ? 'Completed deals' : 'None yet',
+      subtitle: closedCount > 0 ? 'Closed enquiries' : 'None yet',
+      icon: (
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      ),
+      color: 'gray',
+      link: '/service-provider/students',
+    },
+    {
+      title: 'Converted',
+      value: convertedCount.toString(),
+      subtitle: convertedCount > 0 ? 'Successful conversions' : 'None yet',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -127,6 +141,7 @@ export default function ServiceProviderDashboard() {
     yellow: { bg: 'bg-yellow-100', text: 'text-yellow-600', icon: 'bg-yellow-100' },
     red: { bg: 'bg-red-100', text: 'text-red-600', icon: 'bg-red-100' },
     purple: { bg: 'bg-purple-100', text: 'text-purple-600', icon: 'bg-purple-100' },
+    gray: { bg: 'bg-gray-100', text: 'text-gray-600', icon: 'bg-gray-100' },
   };
 
   return (
@@ -147,7 +162,7 @@ export default function ServiceProviderDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           {stats.map((stat) => {
             const colors = colorClasses[stat.color];
             return (

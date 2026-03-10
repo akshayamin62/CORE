@@ -336,6 +336,7 @@ export interface SPServiceListing {
   category: string;
   price?: number;
   priceType: 'Fixed' | 'Starting From' | 'Contact for Price';
+  thumbnail?: string;
   isActive: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -351,8 +352,9 @@ export interface SPEnquiryItem {
     city?: string;
     state?: string;
     country?: string;
+    website?: string;
   };
-  spServiceId: string | { _id: string; title: string; category: string; price?: number; priceType?: string };
+  spServiceId: string | { _id: string; title: string; category: string; description?: string; price?: number; priceType?: string; thumbnail?: string };
   studentName: string;
   studentEmail: string;
   studentMobile?: string;
