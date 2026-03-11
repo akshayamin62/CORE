@@ -297,6 +297,20 @@ function MyDetailsContent() {
     }
   };
 
+  const handleUpdateBrainographyMeta = async (field: 'standard' | 'board', value: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.patch(
+        `${BRAINOGRAPHY_API_URL}/portfolio/${registrationId}/data`,
+        { [field]: value },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setBrainographyData(response.data.data.brainographyData || null);
+    } catch (error) {
+      // Silently fail
+    }
+  };
+
   const fetchPortfolios = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -1072,7 +1086,7 @@ function MyDetailsContent() {
           </div>
         </div>
         {/* Extracted Brainography Data */}
-        {brainographyData && <BrainographyDataDisplay data={brainographyData} />}
+        {brainographyData && <BrainographyDataDisplay data={brainographyData} canEdit onUpdate={handleUpdateBrainographyMeta} />}
       </div>
     );
 

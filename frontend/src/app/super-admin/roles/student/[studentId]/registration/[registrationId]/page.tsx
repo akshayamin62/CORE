@@ -156,6 +156,18 @@ export default function SuperAdminStudentFormEditPage() {
     } catch { /* silently fail */ }
   };
 
+  const handleUpdateBrainographyMeta = async (field: 'standard' | 'board', value: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.patch(
+        `${API_URL}/portfolio/${registrationId}/data`,
+        { [field]: value },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setBrainographyData(response.data.data.brainographyData || null);
+    } catch { /* silently fail */ }
+  };
+
   const fetchPortfolios = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -607,7 +619,7 @@ export default function SuperAdminStudentFormEditPage() {
                   </div>
                 )}
               </div>
-              {brainographyData && <div className="mb-6"><BrainographyDataDisplay data={brainographyData} /></div>}
+              {brainographyData && <div className="mb-6"><BrainographyDataDisplay data={brainographyData} canEdit onUpdate={handleUpdateBrainographyMeta} /></div>}
             </>
           )}
 

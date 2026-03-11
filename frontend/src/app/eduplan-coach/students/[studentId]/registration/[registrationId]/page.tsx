@@ -178,6 +178,20 @@ export default function EduplanCoachStudentFormEditPage() {
     }
   };
 
+  const handleUpdateBrainographyMeta = async (field: 'standard' | 'board', value: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.patch(
+        `${API_URL}/portfolio/${registrationId}/data`,
+        { [field]: value },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setBrainographyData(response.data.data.brainographyData || null);
+    } catch {
+      // silently fail
+    }
+  };
+
   const fetchPortfolios = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -648,7 +662,7 @@ export default function EduplanCoachStudentFormEditPage() {
                       </button>
                     </div>
                   ) : (
-                    <BrainographyDataDisplay data={brainographyData} />
+                    <BrainographyDataDisplay data={brainographyData} canEdit onUpdate={handleUpdateBrainographyMeta} />
                   )}
                 </div>
               )}
