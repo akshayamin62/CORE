@@ -1313,6 +1313,7 @@ function MyDetailsContent() {
                             handleRemoveInstance(currentPart.part.key, currentSection._id, subSectionId, index)
                           }
                           errors={errors}
+                          readOnlyKeys={currentPart.part.key === 'PROFILE' ? ['firstName', 'middleName', 'lastName'] : undefined}
                         />
                         <div className="flex justify-end gap-3 mt-5">
                           <button

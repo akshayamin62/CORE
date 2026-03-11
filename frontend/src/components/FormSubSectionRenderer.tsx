@@ -13,6 +13,7 @@ interface FormSubSectionRendererProps {
   errors?: { [key: string]: string }[];
   isAdminEdit?: boolean;
   readOnly?: boolean;
+  readOnlyKeys?: string[];
 }
 
 export default function FormSubSectionRenderer({
@@ -24,6 +25,7 @@ export default function FormSubSectionRenderer({
   errors = [],
   isAdminEdit = false,
   readOnly = false,
+  readOnlyKeys,
 }: FormSubSectionRendererProps) {
   const [expandedIndices, setExpandedIndices] = useState<Set<number>>(
     new Set([0])
@@ -218,7 +220,7 @@ export default function FormSubSectionRenderer({
                           error={errors[index]?.[sortedFields[i].key]}
                           allValues={instanceValues}
                           isAdminEdit={isAdminEdit}
-                          readOnly={readOnly}
+                          readOnly={readOnly || !!readOnlyKeys?.includes(sortedFields[i].key)}
                         />
                         <FormFieldRenderer
                           field={sortedFields[i + 1]}
@@ -227,7 +229,7 @@ export default function FormSubSectionRenderer({
                           error={errors[index]?.[sortedFields[i + 1].key]}
                           allValues={instanceValues}
                           isAdminEdit={isAdminEdit}
-                          readOnly={readOnly}
+                          readOnly={readOnly || !!readOnlyKeys?.includes(sortedFields[i + 1].key)}
                         />
                         <FormFieldRenderer
                           field={sortedFields[i + 2]}
@@ -236,7 +238,7 @@ export default function FormSubSectionRenderer({
                           error={errors[index]?.[sortedFields[i + 2].key]}
                           allValues={instanceValues}
                           isAdminEdit={isAdminEdit}
-                          readOnly={readOnly}
+                          readOnly={readOnly || !!readOnlyKeys?.includes(sortedFields[i + 2].key)}
                         />
                       </div>
                     );

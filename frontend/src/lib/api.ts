@@ -267,6 +267,17 @@ export const formAnswerAPI = {
   
   deleteFormAnswers: (answerId: string) => 
     api.delete(`/forms/answers/${answerId}`),
+
+  // Student profile (no registrationId needed)
+  getStudentProfile: () =>
+    api.get('/forms/student-profile'),
+  
+  saveStudentProfile: (answers: any) =>
+    api.put('/forms/student-profile', { answers }),
+
+  // View student profile data (for other roles)
+  getStudentProfileById: (studentId: string) =>
+    api.get(`/forms/student-profile/${studentId}`),
 };
 
 // Student API

@@ -4,6 +4,10 @@ import Student from "../models/Student";
 import StudentServiceRegistration, {
   ServiceRegistrationStatus,
 } from "../models/StudentServiceRegistration";
+import FormPart, { FormPartKey } from "../models/FormPart";
+import FormSection from "../models/FormSection";
+import FormSubSection from "../models/FormSubSection";
+import FormField from "../models/FormField";
 import { AuthRequest } from "../types/auth";
 
 // Save form answers (part-wise for reusability across services)
@@ -273,6 +277,228 @@ export const deleteFormAnswers = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Failed to delete form answers",
+      error: error.message,
+    });
+  }
+};
+
+// Get profile form structure + answers for the logged-in student (no registrationId needed)
+export const getStudentProfileData = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+
+    const student = await Student.findOne({ userId });
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student record not found",
+      });
+    }
+
+    // Get PROFILE part  
+    const profilePart = await FormPart.findOne({ key: FormPartKey.PROFILE });
+    if (!profilePart) {
+      return res.status(404).json({ success: false, message: "Profile form part not found" });
+    }
+
+    // Get sections for profile (only the 4 relevant ones)
+    const sectionTitles = ["Personal Details", "Parental Details", "Academic Qualification", "Work Experience"];
+    const sections = await FormSection.find({
+      partId: profilePart._id,
+      title: { $in: sectionTitles },
+      isActive: true,
+    }).sort({ order: 1 });
+
+    // Get subsections and fields for each section
+    const formStructure = [];
+    for (const section of sections) {
+      const subSections = await FormSubSection.find({
+        sectionId: section._id,
+        isActive: true,
+      }).sort({ order: 1 });
+
+      const subSectionsWithFields = [];
+      for (const subSection of subSections) {
+        const fields = await FormField.find({
+          subSectionId: subSection._id,
+          isActive: true,
+        }).sort({ order: 1 });
+
+        subSectionsWithFields.push({
+          ...subSection.toObject(),
+          fields,
+        });
+      }
+
+      formStructure.push({
+        ...section.toObject(),
+        subSections: subSectionsWithFields,
+      });
+    }
+
+    // Get saved answers
+    const answerDoc = await StudentFormAnswer.findOne({
+      studentId: student._id,
+      partKey: "PROFILE",
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        formStructure,
+        answers: answerDoc?.answers || {},
+        mobileNumber: student.mobileNumber,
+      },
+    });
+  } catch (error: any) {
+    console.error("Get student profile data error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch profile data",
+      error: error.message,
+    });
+  }
+};
+
+// Save profile answers directly (no registrationId needed)
+export const saveStudentProfileData = async (req: AuthRequest, res: Response) => {
+  try {
+    const { answers } = req.body;
+    const userId = req.user?.userId;
+
+    const student = await Student.findOne({ userId });
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student record not found",
+      });
+    }
+
+    // Extract phone number if present
+    if (answers) {
+      for (const sectionId in answers) {
+        const sectionData = answers[sectionId];
+        if (typeof sectionData === 'object' && sectionData !== null) {
+          for (const subSectionId in sectionData) {
+            const subSectionData = sectionData[subSectionId];
+            if (Array.isArray(subSectionData)) {
+              const instanceData = subSectionData[0] || {};
+              const phoneValue = instanceData.phoneNumber || instanceData.mobileNumber || instanceData.phone;
+              if (phoneValue && phoneValue.trim()) {
+                student.mobileNumber = phoneValue.trim();
+                await student.save();
+              }
+            }
+          }
+        }
+      }
+    }
+
+    let answerDoc = await StudentFormAnswer.findOne({
+      studentId: student._id,
+      partKey: "PROFILE",
+    });
+
+    if (answerDoc) {
+      answerDoc.answers = { ...answerDoc.answers, ...answers };
+      answerDoc.lastSavedAt = new Date();
+      await answerDoc.save();
+    } else {
+      answerDoc = await StudentFormAnswer.create({
+        studentId: student._id,
+        partKey: "PROFILE",
+        answers,
+        lastSavedAt: new Date(),
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile saved successfully",
+      data: { answer: answerDoc },
+    });
+  } catch (error: any) {
+    console.error("Save student profile data error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to save profile data",
+      error: error.message,
+    });
+  }
+};
+
+// Get a specific student's profile data (for other roles to view)
+export const getStudentProfileDataById = async (req: AuthRequest, res: Response) => {
+  try {
+    const { studentId } = req.params;
+
+    const student = await Student.findById(studentId).populate('userId', 'firstName middleName lastName email isVerified isActive');
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
+
+    // Get PROFILE part
+    const profilePart = await FormPart.findOne({ key: FormPartKey.PROFILE });
+    if (!profilePart) {
+      return res.status(404).json({ success: false, message: "Profile form part not found" });
+    }
+
+    // Get sections
+    const sectionTitles = ["Personal Details", "Parental Details", "Academic Qualification", "Work Experience"];
+    const sections = await FormSection.find({
+      partId: profilePart._id,
+      title: { $in: sectionTitles },
+      isActive: true,
+    }).sort({ order: 1 });
+
+    const formStructure = [];
+    for (const section of sections) {
+      const subSections = await FormSubSection.find({
+        sectionId: section._id,
+        isActive: true,
+      }).sort({ order: 1 });
+
+      const subSectionsWithFields = [];
+      for (const subSection of subSections) {
+        const fields = await FormField.find({
+          subSectionId: subSection._id,
+          isActive: true,
+        }).sort({ order: 1 });
+
+        subSectionsWithFields.push({
+          ...subSection.toObject(),
+          fields,
+        });
+      }
+
+      formStructure.push({
+        ...section.toObject(),
+        subSections: subSectionsWithFields,
+      });
+    }
+
+    const answerDoc = await StudentFormAnswer.findOne({
+      studentId: student._id,
+      partKey: "PROFILE",
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        student,
+        formStructure,
+        answers: answerDoc?.answers || {},
+        mobileNumber: student.mobileNumber,
+      },
+    });
+  } catch (error: any) {
+    console.error("Get student profile data by id error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch student profile data",
       error: error.message,
     });
   }

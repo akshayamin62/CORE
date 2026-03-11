@@ -4,6 +4,9 @@ import {
   getFormAnswers,
   getProgress,
   deleteFormAnswers,
+  getStudentProfileData,
+  saveStudentProfileData,
+  getStudentProfileDataById,
 } from "../controllers/formAnswerController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
@@ -36,6 +39,36 @@ router.get(
 );
 
 router.delete("/answers/:answerId", authenticate, authorize(USER_ROLE.STUDENT), deleteFormAnswers);
+
+// Student profile (no registrationId needed)
+router.get(
+  "/student-profile",
+  authenticate,
+  authorize(USER_ROLE.STUDENT),
+  getStudentProfileData
+);
+
+router.put(
+  "/student-profile",
+  authenticate,
+  authorize(USER_ROLE.STUDENT),
+  saveStudentProfileData
+);
+
+// View student profile data (for other roles)
+router.get(
+  "/student-profile/:studentId",
+  authenticate,
+  authorize([
+    USER_ROLE.SUPER_ADMIN,
+    USER_ROLE.ADMIN,
+    USER_ROLE.COUNSELOR,
+    USER_ROLE.OPS,
+    USER_ROLE.EDUPLAN_COACH,
+    USER_ROLE.IVY_EXPERT,
+  ]),
+  getStudentProfileDataById
+);
 
 export default router;
 
