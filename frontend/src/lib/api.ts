@@ -210,6 +210,14 @@ export const adminStudentAPI = {
     api.get(`/admin/students/${studentId}/registrations/${registrationId}/answers`),
 };
 
+// Parent Dashboard API (read-only access to linked students for parent)
+export const parentAPI = {
+  getMyStudents: () => api.get('/parents/my-students'),
+  getStudentDetails: (studentId: string) => api.get(`/parents/my-students/${studentId}`),
+  getStudentFormAnswers: (studentId: string, registrationId: string) =>
+    api.get(`/parents/my-students/${studentId}/registrations/${registrationId}/answers`),
+};
+
 // Service API
 export const serviceAPI = {
   getAllServices: () => api.get('/services/services'),

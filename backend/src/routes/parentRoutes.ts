@@ -4,11 +4,41 @@ import {
   updateParentInfo,
   addParentForStudent,
 } from "../controllers/parentController";
+import {
+  getParentStudents,
+  getParentStudentDetails,
+  getParentStudentFormAnswers,
+} from "../controllers/parentDashboardController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
 import { USER_ROLE } from "../types/roles";
 
 const router = express.Router();
+
+// ─── Parent Dashboard (logged-in parent's own data) ─────────────────
+// Get all students linked to the logged-in parent
+router.get(
+  "/my-students",
+  authenticate,
+  authorize(USER_ROLE.PARENT),
+  getParentStudents
+);
+
+// Get student detail (read-only for parent)
+router.get(
+  "/my-students/:studentId",
+  authenticate,
+  authorize(USER_ROLE.PARENT),
+  getParentStudentDetails
+);
+
+// Get student form answers for a registration (read-only for parent)
+router.get(
+  "/my-students/:studentId/registrations/:registrationId/answers",
+  authenticate,
+  authorize(USER_ROLE.PARENT),
+  getParentStudentFormAnswers
+);
 
 // All routes require authentication
 

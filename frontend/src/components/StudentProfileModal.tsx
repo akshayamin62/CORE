@@ -21,7 +21,7 @@ export default function StudentProfileModal({ studentId, onClose, viewerRole }: 
   const [studentInfo, setStudentInfo] = useState<any>(null);
 
   // Role-based permissions
-  const isReadOnly = viewerRole === USER_ROLE.ADMIN || viewerRole === USER_ROLE.COUNSELOR;
+  const isReadOnly = viewerRole === USER_ROLE.ADMIN || viewerRole === USER_ROLE.COUNSELOR || viewerRole === USER_ROLE.PARENT;
   const canEditNames = viewerRole === USER_ROLE.SUPER_ADMIN;
   const canEdit = !isReadOnly;
 
