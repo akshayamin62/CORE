@@ -410,7 +410,7 @@ export default function AdminStudentDetailPage() {
         </div>
       </AdminLayout>
       {showProfileModal && (
-        <StudentProfileModal studentId={studentId} onClose={() => setShowProfileModal(false)} />
+        <StudentProfileModal studentId={studentId} onClose={() => setShowProfileModal(false)} viewerRole="ADMIN" />
       )}
     </>
   );

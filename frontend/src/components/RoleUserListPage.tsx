@@ -524,6 +524,9 @@ export default function RoleUserListPage({
                       {roleEnum === USER_ROLE.COUNSELOR && (
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Admin</th>
                       )}
+                      {roleEnum === USER_ROLE.PARENT && (
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Students</th>
+                      )}
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Role</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Joined</th>
@@ -572,6 +575,25 @@ export default function RoleUserListPage({
                             <div className="text-sm font-medium text-gray-900">
                               {user.companyName || 'N/A'}
                             </div>
+                          </td>
+                        )}
+                        {roleEnum === USER_ROLE.PARENT && (
+                          <td className="px-6 py-4">
+                            {user.students && user.students.length > 0 ? (
+                              <div className="flex flex-col gap-1">
+                                {user.students.map((s: { studentId: string; firstName: string; lastName: string }) => (
+                                  <button
+                                    key={s.studentId}
+                                    onClick={() => router.push(`/super-admin/roles/student/${s.studentId}`)}
+                                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline text-left"
+                                  >
+                                    {`${s.firstName} ${s.lastName}`.trim() || 'N/A'}
+                                  </button>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-sm text-gray-400">No students linked</span>
+                            )}
                           </td>
                         )}
                         <td className="px-6 py-4 whitespace-nowrap">

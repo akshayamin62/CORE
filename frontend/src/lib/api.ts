@@ -278,6 +278,10 @@ export const formAnswerAPI = {
   // View student profile data (for other roles)
   getStudentProfileById: (studentId: string) =>
     api.get(`/forms/student-profile/${studentId}`),
+
+  // Save student profile data (for staff roles)
+  saveStudentProfileById: (studentId: string, answers: any) =>
+    api.put(`/forms/student-profile/${studentId}`, { answers }),
 };
 
 // Student API
@@ -423,6 +427,18 @@ export const leadAPI = {
     mobileNumber: string;
     city: string;
     serviceTypes: string[];
+    intake?: string;
+    year?: string;
+    parentDetail?: {
+      firstName: string;
+      middleName?: string;
+      lastName: string;
+      relationship: string;
+      mobileNumber: string;
+      email: string;
+      qualification: string;
+      occupation: string;
+    };
   }) => api.post(`/public/enquiry/${adminSlug}/submit`, data),
   
   // Admin endpoints

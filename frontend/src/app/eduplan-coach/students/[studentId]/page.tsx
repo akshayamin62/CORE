@@ -328,7 +328,7 @@ export default function EduplanCoachStudentDetailPage() {
         </div>
       </EduplanCoachLayout>
       {showProfileModal && (
-        <StudentProfileModal studentId={studentId} onClose={() => setShowProfileModal(false)} />
+        <StudentProfileModal studentId={studentId} onClose={() => setShowProfileModal(false)} viewerRole="EDUPLAN_COACH" />
       )}
     </>
   );

@@ -1314,30 +1314,66 @@ function MyDetailsContent() {
                       />
                     ) : (
                       <>
-                        <FormSectionRenderer
-                          section={currentSection}
-                          values={formValues[currentPart.part.key]?.[currentSection._id] || {}}
-                          onChange={(subSectionId, index, key, value) =>
-                            handleFieldChange(currentPart.part.key, currentSection._id, subSectionId, index, key, value)
+                        {(() => {
+                          const isParentalSection = currentPart.part.key === 'PROFILE' && currentSection.title === 'Parental Details';
+                          const sData = formValues[currentPart.part.key]?.[currentSection._id];
+                          const parentalReadOnlyInstances: number[] = [];
+                          let allParentalSlotsFilled = false;
+                          if (isParentalSection && sData) {
+                            Object.values(sData).forEach((subData: any) => {
+                              if (Array.isArray(subData)) {
+                                subData.forEach((entry: any, idx: number) => {
+                                  if (entry && Object.values(entry).some((v: any) => v && String(v).trim() !== '')) {
+                                    parentalReadOnlyInstances.push(idx);
+                                  }
+                                });
+                              }
+                            });
+                            const entries = Object.values(sData).flat() as any[];
+                            const filledCount = entries.filter((entry: any) =>
+                              entry && Object.values(entry).some((v: any) => v && String(v).trim() !== '')
+                            ).length;
+                            allParentalSlotsFilled = filledCount >= 2;
                           }
-                          onAddInstance={(subSectionId) =>
-                            handleAddInstance(currentPart.part.key, currentSection._id, subSectionId)
-                          }
-                          onRemoveInstance={(subSectionId, index) =>
-                            handleRemoveInstance(currentPart.part.key, currentSection._id, subSectionId, index)
-                          }
-                          errors={errors}
-                          readOnlyKeys={currentPart.part.key === 'PROFILE' ? ['firstName', 'middleName', 'lastName'] : undefined}
-                        />
-                        <div className="flex justify-end gap-3 mt-5">
-                          <button
-                            onClick={handleSaveSection}
-                            disabled={saving}
-                            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {saving ? 'Saving...' : 'Save'}
-                          </button>
-                        </div>
+                          return (
+                            <>
+                              <FormSectionRenderer
+                                section={currentSection}
+                                values={formValues[currentPart.part.key]?.[currentSection._id] || {}}
+                                onChange={(subSectionId, index, key, value) =>
+                                  handleFieldChange(currentPart.part.key, currentSection._id, subSectionId, index, key, value)
+                                }
+                                onAddInstance={(subSectionId) =>
+                                  handleAddInstance(currentPart.part.key, currentSection._id, subSectionId)
+                                }
+                                onRemoveInstance={(subSectionId, index) =>
+                                  handleRemoveInstance(currentPart.part.key, currentSection._id, subSectionId, index)
+                                }
+                                errors={errors}
+                                readOnly={isParentalSection && allParentalSlotsFilled}
+                                readOnlyKeys={currentPart.part.key === 'PROFILE' ? ['firstName', 'middleName', 'lastName'] : undefined}
+                                noDelete={isParentalSection}
+                                readOnlyInstances={isParentalSection ? parentalReadOnlyInstances : []}
+                              />
+                              {isParentalSection && parentalReadOnlyInstances.length > 0 && (
+                                <div className="mt-3 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+                                  {allParentalSlotsFilled
+                                    ? 'Both parental detail entries are saved. Contact your counselor or admin to make changes.'
+                                    : 'Saved parental details cannot be edited. You may add one more parent entry.'}
+                                </div>
+                              )}
+                              <div className="flex justify-end gap-3 mt-5">
+                                <button
+                                  onClick={handleSaveSection}
+                                  disabled={saving}
+                                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {saving ? 'Saving...' : 'Save'}
+                                </button>
+                              </div>
+                            </>
+                          );
+                        })()}
                       </>
                     )}
                   </div>

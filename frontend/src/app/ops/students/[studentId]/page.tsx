@@ -326,7 +326,7 @@ export default function StudentDetailPage() {
         </div>
       </OpsLayout>
       {showProfileModal && (
-        <StudentProfileModal studentId={studentId} onClose={() => setShowProfileModal(false)} />
+        <StudentProfileModal studentId={studentId} onClose={() => setShowProfileModal(false)} viewerRole="OPS" />
       )}
     </>
   );

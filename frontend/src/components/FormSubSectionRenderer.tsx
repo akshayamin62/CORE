@@ -14,6 +14,8 @@ interface FormSubSectionRendererProps {
   isAdminEdit?: boolean;
   readOnly?: boolean;
   readOnlyKeys?: string[];
+  noDelete?: boolean;
+  readOnlyInstances?: number[];
 }
 
 export default function FormSubSectionRenderer({
@@ -26,6 +28,8 @@ export default function FormSubSectionRenderer({
   isAdminEdit = false,
   readOnly = false,
   readOnlyKeys,
+  noDelete = false,
+  readOnlyInstances = [],
 }: FormSubSectionRendererProps) {
   const [expandedIndices, setExpandedIndices] = useState<Set<number>>(
     new Set([0])
@@ -69,7 +73,7 @@ export default function FormSubSectionRenderer({
             </p>
           )}
         </div>
-        {subSection.isRepeatable && !readOnly && (
+        {subSection.isRepeatable && !readOnly && (!subSection.maxRepeat || values.length < subSection.maxRepeat) && (
           <button
             type="button"
             onClick={(e) => {
@@ -117,7 +121,7 @@ export default function FormSubSectionRenderer({
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                {values.length > 1 && !readOnly && (
+                {values.length > 1 && !readOnly && !noDelete && (
                   <button
                     type="button"
                     onClick={(e) => {
@@ -166,6 +170,7 @@ export default function FormSubSectionRenderer({
           {(!subSection.isRepeatable || expandedIndices.has(index)) && (
             <div className="p-5 bg-white">
               {(() => {
+                const isInstanceReadOnly = readOnly || readOnlyInstances.includes(index);
                 const sortedFields = subSection.fields.sort((a, b) => a.order - b.order);
                 const renderedFields: React.ReactElement[] = [];
                 let i = 0;
@@ -184,7 +189,7 @@ export default function FormSubSectionRenderer({
                           error={errors[index]?.[field.key]}
                           allValues={instanceValues}
                           isAdminEdit={isAdminEdit}
-                          readOnly={readOnly}
+                          readOnly={isInstanceReadOnly}
                         />
                       </div>
                     );
@@ -201,7 +206,7 @@ export default function FormSubSectionRenderer({
                           error={errors[index]?.[field.key]}
                           allValues={instanceValues}
                           isAdminEdit={isAdminEdit}
-                          readOnly={readOnly}
+                          readOnly={isInstanceReadOnly}
                         />
                       </div>
                     );
@@ -220,7 +225,7 @@ export default function FormSubSectionRenderer({
                           error={errors[index]?.[sortedFields[i].key]}
                           allValues={instanceValues}
                           isAdminEdit={isAdminEdit}
-                          readOnly={readOnly || !!readOnlyKeys?.includes(sortedFields[i].key)}
+                          readOnly={isInstanceReadOnly || !!readOnlyKeys?.includes(sortedFields[i].key)}
                         />
                         <FormFieldRenderer
                           field={sortedFields[i + 1]}
@@ -229,7 +234,7 @@ export default function FormSubSectionRenderer({
                           error={errors[index]?.[sortedFields[i + 1].key]}
                           allValues={instanceValues}
                           isAdminEdit={isAdminEdit}
-                          readOnly={readOnly || !!readOnlyKeys?.includes(sortedFields[i + 1].key)}
+                          readOnly={isInstanceReadOnly || !!readOnlyKeys?.includes(sortedFields[i + 1].key)}
                         />
                         <FormFieldRenderer
                           field={sortedFields[i + 2]}
@@ -238,7 +243,7 @@ export default function FormSubSectionRenderer({
                           error={errors[index]?.[sortedFields[i + 2].key]}
                           allValues={instanceValues}
                           isAdminEdit={isAdminEdit}
-                          readOnly={readOnly || !!readOnlyKeys?.includes(sortedFields[i + 2].key)}
+                          readOnly={isInstanceReadOnly || !!readOnlyKeys?.includes(sortedFields[i + 2].key)}
                         />
                       </div>
                     );
@@ -257,7 +262,7 @@ export default function FormSubSectionRenderer({
                           error={errors[index]?.[sortedFields[i].key]}
                           allValues={instanceValues}
                           isAdminEdit={isAdminEdit}
-                          readOnly={readOnly}
+                          readOnly={isInstanceReadOnly}
                         />
                         <FormFieldRenderer
                           field={sortedFields[i + 1]}
@@ -266,7 +271,7 @@ export default function FormSubSectionRenderer({
                           error={errors[index]?.[sortedFields[i + 1].key]}
                           allValues={instanceValues}
                           isAdminEdit={isAdminEdit}
-                          readOnly={readOnly}
+                          readOnly={isInstanceReadOnly}
                         />
                       </div>
                     );
@@ -351,7 +356,7 @@ export default function FormSubSectionRenderer({
                           error={errors[index]?.[sortedFields[i].key]}
                           allValues={instanceValues}
                           isAdminEdit={isAdminEdit}
-                          readOnly={readOnly}
+                          readOnly={isInstanceReadOnly}
                         />
                         <FormFieldRenderer
                           field={sortedFields[i + 1]}
@@ -360,7 +365,7 @@ export default function FormSubSectionRenderer({
                           error={errors[index]?.[sortedFields[i + 1].key]}
                           allValues={instanceValues}
                           isAdminEdit={isAdminEdit}
-                          readOnly={readOnly}
+                          readOnly={isInstanceReadOnly}
                         />
                       </div>
                     );
@@ -378,7 +383,7 @@ export default function FormSubSectionRenderer({
                           error={errors[index]?.[sortedFields[i].key]}
                           allValues={instanceValues}
                           isAdminEdit={isAdminEdit}
-                          readOnly={readOnly}
+                          readOnly={isInstanceReadOnly}
                         />
                         <FormFieldRenderer
                           field={sortedFields[i + 1]}
@@ -387,7 +392,7 @@ export default function FormSubSectionRenderer({
                           error={errors[index]?.[sortedFields[i + 1].key]}
                           allValues={instanceValues}
                           isAdminEdit={isAdminEdit}
-                          readOnly={readOnly}
+                          readOnly={isInstanceReadOnly}
                         />
                       </div>
                     );
@@ -426,7 +431,7 @@ export default function FormSubSectionRenderer({
                             onChange={(key, value) => onChange(index, key, value)}
                             error={errors[index]?.[field.key]}
                             isAdminEdit={isAdminEdit}
-                          readOnly={readOnly}
+                          readOnly={isInstanceReadOnly}
                           />
                         </div>
                       );
@@ -443,13 +448,12 @@ export default function FormSubSectionRenderer({
       ))}
 
       {/* Add button at bottom for repeatable sections */}
-      {subSection.isRepeatable && values.length > 0 && (
+      {subSection.isRepeatable && values.length > 0 && !readOnly && (!subSection.maxRepeat || values.length < subSection.maxRepeat) && (
         <button
           type="button"
           onClick={(e) => {
             e.preventDefault();
             handleAddInstance();
-            // onAdd?.();
           }}
           className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 bg-white hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 transition-colors flex items-center justify-center gap-2 font-medium text-sm"
         >

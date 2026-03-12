@@ -26,6 +26,8 @@ export interface User {
   // Admin-specific fields (populated when role is ADMIN)
   companyName?: string;
   companyLogo?: string;
+  // Parent-specific fields (populated when role is PARENT)
+  students?: { studentId: string; firstName: string; lastName: string }[];
 }
 
 export interface Student {
@@ -381,6 +383,17 @@ export enum LEAD_STAGE {
   CLOSED = 'Closed',
 }
 
+export interface LeadParentDetail {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  relationship: string;
+  mobileNumber: string;
+  email: string;
+  qualification: string;
+  occupation: string;
+}
+
 export interface Lead {
   _id: string;
   adminId: {
@@ -411,6 +424,7 @@ export interface Lead {
   serviceTypes: SERVICE_TYPE[];
   intake?: string;
   year?: string;
+  parentDetail?: LeadParentDetail;
   stage: LEAD_STAGE;
   conversionRequestId?: string;
   conversionStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';

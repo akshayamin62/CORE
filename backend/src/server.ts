@@ -26,6 +26,7 @@ import spDocumentRoutes from "./routes/spDocumentRoutes";
 import spServiceRoutes from "./routes/spServiceRoutes";
 import brainographyRoutes from "./routes/brainographyRoutes";
 import portfolioRoutes from "./routes/portfolioRoutes";
+import parentRoutes from "./routes/parentRoutes";
 import activityRoutes from "./routes/activityRoutes";
 import ivyLeagueRegistrationRoutes from "./routes/ivyLeagueRegistrationRoutes";
 import ivyLeagueAdminRoutes from "./routes/ivyLeagueAdmin.routes";
@@ -149,6 +150,7 @@ app.use("/api/sp-documents", spDocumentRoutes); // Service Provider document rou
 app.use("/api/sp-services", spServiceRoutes); // Service Provider services & enquiry routes
 app.use("/api/brainography", brainographyRoutes); // Brainography report routes
 app.use("/api/portfolio", portfolioRoutes); // Portfolio generation routes
+app.use("/api/parents", parentRoutes); // Parent management routes
 app.use("/api/activity", activityRoutes); // Activity management routes
 app.use("/api/ivy-league-registration", ivyLeagueRegistrationRoutes); // Ivy League registration form routes
 app.use("/api", leadRoutes); // Lead routes (includes public, admin, counselor endpoints)

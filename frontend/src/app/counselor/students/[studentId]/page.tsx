@@ -412,7 +412,7 @@ export default function CounselorStudentDetailPage() {
         </div>
       </CounselorLayout>
       {showProfileModal && (
-        <StudentProfileModal studentId={studentId} onClose={() => setShowProfileModal(false)} />
+        <StudentProfileModal studentId={studentId} onClose={() => setShowProfileModal(false)} viewerRole="COUNSELOR" />
       )}
     </>
   );

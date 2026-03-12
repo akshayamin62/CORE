@@ -13,6 +13,10 @@ import TeamMeet from "../models/TeamMeet";
 import LeadStudentConversion from "../models/LeadStudentConversion";
 import FollowUp, { FOLLOWUP_STATUS } from "../models/FollowUp";
 import ServiceProvider from "../models/ServiceProvider";
+import Parent from "../models/Parent";
+import StudentFormAnswer from "../models/StudentFormAnswer";
+import FormPart, { FormPartKey } from "../models/FormPart";
+import FormSection from "../models/FormSection";
 import { generateSlug, getUniqueSlug } from "./leadController";
 // import { sendEmail } from "../utils/email";
 
@@ -124,6 +128,35 @@ export const getAllUsers = async (req: Request, res: Response): Promise<Response
           (user.companyName && user.companyName.toLowerCase().includes(searchLower))
         );
       }
+    }
+
+    // If filtering by PARENT role, include linked student names
+    if (role && String(role).toUpperCase() === 'PARENT') {
+      enrichedUsers = await Promise.all(
+        users.map(async (user: any) => {
+          const userObj = user.toObject();
+          if (userObj.role === USER_ROLE.PARENT) {
+            const parentProfile = await Parent.findOne({ userId: user._id });
+            if (parentProfile && parentProfile.studentIds.length > 0) {
+              const students = await Student.find({ _id: { $in: parentProfile.studentIds } }).select('_id userId');
+              const studentUserIds = students.map((s: any) => s.userId);
+              const studentUsers = await User.find({ _id: { $in: studentUserIds } }).select('firstName lastName');
+              const studentUserMap = new Map(studentUsers.map((u: any) => [u._id.toString(), u]));
+              userObj.students = students.map((s: any) => {
+                const su = studentUserMap.get(s.userId.toString());
+                return {
+                  studentId: s._id,
+                  firstName: su?.firstName || '',
+                  lastName: su?.lastName || '',
+                };
+              });
+            } else {
+              userObj.students = [];
+            }
+          }
+          return userObj;
+        })
+      );
     }
 
     return res.json({
@@ -2171,6 +2204,93 @@ export const editUserByRole = async (req: Request, res: Response): Promise<Respo
       if (body.bankUpiId !== undefined) spUpdate.bankUpiId = body.bankUpiId.trim();
       if (Object.keys(spUpdate).length > 0) {
         await ServiceProvider.findOneAndUpdate({ userId }, spUpdate, { new: true, runValidators: false });
+      }
+    } else if (role === USER_ROLE.PARENT) {
+      // Update Parent profile fields
+      const parentUpdate: any = {};
+      if (mobileNumber !== undefined) parentUpdate.mobileNumber = mobileNumber.trim();
+      if (body.relationship !== undefined) parentUpdate.relationship = body.relationship.trim();
+      if (body.qualification !== undefined) parentUpdate.qualification = body.qualification.trim();
+      if (body.occupation !== undefined) parentUpdate.occupation = body.occupation.trim();
+      if (Object.keys(parentUpdate).length > 0) {
+        await Parent.findOneAndUpdate({ userId }, parentUpdate, { new: true, runValidators: false });
+      }
+
+      // Reverse sync to Lead and StudentFormAnswer
+      const parentDoc = await Parent.findOne({ userId });
+      if (parentDoc && parentDoc.studentIds.length > 0) {
+        const updatedParentUser = await User.findById(userId);
+        if (updatedParentUser) {
+
+        for (const sid of parentDoc.studentIds) {
+          const student = await Student.findById(sid);
+          if (!student) continue;
+
+          // Sync to Lead.parentDetail
+          if (student.convertedFromLeadId) {
+            const lead = await Lead.findById(student.convertedFromLeadId);
+            if (lead?.parentDetail?.email?.toLowerCase() === user.email.toLowerCase()) {
+              await Lead.findByIdAndUpdate(student.convertedFromLeadId, {
+                parentDetail: {
+                  firstName: updatedParentUser.firstName,
+                  middleName: updatedParentUser.middleName || "",
+                  lastName: updatedParentUser.lastName,
+                  relationship: parentDoc.relationship,
+                  mobileNumber: parentDoc.mobileNumber,
+                  email: updatedParentUser.email,
+                  qualification: parentDoc.qualification || "",
+                  occupation: parentDoc.occupation || "",
+                },
+              });
+            }
+          }
+
+          // Sync to StudentFormAnswer (parental details section)
+          try {
+            const profilePart = await FormPart.findOne({ key: FormPartKey.PROFILE });
+            if (profilePart) {
+              const parentalSection = await FormSection.findOne({
+                partId: profilePart._id,
+                title: "Parental Details",
+                isActive: true,
+              });
+              if (parentalSection) {
+                const sKey = parentalSection._id.toString();
+                const answerDoc = await StudentFormAnswer.findOne({
+                  studentId: student._id,
+                  partKey: "PROFILE",
+                });
+                if (answerDoc?.answers?.[sKey]) {
+                  let changed = false;
+                  for (const subKey of Object.keys(answerDoc.answers[sKey])) {
+                    const entries: any[] = answerDoc.answers[sKey][subKey];
+                    if (!Array.isArray(entries)) continue;
+                    for (const entry of entries) {
+                      if (entry.parentEmail?.trim().toLowerCase() === user.email.toLowerCase()) {
+                        entry.parentFirstName = updatedParentUser.firstName;
+                        entry.parentMiddleName = updatedParentUser.middleName || "";
+                        entry.parentLastName = updatedParentUser.lastName;
+                        entry.parentEmail = updatedParentUser.email;
+                        entry.parentMobile = parentDoc.mobileNumber || entry.parentMobile;
+                        entry.parentRelationship = parentDoc.relationship || entry.parentRelationship;
+                        entry.parentQualification = parentDoc.qualification || entry.parentQualification;
+                        entry.parentOccupation = parentDoc.occupation || entry.parentOccupation;
+                        changed = true;
+                      }
+                    }
+                  }
+                  if (changed) {
+                    answerDoc.markModified('answers');
+                    await answerDoc.save();
+                  }
+                }
+              }
+            }
+          } catch (syncErr) {
+            console.error("⚠️ Parent → StudentFormAnswer reverse sync failed:", syncErr);
+          }
+        }
+        }
       }
     }
 

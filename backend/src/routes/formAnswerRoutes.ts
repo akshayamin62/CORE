@@ -7,6 +7,7 @@ import {
   getStudentProfileData,
   saveStudentProfileData,
   getStudentProfileDataById,
+  saveStudentProfileDataById,
 } from "../controllers/formAnswerController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
@@ -68,6 +69,19 @@ router.get(
     USER_ROLE.IVY_EXPERT,
   ]),
   getStudentProfileDataById
+);
+
+// Save student profile data (for staff roles with edit access)
+router.put(
+  "/student-profile/:studentId",
+  authenticate,
+  authorize([
+    USER_ROLE.SUPER_ADMIN,
+    USER_ROLE.OPS,
+    USER_ROLE.EDUPLAN_COACH,
+    USER_ROLE.IVY_EXPERT,
+  ]),
+  saveStudentProfileDataById
 );
 
 export default router;

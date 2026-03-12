@@ -9,6 +9,8 @@ import FormSection from "../models/FormSection";
 import FormSubSection from "../models/FormSubSection";
 import FormField from "../models/FormField";
 import { AuthRequest } from "../types/auth";
+import { USER_ROLE } from "../types/roles";
+import { syncParentsFromFormAnswers } from "../utils/parentSync";
 
 // Save form answers (part-wise for reusability across services)
 export const saveFormAnswers = async (req: AuthRequest, res: Response) => {
@@ -95,6 +97,34 @@ export const saveFormAnswers = async (req: AuthRequest, res: Response) => {
     if (registration.status === ServiceRegistrationStatus.REGISTERED) {
       registration.status = ServiceRegistrationStatus.IN_PROGRESS;
       await registration.save();
+    }
+
+    // Sync parent records when PROFILE part's Parental Details is saved
+    if (partKey === 'PROFILE') {
+      try {
+        const profilePart = await FormPart.findOne({ key: FormPartKey.PROFILE });
+        if (profilePart) {
+          const parentalSection = await FormSection.findOne({
+            partId: profilePart._id,
+            title: "Parental Details",
+            isActive: true,
+          });
+          if (parentalSection) {
+            const sKey = parentalSection._id.toString();
+            const savedAnswers = answerDoc.answers?.[sKey];
+            if (savedAnswers) {
+              for (const subKey of Object.keys(savedAnswers)) {
+                const entries = savedAnswers[subKey];
+                if (Array.isArray(entries) && entries.length > 0) {
+                  await syncParentsFromFormAnswers(student._id, entries);
+                }
+              }
+            }
+          }
+        }
+      } catch (syncError) {
+        console.error("⚠️ Parent sync after form save failed:", syncError);
+      }
     }
 
     return res.status(200).json({
@@ -374,6 +404,81 @@ export const saveStudentProfileData = async (req: AuthRequest, res: Response) =>
       });
     }
 
+    // Guard: Prevent student from editing name fields (firstName, middleName, lastName)
+    // in Personal Details section
+    if (answers) {
+      const profilePart = await FormPart.findOne({ key: FormPartKey.PROFILE });
+      if (profilePart) {
+        const personalSection = await FormSection.findOne({
+          partId: profilePart._id,
+          title: "Personal Details",
+          isActive: true,
+        });
+        if (personalSection) {
+          const personalKey = personalSection._id.toString();
+          const existingAnswer = await StudentFormAnswer.findOne({
+            studentId: student._id,
+            partKey: "PROFILE",
+          });
+          if (existingAnswer?.answers?.[personalKey] && answers[personalKey]) {
+            const existingData = existingAnswer.answers[personalKey];
+            const incomingData = answers[personalKey];
+            for (const subKey of Object.keys(incomingData)) {
+              const existingEntries: any[] = existingData[subKey] || [];
+              const incomingEntries: any[] = incomingData[subKey] || [];
+              if (existingEntries[0]) {
+                const nameFields = ['firstName', 'middleName', 'lastName'];
+                for (const field of nameFields) {
+                  if (existingEntries[0][field] !== undefined) {
+                    if (!incomingEntries[0]) incomingEntries[0] = {};
+                    incomingEntries[0][field] = existingEntries[0][field];
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Guard: Prevent student from editing already-filled Parental Details entries
+        // but allow adding new entries up to maxRepeat=2
+        const parentalSection = await FormSection.findOne({
+          partId: profilePart._id,
+          title: "Parental Details",
+          isActive: true,
+        });
+        if (parentalSection) {
+          const sectionKey = parentalSection._id.toString();
+          const existingAnswer = await StudentFormAnswer.findOne({
+            studentId: student._id,
+            partKey: "PROFILE",
+          });
+          if (existingAnswer?.answers?.[sectionKey] && answers[sectionKey]) {
+            const existingSectionData = existingAnswer.answers[sectionKey];
+            const incomingSectionData = answers[sectionKey];
+            // For each subsection, preserve already-filled entries
+            for (const subKey of Object.keys(incomingSectionData)) {
+              const existingEntries: any[] = existingSectionData[subKey] || [];
+              const incomingEntries: any[] = incomingSectionData[subKey] || [];
+              const merged: any[] = [];
+              for (let idx = 0; idx < Math.max(existingEntries.length, incomingEntries.length); idx++) {
+                const existing = existingEntries[idx];
+                const hasFilled = existing && Object.values(existing).some((v: any) => v && String(v).trim() !== "");
+                if (hasFilled) {
+                  // Keep existing entry — student can't overwrite
+                  merged.push(existing);
+                } else if (incomingEntries[idx]) {
+                  merged.push(incomingEntries[idx]);
+                }
+              }
+              // Cap at 2 entries
+              incomingSectionData[subKey] = merged.slice(0, 2);
+            }
+            answers[sectionKey] = incomingSectionData;
+          }
+        }
+      }
+    }
+
     // Extract phone number if present
     if (answers) {
       for (const sectionId in answers) {
@@ -410,6 +515,32 @@ export const saveStudentProfileData = async (req: AuthRequest, res: Response) =>
         answers,
         lastSavedAt: new Date(),
       });
+    }
+
+    // Sync parent records from Parental Details entries
+    try {
+      const profilePart2 = await FormPart.findOne({ key: FormPartKey.PROFILE });
+      if (profilePart2) {
+        const parentalSection2 = await FormSection.findOne({
+          partId: profilePart2._id,
+          title: "Parental Details",
+          isActive: true,
+        });
+        if (parentalSection2) {
+          const sKey = parentalSection2._id.toString();
+          const savedAnswers = answerDoc.answers?.[sKey];
+          if (savedAnswers) {
+            for (const subKey of Object.keys(savedAnswers)) {
+              const entries = savedAnswers[subKey];
+              if (Array.isArray(entries) && entries.length > 0) {
+                await syncParentsFromFormAnswers(student._id, entries);
+              }
+            }
+          }
+        }
+      }
+    } catch (syncError) {
+      console.error("⚠️ Parent sync after profile save failed:", syncError);
     }
 
     return res.status(200).json({
@@ -504,4 +635,132 @@ export const getStudentProfileDataById = async (req: AuthRequest, res: Response)
   }
 };
 
+// Save a specific student's profile data (for staff roles)
+export const saveStudentProfileDataById = async (req: AuthRequest, res: Response) => {
+  try {
+    const { studentId } = req.params;
+    const { answers } = req.body;
+    const callerRole = req.user?.role;
 
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
+
+    // Guard: Protect student name fields for non-super-admin callers
+    if (answers && callerRole !== USER_ROLE.SUPER_ADMIN) {
+      const profilePart = await FormPart.findOne({ key: FormPartKey.PROFILE });
+      if (profilePart) {
+        const personalSection = await FormSection.findOne({
+          partId: profilePart._id,
+          title: "Personal Details",
+          isActive: true,
+        });
+        if (personalSection) {
+          const personalKey = personalSection._id.toString();
+          const existingAnswer = await StudentFormAnswer.findOne({
+            studentId: student._id,
+            partKey: "PROFILE",
+          });
+          if (existingAnswer?.answers?.[personalKey] && answers[personalKey]) {
+            const existingData = existingAnswer.answers[personalKey];
+            const incomingData = answers[personalKey];
+            for (const subKey of Object.keys(incomingData)) {
+              const existingEntries: any[] = existingData[subKey] || [];
+              const incomingEntries: any[] = incomingData[subKey] || [];
+              if (existingEntries[0]) {
+                const nameFields = ['firstName', 'middleName', 'lastName'];
+                for (const field of nameFields) {
+                  if (existingEntries[0][field] !== undefined) {
+                    if (!incomingEntries[0]) incomingEntries[0] = {};
+                    incomingEntries[0][field] = existingEntries[0][field];
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Extract phone number if present
+    if (answers) {
+      for (const sectionId in answers) {
+        const sectionData = answers[sectionId];
+        if (typeof sectionData === 'object' && sectionData !== null) {
+          for (const subSectionId in sectionData) {
+            const subSectionData = sectionData[subSectionId];
+            if (Array.isArray(subSectionData)) {
+              const instanceData = subSectionData[0] || {};
+              const phoneValue = instanceData.phoneNumber || instanceData.mobileNumber || instanceData.phone;
+              if (phoneValue && phoneValue.trim()) {
+                student.mobileNumber = phoneValue.trim();
+                await student.save();
+              }
+            }
+          }
+        }
+      }
+    }
+
+    let answerDoc = await StudentFormAnswer.findOne({
+      studentId: student._id,
+      partKey: "PROFILE",
+    });
+
+    if (answerDoc) {
+      answerDoc.answers = { ...answerDoc.answers, ...answers };
+      answerDoc.lastSavedAt = new Date();
+      await answerDoc.save();
+    } else {
+      answerDoc = await StudentFormAnswer.create({
+        studentId: student._id,
+        partKey: "PROFILE",
+        answers,
+        lastSavedAt: new Date(),
+      });
+    }
+
+    // Sync parent records from Parental Details entries
+    try {
+      const profilePart = await FormPart.findOne({ key: FormPartKey.PROFILE });
+      if (profilePart) {
+        const parentalSection = await FormSection.findOne({
+          partId: profilePart._id,
+          title: "Parental Details",
+          isActive: true,
+        });
+        if (parentalSection) {
+          const sKey = parentalSection._id.toString();
+          const savedAnswers = answerDoc.answers?.[sKey];
+          if (savedAnswers) {
+            for (const subKey of Object.keys(savedAnswers)) {
+              const entries = savedAnswers[subKey];
+              if (Array.isArray(entries) && entries.length > 0) {
+                await syncParentsFromFormAnswers(student._id, entries);
+              }
+            }
+          }
+        }
+      }
+    } catch (syncError) {
+      console.error("⚠️ Parent sync after staff profile save failed:", syncError);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile saved successfully",
+      data: { answer: answerDoc },
+    });
+  } catch (error: any) {
+    console.error("Save student profile data by id error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to save profile data",
+      error: error.message,
+    });
+  }
+};

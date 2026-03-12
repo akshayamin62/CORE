@@ -2,20 +2,28 @@
 
 import { useEffect, useState } from 'react';
 import { formAnswerAPI } from '@/lib/api';
-import { FormSection } from '@/types';
+import { FormSection, USER_ROLE } from '@/types';
 import FormSectionRenderer from './FormSectionRenderer';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface StudentProfileModalProps {
   studentId: string;
   onClose: () => void;
+  viewerRole?: string;
 }
 
-export default function StudentProfileModal({ studentId, onClose }: StudentProfileModalProps) {
+export default function StudentProfileModal({ studentId, onClose, viewerRole }: StudentProfileModalProps) {
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [formSections, setFormSections] = useState<FormSection[]>([]);
   const [formValues, setFormValues] = useState<any>({});
   const [selectedSectionIndex, setSelectedSectionIndex] = useState(0);
   const [studentInfo, setStudentInfo] = useState<any>(null);
+
+  // Role-based permissions
+  const isReadOnly = viewerRole === USER_ROLE.ADMIN || viewerRole === USER_ROLE.COUNSELOR;
+  const canEditNames = viewerRole === USER_ROLE.SUPER_ADMIN;
+  const canEdit = !isReadOnly;
 
   useEffect(() => {
     fetchData();
@@ -49,7 +57,64 @@ export default function StudentProfileModal({ studentId, onClose }: StudentProfi
     }
   };
 
+  const handleFieldChange = (sectionId: string, subSectionId: string, index: number, key: string, value: any) => {
+    setFormValues((prev: any) => {
+      const updated = { ...prev };
+      if (!updated[sectionId]) updated[sectionId] = {};
+      if (!updated[sectionId][subSectionId]) updated[sectionId][subSectionId] = [{}];
+      const instances = [...updated[sectionId][subSectionId]];
+      instances[index] = { ...instances[index], [key]: value };
+      updated[sectionId] = { ...updated[sectionId], [subSectionId]: instances };
+      return updated;
+    });
+  };
+
+  const handleAddInstance = (sectionId: string, subSectionId: string) => {
+    setFormValues((prev: any) => {
+      const updated = { ...prev };
+      if (!updated[sectionId]) updated[sectionId] = {};
+      if (!updated[sectionId][subSectionId]) updated[sectionId][subSectionId] = [];
+      updated[sectionId] = {
+        ...updated[sectionId],
+        [subSectionId]: [...updated[sectionId][subSectionId], {}],
+      };
+      return updated;
+    });
+  };
+
+  const handleRemoveInstance = (sectionId: string, subSectionId: string, index: number) => {
+    setFormValues((prev: any) => {
+      const updated = { ...prev };
+      if (!updated[sectionId]?.[subSectionId]) return prev;
+      const instances = [...updated[sectionId][subSectionId]];
+      instances.splice(index, 1);
+      updated[sectionId] = { ...updated[sectionId], [subSectionId]: instances };
+      return updated;
+    });
+  };
+
+  const handleSaveSection = async (sectionId: string) => {
+    try {
+      setSaving(true);
+      const sectionValues = formValues[sectionId] || {};
+      await formAnswerAPI.saveStudentProfileById(studentId, { [sectionId]: sectionValues });
+      toast.success('Section saved successfully');
+    } catch (error) {
+      console.error('Failed to save section:', error);
+      toast.error('Failed to save section');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const currentSection = formSections[selectedSectionIndex];
+  const isParentalSection = currentSection?.title === 'Parental Details';
+  const isPersonalSection = currentSection?.title === 'Personal Details';
+
+  // ReadOnlyKeys: lock name fields for non-super-admin editors
+  const readOnlyKeys = (!canEditNames && isPersonalSection)
+    ? ['firstName', 'middleName', 'lastName']
+    : undefined;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
@@ -57,6 +122,7 @@ export default function StudentProfileModal({ studentId, onClose }: StudentProfi
         className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
+        <Toaster position="top-right" />
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-white">Student Profile</h2>
@@ -98,17 +164,42 @@ export default function StudentProfileModal({ studentId, onClose }: StudentProfi
                 ))}
               </div>
 
-              {/* Form Section (read-only) */}
+              {/* Form Section */}
               {currentSection && (
-                <FormSectionRenderer
-                  section={currentSection}
-                  values={formValues[currentSection._id] || {}}
-                  onChange={() => {}}
-                  onAddInstance={() => {}}
-                  onRemoveInstance={() => {}}
-                  errors={{}}
-                  readOnly={true}
-                />
+                <div>
+                  <FormSectionRenderer
+                    section={currentSection}
+                    values={formValues[currentSection._id] || {}}
+                    onChange={canEdit
+                      ? (subSectionId, index, key, value) =>
+                          handleFieldChange(currentSection._id, subSectionId, index, key, value)
+                      : () => {}
+                    }
+                    onAddInstance={canEdit
+                      ? (subSectionId) => handleAddInstance(currentSection._id, subSectionId)
+                      : () => {}
+                    }
+                    onRemoveInstance={canEdit
+                      ? (subSectionId, index) => handleRemoveInstance(currentSection._id, subSectionId, index)
+                      : () => {}
+                    }
+                    errors={{}}
+                    readOnly={isReadOnly}
+                    readOnlyKeys={readOnlyKeys}
+                    noDelete={isParentalSection}
+                  />
+                  {canEdit && (
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        onClick={() => handleSaveSection(currentSection._id)}
+                        disabled={saving}
+                        className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium transition-colors"
+                      >
+                        {saving ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </>
           )}

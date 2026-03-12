@@ -18,6 +18,8 @@ interface FormSectionRendererProps {
   userRole?: 'STUDENT' | 'OPS' | 'SUPER_ADMIN' | 'ADMIN' | 'COUNSELOR';
   readOnly?: boolean;
   readOnlyKeys?: string[];
+  noDelete?: boolean;
+  readOnlyInstances?: number[];
 }
 
 export default function FormSectionRenderer({
@@ -33,6 +35,8 @@ export default function FormSectionRenderer({
   userRole,
   readOnly = false,
   readOnlyKeys,
+  noDelete = false,
+  readOnlyInstances = [],
 }: FormSectionRendererProps) {
   // Check if this is a document section
   const isDocumentSection = section.title.toLowerCase().includes('document');
@@ -120,6 +124,8 @@ export default function FormSectionRenderer({
                   isAdminEdit={isAdminEdit}
                   readOnly={readOnly}
                   readOnlyKeys={readOnlyKeys}
+                  noDelete={noDelete}
+                  readOnlyInstances={readOnlyInstances}
                 />
               </div>
             );

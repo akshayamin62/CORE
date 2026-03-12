@@ -595,7 +595,7 @@ const seedFormData = async () => {
       description: "Add parent or guardian information",
       order: 1,
       isRepeatable: true,
-      maxRepeat: 10,
+      maxRepeat: 2,
       isActive: true,
     });
 

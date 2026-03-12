@@ -149,6 +149,8 @@ export default function ProfilePage() {
   if (user?.role === 'STUDENT' && formSections.length > 0) {
     const currentSection = formSections[selectedSectionIndex];
 
+    const isParentalSection = currentSection?.title === 'Parental Details';
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
         <Toaster position="top-right" />
@@ -203,27 +205,36 @@ export default function ProfilePage() {
               <FormSectionRenderer
                 section={currentSection}
                 values={formValues[currentSection._id] || {}}
-                onChange={(subSectionId, index, key, value) =>
+                onChange={isParentalSection ? () => {} : (subSectionId, index, key, value) =>
                   handleFieldChange(currentSection._id, subSectionId, index, key, value)
                 }
-                onAddInstance={(subSectionId) =>
+                onAddInstance={isParentalSection ? () => {} : (subSectionId) =>
                   handleAddInstance(currentSection._id, subSectionId)
                 }
-                onRemoveInstance={(subSectionId, index) =>
+                onRemoveInstance={isParentalSection ? () => {} : (subSectionId, index) =>
                   handleRemoveInstance(currentSection._id, subSectionId, index)
                 }
                 errors={{}}
+                readOnly={isParentalSection}
                 readOnlyKeys={['firstName', 'middleName', 'lastName']}
+                noDelete={isParentalSection}
               />
-              <div className="mt-4 flex justify-end">
-                <button
-                  onClick={() => handleSaveSection(currentSection._id)}
-                  disabled={saving}
-                  className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium transition-colors"
-                >
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
-              </div>
+              {isParentalSection && (
+                <div className="mt-3 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+                  Parental details can only be edited by Super Admin
+                </div>
+              )}
+              {!isParentalSection && (
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={() => handleSaveSection(currentSection._id)}
+                    disabled={saving}
+                    className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium transition-colors"
+                  >
+                    {saving ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
