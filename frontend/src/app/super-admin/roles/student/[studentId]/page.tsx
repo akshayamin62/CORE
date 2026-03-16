@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { authAPI, serviceAPI } from '@/lib/api';
+import { authAPI, serviceAPI, superAdminAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
@@ -132,6 +132,7 @@ export default function StudentDetailPage() {
   const [eduplanCoaches, setEduplanCoaches] = useState<EduplanCoach[]>([]);
   const [assigningOps, setAssigningOps] = useState<string | null>(null);
   const [switchingActive, setSwitchingActive] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
   // Use ref to prevent double execution in React StrictMode
@@ -320,6 +321,25 @@ export default function StudentDetailPage() {
     router.push(`/super-admin/roles/student/${studentId}/registration/${registrationId}`);
   };
 
+  const handleStatusChange = async (registrationId: string, newStatus: string) => {
+    setUpdatingStatus(registrationId);
+    try {
+      await superAdminAPI.updateRegistrationStatus(registrationId, newStatus);
+      toast.success(`Status updated to ${newStatus.replace(/_/g, ' ')}`);
+      // Update local state
+      setRegistrations(prev =>
+        prev.map(r =>
+          r._id === registrationId ? { ...r, status: newStatus } : r
+        )
+      );
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update status');
+      console.error('Update status error:', error);
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -484,9 +504,24 @@ export default function StudentDetailPage() {
                         </p>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
                           <span>Registered: {new Date(registration.createdAt).toLocaleDateString('en-GB')}</span>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
-                            {registration.status}
-                          </span>
+                          <select
+                            value={registration.status}
+                            onChange={(e) => handleStatusChange(registration._id, e.target.value)}
+                            disabled={updatingStatus === registration._id}
+                            className={`px-2 py-1 rounded text-xs font-medium border cursor-pointer focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                              registration.status === 'COMPLETED' ? 'bg-green-100 text-green-800 border-green-300' :
+                              registration.status === 'CANCELLED' ? 'bg-red-100 text-red-800 border-red-300' :
+                              registration.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+                              'bg-blue-100 text-blue-800 border-blue-300'
+                            }`}
+                          >
+                            <option value="IN_PROGRESS">IN_PROGRESS</option>
+                            <option value="COMPLETED">COMPLETED</option>
+                            <option value="CANCELLED">CANCELLED</option>
+                          </select>
+                          {updatingStatus === registration._id && (
+                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                          )}
                         </div>
                         {user?.role === USER_ROLE.SUPER_ADMIN && (
                           <div className="mt-4 space-y-4 border-t pt-4">

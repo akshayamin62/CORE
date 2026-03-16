@@ -203,6 +203,9 @@ export const superAdminAPI = {
   
   switchActiveOps: (registrationId: string, activeOpsId: string) =>
     api.post(`/super-admin/students/registrations/${registrationId}/switch-active-ops`, { activeOpsId }),
+
+  updateRegistrationStatus: (registrationId: string, status: string) =>
+    api.patch(`/super-admin/students/registrations/${registrationId}/status`, { status }),
 };
 
 // Admin Student API (read-only access to students for admin/counselor)
