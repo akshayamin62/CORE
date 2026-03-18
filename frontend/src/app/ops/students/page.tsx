@@ -119,6 +119,7 @@ export default function OpsStudentsPage() {
   };
 
   const filteredStudents = students.filter((student) => {
+    if (student.user.isActive === false) return false;
     const query = searchQuery.toLowerCase();
     const studentName = getFullName(student.user).toLowerCase();
     return (

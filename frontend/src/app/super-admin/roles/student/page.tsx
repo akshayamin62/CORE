@@ -161,10 +161,11 @@ export default function StudentUsersPage() {
         };
       }));
       
-      // Calculate stats
+      // Calculate stats (only active students shown in this view)
+      const activeStudents = fetchedStudents.filter((s: StudentData) => s.user.isActive);
       setStats({
-        total: fetchedStudents.length,
-        active: fetchedStudents.filter((s: StudentData) => s.user.isActive).length,
+        total: activeStudents.length,
+        active: activeStudents.length,
         pendingOpsAssignments: pendingOpsAssignments,
       });
     } catch (error: any) {
@@ -184,13 +185,9 @@ export default function StudentUsersPage() {
       student.mobileNumber?.includes(query) ||
       student.adminId?.companyName?.toLowerCase().includes(query);
     
-    const matchesStatus = !statusFilter || 
-      (statusFilter === 'active' && student.user.isActive) ||
-      (statusFilter === 'inactive' && !student.user.isActive);
-    
     const matchesPending = !pendingFilter || student.hasPendingAssignment;
     
-    return matchesSearch && matchesStatus && matchesPending;
+    return matchesSearch && matchesPending && student.user.isActive !== false;
   });
 
   const handleViewStudent = (studentId: string) => {
@@ -386,7 +383,6 @@ export default function StudentUsersPage() {
                 >
                   <option value="">All Status</option>
                   <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
                 </select>
                 <button
                   onClick={() => {

@@ -235,6 +235,14 @@ export const parentAPI = {
   getParentDetailByUserId: (userId: string) => api.get(`/parents/detail-by-user/${userId}`),
 };
 
+// Archive API
+export const archiveAPI = {
+  getSuperAdminArchive: (params?: { role?: string; search?: string }) =>
+    api.get('/archive/super-admin', { params }),
+  getStaffArchive: (params?: { search?: string; type?: string }) =>
+    api.get('/archive/staff', { params }),
+};
+
 // Service API
 export const serviceAPI = {
   getAllServices: () => api.get('/services/services'),
@@ -821,6 +829,12 @@ export const spServiceAPI = {
   browseServices: (params?: { category?: string; search?: string }) => api.get('/sp-services/browse', { params }),
   sendEnquiry: (data: { spServiceId: string; serviceProviderId: string; message: string }) => api.post('/sp-services/enquiry', data),
   getStudentEnquiries: () => api.get('/sp-services/student-enquiries'),
+
+  // Admin-facing (Super Admin, Admin, Parent)
+  getStudentEnquiriesById: (studentId: string) => api.get(`/sp-services/student/${studentId}/enquiries`),
+  getSPServicesById: (providerId: string) => api.get(`/sp-services/provider/${providerId}/services`),
+  getSPEnquiriesById: (providerId: string) => api.get(`/sp-services/provider/${providerId}/enquiries`),
+  getAllServicesForSuperAdmin: (params?: { category?: string; search?: string }) => api.get('/sp-services/all', { params }),
 };
 
 export default api;
