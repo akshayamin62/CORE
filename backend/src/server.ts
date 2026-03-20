@@ -30,6 +30,7 @@ import parentRoutes from "./routes/parentRoutes";
 import activityRoutes from "./routes/activityRoutes";
 import archiveRoutes from "./routes/archiveRoutes";
 import ivyLeagueRegistrationRoutes from "./routes/ivyLeagueRegistrationRoutes";
+import servicePlanRoutes from "./routes/servicePlanRoutes";
 import ivyLeagueAdminRoutes from "./routes/ivyLeagueAdmin.routes";
 
 // Ivy League route imports
@@ -82,6 +83,8 @@ import "./models/Portfolio";
 import "./models/MonthlyFocus";
 import "./models/DailyPlanner";
 import "./models/IvyLeagueRegistration";
+import "./models/ServicePricing";
+import "./models/SuperAdminServicePricing";
 
 // Import Ivy League models to register them with Mongoose
 import "./models/ivy/AcademicData";
@@ -150,6 +153,7 @@ app.use("/api/portfolio", portfolioRoutes); // Portfolio generation routes
 app.use("/api/parents", parentRoutes); // Parent management routes
 app.use("/api/archive", archiveRoutes); // Archive (deactivated users) routes
 app.use("/api/activity", activityRoutes); // Activity management routes
+app.use("/api/service-plans", servicePlanRoutes); // Service plans & pricing routes (study-abroad, ivy-league, education-planning)
 app.use("/api/ivy-league-registration", ivyLeagueRegistrationRoutes); // Ivy League registration form routes
 app.use("/api", leadRoutes); // Lead routes (includes public, admin, counselor endpoints)
 

@@ -113,7 +113,7 @@ export default function StudentUsersPage() {
         return 'bg-amber-100 text-amber-800';
       case SERVICE_TYPE.EDUCATION_PLANNING:
         return 'bg-teal-100 text-teal-800';
-      case SERVICE_TYPE.IELTS_GRE_LANGUAGE_COACHING:
+      case SERVICE_TYPE.COACHING_CLASSES:
         return 'bg-rose-100 text-rose-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -743,7 +743,7 @@ export default function StudentUsersPage() {
                         <div className="sm:col-span-2">
                           <label className="block text-sm font-semibold text-gray-700 mb-1">Service Types</label>
                           <div className="flex flex-wrap gap-2">
-                            {['Education Planning', 'Career Focus Study Abroad', 'Ivy League Admission', 'IELTS/GRE/Language Coaching'].map((st) => (
+                            {['Education Planning', 'Career Focus Study Abroad', 'Ivy League Admission', 'Coaching Classes'].map((st) => (
                               <label key={st} className="flex items-center gap-1.5 text-xs bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200 opacity-60 cursor-not-allowed">
                                 <input
                                   type="checkbox"

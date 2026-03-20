@@ -53,6 +53,7 @@ export default function AdminStudentFormViewPage() {
   const [formValues, setFormValues] = useState<any>({});
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [serviceInfo, setServiceInfo] = useState<any>(null);
+  const [planTier, setPlanTier] = useState<string | undefined>();
 
   // Education Planning state
   const [brainographyDoc, setBrainographyDoc] = useState<BrainographyDoc | null>(null);
@@ -218,6 +219,7 @@ export default function AdminStudentFormViewPage() {
       const extractedServiceId = typeof regServiceId === 'object' ? regServiceId._id : regServiceId;
 
       setServiceInfo(regServiceId);
+      setPlanTier(registrationData.registration.planTier);
 
       const svcName = typeof regServiceId === 'object' ? regServiceId.name : '';
       const svcSlug = typeof regServiceId === 'object' ? regServiceId.slug : '';
@@ -323,8 +325,11 @@ export default function AdminStudentFormViewPage() {
             <StudentFormHeader
               studentName={getFullName(studentInfo.userId) || 'Student'}
               serviceName={serviceInfo.name}
-              editMode="VIEW"
+              editMode="admin"
               studentId={studentId}
+              planTier={planTier}
+              serviceSlug={typeof serviceInfo === 'object' ? serviceInfo.slug : ''}
+              adminId={studentInfo.adminId?._id}
             />
           )}
 
@@ -426,8 +431,8 @@ export default function AdminStudentFormViewPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button onClick={handleBrainographyView} className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-xs font-medium">View</button>
-                        <button onClick={handleBrainographyDownload} className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-xs font-medium">Download</button>
+                        <button onClick={handleBrainographyView} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">View</button>
+                        <button onClick={handleBrainographyDownload} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">Download</button>
                       </div>
                     </div>
                   </div>
@@ -574,7 +579,7 @@ export default function AdminStudentFormViewPage() {
                 <div className="mb-6">
                   {currentPart.key === 'APPLICATION' && (currentSection.title === 'Apply to Program' || currentSection.title === 'Applied Program') ? (
                     <div className="bg-white rounded-lg border border-gray-200 p-6">
-                      <div className="bg-indigo-600 px-6 py-4 -mx-6 -mt-6 mb-6 border-b border-indigo-700">
+                      <div className="bg-blue-600 px-6 py-4 -mx-6 -mt-6 mb-6 border-b border-blue-700">
                         <h3 className="text-xl font-semibold text-white">{currentSection.title}</h3>
                         {currentSection.description && <p className="text-indigo-100 text-sm mt-1">{currentSection.description}</p>}
                       </div>

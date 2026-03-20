@@ -256,6 +256,30 @@ export const serviceAPI = {
     api.get(`/services/registrations/${registrationId}`),
 };
 
+// Service Plans API (Study Abroad, Coaching Classes, etc.)
+export const servicePlanAPI = {
+  getPricing: (serviceSlug: string) => api.get(`/service-plans/${serviceSlug}/pricing`),  // works for STUDENT and COUNSELOR
+  register: (serviceSlug: string, planTier: string) =>
+    api.post(`/service-plans/${serviceSlug}/register`, { planTier }),
+  upgrade: (serviceSlug: string, newPlanTier: string) =>
+    api.put(`/service-plans/${serviceSlug}/upgrade`, { newPlanTier }),
+  // Admin
+  getAdminPricing: (serviceSlug: string) => api.get(`/service-plans/${serviceSlug}/admin/pricing`),
+  setAdminPricing: (serviceSlug: string, prices: Record<string, number>) =>
+    api.put(`/service-plans/${serviceSlug}/admin/pricing`, { prices }),
+  getBasePricingForAdmin: (serviceSlug: string) => api.get(`/service-plans/${serviceSlug}/admin/base-pricing`),
+  // Get any admin's pricing by adminId (for viewing plans from any role)
+  getAdminPricingById: (serviceSlug: string, adminId: string) =>
+    api.get(`/service-plans/${serviceSlug}/admin/${adminId}/pricing`),
+  // Super Admin
+  getSuperAdminPricing: (serviceSlug: string) => api.get(`/service-plans/${serviceSlug}/super-admin/pricing`),
+  setSuperAdminPricing: (serviceSlug: string, prices: Record<string, number>) =>
+    api.put(`/service-plans/${serviceSlug}/super-admin/pricing`, { prices }),
+  // Get a student's plan tiers
+  getStudentPlanTiers: (studentId: string) =>
+    api.get(`/service-plans/student/${studentId}/plan-tiers`),
+};
+
 // Ivy League Registration API
 export const ivyLeagueRegistrationAPI = {
   getPrefill: () => api.get('/ivy-league-registration/prefill'),

@@ -52,6 +52,7 @@ export default function ParentStudentRegistrationPage() {
   const [formValues, setFormValues] = useState<any>({});
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [serviceInfo, setServiceInfo] = useState<any>(null);
+  const [planTier, setPlanTier] = useState<string | undefined>();
 
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [isStudyAbroad, setIsStudyAbroad] = useState(false);
@@ -214,6 +215,7 @@ export default function ParentStudentRegistrationPage() {
       const extractedServiceId = typeof regServiceId === 'object' ? regServiceId._id : regServiceId;
 
       setServiceInfo(regServiceId);
+      setPlanTier(registrationData.registration.planTier);
 
       const svcSlug = typeof regServiceId === 'object' ? regServiceId.slug : '';
       const svcName = typeof regServiceId === 'object' ? regServiceId.name : '';
@@ -309,6 +311,9 @@ export default function ParentStudentRegistrationPage() {
               serviceName={serviceInfo.name}
               editMode="VIEW"
               studentId={studentId}
+              planTier={planTier}
+              serviceSlug={typeof serviceInfo === 'object' ? serviceInfo.slug : ''}
+              adminId={studentInfo.adminId?._id}
             />
           )}
 

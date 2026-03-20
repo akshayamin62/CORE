@@ -29,6 +29,7 @@ export interface IStudentServiceRegistration extends Document {
   registeredAt: Date;
   completedAt?: Date;
   cancelledAt?: Date;
+  planTier?: string;
   paymentStatus?: string;
   paymentAmount?: number;
   notes?: string;
@@ -122,6 +123,10 @@ const studentServiceRegistrationSchema = new Schema<IStudentServiceRegistration>
     },
     cancelledAt: {
       type: Date,
+      default: undefined,
+    },
+    planTier: {
+      type: String,
       default: undefined,
     },
     paymentStatus: {

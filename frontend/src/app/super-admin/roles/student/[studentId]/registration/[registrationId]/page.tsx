@@ -55,6 +55,7 @@ export default function SuperAdminStudentFormEditPage() {
   const [formValues, setFormValues] = useState<any>({});
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [serviceInfo, setServiceInfo] = useState<any>(null);
+  const [planTier, setPlanTier] = useState<string | undefined>();
 
   // Education Planning state
   const [brainographyDoc, setBrainographyDoc] = useState<BrainographyDoc | null>(null);
@@ -235,6 +236,7 @@ export default function SuperAdminStudentFormEditPage() {
 
       setStudentInfo(studentData);
       setServiceInfo(regServiceId);
+      setPlanTier(registrationData.registration.planTier);
 
       const svcName = typeof regServiceId === 'object' ? regServiceId.name : '';
       const svcSlug = typeof regServiceId === 'object' ? regServiceId.slug : '';
@@ -425,6 +427,9 @@ export default function SuperAdminStudentFormEditPage() {
               serviceName={serviceInfo.name}
               editMode="SUPER_ADMIN"
               studentId={studentId}
+              planTier={planTier}
+              serviceSlug={typeof serviceInfo === 'object' ? serviceInfo.slug : ''}
+              adminId={studentInfo.adminId?._id}
             />
           )}
 
