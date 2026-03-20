@@ -6,6 +6,7 @@ import { authAPI, serviceAPI, servicePlanAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import StudentLayout from '@/components/StudentLayout';
 import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
+import CoachingClassCards from '@/components/CoachingClassCards';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -161,6 +162,7 @@ export default function StudentServicePlansPage() {
 
   const selectedServiceInfo = availableServices.find((s) => s.slug === selectedService);
   const plans = selectedService ? getServicePlans(selectedService) : [];
+  const isCoaching = selectedService === 'coaching-classes';
 
   return (
     <StudentLayout user={user} formStructure={[]} currentPartIndex={0} currentSectionIndex={0} onPartChange={() => {}} onSectionChange={() => {}} isOuterNav={true}>
@@ -212,6 +214,58 @@ export default function StudentServicePlansPage() {
               <div className="flex items-center justify-center py-20">
                 <div className="text-center"><div className="spinner mx-auto mb-4"></div><p className="text-gray-600">Loading plan details...</p></div>
               </div>
+            ) : isCoaching ? (
+              <>
+                {/* Coaching Classes Header */}
+                <div className="mb-8">
+                  <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Coaching Classes</h2>
+                  <p className="mt-1 text-gray-500 text-lg max-w-2xl">Choose your coaching class. Each includes study material, session recordings, and dedicated mock tests.</p>
+                </div>
+
+                {/* No pricing warning */}
+                {!pricing && (
+                  <div className="mb-8 bg-amber-50/80 backdrop-blur border border-amber-200 rounded-2xl p-5">
+                    <div className="flex gap-3">
+                      <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
+                        <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-amber-900">Pricing Not Available</p>
+                        <p className="text-sm text-amber-700 mt-0.5">Your admin has not set pricing yet.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <CoachingClassCards
+                  plans={plans}
+                  pricing={pricing}
+                  renderAction={(plan) => (
+                    <button
+                      onClick={() => handleRegister(plan.key)}
+                      disabled={registering !== null || pricing?.[plan.key] == null}
+                      className="w-full py-3 bg-blue-600 text-white rounded-full font-bold text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {registering === plan.key ? (
+                        <span className="inline-flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Registering...</span>
+                      ) : 'Register Now'}
+                    </button>
+                  )}
+                />
+
+                {/* Note */}
+                <div className="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-5">
+                  <div className="flex gap-3">
+                    <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-blue-800">All coaching classes include</p>
+                      <p className="text-sm text-blue-700 mt-1">Study Material, Session Recordings, and dedicated mock tests as mentioned per class.</p>
+                    </div>
+                  </div>
+                </div>
+              </>
             ) : (
               <>
                 {/* Header */}

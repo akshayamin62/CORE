@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { authAPI, serviceAPI, servicePlanAPI } from '@/lib/api';
 import { User, Service } from '@/types';
 import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
+import CoachingClassCards from '@/components/CoachingClassCards';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -92,21 +93,17 @@ function ServicePlansViewContent() {
       <Toaster position="top-right" />
       <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white relative overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-60 h-60 bg-blue-500/10 rounded-full" />
-          <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-indigo-500/10 rounded-full" />
-          <div className="max-w-7xl mx-auto px-6 py-8 lg:px-8 relative">
-            <button
-              onClick={() => router.back()}
-              className="mb-4 inline-flex items-center gap-1.5 text-sm text-blue-200 hover:text-white transition-colors font-medium"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              Back
-            </button>
-            <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight">Service Plans</h1>
-            {studentName && <p className="text-blue-200 mt-1">Viewing plans for <span className="font-semibold text-white">{studentName}</span></p>}
-            {!studentName && <p className="text-blue-200 mt-1">Browse and compare service plans and pricing.</p>}
-          </div>
+        <div className="max-w-7xl mx-auto px-6 py-8 lg:px-8">
+          <button
+            onClick={() => router.back()}
+            className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            Back
+          </button>
+          <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Service Plans</h1>
+          {studentName && <p className="text-gray-500 mt-1">Viewing plans for <span className="font-semibold text-gray-900">{studentName}</span></p>}
+          {!studentName && <p className="text-gray-500 mt-1">Browse and compare service plans and pricing.</p>}
         </div>
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
@@ -181,81 +178,125 @@ function ServicePlansViewContent() {
                 </div>
               ) : (
                 <>
-                  <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white rounded-2xl p-8 mb-8 relative overflow-hidden">
-                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full" />
-                    <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-indigo-500/10 rounded-full" />
-                    <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight relative">{selectedServiceInfo?.name} Plans</h2>
-                    <p className="mt-2 text-blue-200 text-lg max-w-2xl relative">
-                      {studentPlanTiers[selectedService!]
-                        ? `${studentName || 'Student'} is on the ${studentPlanTiers[selectedService!]} plan.`
-                        : 'Compare features and pricing across all plan tiers.'}
-                    </p>
-                  </div>
+                {selectedService === 'coaching-classes' ? (
+                  <>
+                    {/* Coaching Classes Header */}
+                    <div className="mb-8">
+                      <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Coaching Classes</h2>
+                      <p className="mt-1 text-gray-500 text-lg max-w-2xl">
+                        {studentPlanTiers[selectedService!]
+                          ? `${studentName || 'Student'} is registered for coaching.`
+                          : 'Compare features and pricing across all coaching classes.'}
+                      </p>
+                    </div>
 
-                  {/* Plan Cards with current plan indicator */}
-                  {plans.length > 0 && studentPlanTiers[selectedService!] && (
-                    <div className={`grid gap-5 mb-8 ${plans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
-                      {plans.map((plan) => {
-                        const currentTier = studentPlanTiers[selectedService!];
-                        const isCurrent = currentTier === plan.key;
-                        const PLAN_HIERARCHY: Record<string, number> = { PRO: 0, PREMIUM: 1, PLATINUM: 2 };
-                        const isUpgradePlan = (PLAN_HIERARCHY[plan.key] ?? -1) > (PLAN_HIERARCHY[currentTier] ?? -1);
-                        const isLowerPlan = (PLAN_HIERARCHY[plan.key] ?? -1) < (PLAN_HIERARCHY[currentTier] ?? -1);
-                        const priceDiff = pricing && pricing[plan.key] != null && pricing[currentTier] != null
-                          ? pricing[plan.key] - pricing[currentTier] : null;
-
-                        return (
-                          <div key={plan.key} className={`relative bg-white rounded-2xl shadow-md border-2 ${isCurrent ? 'ring-2 ring-green-500 ' : ''}${plan.borderColor} overflow-hidden`}>
-                            {isCurrent && (
-                              <div className="absolute top-3 right-3 z-10 px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md flex items-center gap-1">
-                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                                Current Plan
-                              </div>
-                            )}
-                            <div className={`${plan.headerGradient} px-5 py-4 text-white`}>
-                              <h3 className="text-lg font-bold">{plan.name}</h3>
-                              {plan.subtitle && <p className="text-xs opacity-80 mt-0.5">{plan.subtitle}</p>}
-                            </div>
-                            <div className="p-5">
-                              {pricing?.[plan.key] != null ? (
-                                <div className="mb-3">
-                                  <p className="text-3xl font-extrabold text-gray-900">₹{pricing[plan.key].toLocaleString('en-IN')}</p>
-                                  <p className="text-xs text-gray-500 mt-1">One-time payment</p>
-                                  {isUpgradePlan && priceDiff != null && priceDiff > 0 && (
-                                    <p className="text-sm text-emerald-600 font-semibold mt-2">+₹{priceDiff.toLocaleString('en-IN')} upgrade difference</p>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="mb-3"><p className="text-sm text-gray-400 font-medium">Price not set</p></div>
-                              )}
-                              {isCurrent ? (
-                                <span className="inline-block w-full text-center py-2 px-4 rounded-xl font-bold text-sm text-white bg-green-500">Current Plan</span>
-                              ) : isUpgradePlan ? (
-                                <span className="inline-block w-full text-center py-2 px-4 rounded-xl font-bold text-sm text-blue-600 bg-blue-50 border border-blue-200">Upgrade Option</span>
-                              ) : isLowerPlan ? (
-                                <span className="inline-block w-full text-center py-2 px-4 rounded-xl font-bold text-sm text-gray-400 bg-gray-100">Lower Tier</span>
-                              ) : null}
-                            </div>
+                    {/* No pricing warning */}
+                    {!pricing && (
+                      <div className="mb-8 bg-amber-50/80 backdrop-blur border border-amber-200 rounded-2xl p-5">
+                        <div className="flex gap-3">
+                          <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
+                            <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                          <div>
+                            <p className="text-sm font-bold text-amber-900">Pricing Not Available</p>
+                            <p className="text-sm text-amber-700 mt-0.5">{adminId ? 'Admin has not set pricing yet.' : 'No admin pricing available.'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
-                  {plans.length > 0 ? (
-                    <ServicePlanDetailsView
-                      features={features}
-                      pricing={pricing}
+                    <CoachingClassCards
                       plans={plans}
-                      serviceName={selectedServiceInfo?.name || ''}
-                      showPricing={true}
-                      noPricingMessage={adminId ? 'Admin has not set pricing yet.' : 'No admin pricing available.'}
+                      pricing={pricing}
+                      currentPlanKey={studentPlanTiers[selectedService!] || null}
                     />
-                  ) : (
-                    <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
-                      <p className="text-gray-500">No plans configured for this service yet.</p>
+
+                    {/* Note */}
+                    <div className="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-5">
+                      <p className="text-sm text-blue-800">
+                        <strong>All coaching classes include:</strong> Study Material, Session Recordings, and dedicated mock tests as listed per program.
+                      </p>
                     </div>
-                  )}
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white rounded-2xl p-8 mb-8 relative overflow-hidden">
+                      <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full" />
+                      <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-indigo-500/10 rounded-full" />
+                      <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight relative">{selectedServiceInfo?.name} Plans</h2>
+                      <p className="mt-2 text-blue-200 text-lg max-w-2xl relative">
+                        {studentPlanTiers[selectedService!]
+                          ? `${studentName || 'Student'} is on the ${studentPlanTiers[selectedService!]} plan.`
+                          : 'Compare features and pricing across all plan tiers.'}
+                      </p>
+                    </div>
+
+                    {/* Plan Cards with current plan indicator */}
+                    {plans.length > 0 && studentPlanTiers[selectedService!] && (
+                      <div className={`grid gap-5 mb-8 ${plans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+                        {plans.map((plan) => {
+                          const currentTier = studentPlanTiers[selectedService!];
+                          const isCurrent = currentTier === plan.key;
+                          const PLAN_HIERARCHY: Record<string, number> = { PRO: 0, PREMIUM: 1, PLATINUM: 2 };
+                          const isUpgradePlan = (PLAN_HIERARCHY[plan.key] ?? -1) > (PLAN_HIERARCHY[currentTier] ?? -1);
+                          const isLowerPlan = (PLAN_HIERARCHY[plan.key] ?? -1) < (PLAN_HIERARCHY[currentTier] ?? -1);
+                          const priceDiff = pricing && pricing[plan.key] != null && pricing[currentTier] != null
+                            ? pricing[plan.key] - pricing[currentTier] : null;
+
+                          return (
+                            <div key={plan.key} className={`relative bg-white rounded-2xl shadow-md border-2 ${isCurrent ? 'ring-2 ring-green-500 ' : ''}${plan.borderColor} overflow-hidden`}>
+                              {isCurrent && (
+                                <div className="absolute top-3 right-3 z-10 px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md flex items-center gap-1">
+                                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                                  Current Plan
+                                </div>
+                              )}
+                              <div className={`${plan.headerGradient} px-5 py-4 text-white`}>
+                                <h3 className="text-lg font-bold">{plan.name}</h3>
+                                {plan.subtitle && <p className="text-xs opacity-80 mt-0.5">{plan.subtitle}</p>}
+                              </div>
+                              <div className="p-5">
+                                {pricing?.[plan.key] != null ? (
+                                  <div className="mb-3">
+                                    <p className="text-3xl font-extrabold text-gray-900">₹{pricing[plan.key].toLocaleString('en-IN')}</p>
+                                    <p className="text-xs text-gray-500 mt-1">One-time payment</p>
+                                    {isUpgradePlan && priceDiff != null && priceDiff > 0 && (
+                                      <p className="text-sm text-emerald-600 font-semibold mt-2">+₹{priceDiff.toLocaleString('en-IN')} upgrade difference</p>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="mb-3"><p className="text-sm text-gray-400 font-medium">Price not set</p></div>
+                                )}
+                                {isCurrent ? (
+                                  <span className="inline-block w-full text-center py-2 px-4 rounded-xl font-bold text-sm text-white bg-green-500">Current Plan</span>
+                                ) : isUpgradePlan ? (
+                                  <span className="inline-block w-full text-center py-2 px-4 rounded-xl font-bold text-sm text-blue-600 bg-blue-50 border border-blue-200">Upgrade Option</span>
+                                ) : isLowerPlan ? (
+                                  <span className="inline-block w-full text-center py-2 px-4 rounded-xl font-bold text-sm text-gray-400 bg-gray-100">Lower Tier</span>
+                                ) : null}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {plans.length > 0 ? (
+                      <ServicePlanDetailsView
+                        features={features}
+                        pricing={pricing}
+                        plans={plans}
+                        serviceName={selectedServiceInfo?.name || ''}
+                        showPricing={true}
+                        noPricingMessage={adminId ? 'Admin has not set pricing yet.' : 'No admin pricing available.'}
+                      />
+                    ) : (
+                      <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
+                        <p className="text-gray-500">No plans configured for this service yet.</p>
+                      </div>
+                    )}
+                  </>
+                )}
                 </>
               )}
             </div>

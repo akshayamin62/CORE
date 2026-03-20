@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { authAPI, servicePlanAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
-import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
-import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
+import CoachingClassCards from '@/components/CoachingClassCards';
+import { getServicePlans } from '@/config/servicePlans';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function CoachingClassesPricingPage() {
@@ -18,7 +18,6 @@ export default function CoachingClassesPricingPage() {
   const [basePricing, setBasePricing] = useState<Record<string, number> | null>(null);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const plans = getServicePlans('coaching-classes');
-  const features = getServiceFeatures('coaching-classes');
 
   useEffect(() => { checkAuth(); }, []);
 
@@ -75,23 +74,19 @@ export default function CoachingClassesPricingPage() {
     <AdminLayout user={user}>
       <Toaster position="top-right" />
       <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-[calc(100vh-5rem)]">
-        <div className="bg-gradient-to-r from-teal-600 via-emerald-600 to-cyan-600 text-white relative overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-60 h-60 bg-teal-500/10 rounded-full" />
-          <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-emerald-500/10 rounded-full" />
-          <div className="px-6 lg:px-8 py-8 relative">
-            <button onClick={() => router.push('/admin/service-pricing')} className="mb-4 inline-flex items-center gap-1.5 text-sm text-teal-100 hover:text-white transition-colors font-medium">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              Back to Service Pricing
-            </button>
-            <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight">Coaching Classes Pricing</h1>
-            <p className="text-teal-100 mt-1 max-w-2xl">Set the selling prices for your students&apos; coaching classes.</p>
-          </div>
+        <div className="px-6 lg:px-8 py-8">
+          <button onClick={() => router.push('/admin/service-pricing')} className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            Back to Service Pricing
+          </button>
+          <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Coaching Fees</h1>
+          <p className="text-gray-500 mt-1 max-w-2xl">Set the selling prices for your students&apos; coaching classes.</p>
         </div>
 
         <div className="p-6 lg:p-8">
           {/* Pricing Form — 2-column grid */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 lg:p-8">
-            <h2 className="text-lg font-bold text-gray-900 mb-6">{pricing ? 'Update Selling Prices' : 'Set Selling Prices'}</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-6">{pricing ? 'Update Fees' : 'Set Fees'}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {plans.map((plan) => {
                 const inputVal = Number(formData[plan.key]) || 0;
@@ -140,16 +135,14 @@ export default function CoachingClassesPricingPage() {
             </div>
           </div>
 
-          {/* Plan Features */}
-          {features.length > 0 && (
-            <div className="mt-10">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Coaching Classes Plan Details</h2>
-                <p className="text-sm text-gray-500 mt-1">This is what your students will see when browsing plans.</p>
-              </div>
-              <ServicePlanDetailsView features={features} pricing={pricing} plans={plans} serviceName="Coaching Classes" showPricing={false} />
+          {/* Plan Preview */}
+          <div className="mt-10">
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Coaching Classes Plan Details</h2>
+              <p className="text-sm text-gray-500 mt-1">This is what your students will see when browsing plans.</p>
             </div>
-          )}
+            <CoachingClassCards plans={plans} pricing={pricing} />
+          </div>
         </div>
       </div>
     </AdminLayout>
