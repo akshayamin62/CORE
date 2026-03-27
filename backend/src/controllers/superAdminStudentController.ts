@@ -158,9 +158,11 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
           studentId: student._id,
         }).populate('serviceId', 'name');
 
-        const serviceNames = registrations
-          .map((r: any) => r.serviceId?.name)
-          .filter(Boolean);
+        const serviceNames = [...new Set(
+          registrations
+            .map((r: any) => r.serviceId?.name)
+            .filter(Boolean)
+        )];
 
         return {
           _id: student._id,
@@ -1110,6 +1112,7 @@ export const updateRegistrationStatus = async (req: AuthRequest, res: Response):
 
     // Validate status value
     const allowedStatuses = [
+      ServiceRegistrationStatus.REGISTERED,
       ServiceRegistrationStatus.IN_PROGRESS,
       ServiceRegistrationStatus.COMPLETED,
       ServiceRegistrationStatus.CANCELLED,

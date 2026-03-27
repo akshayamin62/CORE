@@ -11,6 +11,7 @@ interface ServiceCardProps {
   loading?: boolean;
   showLearnMore?: boolean;
   planTier?: string;
+  registrationStatus?: string;
 }
 
 export default function ServiceCard({
@@ -21,6 +22,7 @@ export default function ServiceCard({
   loading = false,
   showLearnMore = true,
   planTier,
+  registrationStatus,
 }: ServiceCardProps) {
   return (
     <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden group">
@@ -58,7 +60,12 @@ export default function ServiceCard({
         {/* Status Badge */}
         {isRegistered && (
           <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+              registrationStatus === 'COMPLETED' ? 'bg-emerald-100 text-emerald-800' :
+              registrationStatus === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+              registrationStatus === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-800' :
+              'bg-green-100 text-green-800'
+            }`}>
               <svg
                 className="w-4 h-4 mr-1"
                 fill="currentColor"
@@ -70,7 +77,10 @@ export default function ServiceCard({
                   clipRule="evenodd"
                 />
               </svg>
-              Registered
+              {registrationStatus === 'IN_PROGRESS' ? 'In Progress' :
+               registrationStatus === 'COMPLETED' ? 'Completed' :
+               registrationStatus === 'CANCELLED' ? 'Cancelled' :
+               'Registered'}
             </span>
             {planTier && (
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${

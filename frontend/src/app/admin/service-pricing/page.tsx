@@ -24,6 +24,14 @@ const services = [
     path: '/admin/service-pricing/coaching-classes-pricing',
     color: 'teal',
   },
+  {
+    name: 'Education Planning',
+    slug: 'education-planning',
+    description: 'Set pricing for Education Planning PRO, PREMIUM, and PLATINUM plans for your students.',
+    icon: '🎓',
+    path: '/admin/service-pricing/education-planning-pricing',
+    color: 'purple',
+  },
 ];
 
 export default function ServicePricingIndexPage() {

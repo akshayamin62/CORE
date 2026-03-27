@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { authAPI, serviceAPI, servicePlanAPI } from '@/lib/api';
 import { User, Service } from '@/types';
 import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
-import CoachingClassCards from '@/components/CoachingClassCards';
+import CoachingClassCards, { ClassTiming } from '@/components/CoachingClassCards';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -24,6 +24,7 @@ function ServicePlansViewContent() {
   const [pricing, setPricing] = useState<Record<string, number> | null>(null);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [studentPlanTiers, setStudentPlanTiers] = useState<Record<string, string>>({});
+  const [coachingRegisteredClasses, setCoachingRegisteredClasses] = useState<Record<string, ClassTiming | null>>({});
   const [studentName, setStudentName] = useState<string>(paramStudentName || '');
   const [adminId, setAdminId] = useState<string>(paramAdminId || '');
 
@@ -44,6 +45,7 @@ function ServicePlansViewContent() {
             const tiersRes = await servicePlanAPI.getStudentPlanTiers(studentId);
             const data = tiersRes.data.data;
             setStudentPlanTiers(data.planTiers || {});
+            if (data.coachingPlanTiers) setCoachingRegisteredClasses(data.coachingPlanTiers);
             if (data.studentName) setStudentName(data.studentName);
             if (data.adminId) setAdminId(data.adminId);
           } catch { /* ignore */ }
@@ -92,19 +94,7 @@ function ServicePlansViewContent() {
     <>
       <Toaster position="top-right" />
       <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
-        {/* Header */}
-        <div className="max-w-7xl mx-auto px-6 py-8 lg:px-8">
-          <button
-            onClick={() => router.back()}
-            className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            Back
-          </button>
-          <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Service Plans</h1>
-          {studentName && <p className="text-gray-500 mt-1">Viewing plans for <span className="font-semibold text-gray-900">{studentName}</span></p>}
-          {!studentName && <p className="text-gray-500 mt-1">Browse and compare service plans and pricing.</p>}
-        </div>
+
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
           {/* Service Selection */}
@@ -148,6 +138,11 @@ function ServicePlansViewContent() {
                             {studentPlanTiers[service.slug]}
                           </span>
                         )}
+                        {service.slug === 'coaching-classes' && Object.keys(coachingRegisteredClasses).length > 0 && (
+                          <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800">
+                            {Object.keys(coachingRegisteredClasses).length} Registered
+                          </span>
+                        )}
                       </div>
                     </div>
                   </button>
@@ -184,8 +179,8 @@ function ServicePlansViewContent() {
                     <div className="mb-8">
                       <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Coaching Classes</h2>
                       <p className="mt-1 text-gray-500 text-lg max-w-2xl">
-                        {studentPlanTiers[selectedService!]
-                          ? `${studentName || 'Student'} is registered for coaching.`
+                        {Object.keys(coachingRegisteredClasses).length > 0
+                          ? `${studentName || 'Student'} is registered for ${Object.keys(coachingRegisteredClasses).length} coaching class(es).`
                           : 'Compare features and pricing across all coaching classes.'}
                       </p>
                     </div>
@@ -208,7 +203,7 @@ function ServicePlansViewContent() {
                     <CoachingClassCards
                       plans={plans}
                       pricing={pricing}
-                      currentPlanKey={studentPlanTiers[selectedService!] || null}
+                      registeredClasses={Object.keys(coachingRegisteredClasses).length > 0 ? coachingRegisteredClasses : undefined}
                     />
 
                     {/* Note */}
@@ -259,7 +254,6 @@ function ServicePlansViewContent() {
                                 {pricing?.[plan.key] != null ? (
                                   <div className="mb-3">
                                     <p className="text-3xl font-extrabold text-gray-900">₹{pricing[plan.key].toLocaleString('en-IN')}</p>
-                                    <p className="text-xs text-gray-500 mt-1">One-time payment</p>
                                     {isUpgradePlan && priceDiff != null && priceDiff > 0 && (
                                       <p className="text-sm text-emerald-600 font-semibold mt-2">+₹{priceDiff.toLocaleString('en-IN')} upgrade difference</p>
                                     )}

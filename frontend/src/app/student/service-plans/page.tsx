@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { authAPI, serviceAPI, servicePlanAPI } from '@/lib/api';
+import { authAPI, serviceAPI, servicePlanAPI, coachingBatchAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
-import StudentLayout from '@/components/StudentLayout';
 import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
-import CoachingClassCards from '@/components/CoachingClassCards';
+import CoachingClassCards, { ClassTiming } from '@/components/CoachingClassCards';
+import BatchSelectModal from '@/components/BatchSelectModal';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -24,6 +24,22 @@ const availableServices = [
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+  {
+    slug: 'education-planning',
+    name: 'Education Planning',
+    description: 'Personalized education planning with Brainography assessment, counseling sessions, and activity management.',
+    color: 'from-purple-500 via-purple-600 to-indigo-600',
+    iconBg: 'bg-purple-100',
+    iconColor: 'text-purple-600',
+    plansPage: '/student/education-planning/plans',
+    icon: (
+      <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14l9-5-9-5-9 5 9 5z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
       </svg>
     ),
   },
@@ -52,6 +68,20 @@ export default function StudentServicePlansPage() {
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [registering, setRegistering] = useState<string | null>(null);
   const [registrations, setRegistrations] = useState<any[]>([]);
+  const [batchSelectPlan, setBatchSelectPlan] = useState<{ key: string; name: string } | null>(null);
+  const [registeredClasses, setRegisteredClasses] = useState<Record<string, ClassTiming | null>>({});
+
+  const updateRegistrations = (regs: any[]) => {
+    setRegistrations(regs);
+    const regMap: Record<string, ClassTiming | null> = {};
+    for (const reg of regs) {
+      const svc = typeof reg.serviceId === 'object' ? reg.serviceId : null;
+      if (svc?.slug === 'coaching-classes' && reg.planTier) {
+        regMap[reg.planTier] = reg.classTiming || null;
+      }
+    }
+    setRegisteredClasses(regMap);
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -66,7 +96,7 @@ export default function StudentServicePlansPage() {
         // Fetch student's current registrations
         try {
           const servicesRes = await serviceAPI.getMyServices();
-          setRegistrations(servicesRes.data.data.registrations || []);
+          updateRegistrations(servicesRes.data.data.registrations || []);
         } catch { /* ignore */ }
       } catch {
         toast.error('Please login to continue');
@@ -94,22 +124,36 @@ export default function StudentServicePlansPage() {
     }
   };
 
-  const handleRegister = async (planKey: string) => {
+  const handleRegister = async (planKey: string, classTiming?: { batchDate: string; timeFrom: string; timeTo: string }) => {
     if (!selectedService) return;
     setRegistering(planKey);
     try {
-      await servicePlanAPI.register(selectedService, planKey);
-      toast.success('Successfully registered! Redirecting...');
+      await servicePlanAPI.register(selectedService, planKey, classTiming);
+      toast.success('Successfully registered!');
+      setBatchSelectPlan(null);
       // Refresh registrations
       try {
         const servicesRes = await serviceAPI.getMyServices();
-        setRegistrations(servicesRes.data.data.registrations || []);
+        updateRegistrations(servicesRes.data.data.registrations || []);
       } catch { /* ignore */ }
-      setTimeout(() => router.push('/student/registration'), 1500);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Registration failed');
     } finally {
       setRegistering(null);
+    }
+  };
+
+  const handleCoachingRegisterClick = async (planKey: string, planName: string) => {
+    try {
+      const res = await coachingBatchAPI.getBatches(planKey);
+      const batches = res.data.data.batches || [];
+      if (batches.length > 0) {
+        setBatchSelectPlan({ key: planKey, name: planName });
+      } else {
+        toast.error('No batches available for this class. Please check back later.');
+      }
+    } catch {
+      toast.error('Failed to load batches. Please try again.');
     }
   };
 
@@ -122,7 +166,7 @@ export default function StudentServicePlansPage() {
       // Refresh registrations
       try {
         const servicesRes = await serviceAPI.getMyServices();
-        setRegistrations(servicesRes.data.data.registrations || []);
+        updateRegistrations(servicesRes.data.data.registrations || []);
       } catch { /* ignore */ }
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Upgrade failed');
@@ -165,9 +209,13 @@ export default function StudentServicePlansPage() {
   const isCoaching = selectedService === 'coaching-classes';
 
   return (
-    <StudentLayout user={user} formStructure={[]} currentPartIndex={0} currentSectionIndex={0} onPartChange={() => {}} onSectionChange={() => {}} isOuterNav={true}>
+    <>
       <Toaster position="top-right" />
       <div className="p-6 lg:p-8">
+        <button onClick={() => router.back()} className="mb-4 inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors">
+          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+          Return to Dashboard
+        </button>
         {/* Service Selector */}
         {!selectedService && (
           <>
@@ -240,9 +288,10 @@ export default function StudentServicePlansPage() {
                 <CoachingClassCards
                   plans={plans}
                   pricing={pricing}
+                  registeredClasses={registeredClasses}
                   renderAction={(plan) => (
                     <button
-                      onClick={() => handleRegister(plan.key)}
+                      onClick={() => handleCoachingRegisterClick(plan.key, plan.name)}
                       disabled={registering !== null || pricing?.[plan.key] == null}
                       className="w-full py-3 bg-blue-600 text-white rounded-full font-bold text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -354,10 +403,10 @@ export default function StudentServicePlansPage() {
                 {/* Features Comparison */}
                 {getServiceFeatures(selectedService!).length > 0 && (
                   <div>
-                    <div className="mb-6">
+                    {/* <div className="mb-6">
                       <h2 className="text-xl font-bold text-gray-900">Plan Features Comparison</h2>
                       <p className="text-sm text-gray-500 mt-1">See what&apos;s included across all tiers.</p>
-                    </div>
+                    </div> */}
                     <ServicePlanDetailsView features={getServiceFeatures(selectedService!)} pricing={pricing} plans={plans} serviceName={selectedServiceInfo?.name || ''} showPricing={false} />
                   </div>
                 )}
@@ -366,6 +415,17 @@ export default function StudentServicePlansPage() {
           </div>
         )}
       </div>
-    </StudentLayout>
+
+      {batchSelectPlan && (
+        <BatchSelectModal
+          isOpen={true}
+          onClose={() => setBatchSelectPlan(null)}
+          planKey={batchSelectPlan.key}
+          planName={batchSelectPlan.name}
+          onSelectBatch={(classTiming) => handleRegister(batchSelectPlan.key, classTiming)}
+          registering={registering !== null}
+        />
+      )}
+    </>
   );
 }

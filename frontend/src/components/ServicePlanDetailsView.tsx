@@ -111,7 +111,6 @@ export default function ServicePlanDetailsView({
                       {price != null ? `₹${price.toLocaleString('en-IN')}` : '—'}
                     </span>
                   </div>
-                  {price != null && <p className="text-[11px] text-white/60 mt-1 font-medium">One-time payment</p>}
                   {price == null && <p className="text-[11px] text-white/40 mt-1">Price not set yet</p>}
                 </div>
               </div>
@@ -133,11 +132,11 @@ export default function ServicePlanDetailsView({
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2 border-gray-200">
-                    <th className="text-left px-5 py-4 bg-gray-50 min-w-[200px]">
+                    <th className="text-left px-5 py-4 bg-gray-50 min-w-[200px] border-r border-gray-200">
                       <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Feature</span>
                     </th>
-                    {plans.map((plan) => (
-                      <th key={plan.key} className={`text-center px-4 py-4 min-w-[140px] ${plan.cellBg}`}>
+                    {plans.map((plan, i) => (
+                      <th key={plan.key} className={`text-center px-4 py-4 min-w-[140px] ${plan.cellBg} ${i < plans.length - 1 ? 'border-r border-gray-200' : ''}`}>
                         <span className={`inline-block px-4 py-1.5 ${plan.badgeBg} text-white rounded-full text-xs font-bold uppercase tracking-wider`}>
                           {plan.name}
                         </span>
@@ -150,15 +149,15 @@ export default function ServicePlanDetailsView({
                 </thead>
                 <tbody>
                   {features.map((feat, idx) => (
-                    <tr key={idx} className={`border-b border-gray-100 last:border-0 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}`}>
-                      <td className="px-5 py-4 align-top">
+                    <tr key={idx} className={`border-b border-gray-100 last:border-0 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-100'}`}>
+                      <td className="px-5 py-4 align-top border-r border-gray-200">
                         <p className="text-sm font-semibold text-gray-900">{feat.area}</p>
                         {feat.description && (
                           <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{feat.description}</p>
                         )}
                       </td>
-                      {plans.map((plan) => (
-                        <td key={plan.key} className={`px-4 py-4 text-center align-top ${plan.cellBg}`}>
+                      {plans.map((plan, i) => (
+                        <td key={plan.key} className={`px-4 py-4 text-center align-top ${plan.cellBg} ${i < plans.length - 1 ? 'border-r border-gray-200' : ''}`}>
                           {renderValue(feat.values?.[plan.key] || '—')}
                         </td>
                       ))}
@@ -191,14 +190,16 @@ export default function ServicePlanDetailsView({
         </div>
       )}
 
-      {/* Additional Notes */}
-      <div className="bg-gradient-to-r from-slate-50 to-gray-50 border border-slate-200 rounded-2xl p-5 text-center">
-        <p className="text-xs text-gray-500 leading-relaxed">
-          <strong className="text-gray-700">Please note:</strong> An additional fee of Rs. 7,500 applies for each additional country search,
-          Rs. 500 for additional university search, and Rs. 3,500 for each additional university application
-          submitted beyond the specified limit.
-        </p>
-      </div>
+      {/* Additional Notes — Study Abroad only */}
+      {serviceName === 'Study Abroad' && (
+        <div className="bg-gradient-to-r from-slate-50 to-gray-50 border border-slate-200 rounded-2xl p-5 text-center">
+          <p className="text-xs text-gray-500 leading-relaxed">
+            <strong className="text-gray-700">Please note:</strong> An additional fee of Rs. 7,500 applies for each additional country search,
+            Rs. 500 for additional university search, and Rs. 3,500 for each additional university application
+            submitted beyond the specified limit.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -113,6 +113,7 @@ export const COACHING_CLASSES_PLANS: PlanConfig[] = [
 
 export const SERVICE_PLANS: Record<string, PlanConfig[]> = {
   'study-abroad': STUDY_ABROAD_PLANS,
+  'education-planning': STUDY_ABROAD_PLANS,
   'coaching-classes': COACHING_CLASSES_PLANS,
 };
 
@@ -156,8 +157,16 @@ export const STUDY_ABROAD_FEATURES: ServiceFeature[] = [
 
 export const COACHING_CLASSES_FEATURES: ServiceFeature[] = [];
 
+export const EDUCATION_PLANNING_FEATURES: ServiceFeature[] = [
+  { area: 'Brainography Assessment Report', description: 'Scientific assessment to identify career interests, academic strengths, and potential.', values: { PRO: '✓', PREMIUM: '✓', PLATINUM: '✓ + MBTI Test' } },
+  { area: 'Counseling Sessions', description: 'One-on-one expert counseling sessions for personalized education planning.', values: { PRO: '01 Session of 60 minutes', PREMIUM: '01 Session of 90 minutes', PLATINUM: '03 Sessions of 90 minutes each' } },
+  { area: 'Education Portfolio', description: 'Comprehensive three-year education portfolio with structured planning.', values: { PRO: '✗', PREMIUM: '✓ Three Years Planning', PLATINUM: '✓ Three Years Planning' } },
+  { area: 'Activity Management Book', description: 'Structured activity management book for tracking and planning extracurriculars.', values: { PRO: '✗', PREMIUM: 'Activity Management Book - 01', PLATINUM: 'Activity Management Book - 01' } },
+];
+
 export const SERVICE_FEATURES: Record<string, ServiceFeature[]> = {
   'study-abroad': STUDY_ABROAD_FEATURES,
+  'education-planning': EDUCATION_PLANNING_FEATURES,
   'coaching-classes': COACHING_CLASSES_FEATURES,
 };
 

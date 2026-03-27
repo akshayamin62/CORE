@@ -12,6 +12,7 @@ import toast, { Toaster } from 'react-hot-toast';
 
 const availableServices = [
   { slug: 'study-abroad', name: 'Study Abroad', description: 'View this admin\'s pricing for Study Abroad plans.', icon: '🌍' },
+  { slug: 'education-planning', name: 'Education Planning', description: 'View this admin\'s pricing for Education Planning plans.', icon: '🎓' },
   { slug: 'coaching-classes', name: 'Coaching Classes', description: 'View this admin\'s pricing for Coaching Classes.', icon: '📚' },
 ];
 

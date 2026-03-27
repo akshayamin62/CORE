@@ -10,7 +10,7 @@ import toast, { Toaster } from 'react-hot-toast';
 
 const PLAN_HIERARCHY: Record<string, number> = { PRO: 0, PREMIUM: 1, PLATINUM: 2 };
 
-export default function StudentStudyAbroadPlansPage() {
+export default function StudentEducationPlanningPlansPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,8 +18,8 @@ export default function StudentStudyAbroadPlansPage() {
   const [registering, setRegistering] = useState<string | null>(null);
   const [currentPlanTier, setCurrentPlanTier] = useState<string | null>(null);
 
-  const plans = getServicePlans('study-abroad');
-  const features = getServiceFeatures('study-abroad');
+  const plans = getServicePlans('education-planning');
+  const features = getServiceFeatures('education-planning');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -45,19 +45,18 @@ export default function StudentStudyAbroadPlansPage() {
   const fetchData = async () => {
     try {
       const [pricingRes, servicesRes] = await Promise.all([
-        servicePlanAPI.getPricing('study-abroad'),
+        servicePlanAPI.getPricing('education-planning'),
         serviceAPI.getMyServices(),
       ]);
       const p = pricingRes.data.data.pricing;
       if (p) setPricing(p);
 
-      // Find current Study Abroad registration
       const regs = servicesRes.data.data.registrations || [];
-      const saReg = regs.find((r: any) => {
+      const epReg = regs.find((r: any) => {
         const svc = typeof r.serviceId === 'object' ? r.serviceId : null;
-        return svc && (svc.slug === 'study-abroad');
+        return svc && (svc.slug === 'education-planning');
       });
-      if (saReg?.planTier) setCurrentPlanTier(saReg.planTier);
+      if (epReg?.planTier) setCurrentPlanTier(epReg.planTier);
     } catch (error: any) {
       console.error('Failed to load plan data:', error);
     }
@@ -66,7 +65,7 @@ export default function StudentStudyAbroadPlansPage() {
   const handleRegister = async (planKey: string) => {
     setRegistering(planKey);
     try {
-      await servicePlanAPI.register('study-abroad', planKey);
+      await servicePlanAPI.register('education-planning', planKey);
       toast.success('Successfully registered! Redirecting...');
       setTimeout(() => router.push('/dashboard'), 1500);
     } catch (error: any) {
@@ -79,7 +78,7 @@ export default function StudentStudyAbroadPlansPage() {
   const handleUpgrade = async (planKey: string) => {
     setRegistering(planKey);
     try {
-      await servicePlanAPI.upgrade('study-abroad', planKey);
+      await servicePlanAPI.upgrade('education-planning', planKey);
       toast.success(`Successfully upgraded to ${planKey}!`);
       setCurrentPlanTier(planKey);
     } catch (error: any) {
@@ -113,7 +112,7 @@ export default function StudentStudyAbroadPlansPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-[calc(100vh-5rem)]">
+      <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-screen">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white relative overflow-hidden">
           <div className="absolute -top-20 -right-20 w-60 h-60 bg-blue-500/10 rounded-full" />
@@ -123,18 +122,18 @@ export default function StudentStudyAbroadPlansPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
               Back
             </button>
-            <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight">Study Abroad Plans</h1>
+            <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight">Education Planning Plans</h1>
             <p className="text-blue-200 mt-1 max-w-2xl">
               {currentPlanTier
                 ? `You are on the ${currentPlanTier} plan. Upgrade to unlock more features.`
-                : 'Choose the plan that fits your journey. Each plan includes expert guidance at every step.'}
+                : 'Choose the plan that fits your educational journey. Each plan includes expert guidance.'}
             </p>
           </div>
         </div>
 
         <div className="p-6 lg:p-8">
           {/* Plan Cards */}
-          <div className={`grid gap-6 mb-10 ${plans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-3 mb-10">
             {plans.map((plan) => {
               const isCurrent = currentPlanTier === plan.key;
               const canUpgrade = isUpgrade(plan.key);
@@ -169,7 +168,6 @@ export default function StudentStudyAbroadPlansPage() {
                       </div>
                     )}
 
-                    {/* Button logic */}
                     {isCurrent ? (
                       <button disabled className="w-full py-3 px-4 rounded-xl font-bold text-white bg-green-500 cursor-default">
                         Your Current Plan
@@ -208,11 +206,7 @@ export default function StudentStudyAbroadPlansPage() {
           {/* Features Comparison */}
           {features.length > 0 && (
             <div>
-              {/* <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Plan Features Comparison</h2>
-                <p className="text-sm text-gray-500 mt-1">See what&apos;s included in each plan tier.</p>
-              </div> */}
-              <ServicePlanDetailsView features={features} pricing={pricing} plans={plans} serviceName="Study Abroad" showPricing={false} />
+              <ServicePlanDetailsView features={features} pricing={pricing} plans={plans} serviceName="Education Planning" showPricing={false} />
             </div>
           )}
         </div>

@@ -23,7 +23,10 @@ export const getPricingForStudent = async (req: AuthRequest, res: Response): Pro
     if (userRole === USER_ROLE.COUNSELOR) {
       const counselor = await Counselor.findOne({ userId }).lean();
       if (!counselor || !counselor.adminId) { res.status(404).json({ success: false, message: 'Counselor or admin not found' }); return; }
-      adminId = counselor.adminId;
+      // counselor.adminId is the admin's User._id, but ServicePricing uses Admin._id
+      const admin = await Admin.findOne({ userId: counselor.adminId }).lean();
+      if (!admin) { res.status(404).json({ success: false, message: 'Admin not found' }); return; }
+      adminId = admin._id;
     } else {
       const student = await Student.findOne({ userId }).lean();
       if (!student || !student.adminId) { res.status(404).json({ success: false, message: 'Student or admin not found' }); return; }
@@ -50,6 +53,7 @@ export const registerServicePlan = async (req: AuthRequest, res: Response): Prom
     const { serviceSlug } = req.params;
     const userId = req.user?.userId;
     const { planTier } = req.body;
+    const classTiming = req.body.classTiming || undefined;
 
     if (!userId) {
       res.status(401).json({ success: false, message: 'Not authenticated' });
@@ -77,13 +81,29 @@ export const registerServicePlan = async (req: AuthRequest, res: Response): Prom
       return;
     }
 
-    const existing = await StudentServiceRegistration.findOne({
-      studentId: student._id,
-      serviceId: service._id,
-    });
-    if (existing) {
-      res.status(400).json({ success: false, message: `You are already registered for ${service.name}` });
-      return;
+    const isCoaching = serviceSlug === 'coaching-classes';
+
+    if (isCoaching) {
+      // For coaching: check if already registered for this specific class (planTier)
+      const existingClass = await StudentServiceRegistration.findOne({
+        studentId: student._id,
+        serviceId: service._id,
+        planTier,
+      });
+      if (existingClass) {
+        res.status(400).json({ success: false, message: `You are already registered for ${planTier}` });
+        return;
+      }
+    } else {
+      // For other services: one registration per service
+      const existing = await StudentServiceRegistration.findOne({
+        studentId: student._id,
+        serviceId: service._id,
+      });
+      if (existing) {
+        res.status(400).json({ success: false, message: `You are already registered for ${service.name}` });
+        return;
+      }
     }
 
     let paymentAmount: number | undefined;
@@ -99,6 +119,7 @@ export const registerServicePlan = async (req: AuthRequest, res: Response): Prom
       studentId: student._id,
       serviceId: service._id,
       planTier,
+      ...(isCoaching && classTiming ? { classTiming } : {}),
       status: ServiceRegistrationStatus.REGISTERED,
       paymentAmount,
     });
@@ -355,16 +376,21 @@ export const getStudentPlanTiers = async (req: AuthRequest, res: Response): Prom
     const [registrations, student] = await Promise.all([
       StudentServiceRegistration.find({ studentId })
         .populate('serviceId', 'name slug')
-        .select('planTier serviceId')
+        .select('planTier serviceId classTiming')
         .lean(),
       Student.findById(studentId).populate('userId', 'firstName middleName lastName').lean(),
     ]);
 
     const planTiers: Record<string, string> = {};
+    const coachingPlanTiers: Record<string, { batchDate?: string; timeFrom?: string; timeTo?: string } | null> = {};
     for (const reg of registrations) {
       const svc = reg.serviceId as any;
       if (svc?.slug && reg.planTier) {
-        planTiers[svc.slug] = reg.planTier;
+        if (svc.slug === 'coaching-classes') {
+          coachingPlanTiers[reg.planTier] = (reg as any).classTiming || null;
+        } else {
+          planTiers[svc.slug] = reg.planTier;
+        }
       }
     }
 
@@ -372,7 +398,7 @@ export const getStudentPlanTiers = async (req: AuthRequest, res: Response): Prom
     const studentName = u ? [u.firstName, u.middleName, u.lastName].filter(Boolean).join(' ') : '';
     const adminId = student?.adminId?.toString() || '';
 
-    res.json({ success: true, data: { planTiers, studentName, adminId } });
+    res.json({ success: true, data: { planTiers, coachingPlanTiers, studentName, adminId } });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message || 'Failed to fetch student plan tiers' });
   }

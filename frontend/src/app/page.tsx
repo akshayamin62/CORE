@@ -267,6 +267,18 @@ export default function Home() {
       return;
     }
 
+    // For Study Abroad, redirect to plan page
+    if (service && service.slug === 'study-abroad') {
+      router.push('/student/study-abroad/plans');
+      return;
+    }
+
+    // For Education Planning, redirect to plan page
+    if (service && (service.slug === 'education-planning' || service.name === 'Education Planning')) {
+      router.push('/student/education-planning/plans');
+      return;
+    }
+
     setRegisteringServiceId(serviceId);
     try {
       await serviceAPI.registerForService(serviceId);

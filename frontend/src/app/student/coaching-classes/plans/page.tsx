@@ -2,19 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { authAPI, servicePlanAPI } from '@/lib/api';
+import { authAPI, servicePlanAPI, coachingBatchAPI, serviceAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
-import StudentLayout from '@/components/StudentLayout';
-import { getServicePlans } from '@/config/servicePlans';
-import toast, { Toaster } from 'react-hot-toast';
 
-function BlueCheck() {
-  return (
-    <svg className="w-5 h-5 text-blue-600 shrink-0" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-    </svg>
-  );
-}
+import { getServicePlans } from '@/config/servicePlans';
+import CoachingClassCards, { ClassTiming } from '@/components/CoachingClassCards';
+import BatchSelectModal from '@/components/BatchSelectModal';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function StudentCoachingClassesPlansPage() {
   const router = useRouter();
@@ -22,6 +16,8 @@ export default function StudentCoachingClassesPlansPage() {
   const [loading, setLoading] = useState(true);
   const [pricing, setPricing] = useState<Record<string, number> | null>(null);
   const [registering, setRegistering] = useState<string | null>(null);
+  const [batchSelectPlan, setBatchSelectPlan] = useState<{ key: string; name: string } | null>(null);
+  const [registeredClasses, setRegisteredClasses] = useState<Record<string, ClassTiming | null>>({});
 
   const plans = getServicePlans('coaching-classes');
 
@@ -48,24 +44,53 @@ export default function StudentCoachingClassesPlansPage() {
 
   const fetchData = async () => {
     try {
-      const pricingRes = await servicePlanAPI.getPricing('coaching-classes');
+      const [pricingRes, servicesRes] = await Promise.all([
+        servicePlanAPI.getPricing('coaching-classes'),
+        serviceAPI.getMyServices(),
+      ]);
       const p = pricingRes.data.data.pricing;
       if (p) setPricing(p);
+
+      // Build registeredClasses map from coaching registrations
+      const regs = servicesRes.data.data.registrations || [];
+      const regMap: Record<string, ClassTiming | null> = {};
+      for (const reg of regs) {
+        const svc = typeof reg.serviceId === 'object' ? reg.serviceId : null;
+        if (svc?.slug === 'coaching-classes' && reg.planTier) {
+          regMap[reg.planTier] = reg.classTiming || null;
+        }
+      }
+      setRegisteredClasses(regMap);
     } catch (error: any) {
       console.error('Failed to load plan data:', error);
     }
   };
 
-  const handleRegister = async (planKey: string) => {
+  const handleRegister = async (planKey: string, classTiming?: { batchDate: string; timeFrom: string; timeTo: string }) => {
     setRegistering(planKey);
     try {
-      await servicePlanAPI.register('coaching-classes', planKey);
-      toast.success('Successfully registered! Redirecting...');
-      setTimeout(() => router.push('/student/registration'), 1500);
+      await servicePlanAPI.register('coaching-classes', planKey, classTiming);
+      toast.success('Successfully registered!');
+      setBatchSelectPlan(null);
+      await fetchData();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Registration failed');
     } finally {
       setRegistering(null);
+    }
+  };
+
+  const handleRegisterClick = async (planKey: string, planName: string) => {
+    try {
+      const res = await coachingBatchAPI.getBatches(planKey);
+      const batches = res.data.data.batches || [];
+      if (batches.length > 0) {
+        setBatchSelectPlan({ key: planKey, name: planName });
+      } else {
+        toast.error('No batches available for this class. Please check back later.');
+      }
+    } catch {
+      toast.error('Failed to load batches. Please try again.');
     }
   };
 
@@ -78,7 +103,7 @@ export default function StudentCoachingClassesPlansPage() {
   }
 
   return (
-    <StudentLayout user={user} formStructure={[]} currentPartIndex={0} currentSectionIndex={0} onPartChange={() => {}} onSectionChange={() => {}} isOuterNav={true} serviceName="Coaching Classes">
+    <>
       <Toaster position="top-right" />
       <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-[calc(100vh-5rem)]">
         {/* Header */}
@@ -92,63 +117,25 @@ export default function StudentCoachingClassesPlansPage() {
         </div>
 
         <div className="p-6 lg:p-8">
-          {/* Plan Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10">
-            {plans.map((plan) => {
-              const parts = plan.subtitle?.split('\u2022').map(s => s.trim()) || [];
-              const sessionInfo = parts[0] || '';
-              const mockInfo = parts[1] ? `${parts[1]} Included` : '';
-              const price = pricing?.[plan.key];
-              const isPopular = plan.key === 'IELTS_PREMIUM';
-
-              return (
-                <div key={plan.key} className={`bg-white p-7 rounded-2xl shadow-sm flex flex-col hover:shadow-md transition-shadow relative ${isPopular ? 'border-2 border-blue-200' : 'border border-slate-100'}`}>
-                  {isPopular && (
-                    <span className="absolute top-4 right-4 bg-blue-600 text-white text-[10px] uppercase font-extrabold px-2.5 py-1 rounded-md">Popular</span>
-                  )}
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
-                  {price != null ? (
-                    <div className="mb-5">
-                      <p className="text-2xl font-extrabold text-gray-900">₹{price.toLocaleString('en-IN')}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">One-time payment</p>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-400 mb-5">Price not set</p>
-                  )}
-                  <ul className="space-y-2.5 mb-7 flex-grow">
-                    {sessionInfo && (
-                      <li className="flex items-center gap-2.5 text-sm text-gray-600">
-                        <BlueCheck />{sessionInfo}
-                      </li>
-                    )}
-                    {mockInfo && (
-                      <li className="flex items-center gap-2.5 text-sm text-gray-600">
-                        <BlueCheck />{mockInfo}
-                      </li>
-                    )}
-                    <li className="flex items-center gap-2.5 text-sm text-gray-600">
-                      <BlueCheck />Study Material
-                    </li>
-                    <li className="flex items-center gap-2.5 text-sm text-gray-600">
-                      <BlueCheck />Session Recordings
-                    </li>
-                  </ul>
-                  <button
-                    onClick={() => handleRegister(plan.key)}
-                    disabled={registering !== null || price == null}
-                    className="w-full py-3 bg-blue-600 text-white rounded-full font-bold text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {registering === plan.key ? (
-                      <span className="inline-flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Registering...</span>
-                    ) : 'Register Now'}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+          <CoachingClassCards
+            plans={plans}
+            pricing={pricing}
+            registeredClasses={registeredClasses}
+            renderAction={(plan) => (
+              <button
+                onClick={() => handleRegisterClick(plan.key, plan.name)}
+                disabled={registering !== null || pricing?.[plan.key] == null}
+                className="w-full py-3 bg-blue-600 text-white rounded-full font-bold text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {registering === plan.key ? (
+                  <span className="inline-flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Registering...</span>
+                ) : 'Register Now'}
+              </button>
+            )}
+          />
 
           {/* Note */}
-          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5">
+          <div className="mt-10 bg-blue-50 border border-blue-200 rounded-2xl p-5">
             <div className="flex gap-3">
               <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -161,6 +148,17 @@ export default function StudentCoachingClassesPlansPage() {
           </div>
         </div>
       </div>
-    </StudentLayout>
+
+      {batchSelectPlan && (
+        <BatchSelectModal
+          isOpen={true}
+          onClose={() => setBatchSelectPlan(null)}
+          planKey={batchSelectPlan.key}
+          planName={batchSelectPlan.name}
+          onSelectBatch={(classTiming) => handleRegister(batchSelectPlan.key, classTiming)}
+          registering={registering !== null}
+        />
+      )}
+    </>
   );
 }

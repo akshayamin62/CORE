@@ -31,6 +31,7 @@ import activityRoutes from "./routes/activityRoutes";
 import archiveRoutes from "./routes/archiveRoutes";
 import ivyLeagueRegistrationRoutes from "./routes/ivyLeagueRegistrationRoutes";
 import servicePlanRoutes from "./routes/servicePlanRoutes";
+import coachingBatchRoutes from "./routes/coachingBatchRoutes";
 import ivyLeagueAdminRoutes from "./routes/ivyLeagueAdmin.routes";
 
 // Ivy League route imports
@@ -85,6 +86,7 @@ import "./models/DailyPlanner";
 import "./models/IvyLeagueRegistration";
 import "./models/ServicePricing";
 import "./models/SuperAdminServicePricing";
+import "./models/CoachingBatch";
 
 // Import Ivy League models to register them with Mongoose
 import "./models/ivy/AcademicData";
@@ -154,6 +156,7 @@ app.use("/api/parents", parentRoutes); // Parent management routes
 app.use("/api/archive", archiveRoutes); // Archive (deactivated users) routes
 app.use("/api/activity", activityRoutes); // Activity management routes
 app.use("/api/service-plans", servicePlanRoutes); // Service plans & pricing routes (study-abroad, ivy-league, education-planning)
+app.use("/api/coaching-batches", coachingBatchRoutes); // Coaching class batch schedules
 app.use("/api/ivy-league-registration", ivyLeagueRegistrationRoutes); // Ivy League registration form routes
 app.use("/api", leadRoutes); // Lead routes (includes public, admin, counselor endpoints)
 
@@ -197,7 +200,23 @@ const startServer = async () => {
     
     console.log('✅ Connected to MongoDB successfully');
     console.log(`📊 Database: ${mongoose.connection.name}`);
-    
+
+    // Migrate: drop old unique index {studentId, serviceId} if it exists
+    // New index is {studentId, serviceId, planTier} to allow multiple coaching registrations
+    try {
+      const collection = mongoose.connection.collection('studentserviceregistrations');
+      const indexes = await collection.indexes();
+      const oldIndex = indexes.find(
+        (idx: any) => idx.key?.studentId === 1 && idx.key?.serviceId === 1 && !idx.key?.planTier && idx.unique
+      );
+      if (oldIndex) {
+        await collection.dropIndex(oldIndex.name!);
+        console.log('🔄 Dropped old unique index {studentId, serviceId} — replaced with {studentId, serviceId, planTier}');
+      }
+    } catch (indexError) {
+      // Index may not exist yet, that's fine
+    }
+
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on port ${PORT}`);
     });

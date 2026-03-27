@@ -95,19 +95,14 @@ export default function SuperAdminStudyAbroadPricingPage() {
       <Toaster position="top-right" />
       <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-[calc(100vh-5rem)]">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white relative overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-60 h-60 bg-blue-500/10 rounded-full" />
-          <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-indigo-500/10 rounded-full" />
           <div className="px-6 lg:px-8 py-8 relative">
-            <button onClick={() => router.push('/super-admin/service-pricing')} className="mb-4 inline-flex items-center gap-1.5 text-sm text-blue-200 hover:text-white transition-colors font-medium">
+            <button onClick={() => router.push('/super-admin/service-pricing')} className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
               Back to Service Pricing
             </button>
-            <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight">Study Abroad — Base Pricing</h1>
-            <p className="text-blue-200 mt-1 max-w-2xl">Set the base (cost) price for each plan tier. Admins will see this when setting their own selling price.</p>
+            <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Study Abroad — Base Pricing</h1>
+            <p className="text-gray-500 mt-1 max-w-2xl">Set the base (cost) price for each plan tier. Admins will see this when setting their own selling price.</p>
           </div>
-        </div>
-
         <div className="p-6 lg:p-8">
           {/* Current Pricing */}
           {pricing && (

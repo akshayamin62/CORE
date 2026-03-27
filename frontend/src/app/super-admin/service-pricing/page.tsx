@@ -24,6 +24,14 @@ const services = [
     path: '/super-admin/service-pricing/coaching-classes',
     color: 'teal',
   },
+  {
+    name: 'Education Planning',
+    slug: 'education-planning',
+    description: 'Set the base pricing for Education Planning PRO, PREMIUM, and PLATINUM plans — Brainography, Counseling, Portfolio & Activity Management.',
+    icon: '🎓',
+    path: '/super-admin/service-pricing/education-planning',
+    color: 'purple',
+  },
 ];
 
 export default function SuperAdminServicePricingIndexPage() {

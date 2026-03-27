@@ -136,6 +136,12 @@ export default function DashboardPage() {
       return;
     }
 
+    // For Education Planning service, redirect to plan selection page
+    if (service && (service.slug === 'education-planning' || service.name === 'Education Planning')) {
+      router.push('/student/education-planning/plans');
+      return;
+    }
+
     setRegisteringServiceId(serviceId);
     try {
       await serviceAPI.registerForService(serviceId);
@@ -160,6 +166,8 @@ export default function DashboardPage() {
       if (service && (service.slug === 'ivy-league' || service.slug === 'ivy-league-admission' || service.name === 'Ivy League Preparation' || service.name === 'Ivy League Admission')) {
         // Route to the Ivy League student dashboard (auth-based, no params needed)
         router.push('/ivy-league/student');
+      } else if (service && (service.slug === 'coaching-classes' || service.name === 'Coaching Classes')) {
+        router.push('/student/service-plans');
       } else {
         router.push(`/student/registration/${registration._id}`);
       }
@@ -237,6 +245,7 @@ export default function DashboardPage() {
                       isRegistered={true}
                       onViewDetails={handleViewDetails}
                       planTier={registration.planTier}
+                      registrationStatus={registration.status}
                     />
                   );
                 })}

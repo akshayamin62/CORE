@@ -23,6 +23,7 @@ interface StudentLayoutProps {
   onEduPlanViewChange?: (view: string) => void;
   onMyActivityClick?: () => void;
   isOuterNav?: boolean;
+  isCoachingClasses?: boolean;
 }
 
 /* ─── Reusable Icons ─── */
@@ -150,6 +151,7 @@ export default function StudentLayout({
   onEduPlanViewChange,
   onMyActivityClick,
   isOuterNav = false,
+  isCoachingClasses = false,
 }: StudentLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -171,7 +173,7 @@ export default function StudentLayout({
   };
 
   // No sidebar when there's nothing to show
-  if (formStructure.length === 0 && !showDashboard && !isEducationPlanning && !isOuterNav) {
+  if (formStructure.length === 0 && !showDashboard && !isEducationPlanning && !isOuterNav && !isCoachingClasses) {
     return <div>{children}</div>;
   }
 
@@ -202,6 +204,9 @@ export default function StudentLayout({
 
   // ─── Service-specific nav items ───
   const renderServiceNav = () => {
+    // COACHING CLASSES: no service-specific nav items
+    if (isCoachingClasses) return null;
+
     // OUTER PAGES: show nav items from fetched registration
     if (isOuterNav) {
       if (!outerReg) return null;
@@ -281,7 +286,7 @@ export default function StudentLayout({
 
           {/* Always: Parents, Alumni, Service Providers */}
           <div>
-            {commonItems.map(item =>
+            {(isCoachingClasses ? commonItems.filter(i => i.key === 'service-plans') : commonItems).map(item =>
               navBtn(item.key, item.label, item.icon, pathname === item.path, () => router.push(item.path))
             )}
           </div>

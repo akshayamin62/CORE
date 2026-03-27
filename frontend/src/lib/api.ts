@@ -259,8 +259,8 @@ export const serviceAPI = {
 // Service Plans API (Study Abroad, Coaching Classes, etc.)
 export const servicePlanAPI = {
   getPricing: (serviceSlug: string) => api.get(`/service-plans/${serviceSlug}/pricing`),  // works for STUDENT and COUNSELOR
-  register: (serviceSlug: string, planTier: string) =>
-    api.post(`/service-plans/${serviceSlug}/register`, { planTier }),
+  register: (serviceSlug: string, planTier: string, classTiming?: { batchDate: string; timeFrom: string; timeTo: string }) =>
+    api.post(`/service-plans/${serviceSlug}/register`, { planTier, classTiming }),
   upgrade: (serviceSlug: string, newPlanTier: string) =>
     api.put(`/service-plans/${serviceSlug}/upgrade`, { newPlanTier }),
   // Admin
@@ -278,6 +278,18 @@ export const servicePlanAPI = {
   // Get a student's plan tiers
   getStudentPlanTiers: (studentId: string) =>
     api.get(`/service-plans/student/${studentId}/plan-tiers`),
+};
+
+// Coaching Batch API
+export const coachingBatchAPI = {
+  getBatches: (planKey?: string) =>
+    api.get('/coaching-batches', { params: planKey ? { planKey } : {} }),
+  getAllBatches: () => api.get('/coaching-batches/all'),
+  createBatch: (data: { planKey: string; batchDate: string; timeFrom: string; timeTo: string }) =>
+    api.post('/coaching-batches', data),
+  updateBatch: (batchId: string, data: Partial<{ planKey: string; batchDate: string; timeFrom: string; timeTo: string; isActive: boolean }>) =>
+    api.put(`/coaching-batches/${batchId}`, data),
+  deleteBatch: (batchId: string) => api.delete(`/coaching-batches/${batchId}`),
 };
 
 // Ivy League Registration API

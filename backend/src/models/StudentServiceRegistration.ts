@@ -30,6 +30,11 @@ export interface IStudentServiceRegistration extends Document {
   completedAt?: Date;
   cancelledAt?: Date;
   planTier?: string;
+  classTiming?: {
+    batchDate: Date;
+    timeFrom: string;
+    timeTo: string;
+  };
   paymentStatus?: string;
   paymentAmount?: number;
   notes?: string;
@@ -129,6 +134,11 @@ const studentServiceRegistrationSchema = new Schema<IStudentServiceRegistration>
       type: String,
       default: undefined,
     },
+    classTiming: {
+      batchDate: { type: Date },
+      timeFrom: { type: String },
+      timeTo: { type: String },
+    },
     paymentStatus: {
       type: String,
       default: undefined,
@@ -149,9 +159,10 @@ const studentServiceRegistrationSchema = new Schema<IStudentServiceRegistration>
   { timestamps: true }
 );
 
-// Compound index to ensure a student can only register once per service
+// Compound index: for non-coaching services, one registration per service.
+// For coaching-classes, one registration per service + planTier (allows multiple classes).
 studentServiceRegistrationSchema.index(
-  { studentId: 1, serviceId: 1 },
+  { studentId: 1, serviceId: 1, planTier: 1 },
   { unique: true }
 );
 
