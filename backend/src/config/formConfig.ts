@@ -27,7 +27,6 @@ export enum FormPartKey {
   PROFILE = "PROFILE",
   APPLICATION = "APPLICATION",
   DOCUMENT = "DOCUMENT",
-  PAYMENT = "PAYMENT",
 }
 
 // ─── Types ───
@@ -546,31 +545,7 @@ export const DOCUMENT_CONFIG: PartConfig = {
   ],
 };
 
-// ─── PAYMENT Part Config ───
-export const PAYMENT_CONFIG: PartConfig = {
-  key: FormPartKey.PAYMENT,
-  title: "Payment",
-  description: "Payment information",
-  order: 4,
-  sections: [
-    {
-      key: "paymentInformation",
-      title: "Payment Information",
-      order: 1,
-      subSections: [
-        {
-          key: "paymentDetails",
-          title: "Payment Details",
-          order: 1,
-          isRepeatable: false,
-          fields: [
-            { key: "paymentStatus", label: "Payment Status", type: FieldType.TEXT, placeholder: "Payment status", required: false, order: 1 },
-          ],
-        },
-      ],
-    },
-  ],
-};
+
 
 // ═══════════════════════════════════════════════════════
 // SERVICE → PARTS MAPPING
@@ -581,7 +556,7 @@ export const PAYMENT_CONFIG: PartConfig = {
  * Education Planning, Ivy League, Coaching Classes have no form parts.
  */
 export const SERVICE_FORM_PARTS: Record<string, PartConfig[]> = {
-  "study-abroad": [PROFILE_CONFIG, APPLICATION_CONFIG, DOCUMENT_CONFIG, PAYMENT_CONFIG],
+  "study-abroad": [PROFILE_CONFIG, APPLICATION_CONFIG, DOCUMENT_CONFIG],
   // add more services here if they need forms in the future
 };
 
@@ -601,7 +576,7 @@ export function getServiceFormStructure(serviceSlug: string): PartConfig[] {
  * Get a specific part config by key
  */
 export function getPartConfig(partKey: FormPartKey): PartConfig | undefined {
-  const all = [PROFILE_CONFIG, APPLICATION_CONFIG, DOCUMENT_CONFIG, PAYMENT_CONFIG];
+  const all = [PROFILE_CONFIG, APPLICATION_CONFIG, DOCUMENT_CONFIG];
   return all.find(p => p.key === partKey);
 }
 

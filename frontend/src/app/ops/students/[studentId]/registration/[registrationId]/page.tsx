@@ -19,6 +19,7 @@ import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
 import axios from 'axios';
+import PaymentSection from '@/components/PaymentSection';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -42,9 +43,10 @@ export default function StudentFormEditPage() {
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [serviceInfo, setServiceInfo] = useState<any>(null);
   const [planTier, setPlanTier] = useState<string | undefined>();
+  const [registrationObj, setRegistrationObj] = useState<any>(null);
 
   // Dashboard / view state
-  type ActiveView = 'dashboard' | 'form';
+  type ActiveView = 'dashboard' | 'form' | 'payment';
   const [activeView, setActiveView] = useState<ActiveView>('form');
   const [isStudyAbroad, setIsStudyAbroad] = useState(false);
   const [programStats, setProgramStats] = useState({
@@ -141,6 +143,7 @@ export default function StudentFormEditPage() {
       setStudentInfo(studentData);
       setServiceInfo(regServiceId);
       setPlanTier(registrationData.registration.planTier);
+      setRegistrationObj(registrationData.registration);
 
       const svcName = typeof regServiceId === 'object' ? regServiceId.name : '';
       const svcSlug = typeof regServiceId === 'object' ? regServiceId.slug : '';
@@ -408,6 +411,9 @@ export default function StudentFormEditPage() {
               showDashboard={true}
               isDashboardActive={activeView === 'dashboard'}
               onDashboardClick={() => setActiveView('dashboard')}
+              showPayment={true}
+              isPaymentActive={activeView === 'payment'}
+              onPaymentClick={() => setActiveView('payment')}
             />
           )}
 
@@ -515,9 +521,13 @@ export default function StudentFormEditPage() {
               formStructure={formStructure}
               currentPartIndex={currentPartIndex}
               onPartChange={(index) => {
+                setActiveView('form');
                 setCurrentPartIndex(index);
                 setCurrentSectionIndex(0);
               }}
+              showPayment={true}
+              isPaymentActive={activeView === 'payment'}
+              onPaymentClick={() => setActiveView('payment')}
             />
           )}
 
@@ -580,6 +590,20 @@ export default function StudentFormEditPage() {
             />
           )}
             </>
+          )}
+
+          {/* Payment View */}
+          {activeView === 'payment' && (
+            <div className="mb-6">
+              <PaymentSection
+                paymentStatus={registrationObj?.paymentStatus}
+                paymentAmount={registrationObj?.paymentAmount}
+                paymentDate={registrationObj?.paymentDate}
+                planTier={planTier}
+                serviceName={typeof serviceInfo === 'object' ? serviceInfo.name : ''}
+                readOnly={true}
+              />
+            </div>
           )}
         </div>
       </OpsLayout>

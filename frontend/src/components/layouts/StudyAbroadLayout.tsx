@@ -94,6 +94,7 @@ const commonItems = [
   { key: 'parents', label: 'Parents', path: '/student/parents', icon: Icon.parents },
   { key: 'alumni', label: 'Alumni', path: '/student/alumni', icon: Icon.alumni },
   { key: 'service-providers', label: 'Service Providers', path: '/student/service-providers', icon: Icon.serviceProviders },
+  { key: 'payment', label: 'Payment', path: '/student/payment', icon: Icon.payment },
 ];
 
 export default function StudyAbroadLayout({

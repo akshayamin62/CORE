@@ -15,6 +15,7 @@ import ProgramSection from '@/components/ProgramSection';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
 import axios from 'axios';
+import PaymentSection from '@/components/PaymentSection';
 import BrainographyDataDisplay, { BrainographyDataType } from '@/components/BrainographyDataDisplay';
 import PortfolioSection, { PortfolioItem, PortfolioRow, usePortfolioDownload } from '@/components/PortfolioSection';
 import ActivityAnalyticsDashboard from '@/components/ActivityAnalyticsDashboard';
@@ -41,7 +42,7 @@ interface BrainographyDoc {
   version: number;
 }
 
-type ActiveView = 'dashboard' | 'analytics' | 'brainography' | 'portfolio' | 'form';
+type ActiveView = 'dashboard' | 'analytics' | 'brainography' | 'portfolio' | 'form' | 'payment';
 
 export default function EduplanCoachStudentFormEditPage() {
   const router = useRouter();
@@ -61,6 +62,7 @@ export default function EduplanCoachStudentFormEditPage() {
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [serviceInfo, setServiceInfo] = useState<any>(null);
   const [planTier, setPlanTier] = useState<string | undefined>();
+  const [registrationObj, setRegistrationObj] = useState<any>(null);
   const initialParentalReadOnlyRef = useRef<number[]>([]);
 
   const [brainographyDoc, setBrainographyDoc] = useState<BrainographyDoc | null>(null);
@@ -327,6 +329,7 @@ export default function EduplanCoachStudentFormEditPage() {
       setStudentInfo(studentData);
       setServiceInfo(regServiceId);
       setPlanTier(registrationData.registration.planTier);
+      setRegistrationObj(registrationData.registration);
 
       const svcName = typeof regServiceId === 'object' ? regServiceId.name : '';
       const svcSlug = typeof regServiceId === 'object' ? regServiceId.slug : '';
@@ -520,6 +523,7 @@ export default function EduplanCoachStudentFormEditPage() {
         { key: 'analytics', label: 'Activity Analysis', icon: '📊' },
         { key: 'brainography', label: 'Brainography Analysis', icon: '🧠' },
         { key: 'portfolio', label: 'Education Portfolio Generator', icon: '📁' },
+        { key: 'payment', label: 'Payment', icon: '💳' },
       ]
     : [];
 
@@ -726,7 +730,7 @@ export default function EduplanCoachStudentFormEditPage() {
 
           {activeView === 'form' && (
             <>
-              <FormPartsNavigation formStructure={formStructure} currentPartIndex={currentPartIndex} onPartChange={(index) => { setCurrentPartIndex(index); setCurrentSectionIndex(0); }} />
+              <FormPartsNavigation formStructure={formStructure} currentPartIndex={currentPartIndex} onPartChange={(index) => { setActiveView('form'); setCurrentPartIndex(index); setCurrentSectionIndex(0); }} showPayment={true} isPaymentActive={activeView === 'payment'} onPaymentClick={() => setActiveView('payment')} />
               {currentFormStruct && (
                 <FormSectionsNavigation sections={currentFormStruct.sections} currentSectionIndex={currentSectionIndex} onSectionChange={setCurrentSectionIndex} />
               )}
@@ -771,6 +775,20 @@ export default function EduplanCoachStudentFormEditPage() {
           {isEducationPlanning && formStructure.length === 0 && activeView === 'form' && (
             <div className="text-center py-16">
               <p className="text-sm text-gray-500">No form data available for this service. Use the tabs above to access Activity Analysis, Brainography, and Portfolio features.</p>
+            </div>
+          )}
+
+          {/* Payment View */}
+          {activeView === 'payment' && (
+            <div className="mb-6">
+              <PaymentSection
+                paymentStatus={registrationObj?.paymentStatus}
+                paymentAmount={registrationObj?.paymentAmount}
+                paymentDate={registrationObj?.paymentDate}
+                planTier={planTier}
+                serviceName={typeof serviceInfo === 'object' ? serviceInfo.name : ''}
+                readOnly={true}
+              />
             </div>
           )}
         </div>

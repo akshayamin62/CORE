@@ -37,6 +37,7 @@ export interface IStudentServiceRegistration extends Document {
   };
   paymentStatus?: string;
   paymentAmount?: number;
+  paymentDate?: Date;
   notes?: string;
   // Max number of report topics (career+dev pair) this student can generate
   maxReportGenerations?: number;
@@ -145,6 +146,10 @@ const studentServiceRegistrationSchema = new Schema<IStudentServiceRegistration>
     },
     paymentAmount: {
       type: Number,
+      default: undefined,
+    },
+    paymentDate: {
+      type: Date,
       default: undefined,
     },
     notes: {
