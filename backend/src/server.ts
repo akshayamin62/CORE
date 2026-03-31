@@ -33,6 +33,10 @@ import ivyLeagueRegistrationRoutes from "./routes/ivyLeagueRegistrationRoutes";
 import servicePlanRoutes from "./routes/servicePlanRoutes";
 import coachingBatchRoutes from "./routes/coachingBatchRoutes";
 import ivyLeagueAdminRoutes from "./routes/ivyLeagueAdmin.routes";
+import paymentRoutes from "./routes/paymentRoutes";
+import studentPlanDiscountRoutes from "./routes/studentPlanDiscountRoutes";
+import invoiceRoutes from "./routes/invoiceRoutes";
+import ledgerRoutes from "./routes/ledgerRoutes";
 
 // Ivy League route imports
 import ivyServiceRoutes from "./routes/ivyService.routes";
@@ -87,6 +91,9 @@ import "./models/IvyLeagueRegistration";
 import "./models/ServicePricing";
 import "./models/SuperAdminServicePricing";
 import "./models/CoachingBatch";
+import "./models/Payment";
+import "./models/Invoice";
+import "./models/Ledger";
 
 // Import Ivy League models to register them with Mongoose
 import "./models/ivy/AcademicData";
@@ -157,6 +164,10 @@ app.use("/api/archive", archiveRoutes); // Archive (deactivated users) routes
 app.use("/api/activity", activityRoutes); // Activity management routes
 app.use("/api/service-plans", servicePlanRoutes); // Service plans & pricing routes (study-abroad, ivy-league, education-planning)
 app.use("/api/coaching-batches", coachingBatchRoutes); // Coaching class batch schedules
+app.use("/api/payments", paymentRoutes); // Payment system (Razorpay)
+app.use("/api/student-plan-discounts", studentPlanDiscountRoutes); // Student plan discount management
+app.use("/api/invoices", invoiceRoutes); // Invoice management
+app.use("/api/ledger", ledgerRoutes); // Ledger / financial tracking
 app.use("/api/ivy-league-registration", ivyLeagueRegistrationRoutes); // Ivy League registration form routes
 app.use("/api", leadRoutes); // Lead routes (includes public, admin, counselor endpoints)
 

@@ -78,6 +78,14 @@ interface Registration {
   planTier?: 'PRO' | 'PREMIUM' | 'PLATINUM';
   status: string;
   createdAt: string;
+  // Payment fields
+  paymentAmount?: number;
+  totalAmount?: number;
+  discountedAmount?: number;
+  totalPaid?: number;
+  paymentComplete?: boolean;
+  paymentStatus?: string;
+  paymentModel?: string;
 }
 
 export default function AdminStudentDetailPage() {
@@ -123,7 +131,8 @@ export default function AdminStudentDetailPage() {
     try {
       const response = await adminStudentAPI.getStudentDetails(studentId);
       setStudent(response.data.data.student);
-      setRegistrations(response.data.data.registrations);
+      const regs = response.data.data.registrations;
+      setRegistrations(regs);
     } catch (error: any) {
       console.error('Fetch student details error:', error);
       if (error.response?.status === 403) {
@@ -374,6 +383,40 @@ export default function AdminStudentDetailPage() {
                         </svg>
                         View
                       </button>
+                    </div>
+
+                    {/* ====== Pricing & Discount Section ====== */}
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-3">
+                        {/* Original price */}
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Original Price:</span>
+                          <span className={`text-sm font-medium ${registration.discountedAmount != null ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                            {(registration.totalAmount || registration.paymentAmount) ? `₹${(registration.totalAmount || registration.paymentAmount)!.toLocaleString('en-IN')}` : '—'}
+                          </span>
+                        </div>
+
+                        {/* After discount */}
+                        {registration.discountedAmount != null && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-green-600 uppercase tracking-wider">After Discount:</span>
+                            <span className="text-sm font-bold text-green-700">
+                              ₹{registration.discountedAmount.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Payment status */}
+                        {registration.paymentStatus && (
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                            registration.paymentComplete ? 'bg-green-100 text-green-800' :
+                            registration.paymentStatus === 'partial' ? 'bg-amber-100 text-amber-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {registration.paymentComplete ? 'Fully Paid' : registration.paymentStatus}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

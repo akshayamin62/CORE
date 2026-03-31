@@ -526,7 +526,7 @@ export default function StudentFormEditPage() {
                 setCurrentSectionIndex(0);
               }}
               showPayment={true}
-              isPaymentActive={activeView === 'payment'}
+              isPaymentActive={false}
               onPaymentClick={() => setActiveView('payment')}
             />
           )}
@@ -596,11 +596,19 @@ export default function StudentFormEditPage() {
           {activeView === 'payment' && (
             <div className="mb-6">
               <PaymentSection
+                registrationId={registrationId}
+                studentId={studentId}
                 paymentStatus={registrationObj?.paymentStatus}
                 paymentAmount={registrationObj?.paymentAmount}
                 paymentDate={registrationObj?.paymentDate}
                 planTier={planTier}
                 serviceName={typeof serviceInfo === 'object' ? serviceInfo.name : ''}
+                totalAmount={registrationObj?.totalAmount}
+                discountedAmount={registrationObj?.discountedAmount}
+                paymentModel={registrationObj?.paymentModel}
+                installmentPlan={registrationObj?.installmentPlan}
+                totalPaid={registrationObj?.totalPaid}
+                paymentComplete={registrationObj?.paymentComplete}
                 readOnly={true}
               />
             </div>

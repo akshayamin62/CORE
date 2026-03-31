@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { authAPI, servicePlanAPI, coachingBatchAPI, serviceAPI } from '@/lib/api';
+import { authAPI, servicePlanAPI, coachingBatchAPI, serviceAPI, paymentAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 
 import { getServicePlans } from '@/config/servicePlans';
@@ -15,9 +15,11 @@ export default function StudentCoachingClassesPlansPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [pricing, setPricing] = useState<Record<string, number> | null>(null);
+  const [discounts, setDiscounts] = useState<Record<string, { type: string; value: number; calculatedAmount: number; reason?: string }> | null>(null);
   const [registering, setRegistering] = useState<string | null>(null);
   const [batchSelectPlan, setBatchSelectPlan] = useState<{ key: string; name: string } | null>(null);
   const [registeredClasses, setRegisteredClasses] = useState<Record<string, ClassTiming | null>>({});
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
 
   const plans = getServicePlans('coaching-classes');
 
@@ -50,6 +52,7 @@ export default function StudentCoachingClassesPlansPage() {
       ]);
       const p = pricingRes.data.data.pricing;
       if (p) setPricing(p);
+      if (pricingRes.data.data.discounts) setDiscounts(pricingRes.data.data.discounts);
 
       // Build registeredClasses map from coaching registrations
       const regs = servicesRes.data.data.registrations || [];
@@ -69,12 +72,58 @@ export default function StudentCoachingClassesPlansPage() {
   const handleRegister = async (planKey: string, classTiming?: { batchDate: string; timeFrom: string; timeTo: string }) => {
     setRegistering(planKey);
     try {
-      await servicePlanAPI.register('coaching-classes', planKey, classTiming);
-      toast.success('Successfully registered!');
-      setBatchSelectPlan(null);
-      await fetchData();
+      const orderRes = await paymentAPI.createRegistrationOrder('coaching-classes', planKey, classTiming);
+      const orderData = orderRes.data.data;
+
+      if (!window.Razorpay) {
+        toast.error('Payment gateway is loading. Please try again.');
+        return;
+      }
+
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'Kareer Studio',
+        description: `Registration - Coaching Classes ${planKey}`,
+        order_id: orderData.orderId,
+        handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+          setVerifyingPayment(true);
+          try {
+            const verifyRes = await paymentAPI.verifyRegistrationPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            if (verifyRes.data.success) {
+              toast.success('Payment successful! You are now registered.');
+              setBatchSelectPlan(null);
+              await fetchData();
+            } else {
+              toast.error('Payment verification failed');
+            }
+          } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Payment verification failed');
+          } finally {
+            setVerifyingPayment(false);
+          }
+        },
+        prefill: user ? { name: [user.firstName, user.lastName].filter(Boolean).join(' '), email: user.email } : {},
+        theme: { color: '#2959ba' },
+        modal: {
+          ondismiss: () => {
+            toast('Payment cancelled. Registration not completed.', { icon: '⚠️' });
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', (response: any) => {
+        toast.error(response.error?.description || 'Payment failed');
+      });
+      rzp.open();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Registration failed');
+      toast.error(error.response?.data?.message || 'Failed to initiate payment');
     } finally {
       setRegistering(null);
     }
@@ -105,6 +154,15 @@ export default function StudentCoachingClassesPlansPage() {
   return (
     <>
       <Toaster position="top-right" />
+      {verifyingPayment && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 text-center shadow-2xl">
+            <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-900">Verifying Payment...</p>
+            <p className="text-sm text-gray-500 mt-1">Please wait while we confirm your payment.</p>
+          </div>
+        </div>
+      )}
       <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-[calc(100vh-5rem)]">
         {/* Header */}
         <div className="px-6 lg:px-8 py-8">
@@ -121,6 +179,7 @@ export default function StudentCoachingClassesPlansPage() {
             plans={plans}
             pricing={pricing}
             registeredClasses={registeredClasses}
+            discounts={discounts || undefined}
             renderAction={(plan) => (
               <button
                 onClick={() => handleRegisterClick(plan.key, plan.name)}

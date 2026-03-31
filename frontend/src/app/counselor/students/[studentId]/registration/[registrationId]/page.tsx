@@ -620,11 +620,19 @@ export default function CounselorStudentFormViewPage() {
           {activeView === 'payment' && (
             <div className="mb-6">
               <PaymentSection
+                registrationId={registrationId}
+                studentId={studentId}
                 paymentStatus={registrationObj?.paymentStatus}
                 paymentAmount={registrationObj?.paymentAmount}
                 paymentDate={registrationObj?.paymentDate}
                 planTier={planTier}
                 serviceName={typeof serviceInfo === 'object' ? serviceInfo.name : ''}
+                totalAmount={registrationObj?.totalAmount}
+                discountedAmount={registrationObj?.discountedAmount}
+                paymentModel={registrationObj?.paymentModel}
+                installmentPlan={registrationObj?.installmentPlan}
+                totalPaid={registrationObj?.totalPaid}
+                paymentComplete={registrationObj?.paymentComplete}
                 readOnly={true}
               />
             </div>

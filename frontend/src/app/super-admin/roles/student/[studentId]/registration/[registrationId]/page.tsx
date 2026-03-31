@@ -670,7 +670,7 @@ export default function SuperAdminStudentFormEditPage() {
           {/* Form View */}
           {activeView === 'form' && (
             <>
-              {!isStudyAbroad && <FormPartsNavigation formStructure={formStructure} currentPartIndex={currentPartIndex} onPartChange={(index) => { setActiveView('form'); setCurrentPartIndex(index); setCurrentSectionIndex(0); }} showPayment={true} isPaymentActive={activeView === 'payment'} onPaymentClick={() => setActiveView('payment')} />}
+              {!isStudyAbroad && <FormPartsNavigation formStructure={formStructure} currentPartIndex={currentPartIndex} onPartChange={(index) => { setActiveView('form'); setCurrentPartIndex(index); setCurrentSectionIndex(0); }} showPayment={true} isPaymentActive={false} onPaymentClick={() => setActiveView('payment')} />}
               {currentFormStruct && (
                 <FormSectionsNavigation sections={currentFormStruct.sections} currentSectionIndex={currentSectionIndex} onSectionChange={setCurrentSectionIndex} />
               )}
@@ -717,11 +717,19 @@ export default function SuperAdminStudentFormEditPage() {
           {activeView === 'payment' && (
             <div className="mb-6">
               <PaymentSection
+                registrationId={registrationId}
+                studentId={studentId}
                 paymentStatus={registrationObj?.paymentStatus}
                 paymentAmount={registrationObj?.paymentAmount}
                 paymentDate={registrationObj?.paymentDate}
                 planTier={planTier}
                 serviceName={typeof serviceInfo === 'object' ? serviceInfo.name : ''}
+                totalAmount={registrationObj?.totalAmount}
+                discountedAmount={registrationObj?.discountedAmount}
+                paymentModel={registrationObj?.paymentModel}
+                installmentPlan={registrationObj?.installmentPlan}
+                totalPaid={registrationObj?.totalPaid}
+                paymentComplete={registrationObj?.paymentComplete}
                 readOnly={true}
               />
             </div>

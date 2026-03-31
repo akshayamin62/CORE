@@ -10,6 +10,8 @@ import User from '../models/User';
 import Counselor from '../models/Counselor';
 import { USER_ROLE } from '../types/roles';
 import { sendServiceRegistrationEmailToSuperAdmin } from '../utils/email';
+import StudentPlanDiscount from '../models/StudentPlanDiscount';
+import { buildInstallmentSchedule, createProformaInvoice } from '../services/paymentService';
 
 // Get pricing for the student's admin for a specific service
 export const getPricingForStudent = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -38,9 +40,34 @@ export const getPricingForStudent = async (req: AuthRequest, res: Response): Pro
       res.json({ success: true, data: { pricing: null, message: 'Pricing not set by your admin yet' } });
       return;
     }
+
+    // Fetch student-specific discounts for this service
+    let discountMap: Record<string, { type: string; value: number; calculatedAmount: number; reason?: string }> | null = null;
+    if (userRole === USER_ROLE.STUDENT) {
+      const student = await Student.findOne({ userId }).lean();
+      if (student) {
+        const discounts = await StudentPlanDiscount.find({
+          studentId: student._id,
+          serviceSlug,
+          isActive: true,
+        }).lean();
+        if (discounts.length > 0) {
+          discountMap = {};
+          for (const d of discounts) {
+            discountMap[d.planTier] = {
+              type: d.type,
+              value: d.value,
+              calculatedAmount: d.calculatedAmount,
+              reason: d.reason,
+            };
+          }
+        }
+      }
+    }
+
     res.json({
       success: true,
-      data: { pricing: pricing.prices },
+      data: { pricing: pricing.prices, discounts: discountMap },
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message || 'Failed to fetch pricing' });
@@ -81,31 +108,7 @@ export const registerServicePlan = async (req: AuthRequest, res: Response): Prom
       return;
     }
 
-    const isCoaching = serviceSlug === 'coaching-classes';
-
-    if (isCoaching) {
-      // For coaching: check if already registered for this specific class (planTier)
-      const existingClass = await StudentServiceRegistration.findOne({
-        studentId: student._id,
-        serviceId: service._id,
-        planTier,
-      });
-      if (existingClass) {
-        res.status(400).json({ success: false, message: `You are already registered for ${planTier}` });
-        return;
-      }
-    } else {
-      // For other services: one registration per service
-      const existing = await StudentServiceRegistration.findOne({
-        studentId: student._id,
-        serviceId: service._id,
-      });
-      if (existing) {
-        res.status(400).json({ success: false, message: `You are already registered for ${service.name}` });
-        return;
-      }
-    }
-
+    // Check pricing - if service has pricing, registration must go through pay-first flow
     let paymentAmount: number | undefined;
     if (student.adminId) {
       const pricing = await ServicePricing.findOne({ adminId: student.adminId, serviceSlug }).lean();
@@ -115,13 +118,46 @@ export const registerServicePlan = async (req: AuthRequest, res: Response): Prom
       }
     }
 
+    // Paid services must use /payments/create-registration-order flow
+    if (paymentAmount && paymentAmount > 0) {
+      res.status(400).json({
+        success: false,
+        message: 'This service requires payment before registration. Use the payment flow.',
+        requiresPayment: true,
+      });
+      return;
+    }
+
+    const isCoaching = serviceSlug === 'coaching-classes';
+
+    if (isCoaching) {
+      const existingClass = await StudentServiceRegistration.findOne({
+        studentId: student._id, serviceId: service._id, planTier,
+      });
+      if (existingClass) {
+        res.status(400).json({ success: false, message: `You are already registered for ${planTier}` });
+        return;
+      }
+    } else {
+      const existing = await StudentServiceRegistration.findOne({
+        studentId: student._id, serviceId: service._id,
+      });
+      if (existing) {
+        res.status(400).json({ success: false, message: `You are already registered for ${service.name}` });
+        return;
+      }
+    }
+
+    // Free service registration (no payment required)
     const registration = await StudentServiceRegistration.create({
       studentId: student._id,
       serviceId: service._id,
       planTier,
       ...(isCoaching && classTiming ? { classTiming } : {}),
       status: ServiceRegistrationStatus.REGISTERED,
-      paymentAmount,
+      paymentAmount: 0,
+      paymentStatus: 'paid',
+      paymentComplete: true,
     });
 
     const populated = await StudentServiceRegistration.findById(registration._id).populate('serviceId');
@@ -344,25 +380,141 @@ export const upgradePlanTier = async (req: AuthRequest, res: Response): Promise<
     }
 
     const oldPlanTier = registration.planTier;
-    registration.planTier = newPlanTier;
+    const GST_RATE = 18;
 
-    // Update payment amount based on new tier pricing
+    // Get new plan pricing
+    let newBasePrice = 0;
+    let oldBasePrice = registration.totalAmount || registration.paymentAmount || 0;
     if (student.adminId) {
       const pricing = await ServicePricing.findOne({ adminId: student.adminId, serviceSlug }).lean();
       if (pricing && pricing.prices) {
         const pricesObj = pricing.prices as unknown as Record<string, number>;
-        registration.paymentAmount = pricesObj[newPlanTier];
+        newBasePrice = pricesObj[newPlanTier] || 0;
+        // Re-read old price from pricing in case totalAmount was discounted
+        if (oldPlanTier && pricesObj[oldPlanTier]) {
+          oldBasePrice = pricesObj[oldPlanTier];
+        }
       }
+    }
+    if (newBasePrice <= 0) {
+      res.status(400).json({ success: false, message: 'Pricing not available for new plan' }); return;
+    }
+    if (newBasePrice <= oldBasePrice) {
+      res.status(400).json({ success: false, message: 'Can only upgrade to a higher plan' }); return;
+    }
+
+    // Apply discount for new plan tier if exists
+    let newDiscountAmt = 0;
+    const newPlanDiscount = await StudentPlanDiscount.findOne({
+      studentId: student._id, serviceSlug, planTier: newPlanTier, isActive: true,
+    }).lean();
+    if (newPlanDiscount && newPlanDiscount.calculatedAmount > 0) {
+      newDiscountAmt = newPlanDiscount.calculatedAmount;
+    }
+    const newNetBase = Math.max(0, newBasePrice - newDiscountAmt);
+    const newGst = Math.round(newNetBase * GST_RATE / 100);
+    const newNetPayable = newNetBase + newGst;
+
+    // Recalculate old plan's net payable for comparison
+    const oldDiscountAmt = (registration.totalAmount || 0) - (registration.discountedAmount ?? registration.totalAmount ?? 0);
+    const oldNetBase = Math.max(0, oldBasePrice - Math.max(0, oldDiscountAmt));
+    const oldGst = Math.round(oldNetBase * GST_RATE / 100);
+    const oldNetPayable = oldNetBase + oldGst;
+
+    // Determine percentage already paid from installment schedule
+    let percentPaid = 0;
+    if (registration.installmentPlan && registration.installmentPlan.schedule) {
+      const paidInstallments = registration.installmentPlan.schedule.filter(s => s.status === 'paid');
+      percentPaid = paidInstallments.reduce((sum, s) => sum + s.percentage, 0);
+    } else if (registration.paymentComplete) {
+      percentPaid = 100;
+    } else if (registration.totalPaid && oldNetPayable > 0) {
+      percentPaid = Math.round((registration.totalPaid / oldNetPayable) * 100);
+    }
+
+    // Calculate difference: (percentPaid% of new plan) - (what was already paid)
+    const alreadyPaid = registration.totalPaid || 0;
+    const newPlanAtSamePercent = Math.round(newNetPayable * percentPaid / 100);
+    const upgradeDifference = Math.max(0, newPlanAtSamePercent - alreadyPaid);
+
+    // Remaining percentage for third installment (20%)
+    const remainingPercent = 100 - percentPaid;
+    const remainingAmount = Math.round(newNetPayable * remainingPercent / 100);
+
+    // Update registration
+    registration.planTier = newPlanTier;
+    registration.totalAmount = newBasePrice;
+    registration.paymentAmount = newBasePrice;
+    if (newDiscountAmt > 0) {
+      registration.discountedAmount = newNetBase;
+    } else {
+      registration.discountedAmount = undefined;
+    }
+
+    // Rebuild installment schedule for new plan
+    if (registration.paymentModel === 'installment' && registration.installmentPlan) {
+      const oldSchedule = registration.installmentPlan.schedule;
+      const newSchedule = buildInstallmentSchedule(newNetPayable);
+
+      // Preserve paid statuses from old schedule
+      for (const oldInst of oldSchedule) {
+        if (oldInst.status === 'paid') {
+          const newInst = newSchedule.schedule.find(s => s.number === oldInst.number);
+          if (newInst) {
+            newInst.status = 'paid';
+            newInst.paidAt = oldInst.paidAt;
+            newInst.razorpayOrderId = oldInst.razorpayOrderId;
+          }
+        }
+      }
+
+      // Mark next unpaid as due
+      const nextUnpaid = newSchedule.schedule.find(s => s.status !== 'paid');
+      if (nextUnpaid) {
+        nextUnpaid.status = 'due';
+      }
+
+      newSchedule.completedInstallments = newSchedule.schedule.filter(s => s.status === 'paid').length;
+      registration.installmentPlan = newSchedule;
+
+      // Check if all paid (shouldn't happen on upgrade but just in case)
+      registration.paymentComplete = newSchedule.completedInstallments >= newSchedule.totalInstallments;
+      registration.paymentStatus = registration.paymentComplete ? 'paid' : 'partial';
     }
 
     await registration.save();
+
+    // Create proforma invoice for the difference amount only
+    if (upgradeDifference > 0) {
+      await createProformaInvoice({
+        registrationId: registration._id.toString(),
+        studentId: (student._id as any).toString(),
+        adminId: student.adminId?.toString(),
+        serviceName: service.name,
+        serviceSlug,
+        planTier: newPlanTier,
+        totalAmount: upgradeDifference, // only the difference
+        discountAmount: 0,
+      });
+    }
 
     const populated = await StudentServiceRegistration.findById(registration._id).populate('serviceId');
 
     res.json({
       success: true,
       message: `Successfully upgraded from ${oldPlanTier} to ${newPlanTier}`,
-      data: { registration: populated },
+      data: {
+        registration: populated,
+        upgrade: {
+          oldPlan: oldPlanTier,
+          newPlan: newPlanTier,
+          percentPaid,
+          alreadyPaid,
+          upgradeDifference,
+          remainingAmount,
+          newNetPayable,
+        },
+      },
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message || 'Failed to upgrade plan' });

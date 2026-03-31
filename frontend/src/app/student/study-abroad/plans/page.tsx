@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { authAPI, serviceAPI, servicePlanAPI } from '@/lib/api';
+import { authAPI, serviceAPI, servicePlanAPI, paymentAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
@@ -15,8 +15,10 @@ export default function StudentStudyAbroadPlansPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [pricing, setPricing] = useState<Record<string, number> | null>(null);
+  const [discounts, setDiscounts] = useState<Record<string, { type: string; value: number; calculatedAmount: number; reason?: string }> | null>(null);
   const [registering, setRegistering] = useState<string | null>(null);
   const [currentPlanTier, setCurrentPlanTier] = useState<string | null>(null);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
 
   const plans = getServicePlans('study-abroad');
   const features = getServiceFeatures('study-abroad');
@@ -50,6 +52,7 @@ export default function StudentStudyAbroadPlansPage() {
       ]);
       const p = pricingRes.data.data.pricing;
       if (p) setPricing(p);
+      if (pricingRes.data.data.discounts) setDiscounts(pricingRes.data.data.discounts);
 
       // Find current Study Abroad registration
       const regs = servicesRes.data.data.registrations || [];
@@ -66,11 +69,58 @@ export default function StudentStudyAbroadPlansPage() {
   const handleRegister = async (planKey: string) => {
     setRegistering(planKey);
     try {
-      await servicePlanAPI.register('study-abroad', planKey);
-      toast.success('Successfully registered! Redirecting...');
-      setTimeout(() => router.push('/dashboard'), 1500);
+      const orderRes = await paymentAPI.createRegistrationOrder('study-abroad', planKey);
+      const orderData = orderRes.data.data;
+
+      if (!window.Razorpay) {
+        toast.error('Payment gateway is loading. Please try again.');
+        return;
+      }
+
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'Kareer Studio',
+        description: `Registration - Study Abroad ${planKey}`,
+        order_id: orderData.orderId,
+        handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+          setVerifyingPayment(true);
+          try {
+            const verifyRes = await paymentAPI.verifyRegistrationPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            if (verifyRes.data.success) {
+              toast.success('Payment successful! You are now registered.');
+              await fetchData();
+              router.push('/student/payment');
+            } else {
+              toast.error('Payment verification failed');
+            }
+          } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Payment verification failed');
+          } finally {
+            setVerifyingPayment(false);
+          }
+        },
+        prefill: user ? { name: [user.firstName, user.lastName].filter(Boolean).join(' '), email: user.email } : {},
+        theme: { color: '#2959ba' },
+        modal: {
+          ondismiss: () => {
+            toast('Payment cancelled. Registration not completed.', { icon: '⚠️' });
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', (response: any) => {
+        toast.error(response.error?.description || 'Payment failed');
+      });
+      rzp.open();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Registration failed');
+      toast.error(error.response?.data?.message || 'Failed to initiate payment');
     } finally {
       setRegistering(null);
     }
@@ -79,11 +129,58 @@ export default function StudentStudyAbroadPlansPage() {
   const handleUpgrade = async (planKey: string) => {
     setRegistering(planKey);
     try {
-      await servicePlanAPI.upgrade('study-abroad', planKey);
-      toast.success(`Successfully upgraded to ${planKey}!`);
-      setCurrentPlanTier(planKey);
+      const orderRes = await paymentAPI.createUpgradeOrder('study-abroad', planKey);
+      const orderData = orderRes.data.data;
+
+      if (!window.Razorpay) {
+        toast.error('Payment gateway is loading. Please try again.');
+        return;
+      }
+
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'Kareer Studio',
+        description: `Upgrade to ${planKey} - ₹${orderData.amountInr.toLocaleString('en-IN')} (difference)`,
+        order_id: orderData.orderId,
+        handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+          setVerifyingPayment(true);
+          try {
+            const verifyRes = await paymentAPI.verifyUpgradePayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            if (verifyRes.data.success) {
+              toast.success(`Successfully upgraded to ${planKey}! Payment received.`);
+              await fetchData();
+              router.push('/student/payment');
+            } else {
+              toast.error('Upgrade payment verification failed');
+            }
+          } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Upgrade payment verification failed');
+          } finally {
+            setVerifyingPayment(false);
+          }
+        },
+        prefill: user ? { name: [user.firstName, user.lastName].filter(Boolean).join(' '), email: user.email } : {},
+        theme: { color: '#2959ba' },
+        modal: {
+          ondismiss: () => {
+            toast('Payment cancelled. Plan not upgraded.', { icon: '⚠️' });
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', (response: any) => {
+        toast.error(response.error?.description || 'Upgrade payment failed');
+      });
+      rzp.open();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Upgrade failed');
+      toast.error(error.response?.data?.message || 'Failed to initiate upgrade payment');
     } finally {
       setRegistering(null);
     }
@@ -91,10 +188,14 @@ export default function StudentStudyAbroadPlansPage() {
 
   const getUpgradePriceDiff = (planKey: string): number | null => {
     if (!currentPlanTier || !pricing) return null;
-    const currentPrice = pricing[currentPlanTier];
-    const targetPrice = pricing[planKey];
-    if (currentPrice == null || targetPrice == null) return null;
-    return targetPrice - currentPrice;
+    const currentBase = pricing[currentPlanTier];
+    const targetBase = pricing[planKey];
+    if (currentBase == null || targetBase == null) return null;
+    const currentDiscount = discounts?.[currentPlanTier]?.calculatedAmount || 0;
+    const targetDiscount = discounts?.[planKey]?.calculatedAmount || 0;
+    const currentNet = currentBase - currentDiscount;
+    const targetNet = targetBase - targetDiscount;
+    return targetNet - currentNet;
   };
 
   const isUpgrade = (planKey: string): boolean => {
@@ -113,6 +214,15 @@ export default function StudentStudyAbroadPlansPage() {
   return (
     <>
       <Toaster position="top-right" />
+      {verifyingPayment && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 text-center shadow-2xl">
+            <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-lg font-semibold text-gray-900">Verifying Payment...</p>
+            <p className="text-sm text-gray-500 mt-1">Please wait while we confirm your payment.</p>
+          </div>
+        </div>
+      )}
       <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-[calc(100vh-5rem)]">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white relative overflow-hidden">
@@ -133,6 +243,12 @@ export default function StudentStudyAbroadPlansPage() {
         </div>
 
         <div className="p-6 lg:p-8">
+          {/* Installment plan notice */}
+          <div className="mb-6 flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl px-5 py-3">
+            <svg className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <p className="text-sm text-blue-700">Your payments are split into <strong>3 installments (50% / 30% / 20%)</strong>. All prices are exclusive of <strong>18% GST</strong>. First 50% is due at registration.</p>
+          </div>
+
           {/* Plan Cards */}
           <div className={`grid gap-6 mb-10 ${plans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
             {plans.map((plan) => {
@@ -156,7 +272,21 @@ export default function StudentStudyAbroadPlansPage() {
                   <div className="p-6">
                     {pricing?.[plan.key] != null ? (
                       <div className="mb-5">
-                        <p className="text-4xl font-extrabold text-gray-900">₹{pricing[plan.key].toLocaleString('en-IN')}</p>
+                          {discounts?.[plan.key] ? (
+                            <>
+                              <p className="text-lg text-gray-400 line-through">₹{pricing[plan.key].toLocaleString('en-IN')}</p>
+                              <p className="text-4xl font-extrabold text-green-600">₹{(pricing[plan.key] - discounts[plan.key].calculatedAmount).toLocaleString('en-IN')}</p>
+                              <p className="text-xs text-green-600 font-semibold mt-1">
+                                {discounts[plan.key].type === 'percentage' ? `${discounts[plan.key].value}% off` : `₹${discounts[plan.key].calculatedAmount.toLocaleString('en-IN')} off`}
+                              </p>
+                              {discounts[plan.key].reason && (
+                                <p className="text-xs text-blue-600 mt-0.5 italic">"{discounts[plan.key].reason}"</p>
+                              )}
+                            </>
+                          ) : (
+                            <p className="text-4xl font-extrabold text-gray-900">₹{pricing[plan.key].toLocaleString('en-IN')}</p>
+                          )}
+                          <p className="text-xs text-gray-400 mt-1">+ 18% GST applicable</p>
                         {canUpgrade && priceDiff != null && priceDiff > 0 && (
                           <p className="text-sm text-emerald-600 font-semibold mt-2">
                             +₹{priceDiff.toLocaleString('en-IN')} upgrade difference

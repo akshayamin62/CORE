@@ -38,6 +38,26 @@ export interface IStudentServiceRegistration extends Document {
   paymentStatus?: string;
   paymentAmount?: number;
   paymentDate?: Date;
+  // Payment system fields
+  paymentModel?: string; // 'one-time' | 'installment'
+  installmentPlan?: {
+    totalInstallments: number;
+    completedInstallments: number;
+    schedule: Array<{
+      number: number;
+      percentage: number;
+      amount: number;
+      status: string; // 'pending' | 'due' | 'paid' | 'failed'
+      label?: string; // e.g. 'Upgrade to PREMIUM'
+      dueDate?: Date;
+      paidAt?: Date;
+      razorpayOrderId?: string;
+    }>;
+  };
+  totalAmount?: number;
+  discountedAmount?: number;
+  totalPaid?: number;
+  paymentComplete?: boolean;
   notes?: string;
   // Max number of report topics (career+dev pair) this student can generate
   maxReportGenerations?: number;
@@ -151,6 +171,44 @@ const studentServiceRegistrationSchema = new Schema<IStudentServiceRegistration>
     paymentDate: {
       type: Date,
       default: undefined,
+    },
+    // Payment system fields
+    paymentModel: {
+      type: String,
+      enum: ['one-time', 'installment'],
+      default: undefined,
+    },
+    installmentPlan: {
+      totalInstallments: { type: Number, default: undefined },
+      completedInstallments: { type: Number, default: 0 },
+      schedule: [
+        {
+          number: { type: Number },
+          percentage: { type: Number },
+          amount: { type: Number },
+          status: { type: String, enum: ['pending', 'due', 'paid', 'failed'], default: 'pending' },
+          label: { type: String, default: undefined },
+          dueDate: { type: Date, default: undefined },
+          paidAt: { type: Date, default: undefined },
+          razorpayOrderId: { type: String, default: undefined },
+        },
+      ],
+    },
+    totalAmount: {
+      type: Number,
+      default: undefined,
+    },
+    discountedAmount: {
+      type: Number,
+      default: undefined,
+    },
+    totalPaid: {
+      type: Number,
+      default: 0,
+    },
+    paymentComplete: {
+      type: Boolean,
+      default: false,
     },
     notes: {
       type: String,

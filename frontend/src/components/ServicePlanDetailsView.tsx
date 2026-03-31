@@ -9,6 +9,7 @@ interface ServicePlanDetailsViewProps {
   serviceName: string;
   showPricing?: boolean;
   noPricingMessage?: string;
+  discounts?: Record<string, { type: string; value: number; calculatedAmount: number }>;
 }
 
 function renderValue(val: string) {
@@ -64,6 +65,7 @@ export default function ServicePlanDetailsView({
   serviceName,
   showPricing = true,
   noPricingMessage,
+  discounts,
 }: ServicePlanDetailsViewProps) {
   const gridCols = plans.length <= 3
     ? 'grid-cols-1 md:grid-cols-3'
@@ -95,6 +97,8 @@ export default function ServicePlanDetailsView({
         <div className={`grid ${gridCols} gap-5 lg:gap-6 mb-10`}>
           {plans.map((plan) => {
             const price = pricing?.[plan.key];
+            const disc = discounts?.[plan.key];
+            const discountedPrice = price != null && disc ? price - disc.calculatedAmount : null;
             return (
               <div
                 key={plan.key}
@@ -107,9 +111,19 @@ export default function ServicePlanDetailsView({
                   )}
                   <h3 className="text-lg font-extrabold text-white tracking-wide">{plan.name}</h3>
                   <div className="mt-2">
-                    <span className="text-3xl font-black text-white">
-                      {price != null ? `₹${price.toLocaleString('en-IN')}` : '—'}
-                    </span>
+                    {discountedPrice != null ? (
+                      <>
+                        <span className="text-lg text-white/50 line-through">₹{price!.toLocaleString('en-IN')}</span>
+                        <span className="text-3xl font-black text-white ml-2">₹{discountedPrice.toLocaleString('en-IN')}</span>
+                        <p className="text-xs text-white/80 mt-1 font-semibold">
+                          {disc!.type === 'percentage' ? `${disc!.value}% off` : `₹${disc!.calculatedAmount.toLocaleString('en-IN')} off`}
+                        </p>
+                      </>
+                    ) : (
+                      <span className="text-3xl font-black text-white">
+                        {price != null ? `₹${price.toLocaleString('en-IN')}` : '—'}
+                      </span>
+                    )}
                   </div>
                   {price == null && <p className="text-[11px] text-white/40 mt-1">Price not set yet</p>}
                 </div>

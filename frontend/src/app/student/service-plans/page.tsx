@@ -2,15 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { authAPI, serviceAPI, servicePlanAPI, coachingBatchAPI } from '@/lib/api';
+import { authAPI, servicePlanAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
-import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
-import CoachingClassCards, { ClassTiming } from '@/components/CoachingClassCards';
-import BatchSelectModal from '@/components/BatchSelectModal';
-import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
 import toast, { Toaster } from 'react-hot-toast';
-
-const PLAN_HIERARCHY: Record<string, number> = { PRO: 0, PREMIUM: 1, PLATINUM: 2 };
 
 const availableServices = [
   {
@@ -63,25 +57,8 @@ export default function StudentServicePlansPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedService, setSelectedService] = useState<string | null>(null);
-  const [pricing, setPricing] = useState<Record<string, number> | null>(null);
-  const [loadingPlans, setLoadingPlans] = useState(false);
-  const [registering, setRegistering] = useState<string | null>(null);
-  const [registrations, setRegistrations] = useState<any[]>([]);
-  const [batchSelectPlan, setBatchSelectPlan] = useState<{ key: string; name: string } | null>(null);
-  const [registeredClasses, setRegisteredClasses] = useState<Record<string, ClassTiming | null>>({});
-
-  const updateRegistrations = (regs: any[]) => {
-    setRegistrations(regs);
-    const regMap: Record<string, ClassTiming | null> = {};
-    for (const reg of regs) {
-      const svc = typeof reg.serviceId === 'object' ? reg.serviceId : null;
-      if (svc?.slug === 'coaching-classes' && reg.planTier) {
-        regMap[reg.planTier] = reg.classTiming || null;
-      }
-    }
-    setRegisteredClasses(regMap);
-  };
+  const [pricingByService, setPricingByService] = useState<Record<string, Record<string, number> | null>>({});
+  const [discountsByService, setDiscountsByService] = useState<Record<string, Record<string, { type: string; value: number; calculatedAmount: number; reason?: string }> | null>>({});
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -93,11 +70,25 @@ export default function StudentServicePlansPage() {
           return;
         }
         setUser(userData);
-        // Fetch student's current registrations
+
+        // Fetch pricing & discounts for all services (non-critical)
         try {
-          const servicesRes = await serviceAPI.getMyServices();
-          updateRegistrations(servicesRes.data.data.registrations || []);
-        } catch { /* ignore */ }
+          const slugs = ['study-abroad', 'education-planning', 'coaching-classes'];
+          const results = await Promise.allSettled(slugs.map(s => servicePlanAPI.getPricing(s)));
+          const pMap: Record<string, Record<string, number> | null> = {};
+          const dMap: Record<string, Record<string, { type: string; value: number; calculatedAmount: number; reason?: string }> | null> = {};
+          slugs.forEach((slug, i) => {
+            const r = results[i];
+            if (r.status === 'fulfilled') {
+              pMap[slug] = r.value.data.data.pricing || null;
+              dMap[slug] = r.value.data.data.discounts || null;
+            }
+          });
+          setPricingByService(pMap);
+          setDiscountsByService(dMap);
+        } catch {
+          // Non-critical — page works without pricing data
+        }
       } catch {
         toast.error('Please login to continue');
         router.push('/login');
@@ -108,94 +99,6 @@ export default function StudentServicePlansPage() {
     checkAuth();
   }, [router]);
 
-  const handleSelectService = async (slug: string) => {
-    setSelectedService(slug);
-    setLoadingPlans(true);
-    setPricing(null);
-
-    try {
-      const pricingRes = await servicePlanAPI.getPricing(slug);
-      const p = pricingRes.data.data.pricing;
-      if (p) setPricing(p);
-    } catch {
-      toast.error('Failed to load plan details');
-    } finally {
-      setLoadingPlans(false);
-    }
-  };
-
-  const handleRegister = async (planKey: string, classTiming?: { batchDate: string; timeFrom: string; timeTo: string }) => {
-    if (!selectedService) return;
-    setRegistering(planKey);
-    try {
-      await servicePlanAPI.register(selectedService, planKey, classTiming);
-      toast.success('Successfully registered!');
-      setBatchSelectPlan(null);
-      // Refresh registrations
-      try {
-        const servicesRes = await serviceAPI.getMyServices();
-        updateRegistrations(servicesRes.data.data.registrations || []);
-      } catch { /* ignore */ }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Registration failed');
-    } finally {
-      setRegistering(null);
-    }
-  };
-
-  const handleCoachingRegisterClick = async (planKey: string, planName: string) => {
-    try {
-      const res = await coachingBatchAPI.getBatches(planKey);
-      const batches = res.data.data.batches || [];
-      if (batches.length > 0) {
-        setBatchSelectPlan({ key: planKey, name: planName });
-      } else {
-        toast.error('No batches available for this class. Please check back later.');
-      }
-    } catch {
-      toast.error('Failed to load batches. Please try again.');
-    }
-  };
-
-  const handleUpgrade = async (planKey: string) => {
-    if (!selectedService) return;
-    setRegistering(planKey);
-    try {
-      await servicePlanAPI.upgrade(selectedService, planKey);
-      toast.success(`Successfully upgraded to ${planKey}!`);
-      // Refresh registrations
-      try {
-        const servicesRes = await serviceAPI.getMyServices();
-        updateRegistrations(servicesRes.data.data.registrations || []);
-      } catch { /* ignore */ }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Upgrade failed');
-    } finally {
-      setRegistering(null);
-    }
-  };
-
-  const getCurrentPlanTier = (slug: string): string | null => {
-    const reg = registrations.find((r: any) => {
-      const svc = typeof r.serviceId === 'object' ? r.serviceId : null;
-      return svc && svc.slug === slug;
-    });
-    return reg?.planTier || null;
-  };
-
-  const isUpgrade = (planKey: string, currentTier: string | null): boolean => {
-    if (!currentTier) return false;
-    return (PLAN_HIERARCHY[planKey] ?? -1) > (PLAN_HIERARCHY[currentTier] ?? -1);
-  };
-
-  const getUpgradePriceDiff = (planKey: string, currentTier: string | null): number | null => {
-    if (!currentTier || !pricing) return null;
-    const currentPrice = pricing[currentTier];
-    const targetPrice = pricing[planKey];
-    if (currentPrice == null || targetPrice == null) return null;
-    return targetPrice - currentPrice;
-  };
-
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -203,10 +106,6 @@ export default function StudentServicePlansPage() {
       </div>
     );
   }
-
-  const selectedServiceInfo = availableServices.find((s) => s.slug === selectedService);
-  const plans = selectedService ? getServicePlans(selectedService) : [];
-  const isCoaching = selectedService === 'coaching-classes';
 
   return (
     <>
@@ -216,216 +115,58 @@ export default function StudentServicePlansPage() {
           <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           Return to Dashboard
         </button>
-        {/* Service Selector */}
-        {!selectedService && (
-          <>
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-gray-900">Service Plans</h1>
-              <p className="text-gray-500 mt-1">Browse our services, compare plans, and register for the one that fits your goals.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {availableServices.map((service) => (
-                <button
-                  key={service.slug}
-                  onClick={() => handleSelectService(service.slug)}
-                  className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-100 overflow-hidden transition-all duration-300 hover:-translate-y-1 text-left"
-                >
-                  <div className={`h-1.5 bg-gradient-to-r ${service.color}`} />
-                  <div className="p-6">
-                    <div className={`w-12 h-12 ${service.iconBg} ${service.iconColor} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                      {service.icon}
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{service.name}</h3>
-                    <p className="text-sm text-gray-600 mb-4">{service.description}</p>
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 group-hover:text-blue-700">
-                      View Plans
-                      <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </>
-        )}
 
-        {/* Selected Service View */}
-        {selectedService && (
-          <div>
-            <button onClick={() => setSelectedService(null)} className="mb-6 inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              Back to Services
-            </button>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Service Plans</h1>
+          <p className="text-gray-500 mt-1">Browse our services and choose the one that fits your goals.</p>
+        </div>
 
-            {loadingPlans ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="text-center"><div className="spinner mx-auto mb-4"></div><p className="text-gray-600">Loading plan details...</p></div>
-              </div>
-            ) : isCoaching ? (
-              <>
-                {/* Coaching Classes Header */}
-                <div className="mb-8">
-                  <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Coaching Classes</h2>
-                  <p className="mt-1 text-gray-500 text-lg max-w-2xl">Choose your coaching class. Each includes study material, session recordings, and dedicated mock tests.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {availableServices.map((service) => {
+            const servicePricing = pricingByService[service.slug];
+            const serviceDiscounts = discountsByService[service.slug];
+            const prices = servicePricing ? Object.values(servicePricing).filter(v => v > 0) : [];
+            const minPrice = prices.length > 0 ? Math.min(...prices) : null;
+            const discountNotes = serviceDiscounts
+              ? (Object.values(serviceDiscounts) as Array<{ type: string; value: number; calculatedAmount: number; reason?: string }>)
+                  .filter(d => d?.reason)
+                  .map(d => d.reason!)
+              : [];
+            return (
+            <button
+              key={service.slug}
+              onClick={() => router.push(service.plansPage)}
+              className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-100 overflow-hidden transition-all duration-300 hover:-translate-y-1 text-left"
+            >
+              <div className={`h-1.5 bg-gradient-to-r ${service.color}`} />
+              <div className="p-6">
+                <div className={`w-12 h-12 ${service.iconBg} ${service.iconColor} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                  {service.icon}
                 </div>
-
-                {/* No pricing warning */}
-                {!pricing && (
-                  <div className="mb-8 bg-amber-50/80 backdrop-blur border border-amber-200 rounded-2xl p-5">
-                    <div className="flex gap-3">
-                      <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
-                        <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-amber-900">Pricing Not Available</p>
-                        <p className="text-sm text-amber-700 mt-0.5">Your admin has not set pricing yet.</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <CoachingClassCards
-                  plans={plans}
-                  pricing={pricing}
-                  registeredClasses={registeredClasses}
-                  renderAction={(plan) => (
-                    <button
-                      onClick={() => handleCoachingRegisterClick(plan.key, plan.name)}
-                      disabled={registering !== null || pricing?.[plan.key] == null}
-                      className="w-full py-3 bg-blue-600 text-white rounded-full font-bold text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {registering === plan.key ? (
-                        <span className="inline-flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Registering...</span>
-                      ) : 'Register Now'}
-                    </button>
-                  )}
-                />
-
-                {/* Note */}
-                <div className="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-5">
-                  <div className="flex gap-3">
-                    <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-blue-800">All coaching classes include</p>
-                      <p className="text-sm text-blue-700 mt-1">Study Material, Session Recordings, and dedicated mock tests as mentioned per class.</p>
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Header */}
-                <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white rounded-2xl p-8 mb-8 relative overflow-hidden">
-                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full" />
-                  <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-indigo-500/10 rounded-full" />
-                  <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight relative">{selectedServiceInfo?.name} Plans</h2>
-                  <p className="mt-2 text-blue-200 text-lg max-w-2xl relative">
-                    {getCurrentPlanTier(selectedService!)
-                      ? `You are on the ${getCurrentPlanTier(selectedService!)} plan. Upgrade to unlock more features.`
-                      : 'Compare and choose the plan that best fits your needs.'}
+                <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{service.name}</h3>
+                <p className="text-sm text-gray-600 mb-2">{service.description}</p>
+                {minPrice != null && (
+                  <p className="text-xs text-gray-500 font-medium mb-2">
+                    From <span className="text-gray-700 font-semibold">₹{minPrice.toLocaleString('en-IN')}</span> <span className="text-gray-400">+ 18% GST</span>
                   </p>
-                </div>
-
-                {/* Register / Upgrade CTA Cards */}
-                <div className={`grid gap-5 mb-10 ${plans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
-                  {plans.map((plan) => {
-                    const currentTier = getCurrentPlanTier(selectedService!);
-                    const isCurrent = currentTier === plan.key;
-                    const canUpgrade = isUpgrade(plan.key, currentTier);
-                    const priceDiff = getUpgradePriceDiff(plan.key, currentTier);
-                    const isLowerPlan = currentTier ? (PLAN_HIERARCHY[plan.key] ?? -1) < (PLAN_HIERARCHY[currentTier] ?? -1) : false;
-
-                    return (
-                      <div key={plan.key} className={`relative bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border ${isCurrent ? 'ring-2 ring-green-500 ' : ''}${plan.borderColor} overflow-hidden`}>
-                        {isCurrent && (
-                          <div className="absolute top-3 right-3 z-10 px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                            Current Plan
-                          </div>
-                        )}
-                        <div className={`${plan.headerGradient} px-5 py-4 text-white`}>
-                          <h3 className="text-lg font-bold">{plan.name}</h3>
-                          {plan.subtitle && <p className="text-xs opacity-80 mt-0.5">{plan.subtitle}</p>}
-                        </div>
-                        <div className="p-5">
-                          {pricing?.[plan.key] != null ? (
-                            <div className="mb-4">
-                              <p className="text-3xl font-extrabold text-gray-900">₹{pricing[plan.key].toLocaleString('en-IN')}</p>
-                              <p className="text-xs text-gray-500 mt-1">One-time payment</p>
-                              {canUpgrade && priceDiff != null && priceDiff > 0 && (
-                                <p className="text-sm text-emerald-600 font-semibold mt-2">
-                                  +₹{priceDiff.toLocaleString('en-IN')} upgrade difference
-                                </p>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="mb-4"><p className="text-sm text-gray-400 font-medium">Price not set</p></div>
-                          )}
-
-                          {isCurrent ? (
-                            <button disabled className="w-full py-2.5 px-4 rounded-xl font-bold text-sm text-white bg-green-500 cursor-default">
-                              Your Current Plan
-                            </button>
-                          ) : canUpgrade ? (
-                            <button
-                              onClick={() => handleUpgrade(plan.key)}
-                              disabled={registering !== null || pricing?.[plan.key] == null}
-                              className={`w-full py-2.5 px-4 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${plan.headerGradient} hover:opacity-90 hover:shadow-md`}
-                            >
-                              {registering === plan.key ? (
-                                <span className="inline-flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Upgrading...</span>
-                              ) : `Upgrade to ${plan.name}`}
-                            </button>
-                          ) : isLowerPlan ? (
-                            <button disabled className="w-full py-2.5 px-4 rounded-xl font-bold text-sm text-gray-400 bg-gray-100 cursor-not-allowed">
-                              Lower Tier
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => handleRegister(plan.key)}
-                              disabled={registering !== null || pricing?.[plan.key] == null}
-                              className={`w-full py-2.5 px-4 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed ${plan.headerGradient} hover:opacity-90 hover:shadow-md`}
-                            >
-                              {registering === plan.key ? (
-                                <span className="inline-flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Registering...</span>
-                              ) : 'Register Now'}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Features Comparison */}
-                {getServiceFeatures(selectedService!).length > 0 && (
-                  <div>
-                    {/* <div className="mb-6">
-                      <h2 className="text-xl font-bold text-gray-900">Plan Features Comparison</h2>
-                      <p className="text-sm text-gray-500 mt-1">See what&apos;s included across all tiers.</p>
-                    </div> */}
-                    <ServicePlanDetailsView features={getServiceFeatures(selectedService!)} pricing={pricing} plans={plans} serviceName={selectedServiceInfo?.name || ''} showPricing={false} />
+                )}
+                {discountNotes.length > 0 && (
+                  <div className="mb-3 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-xs text-green-700 font-medium">★ {discountNotes[0]}</p>
                   </div>
                 )}
-              </>
-            )}
-          </div>
-        )}
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 group-hover:text-blue-700">
+                  View Plans
+                  <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              </div>
+            </button>
+            );
+          })}
+        </div>
       </div>
-
-      {batchSelectPlan && (
-        <BatchSelectModal
-          isOpen={true}
-          onClose={() => setBatchSelectPlan(null)}
-          planKey={batchSelectPlan.key}
-          planName={batchSelectPlan.name}
-          onSelectBatch={(classTiming) => handleRegister(batchSelectPlan.key, classTiming)}
-          registering={registering !== null}
-        />
-      )}
     </>
   );
 }

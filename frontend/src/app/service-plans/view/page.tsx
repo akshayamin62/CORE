@@ -2,12 +2,20 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { authAPI, serviceAPI, servicePlanAPI } from '@/lib/api';
-import { User, Service } from '@/types';
+import { authAPI, serviceAPI, servicePlanAPI, studentPlanDiscountAPI } from '@/lib/api';
+import { User, Service, USER_ROLE } from '@/types';
 import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
 import CoachingClassCards, { ClassTiming } from '@/components/CoachingClassCards';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
 import toast, { Toaster } from 'react-hot-toast';
+
+interface PlanDiscountInfo {
+  type: string;
+  value: number;
+  calculatedAmount: number;
+  discountId: string;
+  reason?: string;
+}
 
 function ServicePlansViewContent() {
   const router = useRouter();
@@ -27,6 +35,12 @@ function ServicePlansViewContent() {
   const [coachingRegisteredClasses, setCoachingRegisteredClasses] = useState<Record<string, ClassTiming | null>>({});
   const [studentName, setStudentName] = useState<string>(paramStudentName || '');
   const [adminId, setAdminId] = useState<string>(paramAdminId || '');
+
+  // Discount state
+  const [planDiscounts, setPlanDiscounts] = useState<Record<string, Record<string, PlanDiscountInfo>>>({});
+  const [discountForm, setDiscountForm] = useState<{ planKey: string; type: string; value: string; reason: string } | null>(null);
+  const [savingDiscount, setSavingDiscount] = useState(false);
+  const isAdmin = user?.role === USER_ROLE.ADMIN || user?.role === 'admin';
 
   useEffect(() => {
     const init = async () => {
@@ -49,6 +63,12 @@ function ServicePlansViewContent() {
             if (data.studentName) setStudentName(data.studentName);
             if (data.adminId) setAdminId(data.adminId);
           } catch { /* ignore */ }
+
+          // Fetch student plan discounts
+          try {
+            const discRes = await studentPlanDiscountAPI.getDiscounts(studentId);
+            setPlanDiscounts(discRes.data.data.discounts || {});
+          } catch { /* ignore */ }
         }
       } catch {
         toast.error('Please login to continue');
@@ -64,18 +84,73 @@ function ServicePlansViewContent() {
     setSelectedService(slug);
     setLoadingPlans(true);
     setPricing(null);
+    setDiscountForm(null);
 
     try {
+      let p: Record<string, number> | null = null;
+
       if (adminId) {
         const pricingRes = await servicePlanAPI.getAdminPricingById(slug, adminId);
-        const p = pricingRes.data.data.pricing;
-        if (p) setPricing(p);
+        p = pricingRes.data.data.pricing || null;
       }
+
+      // Fallback: if logged-in admin is viewing and student admin pricing lookup returned empty,
+      // fetch own admin pricing directly.
+      if (!p && isAdmin) {
+        const ownPricingRes = await servicePlanAPI.getAdminPricing(slug);
+        p = ownPricingRes.data.data.pricing || null;
+      }
+
+      if (p) setPricing(p);
     } catch {
       console.error('Failed to load pricing');
     } finally {
       setLoadingPlans(false);
     }
+  };
+
+  const handleSetDiscount = async () => {
+    if (!discountForm || !studentId || !selectedService) return;
+    const val = Number(discountForm.value);
+    if (isNaN(val) || val < 0) { toast.error('Invalid discount value'); return; }
+    setSavingDiscount(true);
+    try {
+      await studentPlanDiscountAPI.setDiscount({
+        studentId,
+        serviceSlug: selectedService,
+        planTier: discountForm.planKey,
+        type: discountForm.type,
+        value: val,
+        reason: discountForm.reason || undefined,
+      });
+      toast.success('Discount set successfully');
+      setDiscountForm(null);
+      // Refresh discounts
+      const discRes = await studentPlanDiscountAPI.getDiscounts(studentId);
+      setPlanDiscounts(discRes.data.data.discounts || {});
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to set discount');
+    } finally {
+      setSavingDiscount(false);
+    }
+  };
+
+  const handleRemoveDiscount = async (discountId: string) => {
+    if (!studentId) return;
+    try {
+      await studentPlanDiscountAPI.removeDiscount(discountId);
+      toast.success('Discount removed');
+      const discRes = await studentPlanDiscountAPI.getDiscounts(studentId);
+      setPlanDiscounts(discRes.data.data.discounts || {});
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to remove discount');
+    }
+  };
+
+  const getDiscountedPrice = (slug: string, planKey: string, originalPrice: number): number | null => {
+    const disc = planDiscounts[slug]?.[planKey];
+    if (!disc) return null;
+    return originalPrice - disc.calculatedAmount;
   };
 
   if (loading || !user) {
@@ -204,7 +279,72 @@ function ServicePlansViewContent() {
                       plans={plans}
                       pricing={pricing}
                       registeredClasses={Object.keys(coachingRegisteredClasses).length > 0 ? coachingRegisteredClasses : undefined}
+                      discounts={selectedService ? planDiscounts[selectedService] : undefined}
                     />
+
+                    {/* Admin Discount Controls for Coaching */}
+                    {isAdmin && studentId && (
+                      <div className="mt-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4">Set Discount for {studentName || 'Student'}</h3>
+                        {!pricing && (
+                          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                            Set admin selling price first for this service, then discount options will be enabled for each plan.
+                          </div>
+                        )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                          {plans.map((plan) => {
+                            const price = pricing?.[plan.key];
+                            if (price == null) {
+                              return (
+                                <div key={plan.key} className="border border-gray-200 rounded-xl p-4">
+                                  <p className="text-sm font-bold text-gray-800 mb-1">{plan.name}</p>
+                                  <p className="text-xs text-gray-500 mb-2">Price: Not set</p>
+                                  <p className="text-xs text-amber-700 font-medium">Set pricing for this plan to enable discounts.</p>
+                                </div>
+                              );
+                            }
+                            const disc = planDiscounts[selectedService!]?.[plan.key];
+                            const discountedPrice = disc ? price - disc.calculatedAmount : null;
+                            const isEditing = discountForm?.planKey === plan.key;
+
+                            return (
+                              <div key={plan.key} className="border border-gray-200 rounded-xl p-4">
+                                <p className="text-sm font-bold text-gray-800 mb-1">{plan.name}</p>
+                                <p className="text-xs text-gray-500 mb-2">Price: ₹{price.toLocaleString('en-IN')}</p>
+                                {disc && !isEditing ? (
+                                  <div>
+                                    <p className="text-xs text-green-700 font-semibold">
+                                      Discount: {disc.type === 'percentage' ? `${disc.value}%` : `₹${disc.value.toLocaleString('en-IN')}`} (-₹{disc.calculatedAmount.toLocaleString('en-IN')})
+                                    </p>
+                                    <p className="text-sm font-bold text-green-600 mt-1">After Discount: ₹{discountedPrice?.toLocaleString('en-IN')}</p>
+                                    {disc.reason && <p className="text-xs text-gray-400 mt-1">Reason: {disc.reason}</p>}
+                                    <div className="flex gap-2 mt-2">
+                                      <button onClick={() => setDiscountForm({ planKey: plan.key, type: disc.type, value: String(disc.value), reason: disc.reason || '' })} className="text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button>
+                                      <button onClick={() => handleRemoveDiscount(disc.discountId)} className="text-xs text-red-600 hover:text-red-800 font-medium">Remove</button>
+                                    </div>
+                                  </div>
+                                ) : isEditing ? (
+                                  <div className="space-y-2">
+                                    <select value={discountForm.type} onChange={(e) => setDiscountForm({ ...discountForm, type: e.target.value })} className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5">
+                                      <option value="percentage">Percentage (%)</option>
+                                      <option value="fixed">Fixed Amount (₹)</option>
+                                    </select>
+                                    <input type="number" min="0" value={discountForm.value} onChange={(e) => setDiscountForm({ ...discountForm, value: e.target.value })} placeholder={discountForm.type === 'percentage' ? 'e.g. 10' : 'e.g. 5000'} className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5" />
+                                    <input type="text" value={discountForm.reason} onChange={(e) => setDiscountForm({ ...discountForm, reason: e.target.value })} placeholder="Reason (optional)" className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5" />
+                                    <div className="flex gap-2">
+                                      <button onClick={handleSetDiscount} disabled={savingDiscount || !discountForm.value} className="flex-1 text-xs bg-green-600 text-white py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium">{savingDiscount ? 'Saving...' : 'Save'}</button>
+                                      <button onClick={() => setDiscountForm(null)} className="flex-1 text-xs bg-gray-100 text-gray-600 py-1.5 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <button onClick={() => setDiscountForm({ planKey: plan.key, type: 'percentage', value: '', reason: '' })} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Set Discount</button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Note */}
                     <div className="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-5">
@@ -237,6 +377,8 @@ function ServicePlansViewContent() {
                           const isLowerPlan = (PLAN_HIERARCHY[plan.key] ?? -1) < (PLAN_HIERARCHY[currentTier] ?? -1);
                           const priceDiff = pricing && pricing[plan.key] != null && pricing[currentTier] != null
                             ? pricing[plan.key] - pricing[currentTier] : null;
+                          const disc = planDiscounts[selectedService!]?.[plan.key];
+                          const discountedPrice = pricing?.[plan.key] != null && disc ? pricing[plan.key] - disc.calculatedAmount : null;
 
                           return (
                             <div key={plan.key} className={`relative bg-white rounded-2xl shadow-md border-2 ${isCurrent ? 'ring-2 ring-green-500 ' : ''}${plan.borderColor} overflow-hidden`}>
@@ -253,7 +395,17 @@ function ServicePlansViewContent() {
                               <div className="p-5">
                                 {pricing?.[plan.key] != null ? (
                                   <div className="mb-3">
-                                    <p className="text-3xl font-extrabold text-gray-900">₹{pricing[plan.key].toLocaleString('en-IN')}</p>
+                                    {discountedPrice != null ? (
+                                      <>
+                                        <p className="text-lg text-gray-400 line-through">₹{pricing[plan.key].toLocaleString('en-IN')}</p>
+                                        <p className="text-3xl font-extrabold text-green-600">₹{discountedPrice.toLocaleString('en-IN')}</p>
+                                        <p className="text-xs text-green-600 font-semibold mt-1">
+                                          {disc.type === 'percentage' ? `${disc.value}% off` : `₹${disc.calculatedAmount.toLocaleString('en-IN')} off`}
+                                        </p>
+                                      </>
+                                    ) : (
+                                      <p className="text-3xl font-extrabold text-gray-900">₹{pricing[plan.key].toLocaleString('en-IN')}</p>
+                                    )}
                                     {isUpgradePlan && priceDiff != null && priceDiff > 0 && (
                                       <p className="text-sm text-emerald-600 font-semibold mt-2">+₹{priceDiff.toLocaleString('en-IN')} upgrade difference</p>
                                     )}
@@ -276,6 +428,7 @@ function ServicePlansViewContent() {
                     )}
 
                     {plans.length > 0 ? (
+                      <>
                       <ServicePlanDetailsView
                         features={features}
                         pricing={pricing}
@@ -283,7 +436,73 @@ function ServicePlansViewContent() {
                         serviceName={selectedServiceInfo?.name || ''}
                         showPricing={true}
                         noPricingMessage={adminId ? 'Admin has not set pricing yet.' : 'No admin pricing available.'}
+                        discounts={selectedService ? planDiscounts[selectedService] : undefined}
                       />
+
+                      {/* Admin Discount Controls */}
+                      {isAdmin && studentId && (
+                        <div className="mt-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+                          <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4">Set Discount for {studentName || 'Student'}</h3>
+                          {!pricing && (
+                            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                              Set admin selling price first for this service, then discount options will be enabled for each plan.
+                            </div>
+                          )}
+                          <div className={`grid gap-4 ${plans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
+                            {plans.map((plan) => {
+                              const price = pricing?.[plan.key];
+                              if (price == null) {
+                                return (
+                                  <div key={plan.key} className="border border-gray-200 rounded-xl p-4">
+                                    <p className="text-sm font-bold text-gray-800 mb-1">{plan.name}</p>
+                                    <p className="text-xs text-gray-500 mb-2">Price: Not set</p>
+                                    <p className="text-xs text-amber-700 font-medium">Set pricing for this plan to enable discounts.</p>
+                                  </div>
+                                );
+                              }
+                              const disc = planDiscounts[selectedService!]?.[plan.key];
+                              const discountedPrice = disc ? price - disc.calculatedAmount : null;
+                              const isEditing = discountForm?.planKey === plan.key;
+
+                              return (
+                                <div key={plan.key} className="border border-gray-200 rounded-xl p-4">
+                                  <p className="text-sm font-bold text-gray-800 mb-1">{plan.name}</p>
+                                  <p className="text-xs text-gray-500 mb-2">Price: ₹{price.toLocaleString('en-IN')}</p>
+                                  {disc && !isEditing ? (
+                                    <div>
+                                      <p className="text-xs text-green-700 font-semibold">
+                                        Discount: {disc.type === 'percentage' ? `${disc.value}%` : `₹${disc.value.toLocaleString('en-IN')}`} (-₹{disc.calculatedAmount.toLocaleString('en-IN')})
+                                      </p>
+                                      <p className="text-sm font-bold text-green-600 mt-1">After Discount: ₹{discountedPrice?.toLocaleString('en-IN')}</p>
+                                      {disc.reason && <p className="text-xs text-gray-400 mt-1">Reason: {disc.reason}</p>}
+                                      <div className="flex gap-2 mt-2">
+                                        <button onClick={() => setDiscountForm({ planKey: plan.key, type: disc.type, value: String(disc.value), reason: disc.reason || '' })} className="text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button>
+                                        <button onClick={() => handleRemoveDiscount(disc.discountId)} className="text-xs text-red-600 hover:text-red-800 font-medium">Remove</button>
+                                      </div>
+                                    </div>
+                                  ) : isEditing ? (
+                                    <div className="space-y-2">
+                                      <select value={discountForm.type} onChange={(e) => setDiscountForm({ ...discountForm, type: e.target.value })} className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5">
+                                        <option value="percentage">Percentage (%)</option>
+                                        <option value="fixed">Fixed Amount (₹)</option>
+                                      </select>
+                                      <input type="number" min="0" value={discountForm.value} onChange={(e) => setDiscountForm({ ...discountForm, value: e.target.value })} placeholder={discountForm.type === 'percentage' ? 'e.g. 10' : 'e.g. 5000'} className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5" />
+                                      <input type="text" value={discountForm.reason} onChange={(e) => setDiscountForm({ ...discountForm, reason: e.target.value })} placeholder="Reason (optional)" className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5" />
+                                      <div className="flex gap-2">
+                                        <button onClick={handleSetDiscount} disabled={savingDiscount || !discountForm.value} className="flex-1 text-xs bg-green-600 text-white py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium">{savingDiscount ? 'Saving...' : 'Save'}</button>
+                                        <button onClick={() => setDiscountForm(null)} className="flex-1 text-xs bg-gray-100 text-gray-600 py-1.5 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <button onClick={() => setDiscountForm({ planKey: plan.key, type: 'percentage', value: '', reason: '' })} className="text-xs text-blue-600 hover:text-blue-800 font-medium">+ Set Discount</button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                      </>
                     ) : (
                       <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
                         <p className="text-gray-500">No plans configured for this service yet.</p>

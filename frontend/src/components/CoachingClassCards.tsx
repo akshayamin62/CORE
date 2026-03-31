@@ -49,9 +49,11 @@ interface CoachingClassCardsProps {
   // Inline price editing (for admin/super-admin)
   onPriceEdit?: (planKey: string, price: number) => Promise<void>;
   basePricing?: Record<string, number> | null;
+  // Discounts
+  discounts?: Record<string, { type: string; value: number; calculatedAmount: number; reason?: string }>;
 }
 
-export default function CoachingClassCards({ plans, pricing, renderAction, currentPlanKey, registeredClasses, batches, onAddBatch, onEditBatch, onDeleteBatch, onPriceEdit, basePricing }: CoachingClassCardsProps) {
+export default function CoachingClassCards({ plans, pricing, renderAction, currentPlanKey, registeredClasses, batches, onAddBatch, onEditBatch, onDeleteBatch, onPriceEdit, basePricing, discounts }: CoachingClassCardsProps) {
   const [batchModal, setBatchModal] = useState<{ planKey: string; planName: string } | null>(null);
   const [editingPrice, setEditingPrice] = useState<string | null>(null);
   const [priceValue, setPriceValue] = useState('');
@@ -72,6 +74,8 @@ export default function CoachingClassCards({ plans, pricing, renderAction, curre
         const regTiming = registeredClasses?.[plan.key];
         const isRegistered = registeredClasses ? plan.key in registeredClasses : false;
         const planBatches = batches?.filter(b => b.planKey === plan.key) || [];
+        const disc = discounts?.[plan.key];
+        const discountedPrice = price != null && disc ? price - disc.calculatedAmount : null;
 
         const formatTimingDate = (dateStr: string) => {
           const d = new Date(dateStr);
@@ -141,7 +145,18 @@ export default function CoachingClassCards({ plans, pricing, renderAction, curre
               ) : price != null ? (
                 <div className="mb-5">
                   <div className="flex items-center gap-2">
-                    <p className="text-2xl font-extrabold text-gray-900">₹{price.toLocaleString('en-IN')}</p>
+                    {discountedPrice != null ? (
+                      <div>
+                        <p className="text-sm text-gray-400 line-through">₹{price.toLocaleString('en-IN')}</p>
+                        <p className="text-2xl font-extrabold text-green-600">₹{discountedPrice.toLocaleString('en-IN')}</p>
+                        <p className="text-xs text-green-600 font-semibold mt-0.5">
+                          {disc!.type === 'percentage' ? `${disc!.value}% off` : `₹${disc!.calculatedAmount.toLocaleString('en-IN')} off`}
+                        </p>                        {disc!.reason && (
+                          <p className="text-xs text-blue-600 mt-0.5 italic">"{disc!.reason}"</p>
+                        )}                      </div>
+                    ) : (
+                      <p className="text-2xl font-extrabold text-gray-900">₹{price.toLocaleString('en-IN')}</p>
+                    )}
                     {onPriceEdit && (
                       <button
                         onClick={() => { setEditingPrice(plan.key); setPriceValue(String(price)); }}
@@ -161,6 +176,7 @@ export default function CoachingClassCards({ plans, pricing, renderAction, curre
                       }
                     </p>
                   )}
+                  <p className="text-xs text-gray-400 mt-1">+ 18% GST applicable</p>
                 </div>
               ) : (
                 <div className="mb-5 flex items-center gap-2">
