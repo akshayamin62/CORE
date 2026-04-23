@@ -18,6 +18,13 @@ import { USER_ROLE } from "../types/roles";
 
 const router = express.Router();
 
+import {
+  getReferralInfo,
+  submitReferralEnquiry,
+  getAdminInfoForReferrerRegistration,
+  registerAsReferrer,
+} from "../controllers/referrerController";
+
 // ============= PUBLIC ROUTES (No Auth Required) =============
 
 // Get admin info for enquiry form
@@ -25,6 +32,18 @@ router.get("/public/enquiry/:adminSlug/info", getAdminInfoBySlug);
 
 // Submit enquiry form
 router.post("/public/enquiry/:adminSlug/submit", submitEnquiry);
+
+// Get referral form info
+router.get("/public/referral/:referralSlug/info", getReferralInfo);
+
+// Submit referral enquiry form
+router.post("/public/referral/:referralSlug/submit", submitReferralEnquiry);
+
+// Get admin info for referrer registration form
+router.get("/public/referrer-registration/:adminSlug/info", getAdminInfoForReferrerRegistration);
+
+// Submit referrer registration form
+router.post("/public/referrer-registration/:adminSlug/submit", registerAsReferrer);
 
 // ============= ADMIN ROUTES =============
 
@@ -80,11 +99,11 @@ router.get(
 
 // ============= SHARED ROUTES (Admin & Counselor) =============
 
-// Get lead detail (Admin, Counselor, or Super Admin)
+// Get lead detail (Admin, Counselor, Advisor, or Super Admin)
 router.get(
   "/leads/:leadId",
   authenticate,
-  authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN]),
+  authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADVISOR]),
   getLeadDetail
 );
 
@@ -92,7 +111,7 @@ router.get(
 router.patch(
   "/leads/:leadId/stage",
   authenticate,
-  authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]),
+  authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.ADVISOR]),
   updateLeadStage
 );
 

@@ -4,10 +4,15 @@ export interface IAdmin extends Document {
   userId: mongoose.Types.ObjectId; // Reference to User model
   email: string;
   mobileNumber?: string;
-  companyName: string;
+  companyName?: string;
   address?: string;
   companyLogo?: string;
-  enquiryFormSlug: string; // Unique slug for enquiry form URL
+  enquiryFormSlug?: string; // Unique slug for enquiry form URL
+  isOnboarded: boolean;
+  assignedB2BOpsId?: mongoose.Types.ObjectId;
+  b2bLeadId?: mongoose.Types.ObjectId;
+  onboardingSubmittedAt?: Date;
+  b2bProfileData?: Record<string, any>;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -40,7 +45,7 @@ const adminSchema = new Schema<IAdmin>(
     },
     companyName: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
     address: {
@@ -54,10 +59,33 @@ const adminSchema = new Schema<IAdmin>(
     },
     enquiryFormSlug: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
+      sparse: true,
       lowercase: true,
       trim: true,
+    },
+    isOnboarded: {
+      type: Boolean,
+      default: false,
+    },
+    assignedB2BOpsId: {
+      type: Schema.Types.ObjectId,
+      ref: "B2BOps",
+      default: null,
+    },
+    b2bLeadId: {
+      type: Schema.Types.ObjectId,
+      ref: "B2BLead",
+      default: null,
+    },
+    onboardingSubmittedAt: {
+      type: Date,
+      default: null,
+    },
+    b2bProfileData: {
+      type: Schema.Types.Mixed,
+      default: {},
     },
   },
   { timestamps: true }

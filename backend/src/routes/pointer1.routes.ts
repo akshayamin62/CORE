@@ -24,6 +24,7 @@ import {
 } from '../controllers/pointer1.controller';
 import { authorize } from '../middleware/authorize';
 import { USER_ROLE } from '../types/roles';
+import { checkAdvisorStudentAccess } from '../middleware/advisorStudentOwnership';
 
 const router = Router();
 
@@ -34,58 +35,58 @@ router.post('/upload', authorize(USER_ROLE.STUDENT), academicUploadMiddleware, u
 router.post('/evaluate', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.SUPER_ADMIN]), evaluateAcademicHandler);
 
 // GET /api/pointer1/status/:studentId - Get status and documents
-router.get('/status/:studentId', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.PARENT]), getAcademicStatusHandler);
+router.get('/status/:studentId', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.PARENT, USER_ROLE.ADVISOR]), checkAdvisorStudentAccess, getAcademicStatusHandler);
 
 // ========================
 // Academic Data Routes (Formal/Informal)
 // ========================
 
 // GET /api/pointer1/academic/:studentId - Get academic data
-router.get('/academic/:studentId', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.PARENT]), getAcademicDataHandler);
+router.get('/academic/:studentId', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.PARENT, USER_ROLE.ADVISOR]), checkAdvisorStudentAccess, getAcademicDataHandler);
 
 // POST /api/pointer1/academic/section - Add a section
-router.post('/academic/section', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), addSectionHandler);
+router.post('/academic/section', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN]), addSectionHandler);
 
 // POST /api/pointer1/academic/subsection - Add a sub-section
-router.post('/academic/subsection', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), addSubSectionHandler);
+router.post('/academic/subsection', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN]), addSubSectionHandler);
 
 // PUT /api/pointer1/academic/subsection - Update a sub-section
-router.put('/academic/subsection', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), updateSubSectionHandler);
+router.put('/academic/subsection', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN]), updateSubSectionHandler);
 
 // POST /api/pointer1/academic/subject - Add a subject
-router.post('/academic/subject', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), addSubjectHandler);
+router.post('/academic/subject', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN]), addSubjectHandler);
 
 // PUT /api/pointer1/academic/subject - Update a subject
-router.put('/academic/subject', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), updateSubjectHandler);
+router.put('/academic/subject', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN]), updateSubjectHandler);
 
 // POST /api/pointer1/academic/project - Add a project
-router.post('/academic/project', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), addProjectHandler);
+router.post('/academic/project', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN]), addProjectHandler);
 
 // PUT /api/pointer1/academic/project - Update a project
-router.put('/academic/project', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), updateProjectHandler);
+router.put('/academic/project', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN]), updateProjectHandler);
 
 // DELETE /api/pointer1/academic/section - Delete a section
-router.delete('/academic/section', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), deleteSectionHandler);
+router.delete('/academic/section', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN]), deleteSectionHandler);
 
 // DELETE /api/pointer1/academic/subsection - Delete a sub-section
-router.delete('/academic/subsection', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), deleteSubSectionHandler);
+router.delete('/academic/subsection', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN]), deleteSubSectionHandler);
 
 // DELETE /api/pointer1/academic/subject - Delete a subject
-router.delete('/academic/subject', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), deleteSubjectHandler);
+router.delete('/academic/subject', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN]), deleteSubjectHandler);
 
 // DELETE /api/pointer1/academic/project - Delete a project
-router.delete('/academic/project', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), deleteProjectHandler);
+router.delete('/academic/project', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN]), deleteProjectHandler);
 
 // PUT /api/pointer1/academic/weightages - Update weightages for informal sections
-router.put('/academic/weightages', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), updateWeightagesHandler);
+router.put('/academic/weightages', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN]), updateWeightagesHandler);
 
 // GET /api/pointer1/academic/score/:studentId - Get academic excellence score
-router.get('/academic/score/:studentId', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.PARENT]), getAcademicExcellenceScoreHandler);
+router.get('/academic/score/:studentId', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.PARENT, USER_ROLE.OPS, USER_ROLE.EDUPLAN_COACH, USER_ROLE.REFERRER, USER_ROLE.ADVISOR]), checkAdvisorStudentAccess, getAcademicExcellenceScoreHandler);
 
 // POST /api/pointer1/academic/subsection/file - Upload file to informal sub-section
-router.post('/academic/subsection/file', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), subSectionFileUploadMiddleware, uploadSubSectionFileHandler);
+router.post('/academic/subsection/file', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN]), subSectionFileUploadMiddleware, uploadSubSectionFileHandler);
 
 // DELETE /api/pointer1/academic/subsection/file - Delete file from informal sub-section
-router.delete('/academic/subsection/file', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]), deleteSubSectionFileHandler);
+router.delete('/academic/subsection/file', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.STUDENT, USER_ROLE.SUPER_ADMIN]), deleteSubSectionFileHandler);
 
 export default router;

@@ -1,10 +1,26 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import axios from 'axios';
 import { IVY_API_URL } from '@/lib/ivyApi';
+import { authAPI } from '@/lib/api';
+import { USER_ROLE } from '@/types';
+
+const REFERRER_ROLE = USER_ROLE.REFERRER;
+const ADVISOR_ROLE = USER_ROLE.ADVISOR;
+
+const ALLOWED_ROLES: string[] = [
+    USER_ROLE.STUDENT,
+    USER_ROLE.IVY_EXPERT,
+    USER_ROLE.SUPER_ADMIN,
+    USER_ROLE.ADMIN,
+    USER_ROLE.COUNSELOR,
+    USER_ROLE.PARENT,
+    USER_ROLE.REFERRER,
+    USER_ROLE.ADVISOR,
+];
 
 function StudentSidebar() {
     const pathname = usePathname();
@@ -15,6 +31,15 @@ function StudentSidebar() {
     const readOnly = searchParams.get('readOnly') === 'true';
     
     const [studentInfo, setStudentInfo] = useState<{ firstName: string; lastName: string; email: string } | null>(null);
+    const [userRole, setUserRole] = useState<string>('');
+    const [isServiceUnderAdmin, setIsServiceUnderAdmin] = useState(false);
+
+    useEffect(() => {
+        authAPI.getProfile().then(res => {
+            const role = res.data?.data?.user?.role || '';
+            setUserRole(role);
+        }).catch(() => {});
+    }, []);
 
     useEffect(() => {
         const fetchStudentInfo = async () => {
@@ -37,6 +62,10 @@ function StudentSidebar() {
                         lastName: svc.studentId.lastName || '',
                         email: svc.studentId.email || '',
                     });
+                }
+                // Track if this service was transferred to admin
+                if (svc?.registeredViaAdminId) {
+                    setIsServiceUnderAdmin(true);
                 }
             } catch (error) {
                 console.error('Error fetching student info:', error);
@@ -140,7 +169,7 @@ function StudentSidebar() {
             </div>
 
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-                {navItems.map((item) => {
+                {(readOnly && (userRole === REFERRER_ROLE || (userRole === ADVISOR_ROLE && isServiceUnderAdmin)) ? navItems.filter(item => item.name === 'Dashboard') : navItems).map((item) => {
                     const active = isActive(item.href);
                     
                     return (
@@ -194,6 +223,30 @@ function StudentSidebar() {
 }
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
+    const router = useRouter();
+    const [authorized, setAuthorized] = useState(false);
+
+    useEffect(() => {
+        authAPI.getProfile()
+            .then((res) => {
+                const role = res.data?.data?.user?.role;
+                if (role && ALLOWED_ROLES.includes(role)) {
+                    setAuthorized(true);
+                } else {
+                    router.push('/');
+                }
+            })
+            .catch(() => {
+                router.push('/login');
+            });
+    }, [router]);
+
+    if (!authorized) {
+        return <div className="flex min-h-screen items-center justify-center bg-[#FBFBFE]">
+            <div className="w-10 h-10 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>;
+    }
+
     return (
         <div className="flex bg-[#FBFBFE] min-h-screen">
             <Suspense fallback={<div className="w-72 bg-white border-r animate-pulse"></div>}>

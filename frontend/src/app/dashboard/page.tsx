@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const [registrations, setRegistrations] = useState<StudentServiceRegistration[]>([]);
   const [registeringServiceId, setRegisteringServiceId] = useState<string | null>(null);
   const [otherServices, setOtherServices] = useState<Service[]>([]);
+  const [allowedServices, setAllowedServices] = useState<string[] | null>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -39,6 +40,14 @@ export default function DashboardPage() {
         router.push('/service-provider/dashboard');
       } else if (user.role === 'PARENT') {
         router.push('/parent/dashboard');
+      } else if (user.role === 'REFERRER') {
+        router.push('/referrer/dashboard');
+      } else if (user.role === 'B2B_SALES') {
+        router.push('/b2b-sales/dashboard');
+      } else if (user.role === 'B2B_OPS') {
+        router.push('/b2b-ops/dashboard');
+      } else if (user.role === 'ADVISOR') {
+        router.push('/advisor/dashboard');
       } else {
         fetchMyServices();
       }
@@ -49,6 +58,9 @@ export default function DashboardPage() {
     try {
       const response = await authAPI.getProfile();
       setUser(response.data.data.user);
+      if (response.data.data.allowedServices) {
+        setAllowedServices(response.data.data.allowedServices);
+      }
     } catch (error: any) {
       const message = error.response?.data?.message || 'Failed to fetch profile';
       toast.error(message);
@@ -103,7 +115,8 @@ export default function DashboardPage() {
       const unregisteredServices = allServices.filter((service: Service) => 
         !registeredServiceIds.includes(service._id)
       );
-      
+
+      // Show all unregistered services (don't filter by allowedServices)
       setOtherServices(unregisteredServices);
     } catch (error: any) {
       console.error('Failed to fetch other services:', error);
@@ -276,15 +289,18 @@ export default function DashboardPage() {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {otherServices.map((service) => (
-                  <ServiceCard
-                    key={service._id}
-                    service={service}
-                    isRegistered={false}
-                    onRegister={handleRegister}
-                    loading={registeringServiceId === service._id}
-                  />
-                ))}
+                {otherServices.map((service) => {
+                  const isAllowed = !allowedServices || allowedServices.includes(service.slug);
+                  return (
+                    <ServiceCard
+                      key={service._id}
+                      service={service}
+                      isRegistered={false}
+                      onRegister={isAllowed ? handleRegister : undefined}
+                      loading={registeringServiceId === service._id}
+                    />
+                  );
+                })}
               </div>
             </div>
           )}

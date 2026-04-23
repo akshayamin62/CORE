@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import { superAdminAPI } from '@/lib/api';
 import StudentProfileModal from '@/components/StudentProfileModal';
+import AuthImage from '@/components/AuthImage';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 
@@ -18,6 +19,7 @@ interface StudentDetails {
     middleName?: string;
     lastName: string;
     email: string;
+    profilePicture?: string;
     role: string;
     isVerified: boolean;
     isActive: boolean;
@@ -34,11 +36,24 @@ interface StudentDetails {
       middleName?: string;
       lastName: string;
       email: string;
+    profilePicture?: string;
     };
   };
   counselorId?: {
     _id: string;
     mobileNumber?: string;
+    userId: {
+      _id: string;
+      firstName: string;
+      middleName?: string;
+      lastName: string;
+      email: string;
+    profilePicture?: string;
+    };
+  };
+  advisorId?: {
+    _id: string;
+    companyName?: string;
     userId: {
       _id: string;
       firstName: string;
@@ -113,7 +128,7 @@ function IvyExpertStudentDetail({ params }: { params: Promise<{ studentId: strin
 
   const handleViewService = (registration: Registration) => {
     if (registration.serviceId.name === 'Ivy League Admissions' || registration.serviceId.slug === 'ivy-league') {
-      router.push(`/ivy-league/ivy-expert?studentId=${studentId}&studentIvyServiceId=${serviceId || registration._id}`);
+      router.push(`/ivy-league/ivy-expert?studentId=${studentId}&studentIvyServiceId=${serviceId || registration._id}&userId=${student?.userId?._id || ''}`);
     }
   };
 
@@ -179,11 +194,18 @@ function IvyExpertStudentDetail({ params }: { params: Promise<{ studentId: strin
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                <span className="text-blue-600 font-bold text-xl">
-                  {getInitials(student.userId)}
-                </span>
-              </div>
+              <AuthImage
+                  path={student.userId.profilePicture}
+                  alt={getFullName(student.userId)}
+                  className="w-16 h-16 rounded-full object-cover mr-4"
+                  fallback={
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                      <span className="text-blue-600 font-bold text-xl">
+                        {getInitials(student.userId)}
+                      </span>
+                    </div>
+                  }
+                />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{getFullName(student.userId)}</h1>
                 <p className="text-gray-600">{student.userId.email}</p>
@@ -224,6 +246,7 @@ function IvyExpertStudentDetail({ params }: { params: Promise<{ studentId: strin
                 {student.mobileNumber || 'Not provided'}
               </p>
             </div>
+            {student.adminId && (
             <div>
               <p className="text-sm text-gray-600 mb-1">Admin</p>
               <p className="font-medium text-gray-900">
@@ -233,6 +256,8 @@ function IvyExpertStudentDetail({ params }: { params: Promise<{ studentId: strin
                 <p className="text-sm text-gray-500">{student.adminId.userId.email}</p>
               )}
             </div>
+            )}
+            {student.adminId && (
             <div>
               <p className="text-sm text-gray-600 mb-1">Counselor</p>
               <p className="font-medium text-gray-900">
@@ -242,6 +267,18 @@ function IvyExpertStudentDetail({ params }: { params: Promise<{ studentId: strin
                 <p className="text-sm text-gray-500">{student.counselorId.userId.email}</p>
               )}
             </div>
+            )}
+            {student.advisorId && (
+            <div>
+              <p className="text-sm text-gray-600 mb-1">Advisor</p>
+              <p className="font-medium text-gray-900">
+                {student.advisorId?.companyName || 'N/A'}
+              </p>
+              {student.advisorId?.userId?.email && (
+                <p className="text-sm text-gray-500">{student.advisorId.userId.email}</p>
+              )}
+            </div>
+            )}
             <div>
               <p className="text-sm text-gray-600 mb-1">Joined Date</p>
               <p className="font-medium text-gray-900">
@@ -341,7 +378,7 @@ function IvyExpertStudentDetail({ params }: { params: Promise<{ studentId: strin
         </div>
       </div>
       {/* Service Plans Button */}
-      {student.adminId?._id && (
+      {(student.adminId?._id || student.advisorId?._id) && (
         <div className="px-8 pb-6">
           <button
             onClick={() => router.push('/service-plans/view?studentId=' + studentId)}

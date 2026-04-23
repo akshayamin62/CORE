@@ -9,6 +9,10 @@ export enum USER_ROLE {
   ALUMNI = 'ALUMNI',
   SUPER_ADMIN = 'SUPER_ADMIN',
   SERVICE_PROVIDER = 'SERVICE_PROVIDER',
+  REFERRER = 'REFERRER',
+  ADVISOR = 'ADVISOR',
+  B2B_SALES = 'B2B_SALES',
+  B2B_OPS = 'B2B_OPS',
 }
 
 export interface User {
@@ -224,6 +228,76 @@ export interface SPDocument {
   updatedAt?: string;
 }
 
+// B2B Lead Document Types
+export enum B2BDocumentStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export interface B2BDocumentField {
+  _id: string;
+  b2bLeadId: string;
+  documentName: string;
+  documentKey: string;
+  required: boolean;
+  helpText?: string;
+  order: number;
+  isActive: boolean;
+  createdBy: {
+    _id: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email: string;
+  };
+  createdByRole: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface B2BLeadDocument {
+  _id: string;
+  b2bLeadId: string;
+  documentFieldId: B2BDocumentField | string;
+  documentName: string;
+  documentKey: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedAt: string;
+  uploadedBy: {
+    _id: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email: string;
+  };
+  uploadedByRole: string;
+  status: B2BDocumentStatus;
+  approvedBy?: {
+    _id: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email: string;
+  };
+  approvedAt?: string;
+  rejectedBy?: {
+    _id: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email: string;
+  };
+  rejectedAt?: string;
+  rejectionMessage?: string;
+  version: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface ServiceProviderProfile {
   _id: string;
   userId: string;
@@ -314,6 +388,29 @@ export enum LEAD_STAGE {
   CLOSED = 'Closed',
 }
 
+export enum B2B_LEAD_TYPE {
+  FRANCHISE = 'Franchise',
+  INSTITUTION = 'Institution',
+  ADVISOR = 'Advisor',
+}
+
+export enum B2B_LEAD_STAGE {
+  NEW = 'New',
+  HOT = 'Hot',
+  WARM = 'Warm',
+  COLD = 'Cold',
+  IN_PROCESS = 'Proceed for Documentation',
+  CONVERTED = 'Converted',
+  CLOSED = 'Closed',
+}
+
+export enum B2B_CONVERSION_STATUS {
+  PENDING = 'Pending',
+  APPROVED = 'Approved',
+  REJECTED = 'Rejected',
+  DOCUMENT_VERIFICATION = 'Document Verification',
+}
+
 export interface LeadParentDetail {
   firstName: string;
   middleName?: string;
@@ -357,6 +454,7 @@ export interface Lead {
   year?: string;
   parentDetail?: LeadParentDetail;
   stage: LEAD_STAGE;
+  source?: string;
   conversionRequestId?: string;
   conversionStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;
@@ -368,6 +466,27 @@ export interface AdminInfo {
   companyName?: string;
   companyLogo?: string | null;
   services: string[];
+  allowedServices?: string[];
+  ownerType?: string;
+  isOnboarded?: boolean;
+}
+
+export interface OnboardingProfile {
+  _id: string;
+  userId: string;
+  email: string;
+  mobileNumber?: string;
+  companyName?: string;
+  address?: string;
+  companyLogo?: string;
+  enquiryFormSlug?: string;
+  allowedServices?: string[];
+  isOnboarded: boolean;
+  assignedB2BOpsId?: any;
+  b2bLeadId?: any;
+  onboardingSubmittedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Follow-Up Types
@@ -393,6 +512,9 @@ export enum FOLLOWUP_STATUS {
   FAKE_ENQUIRY = 'Fake / Test Enquiry',
   DUPLICATE_ENQUIRY = 'Duplicate Enquiry',
   CONVERTED_TO_STUDENT = 'Converted to Student',
+  DISCUSS_NEED_TIME = 'Need time to Discuss',
+  PROCEED_FOR_DOCUMENTATION = 'Proceed for Documentation',
+  CONVERTED = 'Converted',
 }
 
 export enum MEETING_TYPE {

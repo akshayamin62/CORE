@@ -20,6 +20,7 @@ import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleCalendar from '@/components/OpsScheduleCalendar';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
 import CoachingClassCards, { ClassTiming } from '@/components/CoachingClassCards';
+import { fetchBlobUrl } from '@/lib/useBlobUrl';
 
 const BRAINOGRAPHY_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -55,6 +56,17 @@ interface ExtendedRegistration extends Omit<StudentServiceRegistration, 'student
     counselorId?: {
       _id: string;
       mobileNumber?: string;
+      userId: {
+        _id: string;
+        firstName: string;
+        middleName?: string;
+        lastName: string;
+        email: string;
+      };
+    };
+    advisorId?: {
+      _id: string;
+    companyName?: string;
       userId: {
         _id: string;
         firstName: string;
@@ -109,6 +121,7 @@ function MyDetailsContent() {
 
   // Extracted data & Portfolio
   const [brainographyData, setBrainographyData] = useState<BrainographyDataType | null>(null);
+  const [extractingBrainography, setExtractingBrainography] = useState(false);
   const [portfolios, setPortfolios] = useState<PortfolioItem[]>([]);
   const handlePortfolioDownload = usePortfolioDownload();
 
@@ -265,10 +278,15 @@ function MyDetailsContent() {
     }
   };
 
-  const handleBrainographyView = () => {
+  const handleBrainographyView = async () => {
     if (!brainographyDoc) return;
-    const baseUrl = BRAINOGRAPHY_API_URL.replace('/api', '') || 'http://localhost:5000';
-    window.open(`${baseUrl}/${brainographyDoc.filePath}`, '_blank');
+    try {
+      const path = brainographyDoc.filePath.startsWith('/') ? brainographyDoc.filePath : `/${brainographyDoc.filePath}`;
+      const blobUrl = await fetchBlobUrl(path);
+      window.open(blobUrl, '_blank');
+    } catch {
+      toast.error('Failed to load document');
+    }
   };
 
   const handleBrainographyDownload = async () => {
@@ -298,11 +316,25 @@ function MyDetailsContent() {
       const response = await axios.get(`${BRAINOGRAPHY_API_URL}/portfolio/${registrationId}/data`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setBrainographyData(response.data.data.brainographyData || null);
+      const data = response.data.data.brainographyData || null;
+      setBrainographyData(data);
+      if (data) setExtractingBrainography(false);
+      return data;
     } catch (error) {
       // Silently fail
+      return null;
     }
   };
+
+  useEffect(() => {
+    if (!brainographyDoc || brainographyData) { setExtractingBrainography(false); return; }
+    setExtractingBrainography(true);
+    const interval = setInterval(async () => {
+      const data = await fetchBrainographyData();
+      if (data) clearInterval(interval);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [brainographyDoc, brainographyData]);
 
   const handleUpdateBrainographyMeta = async (field: 'standard' | 'board', value: string) => {
     try {
@@ -546,15 +578,8 @@ function MyDetailsContent() {
         });
       }
       
-      // Add the new instance before the last one (if there are existing instances)
-      const instances = newValues[partKey][sectionId][subSectionId];
-      if (instances.length > 0) {
-        // Insert before the last element
-        instances.splice(instances.length - 1, 0, newInstance);
-      } else {
-        // No existing instances, just add it
-        instances.push(newInstance);
-      }
+      // Add the new instance at the end
+      newValues[partKey][sectionId][subSectionId].push(newInstance);
       return newValues;
     });
   };
@@ -590,7 +615,21 @@ function MyDetailsContent() {
       const subSectionValues = sectionValues[subSection.key] || [{}];
       
       subSectionValues.forEach((instanceValues: any, index: number) => {
-        subSection.fields.forEach((field) => {
+        // Filter fields by visibility (same logic as FormSubSectionRenderer)
+        const visibleFields = subSection.fields.filter((f) => {
+          const eduLevel = instanceValues?.educationLevel;
+          const board = instanceValues?.board;
+          if (f.key === 'board' || f.key === 'boardFullName') {
+            if (eduLevel !== 'secondary_school' && eduLevel !== 'higher_secondary_school') return false;
+          }
+          if (f.key === 'boardFullName') {
+            if (board !== 'State Board' && board !== 'Other') return false;
+          }
+          if (f.key === 'fieldOfStudy' && eduLevel === 'secondary_school') return false;
+          return true;
+        });
+
+        visibleFields.forEach((field) => {
           if (field.required) {
             let value = instanceValues?.[field.key];
             
@@ -951,7 +990,7 @@ function MyDetailsContent() {
 
     const renderSupportTeam = () => {
       if (!registration.studentId) return null;
-      const hasTeam = registration.studentId.adminId || registration.studentId.counselorId || opsUser || (isEducationPlanning && eduplanCoach);
+      const hasTeam = registration.studentId.adminId || registration.studentId.counselorId || registration.studentId.advisorId || opsUser || (isEducationPlanning && eduplanCoach);
       if (!hasTeam) return null;
       return (
         <div className="bg-white border-b border-gray-200 mb-6">
@@ -983,6 +1022,17 @@ function MyDetailsContent() {
                   )}
                   {registration.studentId.counselorId.mobileNumber && (
                     <p className="text-xs text-gray-600">{registration.studentId.counselorId.mobileNumber}</p>
+                  )}
+                </div>
+              )}
+              {registration.studentId.advisorId && (
+                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                  <p className="text-xs font-medium text-gray-700 mb-1">Advisor</p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    {registration.studentId.advisorId?.companyName}
+                  </p>
+                  {registration.studentId.advisorId.userId?.email && (
+                    <p className="text-xs text-gray-600">{registration.studentId.advisorId.userId.email}</p>
                   )}
                 </div>
               )}
@@ -1119,6 +1169,13 @@ function MyDetailsContent() {
           </div>
         </div>
         {/* Extracted Brainography Data */}
+        {brainographyDoc && !brainographyData && extractingBrainography && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
+            <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <p className="text-sm font-medium text-blue-800">AI is extracting data from brainography report...</p>
+            <p className="text-xs text-blue-600 mt-1">This may take a minute. Please wait.</p>
+          </div>
+        )}
         {brainographyData && <BrainographyDataDisplay data={brainographyData} canEdit onUpdate={handleUpdateBrainographyMeta} />}
       </div>
     );

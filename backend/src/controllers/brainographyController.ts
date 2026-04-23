@@ -4,12 +4,15 @@ import { AuthRequest } from '../middleware/auth';
 import StudentDocument, { DocumentCategory, DocumentStatus, UploaderRole } from '../models/StudentDocument';
 import StudentServiceRegistration from '../models/StudentServiceRegistration';
 import EduplanCoach from '../models/EduplanCoach';
+import Admin from '../models/Admin';
+import Counselor from '../models/Counselor';
+import Advisor from "../models/Advisor";
 import Student from '../models/Student';
 import User from '../models/User';
 import { USER_ROLE } from '../types/roles';
 import fs from 'fs';
 import path from 'path';
-import { getUploadBaseDir, ensureDir } from '../utils/uploadDir';
+import { getUploadBaseDir, ensureDir, validateFilePath } from '../utils/uploadDir';
 import { runBrainographyExtraction } from './portfolioController';
 
 const BRAINOGRAPHY_DOC_KEY = 'brainography_report';
@@ -76,11 +79,44 @@ export const uploadBrainography = async (req: AuthRequest, res: Response): Promi
           message: 'Access denied. You are not the active Eduplan Coach for this registration.',
         });
       }
+    } else if (userRole === USER_ROLE.ADMIN) {
+      const admin = await Admin.findOne({ userId });
+      if (!admin) {
+        fs.unlinkSync(file.path);
+        return res.status(404).json({ success: false, message: 'Admin record not found' });
+      }
+      const student = await Student.findById(registration.studentId);
+      if (!student || !student.adminId || student.adminId.toString() !== admin._id.toString()) {
+        fs.unlinkSync(file.path);
+        return res.status(403).json({ success: false, message: 'Access denied. This student is not assigned to you.' });
+      }
+    } else if (userRole === USER_ROLE.COUNSELOR) {
+      const counselor = await Counselor.findOne({ userId });
+      if (!counselor) {
+        fs.unlinkSync(file.path);
+        return res.status(404).json({ success: false, message: 'Counselor record not found' });
+      }
+      const student = await Student.findById(registration.studentId);
+      if (!student || !student.counselorId || student.counselorId.toString() !== counselor._id.toString()) {
+        fs.unlinkSync(file.path);
+        return res.status(403).json({ success: false, message: 'Access denied. This student is not assigned to you.' });
+      }
+    } else if (userRole === USER_ROLE.ADVISOR) {
+      const advisor = await Advisor.findOne({ userId });
+      if (!advisor) {
+        fs.unlinkSync(file.path);
+        return res.status(404).json({ success: false, message: 'Advisor record not found' });
+      }
+      const student = await Student.findById(registration.studentId);
+      if (!student || !student.advisorId || student.advisorId.toString() !== advisor._id.toString()) {
+        fs.unlinkSync(file.path);
+        return res.status(403).json({ success: false, message: 'Access denied. This student is not assigned to you.' });
+      }
     } else if (userRole !== USER_ROLE.SUPER_ADMIN) {
       fs.unlinkSync(file.path);
       return res.status(403).json({
         success: false,
-        message: 'Only Eduplan Coach or Super Admin can upload brainography reports',
+        message: 'You do not have permission to upload brainography reports',
       });
     }
 
@@ -217,8 +253,13 @@ export const downloadBrainography = async (req: AuthRequest, res: Response): Pro
     }
 
     const filePath = path.join(process.cwd(), document.filePath);
+    const safePath = validateFilePath(filePath);
+    if (!safePath) {
+      res.status(403).json({ success: false, message: 'Access denied: invalid file path' });
+      return;
+    }
     
-    if (!fs.existsSync(filePath)) {
+    if (!fs.existsSync(safePath)) {
       res.status(404).json({
         success: false,
         message: 'File not found on server',
@@ -226,7 +267,7 @@ export const downloadBrainography = async (req: AuthRequest, res: Response): Pro
       return;
     }
 
-    res.download(filePath, document.fileName);
+    res.download(safePath, document.fileName);
   } catch (error: any) {
     console.error('Download brainography error:', error);
     res.status(500).json({

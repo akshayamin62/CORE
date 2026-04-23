@@ -7,11 +7,13 @@ import IvyExpert from '../models/IvyExpert';
 import EduplanCoach from '../models/EduplanCoach';
 import { sendCustomMessageToStudent } from '../utils/email';
 import { sendStaffMessageSms } from '../utils/sms';
+import { sendWhatsAppStaffMessage } from '../utils/whatsapp';
 // import Admin from '../models/Admin';
 // import Counselor from '../models/Counselor';
 import StudentServiceRegistration, { ServiceRegistrationStatus } from '../models/StudentServiceRegistration';
 import StudentFormAnswer from '../models/StudentFormAnswer';
 import { USER_ROLE } from '../types/roles';
+import StudentTransfer from '../models/StudentTransfer';
 import { syncParentsFromFormAnswers } from '../utils/parentSync';
 
 /**
@@ -149,6 +151,14 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
           select: 'firstName middleName lastName email'
         }
       })
+      .populate({
+        path: 'advisorId',
+        select: 'companyName',
+        populate: {
+          path: 'userId',
+          select: 'firstName middleName lastName email'
+        }
+      })
       .sort({ createdAt: -1 });
 
     // Get registration count and service names for each student
@@ -170,6 +180,7 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
           mobileNumber: student.mobileNumber,
           adminId: student.adminId,
           counselorId: student.counselorId,
+          advisorId: student.advisorId,
           registrationCount: registrations.length,
           serviceNames,
           createdAt: student.createdAt,
@@ -230,7 +241,6 @@ export const getAllStudents = async (req: AuthRequest, res: Response): Promise<R
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch students',
-      error: error.message,
     });
   }
 };
@@ -256,6 +266,20 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
       })
       .populate({
         path: 'counselorId',
+        populate: {
+          path: 'userId',
+          select: 'firstName middleName lastName email'
+        }
+      })
+      .populate({
+        path: 'referrerId',
+        populate: {
+          path: 'userId',
+          select: 'firstName middleName lastName'
+        }
+      })
+      .populate({
+        path: 'advisorId',
         populate: {
           path: 'userId',
           select: 'firstName middleName lastName email'
@@ -319,6 +343,16 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
         path: 'activeEduplanCoachId',
         select: 'userId email',
         populate: { path: 'userId', select: 'firstName middleName lastName email' }
+      })
+      .populate({
+        path: 'registeredViaAdvisorId',
+        select: 'companyName userId',
+        populate: { path: 'userId', select: 'firstName middleName lastName' }
+      })
+      .populate({
+        path: 'registeredViaAdminId',
+        select: 'companyName userId',
+        populate: { path: 'userId', select: 'firstName middleName lastName' }
       })
       .sort({ createdAt: -1 })
       .lean()
@@ -400,12 +434,17 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
       }
     }
 
+    // Get approved transfer's interestedServices
+    const approvedTransfer = await StudentTransfer.findOne({ studentId, status: 'APPROVED' }).lean();
+    const transferInterestedServices: string[] = approvedTransfer?.interestedServices || [];
+
     return res.status(200).json({
       success: true,
       message: 'Student details fetched successfully',
       data: {
         student,
         registrations,
+        transferInterestedServices,
       },
     });
   } catch (error: any) {
@@ -413,7 +452,6 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch student details',
-      error: error.message,
     });
   }
 };
@@ -554,7 +592,6 @@ export const getStudentFormAnswers = async (req: AuthRequest, res: Response): Pr
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch form answers',
-      error: error.message,
     });
   }
 };
@@ -654,7 +691,6 @@ export const updateStudentFormAnswers = async (req: AuthRequest, res: Response):
     return res.status(500).json({
       success: false,
       message: 'Failed to update form answers',
-      error: error.message,
     });
   }
 };
@@ -675,7 +711,7 @@ export const getStudentsWithRegistrations = async (req: AuthRequest, res: Respon
     }
 
     const students = await Student.find(query)
-      .populate('userId', 'firstName middleName lastName email')
+      .populate('userId', 'firstName middleName lastName email profilePicture')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -688,7 +724,6 @@ export const getStudentsWithRegistrations = async (req: AuthRequest, res: Respon
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch students',
-      error: error.message,
     });
   }
 };
@@ -853,7 +888,6 @@ export const assignOps = async (req: AuthRequest, res: Response): Promise<Respon
     return res.status(500).json({
       success: false,
       message: 'Failed to assign role',
-      error: error.message,
     });
   }
 };
@@ -987,9 +1021,7 @@ export const sendMessageToStudent = async (req: AuthRequest, res: Response): Pro
   try {
     const userId = req.user?.userId;
     const { studentId } = req.params;
-    const { message, serviceName, sendVia } = req.body;
-    // sendVia: 'email' | 'sms' | 'both' (default: 'email')
-    const channel: string = sendVia || 'email';
+    const { message, serviceName } = req.body;
 
     if (!message || !message.trim()) {
       return res.status(400).json({
@@ -1009,7 +1041,7 @@ export const sendMessageToStudent = async (req: AuthRequest, res: Response): Pro
 
     // Get student info with user details
     const student = await Student.findById(studentId)
-      .populate('userId', 'firstName middleName lastName email');
+      .populate('userId', 'firstName middleName lastName email profilePicture');
     if (!student) {
       return res.status(404).json({
         success: false,
@@ -1018,7 +1050,7 @@ export const sendMessageToStudent = async (req: AuthRequest, res: Response): Pro
     }
 
     const studentUser = student.userId as any;
-    if (!studentUser?.email && (channel === 'email' || channel === 'both')) {
+    if (!studentUser?.email) {
       return res.status(400).json({
         success: false,
         message: 'Student email not found',
@@ -1035,51 +1067,52 @@ export const sendMessageToStudent = async (req: AuthRequest, res: Response): Pro
       COUNSELOR: 'Counselor',
       OPS: 'OPS',
       EDUPLAN_COACH: 'Education Planning Coach',
+      ADVISOR: 'Advisor',
     };
     const senderRole = roleDisplayMap[sender.role] || sender.role;
 
     const results: string[] = [];
 
-    // Send Email
-    if (channel === 'email' || channel === 'both') {
-      await sendCustomMessageToStudent(
-        studentUser.email,
-        studentName,
-        senderName,
-        senderRole,
-        message.trim(),
-        serviceName
-      );
-      results.push('Email sent');
+    // Send Email (always)
+    await sendCustomMessageToStudent(
+      studentUser.email,
+      studentName,
+      senderName,
+      senderRole,
+      message.trim(),
+      serviceName
+    );
+    results.push('Email sent');
+
+    // Send SMS (always; skip gracefully if no mobile)
+    const mobile = student.mobileNumber;
+    if (mobile) {
+      try {
+        await sendStaffMessageSms({ mobile, senderName, senderRole, serviceName: serviceName || 'CORE Platform' });
+        results.push('SMS sent');
+      } catch (smsErr: any) {
+        console.error('SMS send error:', smsErr?.message || smsErr);
+        results.push('SMS failed');
+      }
+    } else {
+      results.push('SMS skipped (no mobile number)');
     }
 
-    // Send SMS
-    if (channel === 'sms' || channel === 'both') {
-      const mobile = student.mobileNumber;
-      if (!mobile) {
-        if (channel === 'sms') {
-          return res.status(400).json({
-            success: false,
-            message: 'Student mobile number not found',
-          });
-        }
-        // If 'both', email already sent, just note SMS was skipped
-        results.push('SMS skipped (no mobile number)');
-      } else {
-        try {
-          await sendStaffMessageSms({ mobile, senderName, senderRole, serviceName: serviceName || 'CORE Platform' });
-          results.push('SMS sent');
-        } catch (smsErr: any) {
-          console.error('SMS send error:', smsErr?.message || smsErr);
-          if (channel === 'sms') {
-            return res.status(500).json({
-              success: false,
-              message: 'Failed to send SMS',
-            });
-          }
-          results.push('SMS failed');
-        }
-      }
+    // Send WhatsApp — Template 6: staff_message_to_student (always; fire-and-forget)
+    if (mobile) {
+      const senderWithRole = `${senderName} - ${senderRole}`;
+      sendWhatsAppStaffMessage(
+        mobile,
+        studentName,
+        serviceName || 'CORE Platform',
+        message.trim(),
+        senderWithRole
+      ).catch((err: any) =>
+        console.error('WhatsApp staff message notification failed:', err.message)
+      );
+      results.push('WhatsApp sent');
+    } else {
+      results.push('WhatsApp skipped (no mobile number)');
     }
 
     return res.status(200).json({
@@ -1257,7 +1290,6 @@ export const updateRegistrationStatus = async (req: AuthRequest, res: Response):
     return res.status(500).json({
       success: false,
       message: 'Failed to update registration status',
-      error: error.message,
     });
   }
 };

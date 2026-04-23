@@ -45,7 +45,10 @@ api.interceptors.response.use(
 
 // API functions
 export const authAPI = {
-  signup: (data: { firstName: string; middleName?: string; lastName: string; email: string; mobileNumber?: string; role: string; captcha: string; captchaInput: string }) =>
+  getCaptcha: () =>
+    api.get('/auth/captcha'),
+  
+  signup: (data: { firstName: string; middleName?: string; lastName: string; email: string; mobileNumber?: string; role: string; captchaToken: string; captchaAnswer: string }) =>
     api.post('/auth/signup', data),
   
   verifySignupOTP: (data: { 
@@ -68,11 +71,14 @@ export const authAPI = {
   }) =>
     api.post('/auth/verify-signup-otp', data),
   
-  login: (data: { email: string; captcha: string; captchaInput: string }) =>
+  login: (data: { email: string; captchaToken: string; captchaAnswer: string }) =>
     api.post('/auth/login', data),
   
   verifyOTP: (data: { email: string; otp: string }) =>
     api.post('/auth/verify-otp', data),
+  
+  resendOTP: (data: { email: string; purpose: 'signup' | 'login' }) =>
+    api.post('/auth/resend-otp', data),
   
   getProfile: () =>
     api.get('/auth/profile'),
@@ -115,7 +121,7 @@ export const superAdminAPI = {
   getUserWithProfile: (userId: string) =>
     api.get(`/super-admin/users/${userId}/profile`),
 
-  editUserByRole: (userId: string, data: Record<string, any>) =>
+  editUserByRole: (userId: string, data: Record<string, any> | FormData) =>
     api.put(`/super-admin/users/${userId}/edit`, data),
 
   deleteUser: (userId: string) => api.delete(`/super-admin/users/${userId}`),
@@ -183,6 +189,19 @@ export const superAdminAPI = {
     month?: number;
     year?: number;
   }) => api.get(`/super-admin/admins/${adminId}/team-meets`, { params }),
+
+  // Advisor dashboard for super admin
+  getAdvisorDashboardStats: (advisorId: string) => api.get(`/super-admin/advisors/${advisorId}/dashboard`),
+  getAdvisorLeads: (advisorId: string, params?: {
+    stage?: string;
+    serviceTypes?: string;
+    search?: string;
+  }) => api.get(`/super-admin/advisors/${advisorId}/leads`, { params }),
+  getAdvisorStudents: (advisorId: string) => api.get(`/super-admin/advisors/${advisorId}/students`),
+  getAdvisorTeamMeets: (advisorId: string, params?: {
+    month?: number;
+    year?: number;
+  }) => api.get(`/super-admin/advisors/${advisorId}/team-meets`, { params }),
   
   // Counselor dashboard for super admin
   getCounselorDashboard: (counselorId: string) => api.get(`/super-admin/counselors/${counselorId}/dashboard`),
@@ -206,6 +225,32 @@ export const superAdminAPI = {
 
   updateRegistrationStatus: (registrationId: string, status: string) =>
     api.patch(`/super-admin/students/registrations/${registrationId}/status`, { status }),
+
+  // Referrer management
+  getReferrers: () => api.get('/super-admin/referrers'),
+  
+  createReferrer: (data: {
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email: string;
+    mobileNumber: string;
+    adminId: string;
+  }) => api.post('/super-admin/referrer', data),
+  
+  toggleReferrerStatus: (referrerId: string) =>
+    api.patch(`/super-admin/referrer/${referrerId}/toggle-status`),
+
+  getReferrerDashboard: (referrerId: string) =>
+    api.get(`/super-admin/referrer/${referrerId}/dashboard`),
+
+  // Advisor management
+  getAdvisors: () => api.get('/super-admin/advisors'),
+  getAdvisorDetails: (id: string) => api.get(`/super-admin/advisors/${id}`),
+  updateAdvisorServices: (id: string, data: { allowedServices: string[] }) =>
+    api.patch(`/super-admin/advisors/${id}/services`, data),
+  toggleAdvisorStatus: (id: string) =>
+    api.patch(`/super-admin/advisors/${id}/toggle-status`),
 };
 
 // Admin Student API (read-only access to students for admin/counselor)
@@ -222,6 +267,10 @@ export const adminStudentAPI = {
   // Get student form answers for a registration (read-only)
   getStudentFormAnswers: (studentId: string, registrationId: string) => 
     api.get(`/admin/students/${studentId}/registrations/${registrationId}/answers`),
+  
+  // Assign counselor to student
+  assignCounselor: (studentId: string, counselorId: string | null) =>
+    api.patch(`/admin/students/${studentId}/assign-counselor`, { counselorId }),
 };
 
 // Parent Dashboard API (read-only access to linked students for parent)
@@ -481,6 +530,23 @@ export const adminAPI = {
   
   getCounselorFollowUpSummary: (counselorId: string) => 
     api.get(`/admin/counselor/${counselorId}/follow-up-summary`),
+
+  // Referrer management
+  createReferrer: (data: {
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email: string;
+    mobileNumber: string;
+  }) => api.post('/admin/referrer', data),
+
+  getReferrers: () => api.get('/admin/referrers'),
+
+  toggleReferrerStatus: (referrerId: string) =>
+    api.patch(`/admin/referrer/${referrerId}/toggle-status`),
+
+  getReferrerDashboard: (referrerId: string) =>
+    api.get(`/admin/referrer/${referrerId}/dashboard`),
 };
 
 // Lead API
@@ -543,6 +609,60 @@ export const leadAPI = {
     serviceTypes?: string;
     adminId?: string;
   }) => api.get('/super-admin/leads', { params }),
+};
+
+// Referral Public API (for public referral form)
+export const referralAPI = {
+  getReferralInfo: (referralSlug: string) =>
+    api.get(`/public/referral/${referralSlug}/info`),
+
+  submitReferralEnquiry: (referralSlug: string, data: {
+    name: string;
+    email: string;
+    mobileNumber: string;
+    city: string;
+    serviceTypes: string[];
+    intake?: string;
+    year?: string;
+    parentDetail?: {
+      firstName: string;
+      middleName?: string;
+      lastName: string;
+      relationship: string;
+      mobileNumber: string;
+      email: string;
+      qualification: string;
+      occupation: string;
+    };
+  }) => api.post(`/public/referral/${referralSlug}/submit`, data),
+};
+
+// Public Referrer Registration API
+export const referrerRegistrationAPI = {
+  getAdminInfo: (adminSlug: string) =>
+    api.get(`/public/referrer-registration/${adminSlug}/info`),
+
+  register: (adminSlug: string, data: {
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email: string;
+    mobileNumber: string;
+  }) => api.post(`/public/referrer-registration/${adminSlug}/submit`, data),
+};
+
+// Referrer API (for REFERRER role authenticated pages)
+export const referrerAPI = {
+  getDashboardStats: () => api.get('/referrer/dashboard-stats'),
+  getReferralLink: () => api.get('/referrer/referral-link'),
+  getLeads: (params?: { stage?: string; search?: string }) =>
+    api.get('/referrer/leads', { params }),
+  getLeadDetail: (leadId: string) => api.get(`/referrer/leads/${leadId}`),
+  getStudents: () => api.get('/referrer/students'),
+  getStudentDetail: (studentId: string) => api.get(`/referrer/students/${studentId}`),
+  getStudentByLeadId: (leadId: string) => api.get(`/referrer/leads/${leadId}/student`),
+  getStudentFormAnswers: (studentId: string, registrationId: string) =>
+    api.get(`/referrer/students/${studentId}/registrations/${registrationId}/answers`),
 };
 
 // Follow-Up API
@@ -929,6 +1049,180 @@ export const invoiceAPI = {
 export const ledgerAPI = {
   getLedgerByRegistration: (registrationId: string) => api.get(`/ledger/registration/${registrationId}`),
   getLedgersByStudent: (studentId: string) => api.get(`/ledger/student/${studentId}`),
+};
+
+// ===== Advisor APIs =====
+export const advisorAPI = {
+  // Dashboard
+  getDashboardStats: () => api.get('/advisor/dashboard'),
+  
+  // Leads
+  getLeads: (params?: Record<string, string>) => api.get('/advisor/leads', { params }),
+  getLeadDetail: (leadId: string) => api.get(`/advisor/leads/${leadId}`),
+  updateLeadStage: (leadId: string, data: { stage: string }) => api.patch(`/advisor/leads/${leadId}/stage`, data),
+  
+  // Follow-ups
+  createFollowUp: (data: Record<string, unknown>) => api.post('/advisor/follow-ups', data),
+  getFollowUps: (params?: Record<string, string>) => api.get('/advisor/follow-ups', { params }),
+  getFollowUpSummary: () => api.get('/advisor/follow-ups/summary'),
+  updateFollowUp: (followUpId: string, data: Record<string, unknown>) => api.patch(`/advisor/follow-ups/${followUpId}`, data),
+  getLeadFollowUpHistory: (leadId: string) => api.get(`/advisor/leads/${leadId}/follow-ups`),
+  
+  // Lead Conversion
+  convertLead: (leadId: string, data: Record<string, unknown>) => api.post(`/advisor/leads/${leadId}/convert`, data),
+  getStudentByLeadId: (leadId: string) => api.get(`/advisor/leads/${leadId}/student`),
+  
+  // Students
+  getStudents: () => api.get('/advisor/students'),
+  getStudentDetail: (studentId: string) => api.get(`/advisor/students/${studentId}`),
+  getStudentFormAnswers: (studentId: string, registrationId: string) =>
+    api.get(`/advisor/students/${studentId}/registrations/${registrationId}/answers`),
+  
+  // Student Transfer
+  initiateTransfer: (studentId: string, data: { interestedServices: string[] }) =>
+    api.post(`/advisor/students/${studentId}/transfer`, data),
+  getTransfers: () => api.get('/advisor/transfers'),
+  cancelTransfer: (transferId: string) => api.post(`/advisor/transfers/${transferId}/cancel`),
+  
+  // Parents
+  getParents: () => api.get('/advisor/parents'),
+  
+  // Service Pricing
+  getPricing: (serviceSlug: string) => api.get(`/advisor/service-pricing/${serviceSlug}`),
+  setPricing: (serviceSlug: string, data: Record<string, unknown>) =>
+    api.put(`/advisor/service-pricing/${serviceSlug}`, data),
+  
+  // Enquiry Form URL
+  getEnquiryFormUrl: () => api.get('/advisor/enquiry-form-url'),
+};
+
+// ===== Admin Transfer APIs =====
+export const adminTransferAPI = {
+  getPendingTransfers: () => api.get('/admin/transfers/pending'),
+  getTransfers: () => api.get('/admin/transfers'),
+  approveTransfer: (transferId: string) => api.post(`/admin/transfers/${transferId}/approve`),
+  rejectTransfer: (transferId: string, data: { reason: string }) =>
+    api.post(`/admin/transfers/${transferId}/reject`, data),
+};
+
+// ===== B2B APIs =====
+export const b2bAPI = {
+  // Public
+  submitEnquiry: (data: {
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email: string;
+    mobileNumber: string;
+    type: string;
+  }) => api.post('/b2b/public/enquiry', data),
+
+  // Super Admin - Leads
+  getAllLeads: (params?: { stage?: string; type?: string }) =>
+    api.get('/b2b/leads', { params }),
+  getLeadDetail: (leadId: string) =>
+    api.get(`/b2b/leads/${leadId}`),
+  assignSales: (leadId: string, b2bSalesId: string | null) =>
+    api.post(`/b2b/leads/${leadId}/assign-sales`, { b2bSalesId }),
+  assignOps: (leadId: string, b2bOpsId: string | null) =>
+    api.post(`/b2b/leads/${leadId}/assign-ops`, { b2bOpsId }),
+  updateLeadStage: (leadId: string, stage: string) =>
+    api.patch(`/b2b/leads/${leadId}/stage`, { stage }),
+
+  // Super Admin - Staff
+  getSalesStaff: () => api.get('/b2b/sales-staff'),
+  getOpsStaff: () => api.get('/b2b/ops-staff'),
+
+  // B2B Sales - own leads
+  getSalesLeads: (params?: { stage?: string; type?: string }) =>
+    api.get('/b2b/sales/leads', { params }),
+
+  // B2B OPS - own leads
+  getOpsLeads: () => api.get('/b2b/ops/leads'),
+
+  // Conversions
+  requestInProcessConversion: (b2bLeadId: string, data: { targetRole: string; loginEmail: string; mobileNumber?: string; allowedServices?: string[] }) =>
+    api.post(`/b2b/conversions/request-in-process/${b2bLeadId}`, data),
+  approveInProcessConversion: (conversionId: string) =>
+    api.post(`/b2b/conversions/approve-in-process/${conversionId}`),
+  requestAdminAdvisorConversion: (b2bLeadId: string) =>
+    api.post(`/b2b/conversions/request-admin-advisor/${b2bLeadId}`),
+  directConvertAdminAdvisor: (b2bLeadId: string) =>
+    api.post(`/b2b/conversions/direct-convert/${b2bLeadId}`),
+  approveAdminAdvisorConversion: (conversionId: string, data?: { enquiryFormSlug?: string }) =>
+    api.post(`/b2b/conversions/approve-admin-advisor/${conversionId}`, data || {}),
+  rejectConversion: (conversionId: string, reason: string) =>
+    api.post(`/b2b/conversions/reject/${conversionId}`, { rejectionReason: reason }),
+  getPendingConversions: () => api.get('/b2b/conversions/pending'),
+  getAllConversions: () => api.get('/b2b/conversions/all'),
+  getConversionHistory: (b2bLeadId: string) =>
+    api.get(`/b2b/conversions/history/${b2bLeadId}`),
+
+  // Follow-ups
+  createFollowUp: (data: {
+    b2bLeadId: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    duration: number;
+    meetingType: string;
+    notes?: string;
+  }) => api.post('/b2b/follow-ups', data),
+  getFollowUps: (params?: { startDate?: string; endDate?: string; status?: string }) =>
+    api.get('/b2b/follow-ups', { params }),
+  getFollowUpSummary: () => api.get('/b2b/follow-ups/summary'),
+  getFollowUpById: (followUpId: string) =>
+    api.get(`/b2b/follow-ups/${followUpId}`),
+  updateFollowUp: (followUpId: string, data: {
+    status?: string;
+    stageChangedTo?: string;
+    notes?: string;
+    nextFollowUp?: {
+      scheduledDate: string;
+      scheduledTime: string;
+      duration: number;
+      meetingType: string;
+    };
+  }) => api.patch(`/b2b/follow-ups/${followUpId}`, data),
+  getLeadFollowUpHistory: (b2bLeadId: string) =>
+    api.get(`/b2b/follow-ups/lead/${b2bLeadId}/history`),
+  checkTimeSlotAvailability: (params: {
+    date: string;
+    time: string;
+    duration: number;
+  }) => api.get('/b2b/follow-ups/check-availability', { params }),
+
+  // ===== Super Admin: B2B Staff Dashboard =====
+  getSalesDashboard: (salesId: string) => api.get(`/b2b/sales/${salesId}/dashboard`),
+  getSalesFollowUps: (salesId: string) => api.get(`/b2b/sales/${salesId}/follow-ups`),
+  getSalesFollowUpSummary: (salesId: string) => api.get(`/b2b/sales/${salesId}/follow-ups/summary`),
+  getOpsDashboard: (opsId: string) => api.get(`/b2b/ops/${opsId}/dashboard`),
+  getOpsFollowUps: (opsId: string) => api.get(`/b2b/ops/${opsId}/follow-ups`),
+  getOpsFollowUpSummary: (opsId: string) => api.get(`/b2b/ops/${opsId}/follow-ups/summary`),
+};
+
+// ===== Onboarding APIs =====
+export const onboardingAPI = {
+  // Admin/Advisor onboarding
+  getProfile: () => api.get('/onboarding/profile'),
+  updateProfile: (data: { companyName?: string; address?: string; enquiryFormSlug?: string; mobileNumber?: string; b2bProfileData?: Record<string, any> }) =>
+    api.put('/onboarding/profile', data),
+  submit: () => api.post('/onboarding/submit'),
+
+  // OPS/Super Admin review
+  getReview: (profileId: string, role: string) =>
+    api.get(`/onboarding/review/${profileId}`, { params: { role } }),
+
+  // Super Admin OPS assignment
+  assignOps: (profileId: string, data: { opsId: string; role: string }) =>
+    api.post(`/onboarding/assign-ops/${profileId}`, data),
+
+  // OPS/Super Admin updates b2bProfileData on a profile
+  updateB2BProfileByReviewer: (profileId: string, data: { b2bProfileData: Record<string, any>; role: string }) =>
+    api.put(`/onboarding/review/${profileId}/b2b-profile`, data),
+
+  // OPS/SA update company details on a profile
+  updateCompanyDetails: (profileId: string, data: { companyName?: string; address?: string; role: string }) =>
+    api.put(`/onboarding/review/${profileId}/company-details`, data),
 };
 
 export default api;

@@ -7,12 +7,14 @@ import {
   getAdminStudentDetails,
   getAdminStudentFormAnswers,
   getStudentByLeadId,
+  assignCounselorToStudent,
 } from '../controllers/adminStudentController';
 import { sendMessageToStudent } from '../controllers/superAdminStudentController';
 
 const router = express.Router();
 
 // All routes require authentication and admin/counselor/super-admin role
+// ADVISOR uses its own /advisor/students routes — do NOT add ADVISOR here
 router.use(authenticate);
 router.use(authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN]));
 
@@ -30,5 +32,8 @@ router.get('/:studentId/registrations/:registrationId/answers', getAdminStudentF
 
 // Send message to student
 router.post('/:studentId/send-message', sendMessageToStudent);
+
+// Assign counselor to student (admin only)
+router.patch('/:studentId/assign-counselor', assignCounselorToStudent);
 
 export default router;

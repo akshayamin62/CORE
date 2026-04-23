@@ -6,6 +6,7 @@ import { authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import OpsLayout from '@/components/OpsLayout';
 import StudentProfileModal from '@/components/StudentProfileModal';
+import AuthImage from '@/components/AuthImage';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
@@ -20,6 +21,7 @@ interface StudentDetails {
     middleName?: string;
     lastName: string;
     email: string;
+    profilePicture?: string;
     role: string;
     isVerified: boolean;
     isActive: boolean;
@@ -36,11 +38,24 @@ interface StudentDetails {
       middleName?: string;
       lastName: string;
       email: string;
+    profilePicture?: string;
     };
   };
   counselorId?: {
     _id: string;
     mobileNumber?: string;
+    userId: {
+      _id: string;
+      firstName: string;
+      middleName?: string;
+      lastName: string;
+      email: string;
+    profilePicture?: string;
+    };
+  };
+  advisorId?: {
+    _id: string;
+    companyName?: string;
     userId: {
       _id: string;
       firstName: string;
@@ -65,6 +80,11 @@ interface Registration {
   planTier?: 'PRO' | 'PREMIUM' | 'PLATINUM';
   status: string;
   createdAt: string;
+  registeredViaAdvisorId?: {
+    _id: string;
+    companyName?: string;
+    userId?: { firstName?: string; middleName?: string; lastName?: string };
+  };
 }
 
 export default function StudentDetailPage() {
@@ -75,6 +95,7 @@ export default function StudentDetailPage() {
   const [user, setUser] = useState<User | null>(null);
   const [student, setStudent] = useState<StudentDetails | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [transferInterestedServices, setTransferInterestedServices] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
@@ -109,6 +130,7 @@ export default function StudentDetailPage() {
       });
       setStudent(response.data.data.student);
       setRegistrations(response.data.data.registrations);
+      setTransferInterestedServices(response.data.data.transferInterestedServices || []);
     } catch (error: any) {
       if (error.response?.status === 403) {
         toast.error('Access denied. You are not assigned as the active OPS for this student.');
@@ -173,11 +195,18 @@ export default function StudentDetailPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                  <span className="text-blue-600 font-bold text-xl">
-                    {getInitials(student.userId)}
-                  </span>
-                </div>
+                <AuthImage
+                  path={student.userId.profilePicture}
+                  alt={getFullName(student.userId)}
+                  className="w-16 h-16 rounded-full object-cover mr-4"
+                  fallback={
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                      <span className="text-blue-600 font-bold text-xl">
+                        {getInitials(student.userId)}
+                      </span>
+                    </div>
+                  }
+                />
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">{getFullName(student.userId)}</h1>
                   <p className="text-gray-600">{student.userId.email}</p>
@@ -218,6 +247,7 @@ export default function StudentDetailPage() {
                   {student.mobileNumber || 'Not provided'}
                 </p>
               </div>
+              {student.adminId && (
               <div>
                 <p className="text-sm text-gray-600 mb-1">Admin</p>
                 <p className="font-medium text-gray-900">
@@ -230,6 +260,8 @@ export default function StudentDetailPage() {
                   <p className="text-sm text-gray-500">{student.adminId.mobileNumber}</p>
                 )}
               </div>
+              )}
+              {student.adminId && (
               <div>
                 <p className="text-sm text-gray-600 mb-1">Counselor</p>
                 <p className="font-medium text-gray-900">
@@ -242,26 +274,60 @@ export default function StudentDetailPage() {
                   <p className="text-sm text-gray-500">{student.counselorId.mobileNumber}</p>
                 )}
               </div>
+              )}
+              {student.advisorId && (
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Advisor</p>
+                <p className="font-medium text-gray-900">
+                  {student.advisorId?.companyName || 'N/A'}
+                </p>
+                {student.advisorId?.userId?.email && (
+                  <p className="text-sm text-gray-500">{student.advisorId.userId.email}</p>
+                )}
+              </div>
+              )}
               <div>
                 <p className="text-sm text-gray-600 mb-1">Joined Date</p>
                 <p className="font-medium text-gray-900">
                   {new Date(student.createdAt).toLocaleDateString('en-GB')}
                 </p>
               </div>
-              {(student.intake || student.year) && (
+            </div>
+
+            {/* Source / Intake / Year / Transfer */}
+            <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-gray-200 mt-4">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Source</p>
+                <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${(student as any).referrerId ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>
+                  {(student as any).referrerId ? 'Referral' : 'Enquiry Form'}
+                </span>
+              </div>
+              {student.intake && (
                 <div>
-                  {student.intake && (
-                    <div className="mb-2">
-                      <p className="text-sm text-gray-600 mb-1">Intake</p>
-                      <p className="font-medium text-blue-600">{student.intake}</p>
-                    </div>
-                  )}
-                  {student.year && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Year</p>
-                      <p className="font-medium text-blue-600">{student.year}</p>
-                    </div>
-                  )}
+                  <p className="text-sm text-gray-600 mb-1">Intake</p>
+                  <p className="font-medium text-blue-600">{student.intake}</p>
+                </div>
+              )}
+              {student.year && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Year</p>
+                  <p className="font-medium text-blue-600">{student.year}</p>
+                </div>
+              )}
+              {student.advisorId && transferInterestedServices.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Transfer For</p>
+                  <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">
+                    {transferInterestedServices.map(s => ({ 'study-abroad': 'Study Abroad', 'ivy-league': 'Ivy League', 'education-planning': 'Education Planning', 'coaching-classes': 'Coaching Classes' }[s] || s)).join(', ')}
+                  </span>
+                </div>
+              )}
+              {(student as any).referrerId && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Referred By</p>
+                  <p className="font-medium text-purple-700">
+                    {[(student as any).referrerId?.userId?.firstName, (student as any).referrerId?.userId?.middleName, (student as any).referrerId?.userId?.lastName].filter(Boolean).join(' ') || 'Referrer'}
+                  </p>
                 </div>
               )}
             </div>
@@ -331,7 +397,7 @@ export default function StudentDetailPage() {
           </div>
 
           {/* Service Plans */}
-          {student && student.adminId?._id && (
+          {student && (student.adminId?._id || student.advisorId?._id) && (
             <div className="mt-6">
               <button
                 onClick={() => router.push('/service-plans/view?studentId=' + studentId)}

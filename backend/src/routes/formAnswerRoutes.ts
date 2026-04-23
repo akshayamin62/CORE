@@ -68,6 +68,8 @@ router.get(
     USER_ROLE.EDUPLAN_COACH,
     USER_ROLE.IVY_EXPERT,
     USER_ROLE.PARENT,
+    USER_ROLE.REFERRER,
+    USER_ROLE.ADVISOR,
   ]),
   getStudentProfileDataById
 );

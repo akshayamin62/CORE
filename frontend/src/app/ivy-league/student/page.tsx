@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { teamMeetAPI, authAPI, opsScheduleAPI } from '@/lib/api';
-import { TeamMeet, OpsSchedule, TEAMMEET_STATUS } from '@/types';
+import { TeamMeet, OpsSchedule, TEAMMEET_STATUS, USER_ROLE } from '@/types';
 import OpsScheduleCalendar from '@/components/OpsScheduleCalendar';
 import TeamMeetSidebar from '@/components/TeamMeetSidebar';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
@@ -91,6 +91,7 @@ function IvyScoreContent() {
     const [teamMeetPanelMode, setTeamMeetPanelMode] = useState<'create' | 'view' | 'respond'>('create');
     const [selectedTeamMeetDate, setSelectedTeamMeetDate] = useState<Date | undefined>(undefined);
     const [currentUserId, setCurrentUserId] = useState('');
+    const [userRole, setUserRole] = useState('');
 
     const fetchTeamMeets = useCallback(async (studentDocId?: string) => {
         try {
@@ -126,6 +127,7 @@ function IvyScoreContent() {
                 if (res.data.success) {
                     const u = res.data.data.user;
                     setCurrentUserId(u?.id || u?._id || '');
+                    setUserRole(u?.role || '');
                 }
             } catch (err) {
                 console.error('Error fetching user:', err);
@@ -362,7 +364,14 @@ function IvyScoreContent() {
     const overallScore = calculatedOverallScore;
     const overallPercentage = (overallScore / totalMaxScore) * 100;
 
+    // Restricted read-only: referrer always, or advisor when service is under admin (transferred)
+    const isRestrictedReadOnly = readOnly && (
+        userRole === USER_ROLE.REFERRER ||
+        (userRole === USER_ROLE.ADVISOR && serviceData?.registeredViaAdminId)
+    );
+
     const handlePointerClick = (pointerNo: number) => {
+        if (isRestrictedReadOnly) return;
         const qs = urlStudentId ? `?studentId=${urlStudentId}&readOnly=true` : '';
         const qsAmp = urlStudentId ? `&studentId=${urlStudentId}&readOnly=true` : '';
         if (pointerNo === 1) {
@@ -436,7 +445,7 @@ function IvyScoreContent() {
             </header>
 
             {!showCalendar && (<>
-            {/* Overall Score Card */}
+            {/* Overall Score Card - always visible */}
             <div className="relative mb-16 group">
                 <div className="absolute inset-0 bg-brand-600 rounded-[3rem] blur-3xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
                 <div className="relative bg-white rounded-[3.5rem] shadow-[0_32px_64px_-16px_rgba(41,89,186,0.1)] border border-gray-100 p-12 overflow-hidden">
@@ -470,7 +479,8 @@ function IvyScoreContent() {
                 </div>
             </div>
 
-            {/* Individual Pointer Scores */}
+            {/* Individual Pointer Scores - hidden in read-only mode */}
+            {!isRestrictedReadOnly && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {scoreData.pointerScores.map((pointer) => {
                     // Use academic excellence score for Pointer 1 if available
@@ -487,7 +497,7 @@ function IvyScoreContent() {
                         <div
                             key={pointer.pointerNo}
                             onClick={() => handlePointerClick(pointer.pointerNo)}
-                            className="bg-white rounded-[2.5rem] shadow-sm hover:shadow-2xl hover:translate-y-[-8px] transition-all duration-500 p-8 border border-gray-100 hover:border-brand-100 group flex flex-col cursor-pointer"
+                            className={`bg-white rounded-[2.5rem] shadow-sm hover:shadow-2xl hover:translate-y-[-8px] transition-all duration-500 p-8 border border-gray-100 hover:border-brand-100 group flex flex-col ${isRestrictedReadOnly ? 'cursor-default' : 'cursor-pointer'}`}
                         >
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-4">
@@ -539,7 +549,9 @@ function IvyScoreContent() {
                     );
                 })}
             </div>
+            )}
 
+            {!isRestrictedReadOnly && (<>
             {/* Premium Info Panel */}
             <div className="mt-20 bg-gray-900 rounded-[3rem] p-12 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-brand-600 rounded-full blur-[120px] opacity-20 translate-x-1/2 -translate-y-1/2"></div>
@@ -601,6 +613,22 @@ function IvyScoreContent() {
                             </div>
                         )}
 
+                        {/* Advisor */}
+                        {serviceData.studentId?.advisorId && (
+                            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                    </div>
+                                    <h5 className="font-black text-gray-900 uppercase tracking-tight text-sm">Advisor</h5>
+                                </div>
+                                <p className="text-sm font-bold text-gray-900 mb-1">{serviceData.studentId.advisorId.firstName} {serviceData.studentId.advisorId.lastName}</p>
+                                <p className="text-xs text-gray-600 mb-1">{serviceData.studentId.advisorId.email}</p>
+                            </div>
+                        )}
+
                         {/* Ivy Expert */}
                         {serviceData.activeIvyExpertId && (
                             <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
@@ -622,6 +650,7 @@ function IvyScoreContent() {
                     </div>
                 </div>
             )}
+            </>)}
             </>)}
 
             {/* Calendar Section */}

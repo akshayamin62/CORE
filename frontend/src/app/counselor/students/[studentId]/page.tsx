@@ -8,6 +8,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import CounselorLayout from '@/components/CounselorLayout';
 import StudentProfileModal from '@/components/StudentProfileModal';
+import AuthImage from '@/components/AuthImage';
 
 
 interface StudentDetails {
@@ -18,6 +19,7 @@ interface StudentDetails {
     middleName?: string;
     lastName: string;
     email: string;
+    profilePicture?: string;
     role: string;
     isVerified: boolean;
     isActive: boolean;
@@ -34,11 +36,24 @@ interface StudentDetails {
       middleName?: string;
       lastName: string;
       email: string;
+    profilePicture?: string;
     };
   };
   counselorId?: {
     _id: string;
     mobileNumber?: string;
+    userId: {
+      _id: string;
+      firstName: string;
+      middleName?: string;
+      lastName: string;
+      email: string;
+    profilePicture?: string;
+    };
+  };
+  advisorId?: {
+    _id: string;
+    companyName?: string;
     userId: {
       _id: string;
       firstName: string;
@@ -78,6 +93,11 @@ interface Registration {
   planTier?: 'PRO' | 'PREMIUM' | 'PLATINUM';
   status: string;
   createdAt: string;
+  registeredViaAdvisorId?: {
+    _id: string;
+    companyName?: string;
+    userId?: { firstName?: string; middleName?: string; lastName?: string };
+  };
 }
 
 export default function CounselorStudentDetailPage() {
@@ -88,6 +108,7 @@ export default function CounselorStudentDetailPage() {
   const [user, setUser] = useState<User | null>(null);
   const [student, setStudent] = useState<StudentDetails | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [transferInterestedServices, setTransferInterestedServices] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
@@ -124,6 +145,7 @@ export default function CounselorStudentDetailPage() {
       const response = await adminStudentAPI.getStudentDetails(studentId);
       setStudent(response.data.data.student);
       setRegistrations(response.data.data.registrations);
+      setTransferInterestedServices(response.data.data.transferInterestedServices || []);
     } catch (error: any) {
       console.error('Error fetching student:', error);
       if (error.response?.status === 404 || error.response?.status === 403) {
@@ -166,7 +188,13 @@ export default function CounselorStudentDetailPage() {
     router.push(`/counselor/students/${studentId}/registration/${registrationId}`);
   };
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -213,11 +241,18 @@ export default function CounselorStudentDetailPage() {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
                 <div className="flex items-start justify-between mb-6">
                   <div className="flex items-center">
+                    <AuthImage
+                  path={student.userId.profilePicture}
+                  alt={getFullName(student.userId)}
+                  className="w-16 h-16 rounded-full object-cover mr-4"
+                  fallback={
                     <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                       <span className="text-blue-600 font-bold text-xl">
                         {getInitials(student.userId)}
                       </span>
                     </div>
+                  }
+                />
                     <div>
                       <h1 className="text-2xl font-bold text-gray-900">{getFullName(student.userId)}</h1>
                       <p className="text-gray-600">{student.userId.email}</p>
@@ -258,6 +293,7 @@ export default function CounselorStudentDetailPage() {
                       {student.mobileNumber || 'Not provided'}
                     </p>
                   </div>
+                  {student.adminId && (
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Admin</p>
                     <p className="font-medium text-gray-900">
@@ -270,6 +306,8 @@ export default function CounselorStudentDetailPage() {
                       <p className="text-sm text-gray-500">{student.adminId.mobileNumber}</p>
                     )}
                   </div>
+                  )}
+                  {student.adminId && (
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Counselor</p>
                     <p className="font-medium text-gray-900">
@@ -282,26 +320,60 @@ export default function CounselorStudentDetailPage() {
                       <p className="text-sm text-gray-500">{student.counselorId.mobileNumber}</p>
                     )}
                   </div>
+                  )}
+                  {student.advisorId && (
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Advisor</p>
+                    <p className="font-medium text-gray-900">
+                      {student.advisorId?.companyName || 'N/A'}
+                    </p>
+                    {student.advisorId?.userId?.email && (
+                      <p className="text-sm text-gray-500">{student.advisorId.userId.email}</p>
+                    )}
+                  </div>
+                  )}
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Joined Date</p>
                     <p className="font-medium text-gray-900">
                       {new Date(student.createdAt).toLocaleDateString('en-GB')}
                     </p>
                   </div>
-                  {(student.intake || student.year) && (
+                </div>
+
+                {/* Source / Intake / Year / Transfer */}
+                <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-gray-200 mt-4">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Source</p>
+                    <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${(student as any).referrerId ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>
+                      {(student as any).referrerId ? 'Referral' : 'Enquiry Form'}
+                    </span>
+                  </div>
+                  {student.intake && (
                     <div>
-                      {student.intake && (
-                        <div className="mb-2">
-                          <p className="text-sm text-gray-600 mb-1">Intake</p>
-                          <p className="font-medium text-blue-600">{student.intake}</p>
-                        </div>
-                      )}
-                      {student.year && (
-                        <div>
-                          <p className="text-sm text-gray-600 mb-1">Year</p>
-                          <p className="font-medium text-blue-600">{student.year}</p>
-                        </div>
-                      )}
+                      <p className="text-sm text-gray-600 mb-1">Intake</p>
+                      <p className="font-medium text-blue-600">{student.intake}</p>
+                    </div>
+                  )}
+                  {student.year && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Year</p>
+                      <p className="font-medium text-blue-600">{student.year}</p>
+                    </div>
+                  )}
+                  {student.advisorId && transferInterestedServices.length > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Transfer For</p>
+                      <span className="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">
+                        {transferInterestedServices.map(s => ({ 'study-abroad': 'Study Abroad', 'ivy-league': 'Ivy League', 'education-planning': 'Education Planning', 'coaching-classes': 'Coaching Classes' }[s] || s)).join(', ')}
+                      </span>
+                    </div>
+                  )}
+                  {(student as any).referrerId && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Referred By</p>
+                      <p className="font-medium text-purple-700">
+                        {[(student as any).referrerId?.userId?.firstName, (student as any).referrerId?.userId?.middleName, (student as any).referrerId?.userId?.lastName].filter(Boolean).join(' ') || 'Referrer'}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -407,7 +479,7 @@ export default function CounselorStudentDetailPage() {
                     </svg>
                     View Ivy League Candidate Profile
                   </button>
-                  {student.adminId?._id && (
+                  {(student.adminId?._id || student.advisorId?._id) && (
                     <button
                       onClick={() => router.push('/service-plans/view?studentId=' + studentId)}
                       className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"

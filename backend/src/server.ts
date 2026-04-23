@@ -4,7 +4,9 @@ dotenv.config(); // MUST be first — loads .env before any other module reads p
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import helmet from 'helmet';
 import path from 'path';
+import rateLimit from 'express-rate-limit';
 import authRoutes from "./routes/authRoutes";
 import superAdminRoutes from "./routes/superAdminRoutes";
 import adminRoutes from "./routes/adminRoutes";
@@ -28,6 +30,7 @@ import brainographyRoutes from "./routes/brainographyRoutes";
 import portfolioRoutes from "./routes/portfolioRoutes";
 import parentRoutes from "./routes/parentRoutes";
 import activityRoutes from "./routes/activityRoutes";
+import referrerRoutes from "./routes/referrerRoutes";
 import archiveRoutes from "./routes/archiveRoutes";
 import ivyLeagueRegistrationRoutes from "./routes/ivyLeagueRegistrationRoutes";
 import servicePlanRoutes from "./routes/servicePlanRoutes";
@@ -37,6 +40,12 @@ import paymentRoutes from "./routes/paymentRoutes";
 import studentPlanDiscountRoutes from "./routes/studentPlanDiscountRoutes";
 import invoiceRoutes from "./routes/invoiceRoutes";
 import ledgerRoutes from "./routes/ledgerRoutes";
+import advisorRoutes from "./routes/advisorRoutes";
+import b2bLeadRoutes from "./routes/b2bLeadRoutes";
+import b2bFollowUpRoutes from "./routes/b2bFollowUpRoutes";
+import b2bConversionRoutes from "./routes/b2bConversionRoutes";
+import b2bLeadDocumentRoutes from "./routes/b2bLeadDocumentRoutes";
+import onboardingRoutes from "./routes/onboardingRoutes";
 
 // Ivy League route imports
 import ivyServiceRoutes from "./routes/ivyService.routes";
@@ -76,6 +85,7 @@ import "./models/ChatMessage";
 import "./models/StudentDocument";
 import "./models/COREDocumentField";
 import "./models/Lead";
+import "./models/Referrer";
 import "./models/FollowUp";
 import "./models/TeamMeet";
 import "./models/OpsSchedule";
@@ -89,11 +99,20 @@ import "./models/MonthlyFocus";
 import "./models/DailyPlanner";
 import "./models/IvyLeagueRegistration";
 import "./models/ServicePricing";
+import "./models/Advisor";
+import "./models/StudentTransfer";
 import "./models/SuperAdminServicePricing";
 import "./models/CoachingBatch";
 import "./models/Payment";
 import "./models/Invoice";
 import "./models/Ledger";
+import "./models/B2BLead";
+import "./models/B2BSales";
+import "./models/B2BOps";
+import "./models/B2BConversion";
+import "./models/B2BFollowUp";
+import "./models/B2BLeadDocument";
+import "./models/B2BDocumentField";
 
 // Import Ivy League models to register them with Mongoose
 import "./models/ivy/AcademicData";
@@ -129,21 +148,86 @@ dotenv.config(); // already called at top — this line is now redundant, kept f
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// --- Security Headers (helmet) ---
+app.use(helmet({
+  contentSecurityPolicy: false, // Disabled — frontend is a separate origin; re-enable with proper directives for production
+  crossOriginEmbedderPolicy: false, // Allow cross-origin resources (fonts, images, etc.)
+}));
+
+// --- CORS whitelist ---
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://core.admitra.io',
+  'https://temp-core.admitra.io',
+  'https://www.core.admitra.io',
+  'https://www.temp-core.admitra.io',
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, server-to-server)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
+
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
-// Serve uploaded files statically
-// Use getUploadBaseDir() for Vercel compatibility (/tmp/uploads on Vercel, ./uploads locally)
-import { getUploadBaseDir } from './utils/uploadDir';
-app.use('/uploads', express.static(getUploadBaseDir()));
+// --- Rate Limiters ---
+// General API limiter: 100 requests per 5 minutes per IP
+const generalLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many requests. Please try again later.' },
+});
 
-app.use("/api/auth", authRoutes);
+// Auth limiter: 100 requests per 5 minutes per IP (signup, login)
+const authLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many authentication attempts. Please try again after 5 minutes.' },
+});
+
+// OTP verification limiter: 5 attempts per 10 minutes per IP
+const otpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many OTP attempts. Please try again after 10 minutes.' },
+});
+
+// Serve uploaded files
+// Company logos under /uploads/admin are public (needed for enquiry/referral pages)
+// Everything else requires authentication
+import { getUploadBaseDir } from './utils/uploadDir';
+app.use('/uploads/admin', (_req: import('express').Request, res: import('express').Response, next: import('express').NextFunction) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(path.join(getUploadBaseDir(), 'admin')));
+app.use('/uploads', authenticate, express.static(getUploadBaseDir()));
+
+// OTP verify routes get the stricter limiter (5 attempts per 10 min) on top of authLimiter
+app.use("/api/auth/verify-otp", otpLimiter);
+app.use("/api/auth/verify-signup-otp", otpLimiter);
+
+app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/super-admin/students", superAdminStudentRoutes); // More specific route must come first
 app.use("/api/super-admin/ivy-league", authenticate, ivyLeagueAdminRoutes); // Ivy League admin routes
 app.use("/api/super-admin", superAdminRoutes);
 app.use("/api/admin/students", adminStudentRoutes); // Admin students routes (read-only)
 app.use("/api/admin", adminRoutes);
+app.use("/api/advisor", advisorRoutes); // Advisor role routes
 app.use("/api/services", serviceRoutes);
 app.use("/api/forms", formAnswerRoutes);
 app.use("/api/student", studentRoutes);
@@ -169,7 +253,13 @@ app.use("/api/student-plan-discounts", studentPlanDiscountRoutes); // Student pl
 app.use("/api/invoices", invoiceRoutes); // Invoice management
 app.use("/api/ledger", ledgerRoutes); // Ledger / financial tracking
 app.use("/api/ivy-league-registration", ivyLeagueRegistrationRoutes); // Ivy League registration form routes
-app.use("/api", leadRoutes); // Lead routes (includes public, admin, counselor endpoints)
+app.use("/api/referrer", referrerRoutes); // Referrer authenticated routes
+app.use("/api/b2b", b2bLeadRoutes); // B2B lead management routes
+app.use("/api/b2b/follow-ups", b2bFollowUpRoutes); // B2B follow-up routes
+app.use("/api/b2b/conversions", b2bConversionRoutes); // B2B conversion routes
+app.use("/api/b2b-lead-documents", b2bLeadDocumentRoutes); // B2B lead document management
+app.use("/api/onboarding", onboardingRoutes); // Admin/Advisor onboarding routes
+app.use("/api", leadRoutes); // Lead routes (includes public, admin, counselor, referral endpoints)
 
 // Ivy League routes (all protected by authenticate middleware)
 app.use("/api/ivy/ivy-service", authenticate, ivyServiceRoutes);

@@ -23,6 +23,7 @@ import OpsScheduleCalendar from '@/components/OpsScheduleCalendar';
 import TeamMeetSidebar from '@/components/TeamMeetSidebar';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
+import { fetchBlobUrl } from '@/lib/useBlobUrl';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -54,6 +55,7 @@ export default function SuperAdminStudentFormEditPage() {
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
 
   const [formValues, setFormValues] = useState<any>({});
+  const [errors, setErrors] = useState<any>({});
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [serviceInfo, setServiceInfo] = useState<any>(null);
   const [planTier, setPlanTier] = useState<string | undefined>();
@@ -64,6 +66,9 @@ export default function SuperAdminStudentFormEditPage() {
   const [brainographyData, setBrainographyData] = useState<BrainographyDataType | null>(null);
   const [portfolios, setPortfolios] = useState<PortfolioItem[]>([]);
   const handlePortfolioDownload = usePortfolioDownload();
+  const [uploadingBrainography, setUploadingBrainography] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [extractingBrainography, setExtractingBrainography] = useState(false);
   const [activeView, setActiveView] = useState<ActiveView>('analytics');
   const [isEducationPlanning, setIsEducationPlanning] = useState(false);
   const [isStudyAbroad, setIsStudyAbroad] = useState(false);
@@ -156,9 +161,22 @@ export default function SuperAdminStudentFormEditPage() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(`${API_URL}/portfolio/${registrationId}/data`, { headers: { Authorization: `Bearer ${token}` } });
-      setBrainographyData(response.data.data.brainographyData || null);
-    } catch { /* silently fail */ }
+      const data = response.data.data.brainographyData || null;
+      setBrainographyData(data);
+      if (data) setExtractingBrainography(false);
+      return data;
+    } catch { /* silently fail */ return null; }
   };
+
+  useEffect(() => {
+    if (!brainographyDoc || brainographyData) { setExtractingBrainography(false); return; }
+    setExtractingBrainography(true);
+    const interval = setInterval(async () => {
+      const data = await fetchBrainographyData();
+      if (data) clearInterval(interval);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [brainographyDoc, brainographyData]);
 
   const handleUpdateBrainographyMeta = async (field: 'standard' | 'board', value: string) => {
     try {
@@ -199,10 +217,15 @@ export default function SuperAdminStudentFormEditPage() {
     }
   };
 
-  const handleBrainographyView = () => {
+  const handleBrainographyView = async () => {
     if (!brainographyDoc) return;
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
-    window.open(`${baseUrl}/${brainographyDoc.filePath}`, '_blank');
+    try {
+      const path = brainographyDoc.filePath.startsWith('/') ? brainographyDoc.filePath : `/${brainographyDoc.filePath}`;
+      const blobUrl = await fetchBlobUrl(path);
+      window.open(blobUrl, '_blank');
+    } catch {
+      toast.error('Failed to load document');
+    }
   };
 
   const handleBrainographyDownload = async () => {
@@ -220,6 +243,41 @@ export default function SuperAdminStudentFormEditPage() {
       window.URL.revokeObjectURL(url);
     } catch {
       toast.error('Failed to download brainography report');
+    }
+  };
+
+  const handleBrainographyUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingBrainography(true);
+    try {
+      const token = localStorage.getItem('token');
+      const fd = new FormData();
+      fd.append('file', file);
+      await axios.post(`${API_URL}/brainography/${registrationId}/upload`, fd, {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
+      });
+      toast.success('Brainography report uploaded successfully!');
+      await fetchBrainography();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to upload brainography report');
+    } finally {
+      setUploadingBrainography(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleBrainographyDelete = async () => {
+    if (!confirm('Are you sure you want to delete this brainography report?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API_URL}/brainography/${registrationId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success('Brainography report deleted');
+      setBrainographyDoc(null);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete brainography report');
     }
   };
 
@@ -374,9 +432,59 @@ export default function SuperAdminStudentFormEditPage() {
     });
   };
 
+  const validateCurrentSection = (): boolean => {
+    const cs = formStructure[currentPartIndex];
+    if (!cs) return true;
+    const section = cs.sections?.[currentSectionIndex];
+    if (!section) return true;
+    const partKey = cs.part.key;
+    const sectionKey = section.key;
+    const sectionValues = formValues[partKey]?.[sectionKey] || {};
+    const newErrors: any = {};
+    let hasErrors = false;
+
+    section.subSections.forEach((subSection) => {
+      const subSectionValues = sectionValues[subSection.key] || [{}];
+      subSectionValues.forEach((instanceValues: any, index: number) => {
+        const visibleFields = subSection.fields.filter((f) => {
+          const eduLevel = instanceValues?.educationLevel;
+          const board = instanceValues?.board;
+          if (f.key === 'board' || f.key === 'boardFullName') {
+            if (eduLevel !== 'secondary_school' && eduLevel !== 'higher_secondary_school') return false;
+          }
+          if (f.key === 'boardFullName') {
+            if (board !== 'State Board' && board !== 'Other') return false;
+          }
+          if (f.key === 'fieldOfStudy' && eduLevel === 'secondary_school') return false;
+          return true;
+        });
+        visibleFields.forEach((field) => {
+          if (field.required) {
+            const value = instanceValues?.[field.key];
+            if (!value || (typeof value === 'string' && value.trim() === '')) {
+              if (!newErrors[subSection.key]) newErrors[subSection.key] = [];
+              if (!newErrors[subSection.key][index]) newErrors[subSection.key][index] = {};
+              newErrors[subSection.key][index][field.key] = `${field.label} is required`;
+              hasErrors = true;
+            }
+          }
+        });
+      });
+    });
+
+    setErrors(newErrors);
+    return !hasErrors;
+  };
+
   const handleSaveSection = async () => {
     const cs = formStructure[currentPartIndex];
     if (!cs) return;
+
+    if (!validateCurrentSection()) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+
     setSaving(true);
     try {
       const token = localStorage.getItem('token');
@@ -548,7 +656,7 @@ export default function SuperAdminStudentFormEditPage() {
                 ))}
                 <button onClick={() => router.push(`/super-admin/roles/student/${studentId}/registration/${registrationId}/activity`)}
                   className="flex-1 flex items-center justify-center gap-1.5 px-4 py-4 text-sm font-semibold transition-colors border-b-2 border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                  Student Activity
+                  Activity Management
                 </button>
               </div>
             </div>
@@ -592,24 +700,22 @@ export default function SuperAdminStudentFormEditPage() {
             <div className="mb-6"><ActivityAnalyticsDashboard registrationId={registrationId} /></div>
           )}
 
-          {/* Brainography (read-only) */}
+          {/* Brainography */}
           {isEducationPlanning && activeView === 'brainography' && (
             <>
               <div className="bg-white rounded-xl shadow-sm border border-blue-200 p-6 mb-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Brainography Report</h3>
+                      <p className="text-sm text-gray-500">Upload the brainography report for this student</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Brainography Report</h3>
-                    <p className="text-sm text-gray-500">View the brainography report for this student</p>
-                  </div>
-                  <span className="ml-auto inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                    Read Only
-                  </span>
                 </div>
                 {brainographyDoc ? (
                   <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -628,15 +734,33 @@ export default function SuperAdminStudentFormEditPage() {
                       <div className="flex items-center gap-2">
                         <button onClick={handleBrainographyView} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">View</button>
                         <button onClick={handleBrainographyDownload} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">Download</button>
+                        <label className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium cursor-pointer">
+                          Re-upload
+                          <input ref={fileInputRef} type="file" className="hidden" onChange={handleBrainographyUpload} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
+                        </label>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                    <p className="text-gray-500">No brainography report uploaded yet</p>
+                    <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p className="text-gray-600 mb-3">No brainography report uploaded yet</p>
+                    <label className={`inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium cursor-pointer ${uploadingBrainography ? 'opacity-50 pointer-events-none' : ''}`}>
+                      {uploadingBrainography ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>Uploading...</>) : 'Upload Brainography Report'}
+                      <input ref={fileInputRef} type="file" className="hidden" onChange={handleBrainographyUpload} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" disabled={uploadingBrainography} />
+                    </label>
                   </div>
                 )}
               </div>
+              {brainographyDoc && !brainographyData && extractingBrainography && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6 text-center">
+                  <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                  <p className="text-sm font-medium text-blue-800">AI is extracting data from brainography report...</p>
+                  <p className="text-xs text-blue-600 mt-1">This may take a minute. Please wait.</p>
+                </div>
+              )}
               {brainographyData && <div className="mb-6"><BrainographyDataDisplay data={brainographyData} canEdit onUpdate={handleUpdateBrainographyMeta} /></div>}
             </>
           )}
@@ -697,6 +821,7 @@ export default function SuperAdminStudentFormEditPage() {
                       userRole="SUPER_ADMIN"
                       readOnlyKeys={currentPart.key === 'PROFILE' && currentSection.title === 'Personal Details' ? ['firstName', 'middleName', 'lastName'] : undefined}
                       noDelete={currentPart.key === 'PROFILE' && currentSection.title === 'Parental Details'}
+                      errors={errors}
                     />
                   )}
                 </div>

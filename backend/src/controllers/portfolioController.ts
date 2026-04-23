@@ -12,7 +12,7 @@ import OpenAI from 'openai';
 import fs from 'fs';
 import path from 'path';
 
-import { getUploadBaseDir, ensureDir } from '../utils/uploadDir';
+import { getUploadBaseDir, ensureDir, validateFilePath } from '../utils/uploadDir';
 
 const BRAINOGRAPHY_DOC_KEY = 'brainography_report';
 
@@ -277,7 +277,7 @@ export const extractBrainographyData = async (req: AuthRequest, res: Response): 
     console.error('Extract brainography data error:', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Failed to extract brainography data',
+      message: 'Failed to extract brainography data',
     });
   }
 };
@@ -410,7 +410,7 @@ export const generateBothReports = async (req: AuthRequest, res: Response): Prom
     console.error('Generate both reports error:', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Failed to generate reports',
+      message: 'Failed to generate reports',
     });
   }
 };
@@ -472,12 +472,17 @@ export const downloadPortfolio = async (req: AuthRequest, res: Response): Promis
     }
 
     const filePath = path.join(process.cwd(), portfolio.filePath);
-    if (!fs.existsSync(filePath)) {
+    const safePath = validateFilePath(filePath);
+    if (!safePath) {
+      res.status(403).json({ success: false, message: 'Access denied: invalid file path' });
+      return;
+    }
+    if (!fs.existsSync(safePath)) {
       res.status(404).json({ success: false, message: 'File not found on server' });
       return;
     }
 
-    res.download(filePath, portfolio.fileName);
+    res.download(safePath, portfolio.fileName);
   } catch (error: any) {
     console.error('Download portfolio error:', error);
     res.status(500).json({ success: false, message: 'Failed to download portfolio' });

@@ -7,7 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import CounselorLayout from '@/components/CounselorLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
-import { BACKEND_URL } from '@/lib/ivyApi';
+import AuthImage from '@/components/AuthImage';
 
 interface StudentData {
   _id: string;
@@ -25,6 +25,7 @@ interface StudentData {
   mobileNumber?: string;
   adminId?: {
     _id: string;
+    companyName?: string;
     userId: {
       _id: string;
       firstName?: string;
@@ -42,6 +43,10 @@ interface StudentData {
       lastName?: string;
       email: string;
     };
+  };
+  advisorId?: {
+    _id: string;
+    companyName?: string;
   };
   registrationCount: number;
   createdAt: string;
@@ -213,6 +218,9 @@ export default function CounselorStudentsPage() {
                       Email
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                      Admin/Advisor
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       Registrations
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -229,15 +237,18 @@ export default function CounselorStudentsPage() {
                       <tr key={student._id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            {student.user.profilePicture ? (
-                              <img src={`${BACKEND_URL}/uploads/${student.user.profilePicture}`} alt="" className="w-10 h-10 rounded-full object-cover mr-3" />
-                            ) : (
-                              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                <span className="text-blue-600 font-semibold text-sm">
-                                  {getInitials(student.user)}
-                                </span>
-                              </div>
-                            )}
+                            <AuthImage
+                              path={student.user.profilePicture}
+                              alt=""
+                              className="w-10 h-10 rounded-full object-cover mr-3"
+                              fallback={
+                                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                  <span className="text-blue-600 font-semibold text-sm">
+                                    {getInitials(student.user)}
+                                  </span>
+                                </div>
+                              }
+                            />
                             <div>
                               <div className="font-medium text-gray-900">
                                 {getFullName(student.user) || 'N/A'}
@@ -250,6 +261,21 @@ export default function CounselorStudentsPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {student.user.email}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {student.adminId?.companyName && student.advisorId?.companyName ? (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-gray-900 text-xs">{student.adminId.companyName}</span>
+                              <span className="text-gray-900 text-xs">{student.advisorId.companyName}</span>
+                              <span className="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800 rounded-full w-fit">Transferred</span>
+                            </div>
+                          ) : student.adminId?.companyName ? (
+                            <span className="text-gray-900">{student.adminId.companyName}</span>
+                          ) : student.advisorId?.companyName ? (
+                            <span className="text-gray-900">{student.advisorId.companyName}</span>
+                          ) : (
+                            <span className="text-gray-400">N/A</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="px-3 py-1 text-sm font-medium bg-blue-100 text-blue-800 rounded-full">
@@ -279,7 +305,7 @@ export default function CounselorStudentsPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center">
+                      <td colSpan={6} className="px-6 py-12 text-center">
                         <div className="text-gray-400">
                           <svg
                             className="w-12 h-12 mx-auto mb-4"

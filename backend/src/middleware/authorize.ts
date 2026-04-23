@@ -30,7 +30,7 @@ export const authorize = (...allowedRoles: (USER_ROLE | USER_ROLE[])[]) => {
     if (!roles.includes(userRole)) {
       res.status(403).json({
         success: false,
-        message: `Access denied. This resource requires one of the following roles: ${roles.join(", ")}. Your role: ${userRole}`,
+        message: "Access denied. You do not have permission to access this resource.",
       });
       return;
     }
@@ -62,6 +62,9 @@ export const adminOpsOrServiceProvider = authorize(
   USER_ROLE.OPS,
   USER_ROLE.SERVICE_PROVIDER
 );
+
+// Only advisor can access
+export const advisorOnly = authorize(USER_ROLE.ADVISOR);
 
 // All verified users except students
 export const nonStudentOnly = authorize(

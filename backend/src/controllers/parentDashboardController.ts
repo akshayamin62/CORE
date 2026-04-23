@@ -6,6 +6,7 @@ import User from '../models/User';
 import StudentServiceRegistration from '../models/StudentServiceRegistration';
 import StudentFormAnswer from '../models/StudentFormAnswer';
 import { USER_ROLE } from '../types/roles';
+import StudentTransfer from '../models/StudentTransfer';
 
 /**
  * Get all students linked to the logged-in parent
@@ -31,7 +32,7 @@ export const getParentStudents = async (req: AuthRequest, res: Response): Promis
     }
 
     const students = await Student.find({ _id: { $in: parentDoc.studentIds } })
-      .populate('userId', 'firstName middleName lastName email isVerified isActive createdAt')
+      .populate('userId', 'firstName middleName lastName email profilePicture isVerified isActive createdAt')
       .populate({
         path: 'adminId',
         populate: { path: 'userId', select: 'firstName middleName lastName email' },
@@ -39,6 +40,10 @@ export const getParentStudents = async (req: AuthRequest, res: Response): Promis
       .populate({
         path: 'counselorId',
         populate: { path: 'userId', select: 'firstName middleName lastName email' },
+      })
+      .populate({
+        path: 'advisorId',
+        select: 'companyName',
       })
       .sort({ createdAt: -1 });
 
@@ -53,6 +58,7 @@ export const getParentStudents = async (req: AuthRequest, res: Response): Promis
           mobileNumber: student.mobileNumber,
           adminId: student.adminId,
           counselorId: student.counselorId,
+          advisorId: student.advisorId,
           intake: student.intake,
           year: student.year,
           registrationCount,
@@ -74,7 +80,6 @@ export const getParentStudents = async (req: AuthRequest, res: Response): Promis
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch students',
-      error: error.message,
     });
   }
 };
@@ -105,13 +110,21 @@ export const getParentStudentDetails = async (req: AuthRequest, res: Response): 
     }
 
     const student = await Student.findById(studentId)
-      .populate('userId', 'firstName middleName lastName email role isVerified isActive createdAt')
+      .populate('userId', 'firstName middleName lastName email role profilePicture isVerified isActive createdAt')
       .populate({
         path: 'adminId',
         populate: { path: 'userId', select: 'firstName middleName lastName email' },
       })
       .populate({
         path: 'counselorId',
+        populate: { path: 'userId', select: 'firstName middleName lastName email' },
+      })
+      .populate({
+        path: 'referrerId',
+        populate: { path: 'userId', select: 'firstName middleName lastName' },
+      })
+      .populate({
+        path: 'advisorId',
         populate: { path: 'userId', select: 'firstName middleName lastName email' },
       })
       .lean()
@@ -138,8 +151,22 @@ export const getParentStudentDetails = async (req: AuthRequest, res: Response): 
         path: 'activeOpsId',
         populate: { path: 'userId', select: 'firstName middleName lastName email' },
       })
+      .populate({
+        path: 'registeredViaAdvisorId',
+        select: 'companyName userId',
+        populate: { path: 'userId', select: 'firstName middleName lastName' },
+      })
+      .populate({
+        path: 'registeredViaAdminId',
+        select: 'companyName userId',
+        populate: { path: 'userId', select: 'firstName middleName lastName' },
+      })
       .lean()
       .exec();
+
+    // Get approved transfer's interestedServices
+    const approvedTransfer = await StudentTransfer.findOne({ studentId, status: 'APPROVED' }).lean();
+    const transferInterestedServices: string[] = approvedTransfer?.interestedServices || [];
 
     return res.status(200).json({
       success: true,
@@ -147,6 +174,7 @@ export const getParentStudentDetails = async (req: AuthRequest, res: Response): 
       data: {
         student,
         registrations,
+        transferInterestedServices,
       },
     });
   } catch (error: any) {
@@ -154,7 +182,6 @@ export const getParentStudentDetails = async (req: AuthRequest, res: Response): 
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch student details',
-      error: error.message,
     });
   }
 };
@@ -209,7 +236,6 @@ export const getParentStudentFormAnswers = async (req: AuthRequest, res: Respons
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch form answers',
-      error: error.message,
     });
   }
 };

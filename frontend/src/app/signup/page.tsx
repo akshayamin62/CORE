@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI } from '@/lib/api';
@@ -8,27 +8,9 @@ import { USER_ROLE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import { Country, State, City, ICountry, IState, ICity } from 'country-state-city';
 
-// Generate random captcha
-const generateCaptcha = (length: number = 6): string => {
-  const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ2345689';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
-};
-
-// Simple hash function for captcha
-const hashCaptcha = async (captcha: string): Promise<string> => {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(captcha.toUpperCase());
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-};
-
 export default function SignupPage() {
   const router = useRouter();
+  const [acceptLegal, setAcceptLegal] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     middleName: '',
@@ -55,10 +37,14 @@ export default function SignupPage() {
   const [selectedState, setSelectedState] = useState<IState | null>(null);
   const [selectedCity, setSelectedCity] = useState<ICity | null>(null);
   const [otp, setOtp] = useState('');
-  const [captcha, setCaptcha] = useState('');
-  const [captchaInput, setCaptchaInput] = useState('');
+  const [captchaQuestion, setCaptchaQuestion] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [step, setStep] = useState<'signup' | 'verify-otp'>('signup');
   const [loading, setLoading] = useState(false);
+  const [resendTimer, setResendTimer] = useState(60);
+  const [resending, setResending] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [userEmail, setUserEmail] = useState('');
   const [userMobileNumber, setUserMobileNumber] = useState('');
   const [userRole, setUserRole] = useState('');
@@ -78,55 +64,92 @@ export default function SignupPage() {
     coachingTests: string[];
   } | null>(null);
 
-  // Generate and store hashed captcha in localStorage on mount
+  // Fetch captcha from server
+  const fetchCaptcha = async () => {
+    try {
+      const res = await authAPI.getCaptcha();
+      setCaptchaToken(res.data.data.token);
+      setCaptchaQuestion(res.data.data.question);
+      setCaptchaAnswer('');
+    } catch {
+      toast.error('Failed to load captcha');
+    }
+  };
+
   useEffect(() => {
     if (step === 'signup') {
-      const initCaptcha = async () => {
-        const newCaptcha = generateCaptcha();
-        setCaptcha(newCaptcha);
-        const hashed = await hashCaptcha(newCaptcha);
-        localStorage.setItem('signup_captcha', hashed);
-      };
-      initCaptcha();
+      fetchCaptcha();
     }
   }, [step]);
 
-  const handleRegenerateCaptcha = async () => {
-    const newCaptcha = generateCaptcha();
-    setCaptcha(newCaptcha);
-    const hashed = await hashCaptcha(newCaptcha);
-    localStorage.setItem('signup_captcha', hashed);
-    setCaptchaInput('');
+  const startResendTimer = useCallback(() => {
+    setResendTimer(60);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setResendTimer(prev => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  const handleResendOTP = async () => {
+    if (resendTimer > 0 || resending) return;
+    setResending(true);
+    try {
+      await authAPI.resendOTP({ email: userEmail, purpose: 'signup' });
+      toast.success('A new OTP has been sent to your email.');
+      startResendTimer();
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Failed to resend OTP.';
+      toast.error(message);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const handleRegenerateCaptcha = () => {
+    fetchCaptcha();
     toast.success('Captcha regenerated!');
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!acceptLegal) {
+      toast.error('Please accept Terms, Privacy and Cookie Policy to continue');
+      return;
+    }
     
     if (!formData.email) {
       toast.error('Please enter your email');
       return;
     }
 
-    const storedCaptchaHash = localStorage.getItem('signup_captcha');
-    if (!storedCaptchaHash || !captcha) {
+    if (!captchaToken || !captchaQuestion) {
       toast.error('Please wait for captcha to load');
       return;
     }
 
-    if (!captchaInput) {
-      toast.error('Please enter the captcha');
+    if (!captchaAnswer) {
+      toast.error('Please enter the captcha answer');
       return;
     }
 
     setLoading(true);
 
     try {
-      const captchaInputHash = await hashCaptcha(captchaInput);
       const response = await authAPI.signup({ 
         ...formData, 
-        captcha: storedCaptchaHash,
-        captchaInput: captchaInputHash
+        captchaToken,
+        captchaAnswer
       });
       const message = response.data.message || 'OTP sent to your email!';
       toast.success(message, { duration: 4000 });
@@ -153,13 +176,14 @@ export default function SignupPage() {
         });
       }
       
-      localStorage.removeItem('signup_captcha'); // Clear captcha after use
+      localStorage.removeItem('signup_captcha');
       setStep('verify-otp');
+      startResendTimer();
     } catch (error: any) {
       const message = error.response?.data?.message || 'Signup failed. Please try again.';
       toast.error(message);
-      // Regenerate captcha on error
-      handleRegenerateCaptcha();
+      // Regenerate captcha on error (old token is consumed)
+      fetchCaptcha();
     } finally {
       setLoading(false);
     }
@@ -691,78 +715,25 @@ export default function SignupPage() {
             {/* Captcha Section */}
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Verification Code
+                Solve to verify
               </label>
               <div className="space-y-3">
-                {/* Display Captcha */}
-                {captcha ? (
-                  <div className="bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 border-2 border-gray-500 rounded-xl p-6 relative overflow-hidden">
-                    {/* Multiple background patterns for noise */}
-                    <div className="absolute inset-0 opacity-20" style={{
-                      backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(0,0,0,.08) 8px, rgba(0,0,0,.08) 16px), repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(0,0,0,.05) 8px, rgba(0,0,0,.05) 16px)',
-                    }}></div>
-                    {/* Random dots for additional noise */}
-                    <div className="absolute inset-0">
-                      {[...Array(30)].map((_, i) => (
-                        <div
-                          key={i}
-                          className="absolute rounded-full bg-gray-600 opacity-20"
-                          style={{
-                            width: `${Math.random() * 3 + 1}px`,
-                            height: `${Math.random() * 3 + 1}px`,
-                            left: `${Math.random() * 100}%`,
-                            top: `${Math.random() * 100}%`,
-                          }}
-                        />
-                      ))}
-                    </div>
-                    {/* Random lines for distraction */}
-                    <div className="absolute inset-0">
-                      {[...Array(5)].map((_, i) => (
-                        <div
-                          key={i}
-                          className="absolute bg-gray-500 opacity-15"
-                          style={{
-                            width: '100%',
-                            height: '1px',
-                            top: `${Math.random() * 100}%`,
-                            transform: `rotate(${Math.random() * 20 - 10}deg)`,
-                          }}
-                        />
-                      ))}
-                    </div>
+                {/* Display Math Question */}
+                {captchaQuestion ? (
+                  <div className="bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 border-2 border-gray-400 rounded-xl p-4 relative overflow-hidden">
                     <div className="flex items-center justify-center relative">
                       <span 
-                        className="text-3xl font-bold text-gray-800 select-none"
-                        style={{ 
-                          fontFamily: 'monospace',
-                          letterSpacing: '0.6em',
-                          textShadow: '3px 3px 5px rgba(0,0,0,0.2), -2px -2px 3px rgba(255,255,255,0.7), 1px -1px 2px rgba(0,0,0,0.1)',
-                          transform: 'skewX(-8deg)',
-                          filter: 'blur(0.3px)',
-                        }}
+                        className="text-2xl font-bold text-gray-800 select-none tracking-wide"
+                        style={{ fontFamily: 'monospace' }}
                       >
-                        {captcha.split('').map((char, index) => (
-                          <span 
-                            key={index}
-                            style={{
-                              display: 'inline-block',
-                              transform: `rotate(${(index % 2 === 0 ? 1 : -1) * (Math.random() * 15 + 8)}deg) translateY(${(index % 2 === 0 ? 1 : -1) * 3}px) scaleX(${0.9 + Math.random() * 0.3})`,
-                              fontSize: `${0.85 + Math.random() * 0.3}em`,
-                              color: `rgb(${50 + Math.random() * 100}, ${50 + Math.random() * 100}, ${50 + Math.random() * 100})`,
-                              textShadow: `${Math.random() * 2}px ${Math.random() * 2}px 3px rgba(0,0,0,0.3)`,
-                            }}
-                          >
-                            {char}
-                          </span>
-                        ))}
+                        {captchaQuestion}
                       </span>
                     </div>
                   </div>
                 ) : null}
 
-                {/* Captcha Input */}
-                {captcha && (
+                {/* Captcha Answer Input */}
+                {captchaQuestion && (
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -770,19 +741,18 @@ export default function SignupPage() {
                       </svg>
                     </div>
                     <input
-                      type="text"
+                      type="number"
                       required
-                      value={captchaInput}
-                      onChange={(e) => setCaptchaInput(e.target.value.toUpperCase())}
-                      maxLength={6}
-                      className="block w-full pl-12 pr-4 py-3.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 uppercase tracking-widest text-center font-semibold bg-gray-50 hover:bg-white"
-                      placeholder="Enter captcha"
+                      value={captchaAnswer}
+                      onChange={(e) => setCaptchaAnswer(e.target.value)}
+                      className="block w-full pl-12 pr-4 py-3.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 placeholder-gray-400 text-center font-semibold bg-gray-50 hover:bg-white"
+                      placeholder="Your answer"
                     />
                   </div>
                 )}
 
                 {/* Regenerate Button */}
-                  {captcha && (
+                  {captchaQuestion && (
                     <button
                       type="button"
                       onClick={handleRegenerateCaptcha}
@@ -791,16 +761,44 @@ export default function SignupPage() {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                       </svg>
-                      Regenerate Captcha
+                      New Question
                     </button>
                   )}
               </div>
             </div>
 
+            {/* Legal Consent */}
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={acceptLegal}
+                  onChange={(e) => setAcceptLegal(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  required
+                />
+                <span className="text-sm text-gray-700">
+                  I agree to the{' '}
+                  <Link href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                    Terms of Service
+                  </Link>
+                  {', '}
+                  <Link href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                    Privacy Policy
+                  </Link>
+                  {' and '}
+                  <Link href="/cookie-policy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                    Cookie Policy
+                  </Link>
+                  .
+                </span>
+              </label>
+            </div>
+
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !acceptLegal}
               className="w-full py-4 px-6 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold text-lg rounded-xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none btn-glow"
             >
               {loading ? (
@@ -828,7 +826,7 @@ export default function SignupPage() {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Verify OTP</h3>
                 <p className="text-gray-600">
-                  Enter the 4-digit code sent to <span className="font-semibold">{userEmail}</span>
+                  Enter the 6-digit code sent to <span className="font-semibold">{userEmail}</span>
                 </p>
               </div>
 
@@ -848,21 +846,43 @@ export default function SignupPage() {
                     name="otp"
                     type="text"
                     required
-                    maxLength={4}
-                    pattern="[0-9]{4}"
+                    maxLength={6}
+                    pattern="[0-9]{6}"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     className="block w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-400 text-center text-2xl font-bold tracking-widest"
-                    placeholder="0000"
+                    placeholder="000000"
                   />
                 </div>
-                <p className="mt-2 text-xs text-gray-500">Check your email for the 4-digit code</p>
+                <p className="mt-2 text-xs text-gray-500">Check your email for the 6-digit code</p>
               </div>
+
+              {/* Resend OTP */}
+              <button
+                type="button"
+                onClick={handleResendOTP}
+                disabled={resendTimer > 0 || resending}
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                {resending ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Sending...
+                  </span>
+                ) : resendTimer > 0 ? (
+                  `Resend OTP (${resendTimer}s)`
+                ) : (
+                  'Resend OTP'
+                )}
+              </button>
 
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={loading || otp.length !== 4}
+                disabled={loading || otp.length !== 6}
                 className="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none btn-glow"
               >
                 {loading ? (
@@ -884,9 +904,8 @@ export default function SignupPage() {
                 onClick={() => {
                   setStep('signup');
                   setOtp('');
-                  setCaptcha('');
-                  setCaptchaInput('');
-                  localStorage.removeItem('signup_captcha');
+                  setCaptchaAnswer('');
+                  fetchCaptcha();
                 }}
                 className="w-full py-2 px-4 text-gray-600 hover:text-gray-800 font-medium rounded-xl transition-colors"
               >

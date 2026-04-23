@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { User, USER_ROLE } from '@/types';
 import { useState } from 'react';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
-import { BACKEND_URL } from '@/lib/ivyApi';
+import AuthImage from '@/components/AuthImage';
 
 interface SuperAdminLayoutProps {
   children: React.ReactNode;
@@ -108,9 +108,43 @@ export default function SuperAdminLayout({ children, user }: SuperAdminLayoutPro
 
   const navigationItems: NavItem[] = [
     {
+      name: 'B2B',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      ),
+      children: [
+        {
+          name: 'B2B Leads',
+          icon: Icons.leads,
+          path: '/super-admin/b2b/leads',
+        },
+        {
+          name: 'B2B Sales',
+          icon: Icons.counselor,
+          path: '/super-admin/b2b/sales',
+        },
+        {
+          name: 'B2B OPS',
+          icon: Icons.ops,
+          path: '/super-admin/b2b/ops',
+        },
+      ],
+    },
+    {
       name: 'Admin',
       icon: Icons.admin,
       path: '/super-admin/roles/admin',
+    },
+    {
+      name: 'Advisor',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      ),
+      path: '/super-admin/roles/advisor',
     },
     {
       name: 'Ops',
@@ -153,6 +187,15 @@ export default function SuperAdminLayout({ children, user }: SuperAdminLayoutPro
       path: '/super-admin/roles/service-provider',
     },
     {
+      name: 'Referrers',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+        </svg>
+      ),
+      path: '/super-admin/referrers',
+    },
+    {
       name: 'Leads',
       icon: Icons.leads,
       path: '/super-admin/leads',
@@ -165,6 +208,24 @@ export default function SuperAdminLayout({ children, user }: SuperAdminLayoutPro
         </svg>
       ),
       path: '/super-admin/service-pricing',
+    },
+    {
+      name: 'Brainography',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
+      ),
+      path: 'https://impact.admitra.io',
+    },
+    {
+      name: 'Learning Hub',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+      ),
+      path: 'https://latitude.admitra.io/',
     },
     {
       name: 'Archive',
@@ -240,7 +301,13 @@ export default function SuperAdminLayout({ children, user }: SuperAdminLayoutPro
     return (
       <button
         key={item.name}
-        onClick={() => item.path && router.push(item.path)}
+        onClick={() => {
+          if (item.path?.startsWith('http')) {
+            window.open(item.path, '_blank', 'noopener,noreferrer');
+          } else if (item.path) {
+            router.push(item.path);
+          }
+        }}
         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
           isActive
             ? 'bg-blue-50 text-blue-600 font-semibold'
@@ -255,12 +322,12 @@ export default function SuperAdminLayout({ children, user }: SuperAdminLayoutPro
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-5rem)] bg-gray-50">
+    <div className="flex min-h-[calc(100vh-6.25rem)] bg-gray-50">
       {/* Sidebar */}
       <aside
         className={`${
           sidebarOpen ? 'w-64' : 'w-20'
-        } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col sticky top-20 h-[calc(100vh-5rem)]`}
+        } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col sticky top-25 h-[calc(100vh-6.25rem)]`}
       >
         {/* Sidebar Header */}
         <div className="h-14 border-b border-gray-200 flex items-center justify-between px-4">
@@ -300,13 +367,16 @@ export default function SuperAdminLayout({ children, user }: SuperAdminLayoutPro
         <div className="border-t border-gray-200 p-4">
           {sidebarOpen ? (
             <div className="mb-3 flex items-center gap-2">
-              {user?.profilePicture ? (
-                <img src={`${BACKEND_URL}/uploads/${user.profilePicture}`} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-              ) : (
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 font-semibold text-sm">{getInitials(user)}</span>
-                </div>
-              )}
+              <AuthImage
+                path={user?.profilePicture}
+                alt=""
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                fallback={
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-blue-600 font-semibold text-sm">{getInitials(user)}</span>
+                  </div>
+                }
+              />
               <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">{getFullName(user)}</p>
                 <p className="text-xs text-gray-500 truncate">{user.email}</p>
@@ -314,13 +384,16 @@ export default function SuperAdminLayout({ children, user }: SuperAdminLayoutPro
             </div>
           ) : (
             <div className="mb-3 flex justify-center">
-              {user?.profilePicture ? (
-                <img src={`${BACKEND_URL}/uploads/${user.profilePicture}`} alt="" className="w-8 h-8 rounded-full object-cover" />
-              ) : (
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 font-semibold text-sm">{getInitials(user)}</span>
-                </div>
-              )}
+              <AuthImage
+                path={user?.profilePicture}
+                alt=""
+                className="w-8 h-8 rounded-full object-cover"
+                fallback={
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 font-semibold text-sm">{getInitials(user)}</span>
+                  </div>
+                }
+              />
             </div>
           )}
           <button

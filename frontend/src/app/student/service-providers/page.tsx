@@ -1,10 +1,11 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authAPI, spServiceAPI } from '@/lib/api';
 import { User, USER_ROLE, SPServiceListing, SPEnquiryItem } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
+import AuthImage from '@/components/AuthImage';
 
 const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
 
@@ -38,7 +39,7 @@ export default function StudentServiceProvidersPage() {
       const profileRes = await authAPI.getProfile();
       const userData = profileRes.data.data.user;
       if (userData.role !== USER_ROLE.STUDENT) {
-        router.push('/dashboard');
+        router.push('/');
         return;
       }
       setUser(userData);
@@ -166,7 +167,7 @@ export default function StudentServiceProvidersPage() {
             </button>
           </div>
 
-          {/* â”€â”€ Browse Services Tab â”€â”€ */}
+          {/* ── Browse Services Tab ── */}
           {activeTab === 'browse' && (
             <>
               {/* Stats */}
@@ -279,11 +280,10 @@ export default function StudentServiceProvidersPage() {
                       <div key={service._id} className="bg-white rounded-xl shadow-sm border-2 border-gray-200 hover:shadow-md hover:border-blue-300 transition-all overflow-hidden">
                         {service.thumbnail && (
                           <div className="h-40 w-full overflow-hidden bg-gray-100">
-                            <img
-                              src={`${BACKEND_URL}/${service.thumbnail.replace(/^\//, '')}`}
+                            <AuthImage
+                              path={service.thumbnail}
                               alt={service.title}
                               className="w-full h-full object-cover"
-                              onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                             />
                           </div>
                         )}
@@ -291,18 +291,16 @@ export default function StudentServiceProvidersPage() {
                           {/* Provider info */}
                           {sp && (
                             <div className="flex items-center gap-3 mb-4">
-                              {sp.companyLogo ? (
-                                <img
-                                  src={`${BACKEND_URL}/${sp.companyLogo.replace(/^\//, '')}`}
-                                  alt={sp.companyName || ''}
-                                  className="w-10 h-10 rounded-lg object-cover border border-gray-200"
-                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                />
-                              ) : (
-                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                  <span className="text-blue-600 font-bold text-sm">{sp.companyName?.charAt(0) || 'S'}</span>
-                                </div>
-                              )}
+                              <AuthImage
+                                path={sp.companyLogo}
+                                alt={sp.companyName || ''}
+                                className="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                                fallback={
+                                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <span className="text-blue-600 font-bold text-sm">{sp.companyName?.charAt(0) || 'S'}</span>
+                                  </div>
+                                }
+                              />
                               <div>
                                 <p className="font-semibold text-gray-900 text-sm">{sp.companyName || 'Service Provider'}</p>
                                 {(sp.city || sp.state) && (
@@ -339,7 +337,7 @@ export default function StudentServiceProvidersPage() {
                             <p className="text-lg font-bold text-gray-900">
                               {service.priceType === 'Contact for Price'
                                 ? 'Contact for Price'
-                                : `${service.priceType}: ₹${service.price?.toLocaleString()}`}
+                                : `${service.priceType}: ?${service.price?.toLocaleString()}`}
                             </p>
                           </div>
 
@@ -371,7 +369,7 @@ export default function StudentServiceProvidersPage() {
             </>
           )}
 
-          {/* â”€â”€ My Enquiries Tab â”€â”€ */}
+          {/* ── My Enquiries Tab ── */}
           {activeTab === 'my-services' && (
             <>
               {myEnquiries.length === 0 ? (
@@ -398,11 +396,10 @@ export default function StudentServiceProvidersPage() {
                       <div key={enquiry._id} className="bg-white rounded-xl shadow-sm border-2 border-gray-200 overflow-hidden">
                         {svc?.thumbnail && (
                           <div className="h-40 w-full overflow-hidden bg-gray-100">
-                            <img
-                              src={`${BACKEND_URL}/${svc.thumbnail.replace(/^\//, '')}`}
+                            <AuthImage
+                              path={svc.thumbnail}
                               alt={svc.title || ''}
                               className="w-full h-full object-cover"
-                              onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                             />
                           </div>
                         )}
@@ -410,18 +407,16 @@ export default function StudentServiceProvidersPage() {
                           {/* Provider info */}
                           {sp && (
                             <div className="flex items-center gap-3 mb-4">
-                              {sp.companyLogo ? (
-                                <img
-                                  src={`${BACKEND_URL}/${sp.companyLogo.replace(/^\//, '')}`}
-                                  alt={sp.companyName || ''}
-                                  className="w-10 h-10 rounded-lg object-cover border border-gray-200"
-                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                />
-                              ) : (
-                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                  <span className="text-blue-600 font-bold text-sm">{sp.companyName?.charAt(0) || 'S'}</span>
-                                </div>
-                              )}
+                              <AuthImage
+                                path={sp.companyLogo}
+                                alt={sp.companyName || ''}
+                                className="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                                fallback={
+                                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <span className="text-blue-600 font-bold text-sm">{sp.companyName?.charAt(0) || 'S'}</span>
+                                  </div>
+                                }
+                              />
                               <div>
                                 <p className="font-semibold text-gray-900 text-sm">{sp.companyName || 'Service Provider'}</p>
                                 {(sp.city || sp.state) && (
@@ -463,7 +458,7 @@ export default function StudentServiceProvidersPage() {
                               <p className="text-lg font-bold text-gray-900">
                                 {svc.priceType === 'Contact for Price'
                                   ? 'Contact for Price'
-                                  : `${svc.priceType}: ₹${svc.price?.toLocaleString()}`}
+                                  : `${svc.priceType}: ?${svc.price?.toLocaleString()}`}
                               </p>
                             </div>
                           )}

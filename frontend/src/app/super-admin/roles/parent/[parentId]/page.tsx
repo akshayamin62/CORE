@@ -7,7 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
-import { BACKEND_URL } from '@/lib/ivyApi';
+import AuthImage from '@/components/AuthImage';
 
 interface ParentDetail {
   _id: string;
@@ -24,7 +24,7 @@ interface ParentDetail {
 export default function SuperAdminParentDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const parentId = params.parentId as string; // This is actually userId from the list page
+  const parentId = params.parentId as string;
   const [user, setUser] = useState<User | null>(null);
   const [parent, setParent] = useState<ParentDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ export default function SuperAdminParentDetailPage() {
 
   const fetchParent = async () => {
     try {
-      const response = await parentAPI.getParentDetailByUserId(parentId);
+      const response = await parentAPI.getParentDetail(parentId);
       setParent(response.data.data.parent);
     } catch { toast.error('Failed to fetch parent details'); } finally { setLoading(false); }
   };
@@ -74,13 +74,16 @@ export default function SuperAdminParentDetailPage() {
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
             <div className="flex items-center mb-6">
-              {parent.userId.profilePicture ? (
-                <img src={`${BACKEND_URL}/uploads/${parent.userId.profilePicture}`} alt="" className="w-16 h-16 rounded-full object-cover mr-4" />
-              ) : (
-                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mr-4">
-                  <span className="text-purple-600 font-bold text-xl">{getInitials(parent.userId)}</span>
-                </div>
-              )}
+              <AuthImage
+                path={parent.userId.profilePicture}
+                alt=""
+                className="w-16 h-16 rounded-full object-cover mr-4"
+                fallback={
+                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                    <span className="text-purple-600 font-bold text-xl">{getInitials(parent.userId)}</span>
+                  </div>
+                }
+              />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{getFullName(parent.userId)}</h1>
                 <p className="text-gray-600">{parent.userId.email}</p>
@@ -110,9 +113,16 @@ export default function SuperAdminParentDetailPage() {
                 {parent.studentIds.map((s: any) => (
                   <div key={s._id} className="flex items-center justify-between py-3">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                        <span className="text-blue-600 font-semibold text-sm">{getInitials(s.userId)}</span>
-                      </div>
+                      <AuthImage
+                        path={s.userId?.profilePicture}
+                        alt={getFullName(s.userId)}
+                        className="w-10 h-10 rounded-full object-cover mr-3"
+                        fallback={
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                            <span className="text-blue-600 font-semibold text-sm">{getInitials(s.userId)}</span>
+                          </div>
+                        }
+                      />
                       <div>
                         <p className="font-medium text-gray-900">{getFullName(s.userId)}</p>
                         <p className="text-sm text-gray-500">{s.userId.email}</p>

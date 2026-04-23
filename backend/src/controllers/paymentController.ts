@@ -9,6 +9,13 @@ import Student from '../models/Student';
 import StudentPlanDiscount from '../models/StudentPlanDiscount';
 import ServicePricing from '../models/ServicePricing';
 import User from '../models/User';
+import Admin from '../models/Admin';
+import Advisor from "../models/Advisor";
+import Counselor from '../models/Counselor';
+import Ops from '../models/Ops';
+import Parent from '../models/Parent';
+import Referrer from '../models/Referrer';
+import EduplanCoach from '../models/EduplanCoach';
 import { USER_ROLE } from '../types/roles';
 import { sendServiceRegistrationEmailToSuperAdmin } from '../utils/email';
 import {
@@ -19,6 +26,66 @@ import {
 } from '../services/paymentService';
 import { LedgerEntryType } from '../models/Ledger';
 import Ledger from '../models/Ledger';
+
+// Verify requesting user is connected to the student
+const verifyStudentAccess = async (userId: string, role: string, studentId: string): Promise<boolean> => {
+  switch (role) {
+    case USER_ROLE.SUPER_ADMIN:
+      return true;
+    case USER_ROLE.STUDENT: {
+      const student = await Student.findById(studentId).select('userId').lean();
+      return student?.userId?.toString() === userId;
+    }
+    case USER_ROLE.ADMIN: {
+      const admin = await Admin.findOne({ userId }).select('_id').lean();
+      if (!admin) return false;
+      const student = await Student.findOne({ _id: studentId, adminId: admin._id }).select('_id').lean();
+      return !!student;
+    }
+    case USER_ROLE.ADVISOR: {
+      const advisor = await Advisor.findOne({ userId }).select('_id').lean();
+      if (!advisor) return false;
+      const student = await Student.findOne({ _id: studentId, advisorId: advisor._id }).select('_id').lean();
+      return !!student;
+    }
+    case USER_ROLE.COUNSELOR: {
+      const counselor = await Counselor.findOne({ userId }).select('_id').lean();
+      if (!counselor) return false;
+      const student = await Student.findOne({ _id: studentId, counselorId: counselor._id }).select('_id').lean();
+      return !!student;
+    }
+    case USER_ROLE.OPS: {
+      const ops = await Ops.findOne({ userId }).select('_id').lean();
+      if (!ops) return false;
+      const reg = await StudentServiceRegistration.findOne({
+        studentId,
+        $or: [{ primaryOpsId: ops._id }, { secondaryOpsId: ops._id }, { activeOpsId: ops._id }],
+      }).select('_id').lean();
+      return !!reg;
+    }
+    case USER_ROLE.PARENT: {
+      const parent = await Parent.findOne({ userId }).select('studentIds').lean();
+      return parent?.studentIds?.some((id: any) => id.toString() === studentId) ?? false;
+    }
+    case USER_ROLE.REFERRER: {
+      const referrer = await Referrer.findOne({ userId }).select('_id').lean();
+      if (!referrer) return false;
+      const student = await Student.findOne({ _id: studentId, referrerId: referrer._id }).select('_id').lean();
+      return !!student;
+    }
+    case USER_ROLE.EDUPLAN_COACH: {
+      const coach = await EduplanCoach.findOne({ userId }).select('_id').lean();
+      if (!coach) return false;
+      const reg = await StudentServiceRegistration.findOne({
+        studentId,
+        $or: [{ primaryEduplanCoachId: coach._id }, { secondaryEduplanCoachId: coach._id }, { activeEduplanCoachId: coach._id }],
+      }).select('_id').lean();
+      return !!reg;
+    }
+    default:
+      return false;
+  }
+};
 
 // ===== Create Razorpay Order =====
 
@@ -40,9 +107,10 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<Resp
       return res.status(404).json({ success: false, message: 'Service not found' });
     }
 
-    // Get student's adminId
+    // Get student's adminId/advisorId
     const student = await Student.findById(registration.studentId).lean();
     const adminId = student?.adminId?.toString();
+    const advisorId = student?.advisorId?.toString();
 
     // Auto-initialize payment model if not set
     if (!registration.paymentModel) {
@@ -128,6 +196,7 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<Resp
       registrationId: registration._id,
       studentId: registration.studentId,
       adminId,
+      advisorId,
       razorpayOrderId: order.id,
       amountInr,
       currency: 'INR',
@@ -164,7 +233,7 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<Resp
     });
   } catch (error: any) {
     console.error('Error creating order:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -222,9 +291,10 @@ export const verifyPayment = async (req: AuthRequest, res: Response): Promise<Re
       const serviceName = service?.name || 'Service';
       const serviceSlug = service?.slug || '';
 
-      // Get student's adminId for invoice
+      // Get student's adminId/advisorId for invoice
       const student = await Student.findById(registration.studentId).lean();
       const adminId = student?.adminId?.toString() || payment.adminId?.toString();
+      const advisorId = student?.advisorId?.toString() || payment.advisorId?.toString();
 
       // Update payment totals (GST-inclusive)
       registration.totalPaid = (registration.totalPaid || 0) + payment.amountInr;
@@ -277,6 +347,7 @@ export const verifyPayment = async (req: AuthRequest, res: Response): Promise<Re
         paymentId: payment._id.toString(),
         studentId: registration.studentId.toString(),
         adminId,
+        advisorId,
         serviceName,
         serviceSlug,
         planTier: registration.planTier || 'Standard',
@@ -315,7 +386,7 @@ export const verifyPayment = async (req: AuthRequest, res: Response): Promise<Re
     });
   } catch (error: any) {
     console.error('Error verifying payment:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -349,7 +420,7 @@ export const requestInstallment = async (req: AuthRequest, res: Response): Promi
     return createOrder(req, res);
   } catch (error: any) {
     console.error('Error requesting installment:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -394,7 +465,8 @@ export const createMiscCollection = async (req: AuthRequest, res: Response): Pro
     // Create Payment record
     const payment = await Payment.create({
       studentId,
-      adminId: req.user?.userId,
+      adminId: student.adminId,
+      advisorId: student.advisorId,
       razorpayOrderId: order.id,
       amountInr: amount,
       currency: 'INR',
@@ -420,7 +492,7 @@ export const createMiscCollection = async (req: AuthRequest, res: Response): Pro
     });
   } catch (error: any) {
     console.error('Error creating misc collection:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -429,6 +501,16 @@ export const createMiscCollection = async (req: AuthRequest, res: Response): Pro
 export const getPaymentsByRegistration = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const { registrationId } = req.params;
+
+    // Verify the requesting user is connected to this registration's student
+    const registration = await StudentServiceRegistration.findById(registrationId).select('studentId').lean();
+    if (!registration) {
+      return res.status(404).json({ success: false, message: 'Registration not found' });
+    }
+    const hasAccess = await verifyStudentAccess(req.user!.userId, req.user!.role, registration.studentId.toString());
+    if (!hasAccess) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
 
     const payments = await Payment.find({ registrationId })
       .sort({ createdAt: -1 })
@@ -440,7 +522,7 @@ export const getPaymentsByRegistration = async (req: AuthRequest, res: Response)
     });
   } catch (error: any) {
     console.error('Error fetching payments:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -449,6 +531,11 @@ export const getPaymentsByRegistration = async (req: AuthRequest, res: Response)
 export const getPaymentsByStudent = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const { studentId } = req.params;
+
+    const hasAccess = await verifyStudentAccess(req.user!.userId, req.user!.role, studentId);
+    if (!hasAccess) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
 
     const payments = await Payment.find({ studentId })
       .sort({ createdAt: -1 })
@@ -461,7 +548,7 @@ export const getPaymentsByStudent = async (req: AuthRequest, res: Response): Pro
     });
   } catch (error: any) {
     console.error('Error fetching student payments:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -470,6 +557,11 @@ export const getPaymentsByStudent = async (req: AuthRequest, res: Response): Pro
 export const getPaymentHistory = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const { studentId } = req.params;
+
+    const hasAccess = await verifyStudentAccess(req.user!.userId, req.user!.role, studentId);
+    if (!hasAccess) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
 
     const payments = await Payment.find({ studentId })
       .sort({ createdAt: -1 })
@@ -495,7 +587,7 @@ export const getPaymentHistory = async (req: AuthRequest, res: Response): Promis
     });
   } catch (error: any) {
     console.error('Error fetching payment history:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -556,7 +648,7 @@ export const initializePayment = async (req: AuthRequest, res: Response): Promis
     });
   } catch (error: any) {
     console.error('Error initializing payment:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -614,7 +706,7 @@ export const setPrice = async (req: AuthRequest, res: Response): Promise<Respons
     });
   } catch (error: any) {
     console.error('Error setting price:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -667,6 +759,12 @@ export const createRegistrationOrder = async (req: AuthRequest, res: Response): 
     let basePrice = 0;
     if (student.adminId) {
       const pricing = await ServicePricing.findOne({ adminId: student.adminId, serviceSlug }).lean();
+      if (pricing && pricing.prices) {
+        const pricesObj = pricing.prices as unknown as Record<string, number>;
+        basePrice = pricesObj[planTier] || 0;
+      }
+    } else if (student.advisorId) {
+      const pricing = await ServicePricing.findOne({ advisorId: student.advisorId, serviceSlug }).lean();
       if (pricing && pricing.prices) {
         const pricesObj = pricing.prices as unknown as Record<string, number>;
         basePrice = pricesObj[planTier] || 0;
@@ -732,6 +830,7 @@ export const createRegistrationOrder = async (req: AuthRequest, res: Response): 
     const payment = await Payment.create({
       studentId: student._id,
       adminId: student.adminId,
+      advisorId: student.advisorId,
       razorpayOrderId: order.id,
       amountInr: chargeNow,
       currency: 'INR',
@@ -759,7 +858,7 @@ export const createRegistrationOrder = async (req: AuthRequest, res: Response): 
     });
   } catch (error: any) {
     console.error('Error creating registration order:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -822,6 +921,7 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
     }
 
     const adminId = student.adminId?.toString();
+    const advisorId = student.advisorId?.toString();
     const GST_RATE = 18;
     const netBase = Math.max(0, basePrice - discountAmt);
 
@@ -848,6 +948,8 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
       paymentStatus: isInstallment ? 'partial' : 'paid',
       totalPaid: payment.amountInr,
       paymentDate: new Date(),
+      ...(student.adminId ? { registeredViaAdminId: student.adminId } : {}),
+      ...(student.advisorId && !student.adminId ? { registeredViaAdvisorId: student.advisorId } : {}),
       paymentComplete: !isInstallment,
     });
 
@@ -878,6 +980,7 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
         paymentId: payment._id.toString(),
         studentId: studId,
         adminId,
+        advisorId,
         serviceName: service.name,
         serviceSlug,
         planTier,
@@ -892,6 +995,7 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
         registrationId: regId,
         studentId: studId,
         adminId,
+        advisorId,
         serviceName: service.name,
         serviceSlug,
         planTier,
@@ -936,6 +1040,7 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
         registrationId: regId,
         studentId: studId,
         adminId,
+        advisorId,
         serviceName: service.name,
         serviceSlug,
         planTier,
@@ -949,6 +1054,7 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
         paymentId: payment._id.toString(),
         studentId: studId,
         adminId,
+        advisorId,
         serviceName: service.name,
         serviceSlug,
         planTier,
@@ -1018,7 +1124,7 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
     });
   } catch (error: any) {
     console.error('Error verifying registration payment:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -1058,8 +1164,13 @@ export const createUpgradeOrder = async (req: AuthRequest, res: Response): Promi
     // Get pricing for both plans
     let newBasePrice = 0;
     let oldBasePrice = 0;
-    if (student.adminId) {
-      const pricing = await ServicePricing.findOne({ adminId: student.adminId, serviceSlug }).lean();
+    const pricingQuery = student.adminId
+      ? { adminId: student.adminId, serviceSlug }
+      : student.advisorId
+        ? { advisorId: student.advisorId, serviceSlug }
+        : null;
+    if (pricingQuery) {
+      const pricing = await ServicePricing.findOne(pricingQuery).lean();
       if (pricing?.prices) {
         const pricesObj = pricing.prices as unknown as Record<string, number>;
         newBasePrice = pricesObj[newPlanTier] || 0;
@@ -1138,6 +1249,7 @@ export const createUpgradeOrder = async (req: AuthRequest, res: Response): Promi
     const payment = await Payment.create({
       studentId: student._id,
       adminId: student.adminId,
+      advisorId: student.advisorId,
       registrationId: registration._id,
       razorpayOrderId: order.id,
       amountInr: upgradeDifference,
@@ -1165,7 +1277,7 @@ export const createUpgradeOrder = async (req: AuthRequest, res: Response): Promi
     });
   } catch (error: any) {
     console.error('Error creating upgrade order:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
@@ -1229,6 +1341,7 @@ export const verifyUpgradePayment = async (req: AuthRequest, res: Response): Pro
     if (!registration) return res.status(404).json({ success: false, message: 'Registration not found' });
 
     const adminId = student.adminId?.toString();
+    const advisorId = student.advisorId?.toString();
     const regId = registration._id.toString();
     const studId = (student._id as any).toString();
 
@@ -1312,6 +1425,7 @@ export const verifyUpgradePayment = async (req: AuthRequest, res: Response): Pro
       paymentId: payment._id.toString(),
       studentId: studId,
       adminId,
+      advisorId,
       serviceName: service.name,
       serviceSlug,
       planTier: newPlanTier,
@@ -1326,6 +1440,7 @@ export const verifyUpgradePayment = async (req: AuthRequest, res: Response): Pro
         registrationId: regId,
         studentId: studId,
         adminId,
+        advisorId,
         serviceName: service.name,
         serviceSlug,
         planTier: newPlanTier,
@@ -1410,6 +1525,6 @@ export const verifyUpgradePayment = async (req: AuthRequest, res: Response): Pro
     });
   } catch (error: any) {
     console.error('Error verifying upgrade payment:', error);
-    return res.status(500).json({ success: false, message: 'Server error', error: error.message });
+    return res.status(500).json({ success: false, message: 'Server error' });
   }
 };

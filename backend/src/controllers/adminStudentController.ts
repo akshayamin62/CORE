@@ -8,6 +8,7 @@ import StudentServiceRegistration from '../models/StudentServiceRegistration';
 import StudentFormAnswer from '../models/StudentFormAnswer';
 import LeadStudentConversion from '../models/LeadStudentConversion';
 import { USER_ROLE } from '../types/roles';
+import StudentTransfer from '../models/StudentTransfer';
 
 /**
  * Get all students for the admin (students converted under this admin)
@@ -58,7 +59,7 @@ export const getAdminStudents = async (req: AuthRequest, res: Response): Promise
     }
     
     const students = await Student.find(studentQuery)
-      .populate('userId', 'firstName middleName lastName email isVerified isActive createdAt')
+      .populate('userId', 'firstName middleName lastName email profilePicture isVerified isActive createdAt')
       .populate({
         path: 'adminId',
         populate: {
@@ -73,14 +74,26 @@ export const getAdminStudents = async (req: AuthRequest, res: Response): Promise
           select: 'firstName middleName lastName email'
         }
       })
+      .populate({
+        path: 'advisorId',
+        select: 'companyName',
+        populate: {
+          path: 'userId',
+          select: 'firstName middleName lastName email'
+        }
+      })
       .sort({ createdAt: -1 });
 
     // Get registration count and conversion info for each student
     const studentsWithStats = await Promise.all(
       students.map(async (student) => {
-        const registrationCount = await StudentServiceRegistration.countDocuments({
+        const registrations = await StudentServiceRegistration.find({
           studentId: student._id,
-        });
+        }).populate('serviceId', 'name');
+        const registrationCount = registrations.length;
+        const serviceNames: string[] = registrations
+          .map((r: any) => r.serviceId?.name)
+          .filter(Boolean);
 
         // Get conversion info if exists
         const conversion = await LeadStudentConversion.findOne({
@@ -96,12 +109,16 @@ export const getAdminStudents = async (req: AuthRequest, res: Response): Promise
           mobileNumber: student.mobileNumber,
           adminId: student.adminId,
           counselorId: student.counselorId,
+          advisorId: student.advisorId,
           registrationCount,
+          serviceNames,
           createdAt: student.createdAt,
           convertedFromLead: conversion?.leadId || null,
         };
       })
     );
+
+    const isMainAdmin = user.role === USER_ROLE.ADMIN && userId === process.env.MAIN_ADMIN_USER_ID;
 
     return res.status(200).json({
       success: true,
@@ -109,6 +126,7 @@ export const getAdminStudents = async (req: AuthRequest, res: Response): Promise
       data: {
         students: studentsWithStats,
         total: studentsWithStats.length,
+        isMainAdmin,
       },
     });
   } catch (error: any) {
@@ -116,7 +134,6 @@ export const getAdminStudents = async (req: AuthRequest, res: Response): Promise
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch students',
-      error: error.message,
     });
   }
 };
@@ -138,7 +155,7 @@ export const getAdminStudentDetails = async (req: AuthRequest, res: Response): P
     }
 
     const student = await Student.findById(studentId)
-      .populate('userId', 'firstName middleName lastName name email role isVerified isActive createdAt')
+      .populate('userId', 'firstName middleName lastName name email role profilePicture isVerified isActive createdAt')
       .populate({
         path: 'adminId',
         populate: {
@@ -148,6 +165,20 @@ export const getAdminStudentDetails = async (req: AuthRequest, res: Response): P
       })
       .populate({
         path: 'counselorId',
+        populate: {
+          path: 'userId',
+          select: 'firstName middleName lastName name email'
+        }
+      })
+      .populate({
+        path: 'referrerId',
+        populate: {
+          path: 'userId',
+          select: 'firstName middleName lastName'
+        }
+      })
+      .populate({
+        path: 'advisorId',
         populate: {
           path: 'userId',
           select: 'firstName middleName lastName name email'
@@ -208,8 +239,22 @@ export const getAdminStudentDetails = async (req: AuthRequest, res: Response): P
         path: 'activeOpsId',
         populate: { path: 'userId', select: 'firstName middleName lastName name email' }
       })
+      .populate({
+        path: 'registeredViaAdvisorId',
+        select: 'companyName userId',
+        populate: { path: 'userId', select: 'firstName middleName lastName' }
+      })
+      .populate({
+        path: 'registeredViaAdminId',
+        select: 'companyName userId',
+        populate: { path: 'userId', select: 'firstName middleName lastName' }
+      })
       .lean()
       .exec();
+
+    // Get approved transfer's interestedServices
+    const approvedTransfer = await StudentTransfer.findOne({ studentId, status: 'APPROVED' }).lean();
+    const transferInterestedServices: string[] = approvedTransfer?.interestedServices || [];
 
     return res.status(200).json({
       success: true,
@@ -217,6 +262,7 @@ export const getAdminStudentDetails = async (req: AuthRequest, res: Response): P
       data: {
         student,
         registrations,
+        transferInterestedServices,
       },
     });
   } catch (error: any) {
@@ -224,7 +270,6 @@ export const getAdminStudentDetails = async (req: AuthRequest, res: Response): P
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch student details',
-      error: error.message,
     });
   }
 };
@@ -313,7 +358,6 @@ export const getAdminStudentFormAnswers = async (req: AuthRequest, res: Response
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch form answers',
-      error: error.message,
     });
   }
 };
@@ -341,7 +385,7 @@ export const getStudentByLeadId = async (req: AuthRequest, res: Response): Promi
     }).populate({
       path: 'createdStudentId',
       populate: [
-        { path: 'userId', select: 'firstName middleName lastName email isVerified isActive createdAt' },
+        { path: 'userId', select: 'firstName middleName lastName email profilePicture isVerified isActive createdAt' },
         { path: 'adminId', populate: { path: 'userId', select: 'firstName middleName lastName email' } },
         { path: 'counselorId', populate: { path: 'userId', select: 'firstName middleName lastName email' } }
       ]
@@ -380,7 +424,57 @@ export const getStudentByLeadId = async (req: AuthRequest, res: Response): Promi
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch student',
-      error: error.message,
     });
+  }
+};
+
+/**
+ * Assign or change counselor for a student
+ */
+export const assignCounselorToStudent = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { studentId } = req.params;
+    const { counselorId } = req.body;
+    const userId = req.user?.userId;
+
+    const user = await User.findById(userId);
+    if (!user || user.role !== USER_ROLE.ADMIN) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const admin = await Admin.findOne({ userId });
+    if (!admin) {
+      return res.status(404).json({ success: false, message: 'Admin record not found' });
+    }
+
+    const student = await Student.findById(studentId);
+    if (!student || student.adminId?.toString() !== admin._id.toString()) {
+      return res.status(404).json({ success: false, message: 'Student not found or not under your admin' });
+    }
+
+    if (counselorId) {
+      const counselor = await Counselor.findById(counselorId);
+      // Counselor.adminId stores the admin's User _id, not Admin doc _id
+      if (!counselor || counselor.adminId?.toString() !== userId) {
+        return res.status(400).json({ success: false, message: 'Counselor not found or not under your admin' });
+      }
+      student.counselorId = counselorId;
+    } else {
+      student.counselorId = undefined;
+    }
+
+    await student.save();
+
+    const updated = await Student.findById(studentId)
+      .populate({ path: 'counselorId', populate: { path: 'userId', select: 'firstName middleName lastName email' } });
+
+    return res.status(200).json({
+      success: true,
+      message: counselorId ? 'Counselor assigned successfully' : 'Counselor removed',
+      data: { student: updated },
+    });
+  } catch (error: any) {
+    console.error('Assign counselor error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to assign counselor' });
   }
 };

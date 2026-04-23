@@ -63,6 +63,7 @@ interface Program {
   registrationId?: string;
   isSelectedByStudent?: boolean;
   selectedAt?: string;
+  createdAt?: string;
   createdBy?: {
     _id: string;
     firstName: string;
@@ -73,7 +74,7 @@ interface Program {
   };
 }
 
-type UserRole = 'STUDENT' | 'OPS' | 'SUPER_ADMIN' | 'ADMIN' | 'COUNSELOR' | 'PARENT' | 'EDUPLAN_COACH' | 'IVY_EXPERT';
+type UserRole = 'STUDENT' | 'OPS' | 'SUPER_ADMIN' | 'ADMIN' | 'COUNSELOR' | 'PARENT' | 'EDUPLAN_COACH' | 'IVY_EXPERT' | 'REFERRER';
 type SectionType = 'available' | 'applied';
 
 interface ProgramSectionProps {
@@ -172,7 +173,7 @@ export default function ProgramSection({
         response = await programAPI.getSuperAdminStudentPrograms(studentId, sectionType === 'applied' ? 'applied' : 'all', registrationId);
         const progs = response.data.data.programs || [];
         setPrograms(sectionType === 'available' ? sortAvailablePrograms(progs) : progs);
-      } else if ((userRole === 'ADMIN' || userRole === 'COUNSELOR' || userRole === 'PARENT') && studentId) {
+      } else if ((userRole === 'ADMIN' || userRole === 'COUNSELOR' || userRole === 'PARENT' || userRole === 'REFERRER') && studentId) {
         response = await axios.get(
           `${API_URL}/programs/ops/student/${studentId}/programs?section=${sectionType === 'applied' ? 'applied' : 'all'}${regParam}`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -567,6 +568,11 @@ export default function ProgramSection({
                             Created by: <span className="font-medium">{getFullName(program.createdBy)}</span>
                           </p>
                         )}
+                        {program.createdAt && (
+                          <p className="text-xs text-gray-500 mb-2">
+                            Uploaded: <span className="font-medium">{new Date(program.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                          </p>
+                        )}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                           {program.campus && <div><span className="font-medium">Campus:</span> {program.campus}</div>}
                           <div><span className="font-medium">Country:</span> {program.country}</div>
@@ -866,7 +872,7 @@ export default function ProgramSection({
                             </div>
                             {/* Chat buttons on the right */}
                             <div className="flex gap-2 shrink-0">
-                              {(userRole === 'STUDENT' || userRole === 'PARENT') ? (
+                              {userRole === 'REFERRER' ? null : (userRole === 'STUDENT' || userRole === 'PARENT') ? (
                                 <button
                                   onClick={() => {
                                     setSelectedChatProgram(program);

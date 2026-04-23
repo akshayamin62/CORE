@@ -8,7 +8,7 @@ import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
-import { BACKEND_URL } from '@/lib/ivyApi';
+import AuthImage from '@/components/AuthImage';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -46,6 +46,10 @@ interface StudentData {
       lastName?: string;
       email: string;
     };
+  };
+  advisorId?: {
+    _id: string;
+    companyName?: string;
   };
   registrationCount: number;
   serviceNames?: string[];
@@ -108,8 +112,10 @@ export default function StudentUsersPage() {
   const getServiceColor = (service: string) => {
     switch (service) {
       case SERVICE_TYPE.CAREER_FOCUS_STUDY_ABROAD:
+      case 'Study Abroad':
         return 'bg-indigo-100 text-indigo-800';
       case SERVICE_TYPE.IVY_LEAGUE_ADMISSION:
+      case 'Ivy League Preparation':
         return 'bg-amber-100 text-amber-800';
       case SERVICE_TYPE.EDUCATION_PLANNING:
         return 'bg-teal-100 text-teal-800';
@@ -409,7 +415,7 @@ export default function StudentUsersPage() {
                       Email
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                      Admin
+                      Admin/Advisor
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                       Registrations
@@ -428,15 +434,18 @@ export default function StudentUsersPage() {
                       <tr key={student._id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            {student.user.profilePicture ? (
-                              <img src={`${BACKEND_URL}/uploads/${student.user.profilePicture}`} alt="" className="w-10 h-10 rounded-full object-cover mr-3" />
-                            ) : (
-                              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                <span className="text-blue-600 font-semibold text-sm">
-                                  {getInitials(student.user)}
-                                </span>
-                              </div>
-                            )}
+                            <AuthImage
+                              path={student.user.profilePicture}
+                              alt=""
+                              className="w-10 h-10 rounded-full object-cover mr-3"
+                              fallback={
+                                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                  <span className="text-blue-600 font-semibold text-sm">
+                                    {getInitials(student.user)}
+                                  </span>
+                                </div>
+                              }
+                            />
                             <div>
                               <div className="font-medium text-gray-900">
                                 {getFullName(student.user) || 'N/A'}
@@ -450,8 +459,20 @@ export default function StudentUsersPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {student.user.email}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {student.adminId?.companyName || 'N/A'}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {student.adminId?.companyName && student.advisorId?.companyName ? (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-gray-900 text-xs">{student.adminId.companyName}</span>
+                              <span className="text-gray-900 text-xs">{student.advisorId.companyName}</span>
+                              <span className="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-800 rounded-full w-fit">Transferred</span>
+                            </div>
+                          ) : student.adminId?.companyName ? (
+                            <span className="text-gray-900">{student.adminId.companyName}</span>
+                          ) : student.advisorId?.companyName ? (
+                            <span className="text-gray-900">{student.advisorId.companyName}</span>
+                          ) : (
+                            <span className="text-gray-400">N/A</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col gap-1">

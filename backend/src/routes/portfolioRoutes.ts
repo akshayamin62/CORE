@@ -27,14 +27,14 @@ router.post(
 // Get extracted brainography data
 router.get(
   '/:registrationId/data',
-  authorize([USER_ROLE.STUDENT, USER_ROLE.EDUPLAN_COACH, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.PARENT]),
+  authorize([USER_ROLE.STUDENT, USER_ROLE.EDUPLAN_COACH, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.PARENT, USER_ROLE.REFERRER, USER_ROLE.ADVISOR]),
   getBrainographyData,
 );
 
-// Update standard / board fields (Student, Eduplan Coach, Super Admin)
+// Update standard / board fields (Student, Eduplan Coach, Super Admin, Admin, Counselor)
 router.patch(
   '/:registrationId/data',
-  authorize([USER_ROLE.STUDENT, USER_ROLE.EDUPLAN_COACH, USER_ROLE.SUPER_ADMIN]),
+  authorize([USER_ROLE.STUDENT, USER_ROLE.EDUPLAN_COACH, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR]),
   updateBrainographyMeta,
 );
 
@@ -48,21 +48,21 @@ router.post(
 // Get report generation limit info
 router.get(
   '/:registrationId/report-limit',
-  authorize([USER_ROLE.STUDENT, USER_ROLE.EDUPLAN_COACH, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.PARENT]),
+  authorize([USER_ROLE.STUDENT, USER_ROLE.EDUPLAN_COACH, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.PARENT, USER_ROLE.REFERRER, USER_ROLE.ADVISOR]),
   getReportLimit,
 );
 
 // Get portfolios for a registration
 router.get(
   '/:registrationId/portfolios',
-  authorize([USER_ROLE.STUDENT, USER_ROLE.EDUPLAN_COACH, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.PARENT]),
+  authorize([USER_ROLE.STUDENT, USER_ROLE.EDUPLAN_COACH, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.PARENT, USER_ROLE.REFERRER, USER_ROLE.ADVISOR]),
   getPortfolios,
 );
 
 // Download a portfolio file
 router.get(
   '/download/:portfolioId',
-  authorize([USER_ROLE.STUDENT, USER_ROLE.EDUPLAN_COACH, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.PARENT]),
+  authorize([USER_ROLE.STUDENT, USER_ROLE.EDUPLAN_COACH, USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.PARENT, USER_ROLE.REFERRER, USER_ROLE.ADVISOR]),
   downloadPortfolio,
 );
 

@@ -22,6 +22,7 @@ import PaymentSection from '@/components/PaymentSection';
 import BrainographyDataDisplay, { BrainographyDataType } from '@/components/BrainographyDataDisplay';
 import PortfolioSection, { PortfolioItem, PortfolioRow, usePortfolioDownload } from '@/components/PortfolioSection';
 import ActivityAnalyticsDashboard from '@/components/ActivityAnalyticsDashboard';
+import { fetchBlobUrl } from '@/lib/useBlobUrl';
 
 const BRAINOGRAPHY_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -63,6 +64,7 @@ export default function ParentStudentRegistrationPage() {
   // Education Planning state
   const [brainographyDoc, setBrainographyDoc] = useState<BrainographyDoc | null>(null);
   const [brainographyData, setBrainographyData] = useState<BrainographyDataType | null>(null);
+  const [extractingBrainography, setExtractingBrainography] = useState(false);
   const [portfolios, setPortfolios] = useState<PortfolioItem[]>([]);
   const handlePortfolioDownload = usePortfolioDownload();
   const [eduPlanStats, setEduPlanStats] = useState<{
@@ -141,10 +143,15 @@ export default function ParentStudentRegistrationPage() {
     } catch { /* silent */ }
   };
 
-  const handleBrainographyView = () => {
+  const handleBrainographyView = async () => {
     if (!brainographyDoc) return;
-    const baseUrl = BRAINOGRAPHY_API_URL.replace('/api', '') || 'http://localhost:5000';
-    window.open(`${baseUrl}/${brainographyDoc.filePath}`, '_blank');
+    try {
+      const path = brainographyDoc.filePath.startsWith('/') ? brainographyDoc.filePath : `/${brainographyDoc.filePath}`;
+      const blobUrl = await fetchBlobUrl(path);
+      window.open(blobUrl, '_blank');
+    } catch {
+      toast.error('Failed to load document');
+    }
   };
 
   const handleBrainographyDownload = async () => {
@@ -166,9 +173,22 @@ export default function ParentStudentRegistrationPage() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(`${BRAINOGRAPHY_API_URL}/portfolio/${registrationId}/data`, { headers: { Authorization: `Bearer ${token}` } });
-      setBrainographyData(response.data.data.brainographyData || null);
-    } catch { /* silent */ }
+      const data = response.data.data.brainographyData || null;
+      setBrainographyData(data);
+      if (data) setExtractingBrainography(false);
+      return data;
+    } catch { /* silent */ return null; }
   };
+
+  useEffect(() => {
+    if (!brainographyDoc || brainographyData) { setExtractingBrainography(false); return; }
+    setExtractingBrainography(true);
+    const interval = setInterval(async () => {
+      const data = await fetchBrainographyData();
+      if (data) clearInterval(interval);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [brainographyDoc, brainographyData]);
 
   const fetchPortfolios = async () => {
     try {
@@ -346,7 +366,7 @@ export default function ParentStudentRegistrationPage() {
                 ))}
                 <button onClick={() => router.push(`/parent/students/${studentId}/registration/${registrationId}/activity`)}
                   className="flex-1 flex items-center justify-center gap-1.5 px-4 py-4 text-sm font-semibold transition-colors border-b-2 border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                  Student Activity
+                  Activity Management
                 </button>
               </div>
             </div>
@@ -435,6 +455,13 @@ export default function ParentStudentRegistrationPage() {
                   </div>
                 )}
               </div>
+              {brainographyDoc && !brainographyData && extractingBrainography && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6 text-center">
+                  <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                  <p className="text-sm font-medium text-blue-800">AI is extracting data from brainography report...</p>
+                  <p className="text-xs text-blue-600 mt-1">This may take a minute. Please wait.</p>
+                </div>
+              )}
               {brainographyData && <div className="mb-6"><BrainographyDataDisplay data={brainographyData} /></div>}
             </>
           )}

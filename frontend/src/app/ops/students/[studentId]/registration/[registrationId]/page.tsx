@@ -40,6 +40,7 @@ export default function StudentFormEditPage() {
   
   // Form data
   const [formValues, setFormValues] = useState<any>({});
+  const [errors, setErrors] = useState<any>({});
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [serviceInfo, setServiceInfo] = useState<any>(null);
   const [planTier, setPlanTier] = useState<string | undefined>();
@@ -308,15 +309,8 @@ export default function StudentFormEditPage() {
       if (!newValues[partKey][sectionId]) newValues[partKey][sectionId] = {};
       if (!newValues[partKey][sectionId][subSectionId]) newValues[partKey][sectionId][subSectionId] = [];
 
-      // Add the new instance before the last one (if there are existing instances)
-      const instances = newValues[partKey][sectionId][subSectionId];
-      if (instances.length > 0) {
-        // Insert before the last element
-        instances.splice(instances.length - 1, 0, {});
-      } else {
-        // No existing instances, just add it
-        instances.push({});
-      }
+      // Add the new instance at the end
+      newValues[partKey][sectionId][subSectionId].push({});
       return newValues;
     });
   };
@@ -333,9 +327,58 @@ export default function StudentFormEditPage() {
     });
   };
 
+  const validateCurrentSection = (): boolean => {
+    const cs = formStructure[currentPartIndex];
+    if (!cs) return true;
+    const section = cs.sections?.[currentSectionIndex];
+    if (!section) return true;
+    const partKey = cs.part.key;
+    const sectionKey = section.key;
+    const sectionValues = formValues[partKey]?.[sectionKey] || {};
+    const newErrors: any = {};
+    let hasErrors = false;
+
+    section.subSections.forEach((subSection) => {
+      const subSectionValues = sectionValues[subSection.key] || [{}];
+      subSectionValues.forEach((instanceValues: any, index: number) => {
+        const visibleFields = subSection.fields.filter((f) => {
+          const eduLevel = instanceValues?.educationLevel;
+          const board = instanceValues?.board;
+          if (f.key === 'board' || f.key === 'boardFullName') {
+            if (eduLevel !== 'secondary_school' && eduLevel !== 'higher_secondary_school') return false;
+          }
+          if (f.key === 'boardFullName') {
+            if (board !== 'State Board' && board !== 'Other') return false;
+          }
+          if (f.key === 'fieldOfStudy' && eduLevel === 'secondary_school') return false;
+          return true;
+        });
+        visibleFields.forEach((field) => {
+          if (field.required) {
+            const value = instanceValues?.[field.key];
+            if (!value || (typeof value === 'string' && value.trim() === '')) {
+              if (!newErrors[subSection.key]) newErrors[subSection.key] = [];
+              if (!newErrors[subSection.key][index]) newErrors[subSection.key][index] = {};
+              newErrors[subSection.key][index][field.key] = `${field.label} is required`;
+              hasErrors = true;
+            }
+          }
+        });
+      });
+    });
+
+    setErrors(newErrors);
+    return !hasErrors;
+  };
+
   const handleSaveSection = async () => {
     const currentFormStructure = formStructure[currentPartIndex];
     if (!currentFormStructure) return;
+
+    if (!validateCurrentSection()) {
+      toast.error('Please fill all required fields');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -577,6 +620,8 @@ export default function StudentFormEditPage() {
                   registrationId={registrationId}
                   studentId={studentId}
                   userRole="OPS"
+                  noDelete={currentPart.key === 'PROFILE' && currentSection.title === 'Parental Details'}
+                  errors={errors}
                 />
               )}
             </div>

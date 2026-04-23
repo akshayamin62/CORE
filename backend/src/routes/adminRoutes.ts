@@ -8,6 +8,18 @@ import {
   getCounselorFollowUpSummary,
   getAdminStats
 } from "../controllers/adminController";
+import {
+  createReferrer,
+  getReferrers,
+  toggleReferrerStatus,
+  getReferrerDashboardForAdmin,
+} from "../controllers/referrerController";
+import {
+  getPendingTransfers,
+  getAdminTransfers,
+  approveTransfer,
+  rejectTransfer,
+} from "../controllers/studentTransferController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
 import { USER_ROLE } from "../types/roles";
@@ -67,6 +79,66 @@ router.get("/counselor/:counselorId/follow-up-summary", getCounselorFollowUpSumm
  * @access  Admin only
  */
 router.patch("/counselor/:counselorId/toggle-status", toggleCounselorStatus);
+
+// ============= REFERRER ROUTES =============
+
+/**
+ * @route   POST /api/admin/referrer
+ * @desc    Create a new Referrer
+ * @access  Admin only
+ */
+router.post("/referrer", createReferrer);
+
+/**
+ * @route   GET /api/admin/referrers
+ * @desc    Get all referrers created by this admin
+ * @access  Admin only
+ */
+router.get("/referrers", getReferrers);
+
+/**
+ * @route   PATCH /api/admin/referrer/:referrerId/toggle-status
+ * @desc    Toggle referrer active/inactive status
+ * @access  Admin only
+ */
+router.patch("/referrer/:referrerId/toggle-status", toggleReferrerStatus);
+
+/**
+ * @route   GET /api/admin/referrer/:referrerId/dashboard
+ * @desc    Get referrer dashboard with leads and stats
+ * @access  Admin only
+ */
+router.get("/referrer/:referrerId/dashboard", getReferrerDashboardForAdmin);
+
+// ============= STUDENT TRANSFER ROUTES =============
+
+/**
+ * @route   GET /api/admin/transfers/pending
+ * @desc    Get pending student transfers for this admin
+ * @access  Admin only
+ */
+router.get("/transfers/pending", getPendingTransfers);
+
+/**
+ * @route   GET /api/admin/transfers
+ * @desc    Get all student transfers for this admin
+ * @access  Admin only
+ */
+router.get("/transfers", getAdminTransfers);
+
+/**
+ * @route   POST /api/admin/transfers/:transferId/approve
+ * @desc    Approve a student transfer
+ * @access  Admin only
+ */
+router.post("/transfers/:transferId/approve", approveTransfer);
+
+/**
+ * @route   POST /api/admin/transfers/:transferId/reject
+ * @desc    Reject a student transfer
+ * @access  Admin only
+ */
+router.post("/transfers/:transferId/reject", rejectTransfer);
 
 export default router;
 

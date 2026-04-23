@@ -670,3 +670,356 @@ export const sendCustomMessageToStudent = async (
     text,
   });
 };
+
+/**
+ * Send email when OPS/Admin suggests a new program to student
+ */
+export const sendProgramSuggestedEmail = async (
+  studentEmail: string,
+  studentName: string,
+  programDetails: {
+    programName: string;
+    university: string;
+    country: string;
+    intake?: string;
+    year?: string;
+  }
+): Promise<void> => {
+  const { programName, university, country, intake, year } = programDetails;
+  const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/student/dashboard`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>New Program Suggestion</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; margin: 0; padding: 0;">
+      <div style="max-width: 600px; margin: 20px auto; background-color: white; padding: 30px; border: 1px solid #ddd; border-radius: 8px;">
+        <h2 style="color: #2563eb; margin-bottom: 20px;">New Program Suggestion</h2>
+        <p style="font-size: 16px;">Hi ${studentName},</p>
+        <p style="font-size: 16px;">Your team has suggested a new program for you:</p>
+        
+        <div style="background-color: #f0f9ff; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <p style="margin: 5px 0;"><strong>Program:</strong> ${programName}</p>
+          <p style="margin: 5px 0;"><strong>University:</strong> ${university}</p>
+          <p style="margin: 5px 0;"><strong>Country:</strong> ${country}</p>
+          ${intake ? `<p style="margin: 5px 0;"><strong>Intake:</strong> ${intake}${year ? ` ${year}` : ''}</p>` : ''}
+        </div>
+
+        <p style="font-size: 16px;">Log in to review and select this program:</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${dashboardUrl}" style="display: inline-block; background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">View Program</a>
+        </div>
+
+        <p style="color: #999; font-size: 12px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+          This is an automated notification from Admitra.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `New Program Suggestion\n\nHi ${studentName},\n\nYour team has suggested a new program for you:\n\nProgram: ${programName}\nUniversity: ${university}\nCountry: ${country}${intake ? `\nIntake: ${intake}${year ? ` ${year}` : ''}` : ''}\n\nLog in to review and select this program:\n${dashboardUrl}\n\nBest regards,\nAdmitra Team`;
+
+  await sendEmail({
+    to: studentEmail,
+    subject: `New Program Suggestion - ${programName} at ${university}`,
+    html,
+    text,
+  });
+};
+
+/**
+ * Send email when student selects/applies to a program (notify OPS)
+ */
+export const sendStudentSelectedProgramEmail = async (
+  opsEmail: string,
+  opsName: string,
+  studentName: string,
+  programDetails: {
+    programName: string;
+    university: string;
+    priority?: number;
+  }
+): Promise<void> => {
+  const { programName, university, priority } = programDetails;
+  const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/ops/dashboard`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Student Selected a Program</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; margin: 0; padding: 0;">
+      <div style="max-width: 600px; margin: 20px auto; background-color: white; padding: 30px; border: 1px solid #ddd; border-radius: 8px;">
+        <h2 style="color: #2563eb; margin-bottom: 20px;">Student Selected a Program</h2>
+        <p style="font-size: 16px;">Hi ${opsName},</p>
+        <p style="font-size: 16px;"><strong>${studentName}</strong> has selected a program for application:</p>
+        
+        <div style="background-color: #f0f9ff; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <p style="margin: 5px 0;"><strong>Program:</strong> ${programName}</p>
+          <p style="margin: 5px 0;"><strong>University:</strong> ${university}</p>
+          ${priority ? `<p style="margin: 5px 0;"><strong>Priority:</strong> ${priority}</p>` : ''}
+        </div>
+
+        <p style="font-size: 16px;">Please review and proceed with the application process.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${dashboardUrl}" style="display: inline-block; background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">View Dashboard</a>
+        </div>
+
+        <p style="color: #999; font-size: 12px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+          This is an automated notification from Admitra.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `Student Selected a Program\n\nHi ${opsName},\n\n${studentName} has selected a program for application:\n\nProgram: ${programName}\nUniversity: ${university}${priority ? `\nPriority: ${priority}` : ''}\n\nPlease review and proceed with the application process.\n${dashboardUrl}\n\nBest regards,\nAdmitra Team`;
+
+  await sendEmail({
+    to: opsEmail,
+    subject: `${studentName} selected a program - Action needed`,
+    html,
+    text,
+  });
+};
+
+/**
+ * Send email when program status is updated (notify student)
+ */
+export const sendProgramStatusUpdateEmail = async (
+  studentEmail: string,
+  studentName: string,
+  programDetails: {
+    programName: string;
+    university: string;
+    country: string;
+    newStatus: string;
+  }
+): Promise<void> => {
+  const { programName, university, country, newStatus } = programDetails;
+  const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/student/dashboard`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Application Status Update</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; margin: 0; padding: 0;">
+      <div style="max-width: 600px; margin: 20px auto; background-color: white; padding: 30px; border: 1px solid #ddd; border-radius: 8px;">
+        <h2 style="color: #2563eb; margin-bottom: 20px;">Application Status Update</h2>
+        <p style="font-size: 16px;">Hi ${studentName},</p>
+        <p style="font-size: 16px;">There is an update on your application:</p>
+        
+        <div style="background-color: #f0f9ff; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <p style="margin: 5px 0;"><strong>Program:</strong> ${programName}</p>
+          <p style="margin: 5px 0;"><strong>University:</strong> ${university}</p>
+          <p style="margin: 5px 0;"><strong>Country:</strong> ${country}</p>
+          <p style="margin: 5px 0;"><strong>New Status:</strong> ${newStatus}</p>
+        </div>
+
+        <p style="font-size: 16px;">Log in for more details:</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${dashboardUrl}" style="display: inline-block; background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">View Application</a>
+        </div>
+
+        <p style="color: #999; font-size: 12px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+          This is an automated notification from Admitra.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `Application Status Update\n\nHi ${studentName},\n\nThere is an update on your application:\n\nProgram: ${programName}\nUniversity: ${university}\nCountry: ${country}\nNew Status: ${newStatus}\n\nLog in for more details:\n${dashboardUrl}\n\nBest regards,\nAdmitra Team`;
+
+  await sendEmail({
+    to: studentEmail,
+    subject: `Application Update - ${programName} at ${university}`,
+    html,
+    text,
+  });
+};
+
+/**
+ * Send email when student receives an offer (special celebration email)
+ */
+export const sendOfferReceivedEmail = async (
+  studentEmail: string,
+  studentName: string,
+  programDetails: {
+    programName: string;
+    university: string;
+    country: string;
+  }
+): Promise<void> => {
+  const { programName, university, country } = programDetails;
+  const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/student/dashboard`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Congratulations! Offer Received</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f9f9f9; margin: 0; padding: 0;">
+      <div style="max-width: 600px; margin: 20px auto; background-color: white; padding: 30px; border: 1px solid #ddd; border-radius: 8px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="color: #16a34a; margin-bottom: 10px;">Congratulations! Offer Received</h1>
+        </div>
+        
+        <p style="font-size: 16px;">Hi ${studentName},</p>
+        <p style="font-size: 16px;">Great news! You have received an admission offer:</p>
+        
+        <div style="background-color: #f0fdf4; border-left: 4px solid #16a34a; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
+          <p style="margin: 5px 0;"><strong>Program:</strong> ${programName}</p>
+          <p style="margin: 5px 0;"><strong>University:</strong> ${university}</p>
+          <p style="margin: 5px 0;"><strong>Country:</strong> ${country}</p>
+        </div>
+
+        <p style="font-size: 16px;">Please log in to review the offer and take the next steps:</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${dashboardUrl}" style="display: inline-block; background-color: #16a34a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px;">Review Offer</a>
+        </div>
+
+        <p style="text-align: center; font-size: 14px; color: #666;">Congratulations from the Admitra Team!</p>
+
+        <p style="color: #999; font-size: 12px; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+          This is an automated notification from Admitra.
+        </p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `Congratulations! Offer Received\n\nHi ${studentName},\n\nGreat news! You have received an admission offer:\n\nProgram: ${programName}\nUniversity: ${university}\nCountry: ${country}\n\nPlease log in to review the offer and take the next steps:\n${dashboardUrl}\n\nCongratulations!\nAdmitra Team`;
+
+  await sendEmail({
+    to: studentEmail,
+    subject: `Congratulations! Offer from ${university}`,
+    html,
+    text,
+  });
+};
+
+/**
+ * Send B2B enquiry confirmation email to the enquirer
+ */
+export const sendB2BEnquiryConfirmationEmail = async (
+  email: string,
+  firstName: string,
+  type: string
+): Promise<void> => {
+  const typeLabel =
+    type === 'Franchise' ? 'Franchise Partner'
+    : type === 'Advisor' ? 'Advisor'
+    : type === 'Referrer' ? 'Referrer'
+    : type;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Your ADMITra Business Opportunity Enquiry</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.8; color: #333; background-color: #f9f9f9; margin: 0; padding: 0;">
+      <div style="max-width: 620px; margin: 30px auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+        <!-- Header -->
+        <div style="background-color: #1e3a5f; padding: 28px 36px;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.5px;">ADMITra</h1>
+          <p style="color: #a8c4e0; margin: 4px 0 0; font-size: 13px;">Business Opportunity Enquiry</p>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 36px;">
+          <p style="margin-top: 0;">Hi ${firstName},</p>
+
+          <p>Thank you for reaching out and showing interest in exploring a business opportunity with <strong>ADMITra</strong>.</p>
+
+          <p>We've received your enquiry for business collaboration as a <strong>${typeLabel}</strong>, and it's great to see your interest in building something meaningful in the education and study abroad space.</p>
+
+          <p>Before we move ahead, it's important you understand how we operate.</p>
+
+          <p><strong>ADMITra is not built like a typical commission-driven model.</strong><br>
+          We focus on structured consulting, long-term client relationships, and a system-driven approach that allows our partners to build credible and sustainable income streams.</p>
+
+          <p style="margin-bottom: 8px;">Depending on the path you choose:</p>
+          <ul style="margin: 0 0 16px; padding-left: 20px; color: #444;">
+            <li style="margin-bottom: 6px;">As a <strong>Referrer</strong>, you leverage your network and earn through qualified conversions</li>
+            <li style="margin-bottom: 6px;">As an <strong>Advisor</strong>, you actively guide students and parents using our frameworks</li>
+            <li style="margin-bottom: 6px;">As a <strong>Franchise Partner</strong>, you build and scale your own consulting setup using the ADMITra ecosystem</li>
+          </ul>
+
+          <p>Each model has a different level of involvement, earning potential, and commitment — so the next step is to understand what fits you best.</p>
+
+          <p style="margin-bottom: 8px;">I'd suggest we connect for a short discussion to:</p>
+          <ul style="margin: 0 0 16px; padding-left: 20px; color: #444;">
+            <li style="margin-bottom: 6px;">Understand your background and expectations</li>
+            <li style="margin-bottom: 6px;">Walk you through the model in detail</li>
+            <li style="margin-bottom: 6px;">Clarify the earning structure and onboarding process</li>
+          </ul>
+
+          <!-- Team note -->
+          <div style="background-color: #f0f4ff; border-left: 4px solid #3b82f6; border-radius: 4px; padding: 14px 18px; margin: 24px 0;">
+            <p style="margin: 0; color: #1e40af; font-size: 14px;">Our team will review your enquiry and reach out to you shortly to schedule a convenient time for a discussion. Please keep an eye on your email.</p>
+          </div>
+
+          <p>Looking forward to connecting for mutual benefits.</p>
+
+          <p style="margin-bottom: 4px;">Regards,</p>
+          <p style="margin: 0; font-weight: 600; color: #1e3a5f;">Makrand Bhatt</p>
+          <p style="margin: 2px 0; color: #555; font-size: 14px;">Founder</p>
+          <p style="margin: 0; color: #555; font-size: 14px; font-weight: 600;">ADMITra</p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color: #f5f7fa; padding: 18px 36px; border-top: 1px solid #e0e0e0;">
+          <p style="margin: 0; font-size: 12px; color: #999;">This is an automated confirmation from ADMITra. Please do not reply to this email.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `Hi ${firstName},
+
+Thank you for reaching out and showing interest in exploring a business opportunity with ADMITra.
+
+We've received your enquiry for business collaboration as a ${typeLabel}.
+
+ADMITra is not built like a typical commission-driven model. We focus on structured consulting, long-term client relationships, and a system-driven approach that allows our partners to build credible and sustainable income streams.
+
+Our team will review your enquiry and reach out to you shortly.
+
+Looking forward to connecting for mutual benefits.
+
+Regards,
+
+Makrand Bhatt
+Founder, ADMITra`;
+
+  await sendEmail({
+    to: email,
+    subject: 'Your ADMITra Business Opportunity Enquiry',
+    html,
+    text,
+  });
+};

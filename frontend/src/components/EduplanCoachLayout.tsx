@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { User } from '@/types';
 import { useState } from 'react';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
-import { BACKEND_URL } from '@/lib/ivyApi';
+import AuthImage from '@/components/AuthImage';
 
 interface EduplanCoachLayoutProps {
   children: React.ReactNode;
@@ -63,6 +63,15 @@ export default function EduplanCoachLayout({ children, user }: EduplanCoachLayou
       path: '/eduplan-coach/service-providers',
     },
     {
+      name: 'Learning Hub',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+      ),
+      path: 'https://latitude.admitra.io/',
+    },
+    {
       name: 'Archive',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,12 +88,12 @@ export default function EduplanCoachLayout({ children, user }: EduplanCoachLayou
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-5rem)] bg-gray-50">
+    <div className="flex min-h-[calc(100vh-6.25rem)] bg-gray-50">
       {/* Sidebar */}
       <aside
         className={`${
           sidebarOpen ? 'w-64' : 'w-20'
-        } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col sticky top-20 h-[calc(100vh-5rem)]`}
+        } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col sticky top-25 h-[calc(100vh-6.25rem)]`}
       >
         {/* Sidebar Header */}
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4">
@@ -122,7 +131,13 @@ export default function EduplanCoachLayout({ children, user }: EduplanCoachLayou
             return (
               <button
                 key={item.path}
-                onClick={() => router.push(item.path)}
+                onClick={() => {
+                  if (item.path?.startsWith('http')) {
+                    window.open(item.path, '_blank', 'noopener,noreferrer');
+                  } else {
+                    router.push(item.path);
+                  }
+                }}
                 className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all ${
                   isActive
                     ? 'bg-blue-50 text-blue-600'
@@ -143,13 +158,16 @@ export default function EduplanCoachLayout({ children, user }: EduplanCoachLayou
         <div className="border-t border-gray-200 p-4">
           {sidebarOpen ? (
             <div className="mb-3 flex items-center gap-2">
-              {user?.profilePicture ? (
-                <img src={`${BACKEND_URL}/uploads/${user.profilePicture}`} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-              ) : (
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 font-semibold text-sm">{getInitials(user)}</span>
-                </div>
-              )}
+              <AuthImage
+                path={user?.profilePicture}
+                alt=""
+                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                fallback={
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-blue-600 font-semibold text-sm">{getInitials(user)}</span>
+                  </div>
+                }
+              />
               <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">{getFullName(user)}</p>
                 <p className="text-xs text-gray-500 truncate">{user.email}</p>
@@ -157,13 +175,16 @@ export default function EduplanCoachLayout({ children, user }: EduplanCoachLayou
             </div>
           ) : (
             <div className="mb-3 flex justify-center">
-              {user?.profilePicture ? (
-                <img src={`${BACKEND_URL}/uploads/${user.profilePicture}`} alt="" className="w-8 h-8 rounded-full object-cover" />
-              ) : (
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 font-semibold text-sm">{getInitials(user)}</span>
-                </div>
-              )}
+              <AuthImage
+                path={user?.profilePicture}
+                alt=""
+                className="w-8 h-8 rounded-full object-cover"
+                fallback={
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 font-semibold text-sm">{getInitials(user)}</span>
+                  </div>
+                }
+              />
             </div>
           )}
           <button

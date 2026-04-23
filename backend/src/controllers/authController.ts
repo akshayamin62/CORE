@@ -2,14 +2,16 @@ import { Response } from "express";
 import User from "../models/User";
 import Student from "../models/Student";
 import Admin from "../models/Admin";
+import Advisor from "../models/Advisor";
 import Alumni from "../models/Alumni";
 import ServiceProvider from "../models/ServiceProvider";
 import { USER_ROLE } from "../types/roles";
 import { generateToken } from "../utils/jwt";
 import { Request } from "express";
+import { AuthRequest } from "../middleware/auth";
 import path from "path";
 import fs from "fs";
-import { getUploadBaseDir } from "../utils/uploadDir";
+import { getUploadBaseDir, ensureDir } from "../utils/uploadDir";
 import {
   sendOTPEmail,
 } from "../utils/email";
@@ -20,6 +22,7 @@ import {
   isOTPExpired,
   getOTPExpiration,
 } from "../utils/otp";
+import { verifyCaptcha } from "../utils/captcha";
 
 interface SignupRequest extends Request {
   body: {
@@ -29,16 +32,16 @@ interface SignupRequest extends Request {
     email: string;
     mobileNumber?: string;
     role: USER_ROLE;
-    captcha: string;
-    captchaInput: string;
+    captchaToken: string;
+    captchaAnswer: string;
   };
 }
 
 interface LoginRequest extends Request {
   body: {
     email: string;
-    captcha: string;
-    captchaInput: string;
+    captchaToken: string;
+    captchaAnswer: string;
   };
 }
 
@@ -66,19 +69,20 @@ interface VerifyOTPRequest extends Request {
 
 export const signup = async (req: SignupRequest, res: Response): Promise<Response> => {
   try {
-    const { firstName, middleName, lastName, email, mobileNumber, role, captcha, captchaInput } = req.body;
+    const { firstName, middleName, lastName, email, mobileNumber, role, captchaToken, captchaAnswer } = req.body;
 
     const emailKey = email.toLowerCase().trim();
 
-    // Verify captcha (comparing hashed values)
-    if (!captcha || !captchaInput) {
+    // Verify server-side captcha
+    if (!captchaToken || !captchaAnswer) {
       return res.status(400).json({
         success: false,
         message: "Captcha is required",
       });
     }
 
-    if (captcha !== captchaInput) {
+    const answerNum = parseInt(captchaAnswer, 10);
+    if (isNaN(answerNum) || !verifyCaptcha(captchaToken, answerNum)) {
       return res.status(401).json({
         success: false,
         message: "Invalid captcha. Please try again.",
@@ -94,7 +98,7 @@ export const signup = async (req: SignupRequest, res: Response): Promise<Respons
       });
     }
 
-    // Generate 4-digit OTP
+    // Generate 6-digit OTP
     const otp = generateOTP();
     const hashedOTP = hashOTP(otp);
     const otpExpires = getOTPExpiration(10); // 10 minutes
@@ -160,19 +164,20 @@ export const signup = async (req: SignupRequest, res: Response): Promise<Respons
 // Request OTP for login
 export const login = async (req: LoginRequest, res: Response): Promise<Response> => {
   try {
-    const { email, captcha, captchaInput } = req.body;
+    const { email, captchaToken, captchaAnswer } = req.body;
 
     const emailKey = email.toLowerCase().trim();
 
-    // Verify captcha (comparing hashed values)
-    if (!captcha || !captchaInput) {
+    // Verify server-side captcha
+    if (!captchaToken || !captchaAnswer) {
       return res.status(400).json({
         success: false,
         message: "Captcha is required",
       });
     }
 
-    if (captcha !== captchaInput) {
+    const answerNum = parseInt(captchaAnswer, 10);
+    if (isNaN(answerNum) || !verifyCaptcha(captchaToken, answerNum)) {
       return res.status(401).json({
         success: false,
         message: "Invalid captcha. Please try again.",
@@ -180,7 +185,7 @@ export const login = async (req: LoginRequest, res: Response): Promise<Response>
     }
 
     // Find user by email
-    const user = await User.findOne({ email: emailKey });
+    const user = await User.findOne({ email: emailKey }).select('+otp +otpExpires');
     if (!user) {
       // Don't reveal if user exists (security best practice)
       return res.status(200).json({
@@ -258,7 +263,7 @@ export const verifySignupOTP = async (req: VerifyOTPRequest, res: Response): Pro
     }
 
     // Find user by email
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+otp +otpExpires');
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -401,7 +406,7 @@ export const verifyOTP = async (req: VerifyOTPRequest, res: Response): Promise<R
     }
 
     // Find user by email
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+otp +otpExpires');
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -474,6 +479,66 @@ export const verifyOTP = async (req: VerifyOTPRequest, res: Response): Promise<R
   }
 };
 
+// Resend OTP (for both signup and login)
+export const resendOTP = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { email, purpose } = req.body as { email: string; purpose?: 'signup' | 'login' };
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required" });
+    }
+
+    const emailKey = email.toLowerCase().trim();
+    const user = await User.findOne({ email: emailKey }).select('+otp +otpExpires');
+
+    if (!user) {
+      // Don't reveal if user exists
+      return res.status(200).json({
+        success: true,
+        message: "If an account exists with this email, a new OTP has been sent.",
+      });
+    }
+
+    // Rate limit: check if OTP was sent less than 60 seconds ago
+    if (user.otpExpires) {
+      // OTP expiry is set to 10 min from creation. So creation time = otpExpires - 10min
+      const otpCreatedAt = new Date(user.otpExpires.getTime() - 10 * 60 * 1000);
+      const secondsSinceLastOTP = (Date.now() - otpCreatedAt.getTime()) / 1000;
+      if (secondsSinceLastOTP < 60) {
+        const waitSeconds = Math.ceil(60 - secondsSinceLastOTP);
+        return res.status(429).json({
+          success: false,
+          message: `Please wait ${waitSeconds} seconds before requesting a new code.`,
+        });
+      }
+    }
+
+    // Generate new OTP
+    const otp = generateOTP();
+    const hashedOTP = hashOTP(otp);
+    const otpExpires = getOTPExpiration(10);
+    console.log("resend otp", otp);
+
+    user.otp = hashedOTP;
+    user.otpExpires = otpExpires;
+    await user.save();
+
+    const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
+    await sendOTPEmail(user.email, fullName, otp, purpose || 'login');
+
+    return res.status(200).json({
+      success: true,
+      message: "A new OTP has been sent to your email.",
+    });
+  } catch (err: any) {
+    console.error("Resend OTP error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+    });
+  }
+};
+
 // Get current user profile (protected route)
 export const getProfile = async (
   req: Request,
@@ -523,6 +588,7 @@ export const getProfile = async (
           companyLogo: admin.companyLogo,
           address: admin.address,
           enquiryFormSlug: admin.enquiryFormSlug,
+          isOnboarded: admin.isOnboarded,
         };
       }
     }
@@ -560,6 +626,35 @@ export const getProfile = async (
       }
     }
 
+    // If user is an ADVISOR, include advisor profile data
+    if (user.role === USER_ROLE.ADVISOR) {
+      const advisor = await Advisor.findOne({ userId: user._id });
+      if (advisor) {
+        responseData.advisor = {
+          companyName: advisor.companyName,
+          companyLogo: advisor.companyLogo,
+          address: advisor.address,
+          enquiryFormSlug: advisor.enquiryFormSlug,
+          allowedServices: advisor.allowedServices,
+          isOnboarded: advisor.isOnboarded,
+        };
+        responseData.user.companyName = advisor.companyName;
+        responseData.user.companyLogo = advisor.companyLogo;
+      }
+    }
+
+    // If user is a STUDENT, include advisor's allowedServices if applicable
+    // But NOT if student has been transferred to admin (has adminId)
+    if (user.role === USER_ROLE.STUDENT) {
+      const student = await Student.findOne({ userId: user._id });
+      if (student?.advisorId && !student.adminId) {
+        const advisor = await Advisor.findById(student.advisorId);
+        if (advisor) {
+          responseData.allowedServices = advisor.allowedServices;
+        }
+      }
+    }
+
     return res.status(200).json({
       success: true,
       data: responseData,
@@ -576,9 +671,9 @@ export const getProfile = async (
 /**
  * Update Service Provider Profile (bank details, etc.)
  */
-export const updateSPProfile = async (req: Request, res: Response): Promise<Response> => {
+export const updateSPProfile = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
-    const userId = (req as any).user?.userId;
+    const userId = req.user?.userId;
     if (!userId) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
@@ -633,7 +728,9 @@ export const updateSPProfile = async (req: Request, res: Response): Promise<Resp
 };
 
 /**
- * Upload profile picture for current user
+ * Upload profile picture for current user.
+ * For ADMIN / ADVISOR the file is stored in the public admin/ folder so that
+ * it doubles as their company logo and is accessible on public pages.
  */
 export const uploadProfilePic = async (req: Request, res: Response): Promise<Response> => {
   try {
@@ -651,17 +748,42 @@ export const uploadProfilePic = async (req: Request, res: Response): Promise<Res
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // Delete old profile picture if exists
+    const isCompanyRole = user.role === USER_ROLE.ADMIN || user.role === USER_ROLE.ADVISOR;
+
+    let relativePath: string;
+    if (isCompanyRole) {
+      // Store in admin/ (publicly accessible) so the logo works on public enquiry/referral pages
+      const adminDir = path.join(getUploadBaseDir(), 'admin');
+      ensureDir(adminDir);
+      const ext = path.extname(req.file.originalname);
+      const newFilename = `logo_${Date.now()}${ext}`;
+      const newFilePath = path.join(adminDir, newFilename);
+      fs.renameSync(req.file.path, newFilePath);
+      relativePath = `/uploads/admin/${newFilename}`;
+    } else {
+      relativePath = `profile-pictures/${req.file.filename}`;
+    }
+
+    // Delete old file from wherever it was stored
     if (user.profilePicture) {
-      const oldPath = path.join(getUploadBaseDir(), 'profile-pictures', path.basename(user.profilePicture));
-      if (fs.existsSync(oldPath)) {
-        fs.unlinkSync(oldPath);
+      const oldRelative = user.profilePicture.startsWith('/uploads/')
+        ? user.profilePicture.slice('/uploads/'.length)
+        : user.profilePicture;
+      const oldFilePath = path.join(getUploadBaseDir(), oldRelative);
+      if (fs.existsSync(oldFilePath)) {
+        try { fs.unlinkSync(oldFilePath); } catch {}
       }
     }
 
-    const relativePath = `profile-pictures/${req.file.filename}`;
     user.profilePicture = relativePath;
     await user.save();
+
+    // Keep Admin / Advisor companyLogo in sync with profilePicture
+    if (user.role === USER_ROLE.ADMIN) {
+      await Admin.findOneAndUpdate({ userId }, { companyLogo: relativePath });
+    } else if (user.role === USER_ROLE.ADVISOR) {
+      await Advisor.findOneAndUpdate({ userId }, { companyLogo: relativePath });
+    }
 
     return res.status(200).json({
       success: true,
@@ -690,12 +812,22 @@ export const removeProfilePic = async (req: Request, res: Response): Promise<Res
     }
 
     if (user.profilePicture) {
-      const filePath = path.join(getUploadBaseDir(), 'profile-pictures', path.basename(user.profilePicture));
+      const oldRelative = user.profilePicture.startsWith('/uploads/')
+        ? user.profilePicture.slice('/uploads/'.length)
+        : user.profilePicture;
+      const filePath = path.join(getUploadBaseDir(), oldRelative);
       if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+        try { fs.unlinkSync(filePath); } catch {}
       }
       user.profilePicture = undefined;
       await user.save();
+    }
+
+    // Keep Admin / Advisor companyLogo in sync
+    if (user.role === USER_ROLE.ADMIN) {
+      await Admin.findOneAndUpdate({ userId }, { $unset: { companyLogo: 1 } });
+    } else if (user.role === USER_ROLE.ADVISOR) {
+      await Advisor.findOneAndUpdate({ userId }, { $unset: { companyLogo: 1 } });
     }
 
     return res.status(200).json({

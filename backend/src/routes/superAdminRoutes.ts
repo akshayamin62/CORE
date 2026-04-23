@@ -37,11 +37,25 @@ import {
   getIvyExpertTeamMeetsForSuperAdmin,
   editUserByRole,
   getUserWithProfile,
+  getAdvisors,
+  getAdvisorDetails,
+  updateAdvisorServices,
+  toggleAdvisorStatus,
+  getAdvisorDashboardStats,
+  getAdvisorLeadsForSuperAdmin,
+  getAdvisorStudentsForSuperAdmin,
+  getAdvisorTeamMeetsForSuperAdmin,
 } from "../controllers/superAdminController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
 import { USER_ROLE } from "../types/roles";
 import { uploadAdminLogo } from "../middleware/upload";
+import {
+  getAllReferrersForSuperAdmin,
+  createReferrerForSuperAdmin,
+  toggleReferrerStatusForSuperAdmin,
+  getReferrerDashboardForSuperAdmin,
+} from "../controllers/referrerController";
 
 const router = Router();
 
@@ -105,7 +119,7 @@ router.get("/users/:userId/profile", getUserWithProfile);
  * @desc    Edit user profile + role-specific fields
  * @access  Super Admin only
  */
-router.put("/users/:userId/edit", editUserByRole);
+router.put("/users/:userId/edit", uploadAdminLogo.single('companyLogo'), editUserByRole);
 
 /**
  * @route   DELETE /api/super-admin/users/:userId
@@ -322,6 +336,95 @@ router.get("/eduplan-coaches/:coachUserId/students", getEduplanCoachStudentsForS
  * @access  Super Admin only
  */
 router.get("/eduplan-coaches/:coachUserId/team-meets", getEduplanCoachTeamMeetsForSuperAdmin);
+
+// ============= REFERRER ROUTES =============
+
+/**
+ * @route   GET /api/super-admin/referrers
+ * @desc    Get all referrers across all admins
+ * @access  Super Admin only
+ */
+router.get("/referrers", getAllReferrersForSuperAdmin);
+
+/**
+ * @route   POST /api/super-admin/referrer
+ * @desc    Create a new referrer under a specific admin
+ * @access  Super Admin only
+ * @body    firstName, lastName, email, mobileNumber, adminId
+ */
+router.post("/referrer", createReferrerForSuperAdmin);
+
+/**
+ * @route   PATCH /api/super-admin/referrer/:referrerId/toggle-status
+ * @desc    Toggle referrer active/inactive status
+ * @access  Super Admin only
+ */
+router.patch("/referrer/:referrerId/toggle-status", toggleReferrerStatusForSuperAdmin);
+
+/**
+ * @route   GET /api/super-admin/referrer/:referrerId/dashboard
+ * @desc    Get referrer dashboard with leads and stats
+ * @access  Super Admin only
+ */
+router.get("/referrer/:referrerId/dashboard", getReferrerDashboardForSuperAdmin);
+
+// ============= ADVISOR ROUTES =============
+
+/**
+ * @route   GET /api/super-admin/advisors
+ * @desc    Get all advisors with lead/student counts
+ * @access  Super Admin only
+ */
+router.get("/advisors", getAdvisors);
+
+/**
+ * @route   GET /api/super-admin/advisors/:id
+ * @desc    Get advisor details
+ * @access  Super Admin only
+ */
+router.get("/advisors/:id", getAdvisorDetails);
+
+/**
+ * @route   PATCH /api/super-admin/advisors/:id/services
+ * @desc    Update advisor allowed services
+ * @access  Super Admin only
+ */
+router.patch("/advisors/:id/services", updateAdvisorServices);
+
+/**
+ * @route   PATCH /api/super-admin/advisors/:id/toggle-status
+ * @desc    Toggle advisor active/inactive status
+ * @access  Super Admin only
+ */
+router.patch("/advisors/:id/toggle-status", toggleAdvisorStatus);
+
+/**
+ * @route   GET /api/super-admin/advisors/:advisorId/dashboard
+ * @desc    Get advisor dashboard stats
+ * @access  Super Admin only
+ */
+router.get("/advisors/:advisorId/dashboard", getAdvisorDashboardStats);
+
+/**
+ * @route   GET /api/super-admin/advisors/:advisorId/leads
+ * @desc    Get leads under a specific advisor
+ * @access  Super Admin only
+ */
+router.get("/advisors/:advisorId/leads", getAdvisorLeadsForSuperAdmin);
+
+/**
+ * @route   GET /api/super-admin/advisors/:advisorId/students
+ * @desc    Get students under a specific advisor
+ * @access  Super Admin only
+ */
+router.get("/advisors/:advisorId/students", getAdvisorStudentsForSuperAdmin);
+
+/**
+ * @route   GET /api/super-admin/advisors/:advisorId/team-meets
+ * @desc    Get team meets for a specific advisor
+ * @access  Super Admin only
+ */
+router.get("/advisors/:advisorId/team-meets", getAdvisorTeamMeetsForSuperAdmin);
 
 export default router;
 

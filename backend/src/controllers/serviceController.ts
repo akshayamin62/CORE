@@ -11,6 +11,7 @@ import { AuthRequest } from "../types/auth";
 import { USER_ROLE } from "../types/roles";
 import { sendServiceRegistrationEmailToSuperAdmin } from "../utils/email";
 import { getServiceFormStructure } from "../config/formConfig";
+import Advisor from "../models/Advisor";
 
 // Get all active services
 export const getAllServices = async (_req: Request, res: Response) => {
@@ -27,7 +28,6 @@ export const getAllServices = async (_req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch services",
-      error: error.message,
     });
   }
 };
@@ -50,6 +50,16 @@ export const getMyServices = async (req: AuthRequest, res: Response) => {
       studentId: student._id,
     })
       .populate("serviceId")
+      .populate({
+        path: "registeredViaAdvisorId",
+        select: "companyName userId",
+        populate: { path: "userId", select: "firstName middleName lastName" },
+      })
+      .populate({
+        path: "registeredViaAdminId",
+        select: "companyName userId",
+        populate: { path: "userId", select: "firstName middleName lastName" },
+      })
       .sort({ registeredAt: -1 });
 
     // Backfill missing payment fields for older registrations so payment UI stays accurate.
@@ -128,7 +138,6 @@ export const getMyServices = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch registered services",
-      error: error.message,
     });
   }
 };
@@ -171,6 +180,17 @@ export const registerForService = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Check advisor allowedServices (only if student hasn't been transferred to admin)
+    if (student.advisorId && !student.adminId) {
+      const advisor = await Advisor.findById(student.advisorId);
+      if (advisor && !advisor.allowedServices.includes(service.slug)) {
+        return res.status(403).json({
+          success: false,
+          message: "This service is not available through your advisor. Please contact your advisor for more information.",
+        });
+      }
+    }
+
     // Check if already registered
     const existingRegistration = await StudentServiceRegistration.findOne({
       studentId: student._id,
@@ -189,6 +209,8 @@ export const registerForService = async (req: AuthRequest, res: Response) => {
       studentId: student._id,
       serviceId,
       status: ServiceRegistrationStatus.REGISTERED,
+      ...(student.adminId ? { registeredViaAdminId: student.adminId } : {}),
+      ...(student.advisorId && !student.adminId ? { registeredViaAdvisorId: student.advisorId } : {}),
     });
 
     const populatedRegistration = await StudentServiceRegistration.findById(
@@ -222,7 +244,6 @@ export const registerForService = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Failed to register for service",
-      error: error.message,
     });
   }
 };
@@ -254,7 +275,6 @@ export const getServiceForm = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch service form",
-      error: error.message,
     });
   }
 };
@@ -292,6 +312,10 @@ export const getRegistrationDetails = async (
           {
             path: "counselorId",
             populate: { path: "userId", select: "firstName middleName lastName email" }
+          },
+          {
+            path: "advisorId",
+            populate: { path: "userId", select: "firstName middleName lastName email" }
           }
         ]
       })
@@ -318,6 +342,16 @@ export const getRegistrationDetails = async (
       .populate({
         path: "activeEduplanCoachId",
         populate: { path: "userId", select: "firstName middleName lastName email" }
+      })
+      .populate({
+        path: "registeredViaAdvisorId",
+        select: "companyName userId",
+        populate: { path: "userId", select: "firstName middleName lastName" },
+      })
+      .populate({
+        path: "registeredViaAdminId",
+        select: "companyName userId",
+        populate: { path: "userId", select: "firstName middleName lastName" },
       });
 
     if (!registration) {
@@ -337,7 +371,6 @@ export const getRegistrationDetails = async (
     return res.status(500).json({
       success: false,
       message: "Failed to fetch registration details",
-      error: error.message,
     });
   }
 };

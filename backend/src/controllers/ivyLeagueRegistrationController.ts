@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Student from "../models/Student";
 import User from "../models/User";
 import IvyLeagueRegistration from "../models/IvyLeagueRegistration";
+import Advisor from "../models/Advisor";
 import { AuthRequest } from "../types/auth";
 
 // GET /prefill - Get student name pre-filled from database
@@ -25,6 +26,15 @@ export const getStudentPrefill = async (req: AuthRequest, res: Response) => {
     // Check if already registered for ivy league
     const existingRegistration = await IvyLeagueRegistration.findOne({ studentId: student._id });
 
+    // Check advisor allowedServices for ivy-league
+    let advisorBlocked = false;
+    if (student.advisorId) {
+      const advisor = await Advisor.findById(student.advisorId);
+      if (advisor && !advisor.allowedServices.includes('ivy-league')) {
+        advisorBlocked = true;
+      }
+    }
+
     return res.status(200).json({
       success: true,
       data: {
@@ -34,6 +44,7 @@ export const getStudentPrefill = async (req: AuthRequest, res: Response) => {
         email: user.email || student.email || "",
         mobile: student.mobileNumber || "",
         alreadyRegistered: !!existingRegistration,
+        advisorBlocked,
       },
     });
   } catch (error: any) {
@@ -41,7 +52,6 @@ export const getStudentPrefill = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch student details",
-      error: error.message,
     });
   }
 };
@@ -57,6 +67,17 @@ export const submitIvyLeagueRegistration = async (req: AuthRequest, res: Respons
     const student = await Student.findOne({ userId });
     if (!student) {
       return res.status(404).json({ success: false, message: "Student record not found" });
+    }
+
+    // Check advisor allowedServices for ivy-league
+    if (student.advisorId) {
+      const advisor = await Advisor.findById(student.advisorId);
+      if (advisor && !advisor.allowedServices.includes('ivy-league')) {
+        return res.status(403).json({
+          success: false,
+          message: "Ivy League service is not available through your advisor. Please contact your advisor for more information.",
+        });
+      }
     }
 
     // Check if already registered
@@ -114,7 +135,6 @@ export const submitIvyLeagueRegistration = async (req: AuthRequest, res: Respons
     return res.status(500).json({
       success: false,
       message: "Failed to submit registration",
-      error: error.message,
     });
   }
 };
@@ -146,7 +166,6 @@ export const getRegistrationStatus = async (req: AuthRequest, res: Response) => 
     return res.status(500).json({
       success: false,
       message: "Failed to check registration status",
-      error: error.message,
     });
   }
 };

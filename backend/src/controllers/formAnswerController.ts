@@ -93,35 +93,36 @@ export const saveFormAnswers = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // Find or create answer document (linked to student, not registration)
-    let answerDoc = await StudentFormAnswer.findOne({
-      studentId: student._id,
-      partKey,
-    });
-
     // Guard name fields and parent entries for PROFILE saves
-    if (partKey === 'PROFILE' && answerDoc) {
-      guardNameFields(answerDoc.answers, answers);
-      guardParentEntries(answerDoc.answers, answers);
-    }
-
-    if (answerDoc) {
-      answerDoc.answers = { ...answerDoc.answers, ...answers };
-      answerDoc.lastSavedAt = new Date();
-      await answerDoc.save();
-    } else {
-      answerDoc = await StudentFormAnswer.create({
+    if (partKey === 'PROFILE') {
+      const existingDoc = await StudentFormAnswer.findOne({
         studentId: student._id,
         partKey,
-        answers,
-        lastSavedAt: new Date(),
-      });
+      }).lean();
+      if (existingDoc) {
+        guardNameFields(existingDoc.answers, answers);
+        guardParentEntries(existingDoc.answers, answers);
+      }
     }
+
+    // Atomic upsert: merge answers using findOneAndUpdate to prevent race conditions
+    const setFields: Record<string, any> = { lastSavedAt: new Date() };
+    for (const [key, value] of Object.entries(answers)) {
+      setFields[`answers.${key}`] = value;
+    }
+
+    const answerDoc = await StudentFormAnswer.findOneAndUpdate(
+      { studentId: student._id, partKey },
+      { $set: setFields, $setOnInsert: { studentId: student._id, partKey } },
+      { upsert: true, new: true, runValidators: true }
+    );
 
     // Update registration status to IN_PROGRESS if not already
     if (registration.status === ServiceRegistrationStatus.REGISTERED) {
-      registration.status = ServiceRegistrationStatus.IN_PROGRESS;
-      await registration.save();
+      await StudentServiceRegistration.findOneAndUpdate(
+        { _id: registration._id, status: ServiceRegistrationStatus.REGISTERED },
+        { $set: { status: ServiceRegistrationStatus.IN_PROGRESS } }
+      );
     }
 
     // Sync parent records when PROFILE part's Parental Details is saved
@@ -139,7 +140,6 @@ export const saveFormAnswers = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Failed to save form answers",
-      error: error.message,
     });
   }
 };
@@ -199,7 +199,6 @@ export const getFormAnswers = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch form answers",
-      error: error.message,
     });
   }
 };
@@ -260,7 +259,6 @@ export const getProgress = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch progress",
-      error: error.message,
     });
   }
 };
@@ -309,7 +307,6 @@ export const deleteFormAnswers = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({
       success: false,
       message: "Failed to delete form answers",
-      error: error.message,
     });
   }
 };
@@ -348,7 +345,6 @@ export const getStudentProfileData = async (req: AuthRequest, res: Response) => 
     return res.status(500).json({
       success: false,
       message: "Failed to fetch profile data",
-      error: error.message,
     });
   }
 };
@@ -416,7 +412,6 @@ export const saveStudentProfileData = async (req: AuthRequest, res: Response) =>
     return res.status(500).json({
       success: false,
       message: "Failed to save profile data",
-      error: error.message,
     });
   }
 };
@@ -426,7 +421,7 @@ export const getStudentProfileDataById = async (req: AuthRequest, res: Response)
   try {
     const { studentId } = req.params;
 
-    const student = await Student.findById(studentId).populate('userId', 'firstName middleName lastName email isVerified isActive');
+    const student = await Student.findById(studentId).populate('userId', 'firstName middleName lastName email profilePicture isVerified isActive');
     if (!student) {
       return res.status(404).json({ success: false, message: "Student not found" });
     }
@@ -455,7 +450,6 @@ export const getStudentProfileDataById = async (req: AuthRequest, res: Response)
     return res.status(500).json({
       success: false,
       message: "Failed to fetch student profile data",
-      error: error.message,
     });
   }
 };
@@ -526,7 +520,6 @@ export const saveStudentProfileDataById = async (req: AuthRequest, res: Response
     return res.status(500).json({
       success: false,
       message: "Failed to save profile data",
-      error: error.message,
     });
   }
 };

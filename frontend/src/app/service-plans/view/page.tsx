@@ -35,12 +35,27 @@ function ServicePlansViewContent() {
   const [coachingRegisteredClasses, setCoachingRegisteredClasses] = useState<Record<string, ClassTiming | null>>({});
   const [studentName, setStudentName] = useState<string>(paramStudentName || '');
   const [adminId, setAdminId] = useState<string>(paramAdminId || '');
+  const [advisorId, setAdvisorId] = useState<string>('');
 
   // Discount state
   const [planDiscounts, setPlanDiscounts] = useState<Record<string, Record<string, PlanDiscountInfo>>>({});
   const [discountForm, setDiscountForm] = useState<{ planKey: string; type: string; value: string; reason: string } | null>(null);
   const [savingDiscount, setSavingDiscount] = useState(false);
-  const isAdmin = user?.role === USER_ROLE.ADMIN || user?.role === 'admin';
+  const [advisorOwnedServiceSlugs, setAdvisorOwnedServiceSlugs] = useState<string[]>([]);
+  const [isTransferredStudent, setIsTransferredStudent] = useState(false);
+  const isAdmin = user?.role === USER_ROLE.ADMIN || user?.role === USER_ROLE.ADVISOR || user?.role === 'admin';
+
+  // Discount management restrictions for transferred students:
+  // - Advisor: can only manage discounts for services they originally registered
+  // - Admin: can only manage discounts for services NOT registered under an advisor
+  const canManageDiscount = (serviceSlug: string) => {
+    if (!isTransferredStudent) return true; // Not transferred, full access for both
+    if (user?.role === USER_ROLE.ADVISOR) {
+      return advisorOwnedServiceSlugs.includes(serviceSlug); // Advisor: only own services
+    }
+    // Admin: block advisor-owned services (those discounts are locked)
+    return !advisorOwnedServiceSlugs.includes(serviceSlug);
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -62,7 +77,17 @@ function ServicePlansViewContent() {
             if (data.coachingPlanTiers) setCoachingRegisteredClasses(data.coachingPlanTiers);
             if (data.studentName) setStudentName(data.studentName);
             if (data.adminId) setAdminId(data.adminId);
-          } catch { /* ignore */ }
+            if (data.advisorId) setAdvisorId(data.advisorId);
+            if (!data.adminId && data.advisorId) setAdminId(data.advisorId);
+            if (data.adminId && data.advisorId) setIsTransferredStudent(true);
+            if (data.advisorOwnedServiceSlugs) setAdvisorOwnedServiceSlugs(data.advisorOwnedServiceSlugs);
+          } catch (err: any) {
+            if (err?.response?.status === 403) {
+              toast.error('You do not have access to this student');
+              router.push('/');
+              return;
+            }
+          }
 
           // Fetch student plan discounts
           try {
@@ -89,16 +114,28 @@ function ServicePlansViewContent() {
     try {
       let p: Record<string, number> | null = null;
 
-      if (adminId) {
-        const pricingRes = await servicePlanAPI.getAdminPricingById(slug, adminId);
-        p = pricingRes.data.data.pricing || null;
+      // For transferred students, use advisor pricing for advisor-owned services
+      const useAdvisorPricing = isTransferredStudent && advisorOwnedServiceSlugs.includes(slug) && advisorId;
+      const pricingId = useAdvisorPricing ? advisorId : adminId;
+
+      if (pricingId) {
+        try {
+          const pricingRes = await servicePlanAPI.getAdminPricingById(slug, pricingId);
+          p = pricingRes.data.data.pricing || null;
+        } catch {
+          // Will fall through to own-pricing fallback
+        }
       }
 
-      // Fallback: if logged-in admin is viewing and student admin pricing lookup returned empty,
-      // fetch own admin pricing directly.
+      // Fallback: if logged-in admin/advisor is viewing and student pricing lookup returned empty,
+      // fetch own admin/advisor pricing directly.
       if (!p && isAdmin) {
-        const ownPricingRes = await servicePlanAPI.getAdminPricing(slug);
-        p = ownPricingRes.data.data.pricing || null;
+        try {
+          const ownPricingRes = await servicePlanAPI.getAdminPricing(slug);
+          p = ownPricingRes.data.data.pricing || null;
+        } catch {
+          // Own pricing also unavailable
+        }
       }
 
       if (p) setPricing(p);
@@ -186,7 +223,7 @@ function ServicePlansViewContent() {
                     onClick={() => handleSelectService(service.slug)}
                     className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-100 overflow-hidden transition-all duration-300 hover:-translate-y-1 text-left"
                   >
-                    <div className="h-1.5 bg-gradient-to-r from-blue-500 via-purple-500 to-amber-500" />
+                    <div className="h-1.5 bg-blue-600" />
                     <div className="p-6">
                       <div className="flex items-start gap-4">
                         <div className="w-14 h-14 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm">
@@ -205,11 +242,7 @@ function ServicePlansViewContent() {
                           <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                         </span>
                         {studentPlanTiers[service.slug] && (
-                          <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${
-                            studentPlanTiers[service.slug] === 'PLATINUM' ? 'bg-amber-100 text-amber-800' :
-                            studentPlanTiers[service.slug] === 'PREMIUM' ? 'bg-purple-100 text-purple-800' :
-                            'bg-blue-100 text-blue-800'
-                          }`}>
+                          <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-800">
                             {studentPlanTiers[service.slug]}
                           </span>
                         )}
@@ -283,7 +316,7 @@ function ServicePlansViewContent() {
                     />
 
                     {/* Admin Discount Controls for Coaching */}
-                    {isAdmin && studentId && (
+                    {isAdmin && studentId && canManageDiscount(selectedService!) && (
                       <div className="mt-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
                         <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4">Set Discount for {studentName || 'Student'}</h3>
                         {!pricing && (
@@ -313,10 +346,10 @@ function ServicePlansViewContent() {
                                 <p className="text-xs text-gray-500 mb-2">Price: ₹{price.toLocaleString('en-IN')}</p>
                                 {disc && !isEditing ? (
                                   <div>
-                                    <p className="text-xs text-green-700 font-semibold">
+                                    <p className="text-xs text-blue-700 font-semibold">
                                       Discount: {disc.type === 'percentage' ? `${disc.value}%` : `₹${disc.value.toLocaleString('en-IN')}`} (-₹{disc.calculatedAmount.toLocaleString('en-IN')})
                                     </p>
-                                    <p className="text-sm font-bold text-green-600 mt-1">After Discount: ₹{discountedPrice?.toLocaleString('en-IN')}</p>
+                                    <p className="text-sm font-bold text-blue-600 mt-1">After Discount: ₹{discountedPrice?.toLocaleString('en-IN')}</p>
                                     {disc.reason && <p className="text-xs text-gray-400 mt-1">Reason: {disc.reason}</p>}
                                     <div className="flex gap-2 mt-2">
                                       <button onClick={() => setDiscountForm({ planKey: plan.key, type: disc.type, value: String(disc.value), reason: disc.reason || '' })} className="text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button>
@@ -332,7 +365,7 @@ function ServicePlansViewContent() {
                                     <input type="number" min="0" value={discountForm.value} onChange={(e) => setDiscountForm({ ...discountForm, value: e.target.value })} placeholder={discountForm.type === 'percentage' ? 'e.g. 10' : 'e.g. 5000'} className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5" />
                                     <input type="text" value={discountForm.reason} onChange={(e) => setDiscountForm({ ...discountForm, reason: e.target.value })} placeholder="Reason (optional)" className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5" />
                                     <div className="flex gap-2">
-                                      <button onClick={handleSetDiscount} disabled={savingDiscount || !discountForm.value} className="flex-1 text-xs bg-green-600 text-white py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium">{savingDiscount ? 'Saving...' : 'Save'}</button>
+                                      <button onClick={handleSetDiscount} disabled={savingDiscount || !discountForm.value} className="flex-1 text-xs bg-blue-600 text-white py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium">{savingDiscount ? 'Saving...' : 'Save'}</button>
                                       <button onClick={() => setDiscountForm(null)} className="flex-1 text-xs bg-gray-100 text-gray-600 py-1.5 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
                                     </div>
                                   </div>
@@ -381,44 +414,45 @@ function ServicePlansViewContent() {
                           const discountedPrice = pricing?.[plan.key] != null && disc ? pricing[plan.key] - disc.calculatedAmount : null;
 
                           return (
-                            <div key={plan.key} className={`relative bg-white rounded-2xl shadow-md border-2 ${isCurrent ? 'ring-2 ring-green-500 ' : ''}${plan.borderColor} overflow-hidden`}>
+                            <div key={plan.key} className={`relative rounded-2xl shadow-sm border ${isCurrent ? 'bg-blue-600 border-blue-600' : 'bg-white border-slate-200'} overflow-hidden`}>
+                              {!isCurrent && <div className={`h-1.5 ${plan.badgeBg}`} />}
                               {isCurrent && (
-                                <div className="absolute top-3 right-3 z-10 px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full shadow-md flex items-center gap-1">
+                                <div className="absolute top-4 right-4 z-10 px-3 py-1 bg-white text-blue-600 text-xs font-bold rounded-full shadow-md flex items-center gap-1">
                                   <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                                   Current Plan
                                 </div>
                               )}
-                              <div className={`${plan.headerGradient} px-5 py-4 text-white`}>
-                                <h3 className="text-lg font-bold">{plan.name}</h3>
-                                {plan.subtitle && <p className="text-xs opacity-80 mt-0.5">{plan.subtitle}</p>}
-                              </div>
                               <div className="p-5">
+                                <div className="mb-1">
+                                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isCurrent ? 'bg-white/20 text-white' : `${plan.badgeBg} text-white`}`}>{plan.name}</span>
+                                </div>
+                                {plan.subtitle && <p className={`text-xs uppercase font-semibold tracking-wide mb-3 ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>{plan.subtitle}</p>}
                                 {pricing?.[plan.key] != null ? (
                                   <div className="mb-3">
                                     {discountedPrice != null ? (
                                       <>
-                                        <p className="text-lg text-gray-400 line-through">₹{pricing[plan.key].toLocaleString('en-IN')}</p>
-                                        <p className="text-3xl font-extrabold text-green-600">₹{discountedPrice.toLocaleString('en-IN')}</p>
-                                        <p className="text-xs text-green-600 font-semibold mt-1">
+                                        <p className={`text-lg line-through ${isCurrent ? 'text-blue-300' : 'text-gray-400'}`}>₹{pricing[plan.key].toLocaleString('en-IN')}</p>
+                                        <p className={`text-3xl font-extrabold ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{discountedPrice.toLocaleString('en-IN')}</p>
+                                        <p className={`text-xs font-semibold mt-1 ${isCurrent ? 'text-blue-200' : 'text-gray-600'}`}>
                                           {disc.type === 'percentage' ? `${disc.value}% off` : `₹${disc.calculatedAmount.toLocaleString('en-IN')} off`}
                                         </p>
                                       </>
                                     ) : (
-                                      <p className="text-3xl font-extrabold text-gray-900">₹{pricing[plan.key].toLocaleString('en-IN')}</p>
+                                      <p className={`text-3xl font-extrabold ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{pricing[plan.key].toLocaleString('en-IN')}</p>
                                     )}
                                     {isUpgradePlan && priceDiff != null && priceDiff > 0 && (
-                                      <p className="text-sm text-emerald-600 font-semibold mt-2">+₹{priceDiff.toLocaleString('en-IN')} upgrade difference</p>
+                                      <p className={`text-sm font-semibold mt-2 ${isCurrent ? 'text-blue-200' : 'text-emerald-600'}`}>+₹{priceDiff.toLocaleString('en-IN')} upgrade difference</p>
                                     )}
                                   </div>
                                 ) : (
-                                  <div className="mb-3"><p className="text-sm text-gray-400 font-medium">Price not set</p></div>
+                                  <div className="mb-3"><p className={`text-sm font-medium ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>Price not set</p></div>
                                 )}
                                 {isCurrent ? (
-                                  <span className="inline-block w-full text-center py-2 px-4 rounded-xl font-bold text-sm text-white bg-green-500">Current Plan</span>
+                                  <span className="inline-block w-full text-center py-2 px-4 rounded-full font-bold text-sm text-blue-600 bg-white">Current Plan</span>
                                 ) : isUpgradePlan ? (
-                                  <span className="inline-block w-full text-center py-2 px-4 rounded-xl font-bold text-sm text-blue-600 bg-blue-50 border border-blue-200">Upgrade Option</span>
+                                  <span className="inline-block w-full text-center py-2 px-4 rounded-full font-bold text-sm text-blue-600 bg-blue-50 border border-blue-200">Upgrade Option</span>
                                 ) : isLowerPlan ? (
-                                  <span className="inline-block w-full text-center py-2 px-4 rounded-xl font-bold text-sm text-gray-400 bg-gray-100">Lower Tier</span>
+                                  <span className="inline-block w-full text-center py-2 px-4 rounded-full font-bold text-sm text-gray-400 bg-gray-100">Lower Tier</span>
                                 ) : null}
                               </div>
                             </div>
@@ -434,13 +468,13 @@ function ServicePlansViewContent() {
                         pricing={pricing}
                         plans={plans}
                         serviceName={selectedServiceInfo?.name || ''}
-                        showPricing={true}
+                        showPricing={!studentPlanTiers[selectedService!]}
                         noPricingMessage={adminId ? 'Admin has not set pricing yet.' : 'No admin pricing available.'}
                         discounts={selectedService ? planDiscounts[selectedService] : undefined}
                       />
 
                       {/* Admin Discount Controls */}
-                      {isAdmin && studentId && (
+                      {isAdmin && studentId && canManageDiscount(selectedService!) && (
                         <div className="mt-6 bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
                           <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4">Set Discount for {studentName || 'Student'}</h3>
                           {!pricing && (
@@ -470,10 +504,10 @@ function ServicePlansViewContent() {
                                   <p className="text-xs text-gray-500 mb-2">Price: ₹{price.toLocaleString('en-IN')}</p>
                                   {disc && !isEditing ? (
                                     <div>
-                                      <p className="text-xs text-green-700 font-semibold">
+                                      <p className="text-xs text-blue-700 font-semibold">
                                         Discount: {disc.type === 'percentage' ? `${disc.value}%` : `₹${disc.value.toLocaleString('en-IN')}`} (-₹{disc.calculatedAmount.toLocaleString('en-IN')})
                                       </p>
-                                      <p className="text-sm font-bold text-green-600 mt-1">After Discount: ₹{discountedPrice?.toLocaleString('en-IN')}</p>
+                                      <p className="text-sm font-bold text-blue-600 mt-1">After Discount: ₹{discountedPrice?.toLocaleString('en-IN')}</p>
                                       {disc.reason && <p className="text-xs text-gray-400 mt-1">Reason: {disc.reason}</p>}
                                       <div className="flex gap-2 mt-2">
                                         <button onClick={() => setDiscountForm({ planKey: plan.key, type: disc.type, value: String(disc.value), reason: disc.reason || '' })} className="text-xs text-blue-600 hover:text-blue-800 font-medium">Edit</button>
@@ -489,7 +523,7 @@ function ServicePlansViewContent() {
                                       <input type="number" min="0" value={discountForm.value} onChange={(e) => setDiscountForm({ ...discountForm, value: e.target.value })} placeholder={discountForm.type === 'percentage' ? 'e.g. 10' : 'e.g. 5000'} className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5" />
                                       <input type="text" value={discountForm.reason} onChange={(e) => setDiscountForm({ ...discountForm, reason: e.target.value })} placeholder="Reason (optional)" className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5" />
                                       <div className="flex gap-2">
-                                        <button onClick={handleSetDiscount} disabled={savingDiscount || !discountForm.value} className="flex-1 text-xs bg-green-600 text-white py-1.5 rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium">{savingDiscount ? 'Saving...' : 'Save'}</button>
+                                        <button onClick={handleSetDiscount} disabled={savingDiscount || !discountForm.value} className="flex-1 text-xs bg-blue-600 text-white py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium">{savingDiscount ? 'Saving...' : 'Save'}</button>
                                         <button onClick={() => setDiscountForm(null)} className="flex-1 text-xs bg-gray-100 text-gray-600 py-1.5 rounded-lg hover:bg-gray-200 font-medium">Cancel</button>
                                       </div>
                                     </div>

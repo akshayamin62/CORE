@@ -27,6 +27,7 @@ router.post(
   authorize([
     USER_ROLE.SUPER_ADMIN,
     USER_ROLE.ADMIN,
+    USER_ROLE.ADVISOR,
     USER_ROLE.COUNSELOR,
     USER_ROLE.OPS,
   ]),
@@ -37,7 +38,7 @@ router.post(
 router.post(
   '/set-price',
   authenticate,
-  authorize([USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN]),
+  authorize([USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.ADVISOR]),
   setPrice
 );
 
@@ -48,6 +49,7 @@ router.post(
   authorize([
     USER_ROLE.SUPER_ADMIN,
     USER_ROLE.ADMIN,
+    USER_ROLE.ADVISOR,
     USER_ROLE.COUNSELOR,
     USER_ROLE.OPS,
     USER_ROLE.STUDENT,
@@ -55,8 +57,20 @@ router.post(
   createOrder
 );
 
-// Verify payment after Razorpay callback (any authenticated user)
-router.post('/verify', authenticate, verifyPayment);
+// Verify payment after Razorpay callback
+router.post(
+  '/verify',
+  authenticate,
+  authorize([
+    USER_ROLE.SUPER_ADMIN,
+    USER_ROLE.ADMIN,
+    USER_ROLE.ADVISOR,
+    USER_ROLE.COUNSELOR,
+    USER_ROLE.OPS,
+    USER_ROLE.STUDENT,
+  ]),
+  verifyPayment
+);
 
 // Pay-first registration: create order without existing registration (student only)
 router.post(
@@ -66,8 +80,13 @@ router.post(
   createRegistrationOrder
 );
 
-// Pay-first registration: verify payment and create registration (any authenticated user)
-router.post('/verify-registration', authenticate, verifyRegistrationPayment);
+// Pay-first registration: verify payment and create registration
+router.post(
+  '/verify-registration',
+  authenticate,
+  authorize([USER_ROLE.STUDENT]),
+  verifyRegistrationPayment
+);
 
 // Pay-first upgrade: create Razorpay order for the upgrade difference (student only)
 router.post(
@@ -77,8 +96,13 @@ router.post(
   createUpgradeOrder
 );
 
-// Pay-first upgrade: verify payment and upgrade plan (any authenticated user)
-router.post('/verify-upgrade', authenticate, verifyUpgradePayment);
+// Pay-first upgrade: verify payment and upgrade plan
+router.post(
+  '/verify-upgrade',
+  authenticate,
+  authorize([USER_ROLE.STUDENT]),
+  verifyUpgradePayment
+);
 
 // Request next installment (staff triggers)
 router.post(
@@ -87,38 +111,72 @@ router.post(
   authorize([
     USER_ROLE.SUPER_ADMIN,
     USER_ROLE.ADMIN,
+    USER_ROLE.ADVISOR,
     USER_ROLE.COUNSELOR,
     USER_ROLE.OPS,
   ]),
   requestInstallment
 );
 
-// Create miscellaneous collection (super admin, admin, ops)
+// Create miscellaneous collection (super admin, admin, advisor, ops)
 router.post(
   '/misc-collection',
   authenticate,
-  authorize([USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.OPS]),
+  authorize([USER_ROLE.SUPER_ADMIN, USER_ROLE.ADMIN, USER_ROLE.ADVISOR, USER_ROLE.OPS]),
   createMiscCollection
 );
 
-// Get payments by registration
+// Get payments by registration (ownership verified in controller)
 router.get(
   '/registration/:registrationId',
   authenticate,
+  authorize([
+    USER_ROLE.SUPER_ADMIN,
+    USER_ROLE.ADMIN,
+    USER_ROLE.ADVISOR,
+    USER_ROLE.COUNSELOR,
+    USER_ROLE.OPS,
+    USER_ROLE.STUDENT,
+    USER_ROLE.PARENT,
+    USER_ROLE.REFERRER,
+    USER_ROLE.EDUPLAN_COACH,
+  ]),
   getPaymentsByRegistration
 );
 
-// Get payments by student
+// Get payments by student (ownership verified in controller)
 router.get(
   '/student/:studentId',
   authenticate,
+  authorize([
+    USER_ROLE.SUPER_ADMIN,
+    USER_ROLE.ADMIN,
+    USER_ROLE.ADVISOR,
+    USER_ROLE.COUNSELOR,
+    USER_ROLE.OPS,
+    USER_ROLE.STUDENT,
+    USER_ROLE.PARENT,
+    USER_ROLE.REFERRER,
+    USER_ROLE.EDUPLAN_COACH,
+  ]),
   getPaymentsByStudent
 );
 
-// Get full payment history for a student
+// Get full payment history for a student (ownership verified in controller)
 router.get(
   '/history/:studentId',
   authenticate,
+  authorize([
+    USER_ROLE.SUPER_ADMIN,
+    USER_ROLE.ADMIN,
+    USER_ROLE.ADVISOR,
+    USER_ROLE.COUNSELOR,
+    USER_ROLE.OPS,
+    USER_ROLE.STUDENT,
+    USER_ROLE.PARENT,
+    USER_ROLE.REFERRER,
+    USER_ROLE.EDUPLAN_COACH,
+  ]),
   getPaymentHistory
 );
 

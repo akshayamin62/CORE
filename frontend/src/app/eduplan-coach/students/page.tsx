@@ -8,6 +8,7 @@ import EduplanCoachLayout from '@/components/EduplanCoachLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
+import AuthImage from '@/components/AuthImage';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -19,6 +20,7 @@ interface StudentData {
     middleName?: string;
     lastName?: string;
     email: string;
+    profilePicture?: string;
     isVerified: boolean;
     isActive: boolean;
     createdAt: string;
@@ -62,8 +64,10 @@ export default function EduplanCoachStudentsPage() {
   const getServiceColor = (service: string) => {
     switch (service) {
       case SERVICE_TYPE.CAREER_FOCUS_STUDY_ABROAD:
+      case 'Study Abroad':
         return 'bg-indigo-100 text-indigo-800';
       case SERVICE_TYPE.IVY_LEAGUE_ADMISSION:
+      case 'Ivy League Preparation':
         return 'bg-amber-100 text-amber-800';
       case SERVICE_TYPE.EDUCATION_PLANNING:
         return 'bg-blue-100 text-blue-800';
@@ -213,11 +217,18 @@ export default function EduplanCoachStudentsPage() {
                       <tr key={student._id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                              <span className="text-blue-600 font-semibold text-sm">
-                                {getInitials(student.user)}
-                              </span>
-                            </div>
+                            <AuthImage
+                              path={student.user.profilePicture}
+                              alt=""
+                              className="w-10 h-10 rounded-full object-cover mr-3"
+                              fallback={
+                                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                                  <span className="text-blue-600 font-semibold text-sm">
+                                    {getInitials(student.user)}
+                                  </span>
+                                </div>
+                              }
+                            />
                             <div>
                               <div className="font-medium text-gray-900">
                                 {getFullName(student.user) || 'N/A'}

@@ -23,6 +23,7 @@ import OpsScheduleCalendar from '@/components/OpsScheduleCalendar';
 import TeamMeetSidebar from '@/components/TeamMeetSidebar';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
+import { fetchBlobUrl } from '@/lib/useBlobUrl';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -59,6 +60,7 @@ export default function EduplanCoachStudentFormEditPage() {
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
 
   const [formValues, setFormValues] = useState<any>({});
+  const [errors, setErrors] = useState<any>({});
   const [studentInfo, setStudentInfo] = useState<any>(null);
   const [serviceInfo, setServiceInfo] = useState<any>(null);
   const [planTier, setPlanTier] = useState<string | undefined>();
@@ -177,11 +179,23 @@ export default function EduplanCoachStudentFormEditPage() {
       const response = await axios.get(`${API_URL}/portfolio/${registrationId}/data`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setBrainographyData(response.data.data.brainographyData || null);
+      const data = response.data.data.brainographyData || null;
+      setBrainographyData(data);
+      return data;
     } catch {
       // silently fail
+      return null;
     }
   };
+
+  useEffect(() => {
+    if (!brainographyDoc || brainographyData || extracting) return;
+    const interval = setInterval(async () => {
+      const data = await fetchBrainographyData();
+      if (data) clearInterval(interval);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [brainographyDoc, brainographyData, extracting]);
 
   const handleUpdateBrainographyMeta = async (field: 'standard' | 'board', value: string) => {
     try {
@@ -259,7 +273,6 @@ export default function EduplanCoachStudentFormEditPage() {
       });
       toast.success('Brainography report uploaded successfully!');
       await fetchBrainography();
-      setTimeout(async () => { await fetchBrainographyData(); }, 5000);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to upload brainography report');
     } finally {
@@ -282,10 +295,15 @@ export default function EduplanCoachStudentFormEditPage() {
     }
   };
 
-  const handleBrainographyView = () => {
+  const handleBrainographyView = async () => {
     if (!brainographyDoc) return;
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000';
-    window.open(`${baseUrl}/${brainographyDoc.filePath}`, '_blank');
+    try {
+      const path = brainographyDoc.filePath.startsWith('/') ? brainographyDoc.filePath : `/${brainographyDoc.filePath}`;
+      const blobUrl = await fetchBlobUrl(path);
+      window.open(blobUrl, '_blank');
+    } catch {
+      toast.error('Failed to load document');
+    }
   };
 
   const handleBrainographyDownload = async () => {
@@ -481,9 +499,59 @@ export default function EduplanCoachStudentFormEditPage() {
     });
   };
 
+  const validateCurrentSection = (): boolean => {
+    const cs = formStructure[currentPartIndex];
+    if (!cs) return true;
+    const section = cs.sections?.[currentSectionIndex];
+    if (!section) return true;
+    const partKey = cs.part.key;
+    const sectionKey = section.key;
+    const sectionValues = formValues[partKey]?.[sectionKey] || {};
+    const newErrors: any = {};
+    let hasErrors = false;
+
+    section.subSections.forEach((subSection) => {
+      const subSectionValues = sectionValues[subSection.key] || [{}];
+      subSectionValues.forEach((instanceValues: any, index: number) => {
+        const visibleFields = subSection.fields.filter((f) => {
+          const eduLevel = instanceValues?.educationLevel;
+          const board = instanceValues?.board;
+          if (f.key === 'board' || f.key === 'boardFullName') {
+            if (eduLevel !== 'secondary_school' && eduLevel !== 'higher_secondary_school') return false;
+          }
+          if (f.key === 'boardFullName') {
+            if (board !== 'State Board' && board !== 'Other') return false;
+          }
+          if (f.key === 'fieldOfStudy' && eduLevel === 'secondary_school') return false;
+          return true;
+        });
+        visibleFields.forEach((field) => {
+          if (field.required) {
+            const value = instanceValues?.[field.key];
+            if (!value || (typeof value === 'string' && value.trim() === '')) {
+              if (!newErrors[subSection.key]) newErrors[subSection.key] = [];
+              if (!newErrors[subSection.key][index]) newErrors[subSection.key][index] = {};
+              newErrors[subSection.key][index][field.key] = `${field.label} is required`;
+              hasErrors = true;
+            }
+          }
+        });
+      });
+    });
+
+    setErrors(newErrors);
+    return !hasErrors;
+  };
+
   const handleSaveSection = async () => {
     const cs = formStructure[currentPartIndex];
     if (!cs) return;
+
+    if (!validateCurrentSection()) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+
     setSaving(true);
     try {
       const token = localStorage.getItem('token');
@@ -562,7 +630,7 @@ export default function EduplanCoachStudentFormEditPage() {
                 ))}
                 <button onClick={() => router.push(`/eduplan-coach/students/${studentId}/registration/${registrationId}/activity`)}
                   className="flex-1 flex items-center justify-center gap-1.5 px-4 py-4 text-sm font-semibold transition-colors border-b-2 border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                  Student Activity
+                  Activity Management
                 </button>
               </div>
             </div>
@@ -642,7 +710,6 @@ export default function EduplanCoachStudentFormEditPage() {
                       <div className="flex items-center gap-2">
                         <button onClick={handleBrainographyView} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">View</button>
                         <button onClick={handleBrainographyDownload} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">Download</button>
-                        <button onClick={handleBrainographyDelete} className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-xs font-medium">Delete</button>
                         <label className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium cursor-pointer">
                           Re-upload
                           <input ref={fileInputRef} type="file" className="hidden" onChange={handleBrainographyUpload} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
@@ -675,10 +742,12 @@ export default function EduplanCoachStudentFormEditPage() {
               {brainographyDoc && (
                 <div className="mb-6">
                   {!brainographyData ? (
-                    <div className="bg-white rounded-xl shadow-sm border border-amber-200 p-6 text-center">
-                      <p className="text-gray-600 mb-3">Brainography data not yet extracted</p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
+                      <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                      <p className="text-sm font-medium text-blue-800">AI is extracting data from brainography report...</p>
+                      <p className="text-xs text-blue-600 mt-1">This may take a minute. Please wait.</p>
                       {extractProgress && (
-                        <div className="mb-4 max-w-md mx-auto">
+                        <div className="mt-4 max-w-md mx-auto">
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-xs font-medium text-blue-800">{extractProgress.step}</span>
                             <span className="text-xs font-bold text-blue-700">{extractProgress.pct}%</span>
@@ -688,9 +757,6 @@ export default function EduplanCoachStudentFormEditPage() {
                           </div>
                         </div>
                       )}
-                      <button onClick={handleExtractData} disabled={extracting} className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${extracting ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'}`}>
-                        {extracting ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>Extracting with AI...</>) : 'Extract Data from PDF'}
-                      </button>
                     </div>
                   ) : (
                     <BrainographyDataDisplay data={brainographyData} canEdit onUpdate={handleUpdateBrainographyMeta} />
@@ -698,13 +764,7 @@ export default function EduplanCoachStudentFormEditPage() {
                 </div>
               )}
 
-              {brainographyData && brainographyDoc && (
-                <div className="mb-6 flex justify-end">
-                  <button onClick={handleExtractData} disabled={extracting} className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
-                    {extracting ? 'Re-extracting...' : 'Re-extract Data'}
-                  </button>
-                </div>
-              )}
+
             </>
           )}
 
@@ -761,6 +821,7 @@ export default function EduplanCoachStudentFormEditPage() {
                       readOnlyKeys={currentPart.key === 'PROFILE' && currentSection.title === 'Personal Details' ? ['firstName', 'middleName', 'lastName'] : undefined}
                       noDelete={isParentalSection}
                       readOnlyInstances={isParentalSection ? parentalReadOnlyInstances : []}
+                      errors={errors}
                     />
                     );
                   })()}

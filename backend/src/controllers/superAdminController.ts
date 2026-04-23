@@ -5,6 +5,7 @@ import Ops from "../models/Ops";
 import IvyExpert from "../models/IvyExpert";
 import EduplanCoach from "../models/EduplanCoach";
 import Admin from "../models/Admin";
+import Advisor from "../models/Advisor";
 import Counselor from "../models/Counselor";
 import Lead, { LEAD_STAGE } from "../models/Lead";
 import Student from "../models/Student";
@@ -15,6 +16,8 @@ import FollowUp, { FOLLOWUP_STATUS } from "../models/FollowUp";
 import ServiceProvider from "../models/ServiceProvider";
 import Parent from "../models/Parent";
 import StudentFormAnswer from "../models/StudentFormAnswer";
+import B2BSales from "../models/B2BSales";
+import B2BOps from "../models/B2BOps";
 import { generateSlug, getUniqueSlug } from "./leadController";
 // import { sendEmail } from "../utils/email";
 
@@ -91,6 +94,23 @@ export const getAllUsers = async (req: Request, res: Response): Promise<Response
             if (spProfile) {
               userObj.companyName = spProfile.companyName;
               userObj.companyLogo = spProfile.companyLogo;
+            }
+          }
+          return userObj;
+        })
+      );
+    }
+
+    // If filtering by ADVISOR role, include advisor profile data
+    if (role && String(role).toUpperCase() === 'ADVISOR') {
+      enrichedUsers = await Promise.all(
+        users.map(async (user: any) => {
+          const userObj = user.toObject();
+          if (userObj.role === USER_ROLE.ADVISOR) {
+            const advisorProfile = await Advisor.findOne({ userId: user._id }).select('companyName companyLogo');
+            if (advisorProfile) {
+              userObj.companyName = advisorProfile.companyName;
+              userObj.companyLogo = advisorProfile.companyLogo;
             }
           }
           return userObj;
@@ -597,7 +617,6 @@ export const createOps = async (req: Request, res: Response): Promise<Response> 
     return res.status(500).json({
       success: false,
       message: "Error creating ops",
-      error: error.message,
     });
   }
 };
@@ -608,7 +627,7 @@ export const createOps = async (req: Request, res: Response): Promise<Response> 
 export const getAllOps = async (_req: Request, res: Response): Promise<Response> => {
   try {
     const ops = await Ops.find()
-      .populate('userId', 'firstName middleName lastName email isActive')
+      .populate('userId', 'firstName middleName lastName email profilePicture isActive')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -628,7 +647,6 @@ export const getAllOps = async (_req: Request, res: Response): Promise<Response>
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch ops',
-      error: error.message,
     });
   }
 };
@@ -639,7 +657,7 @@ export const getAllOps = async (_req: Request, res: Response): Promise<Response>
 export const getAllIvyExperts = async (_req: Request, res: Response): Promise<Response> => {
   try {
     const ivyExperts = await IvyExpert.find()
-      .populate('userId', 'firstName middleName lastName email isActive')
+      .populate('userId', 'firstName middleName lastName email profilePicture isActive')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -659,7 +677,6 @@ export const getAllIvyExperts = async (_req: Request, res: Response): Promise<Re
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch ivy experts',
-      error: error.message,
     });
   }
 };
@@ -705,7 +722,7 @@ export const getIvyExpertTeamMeetsForSuperAdmin = async (req: Request, res: Resp
     });
   } catch (error: any) {
     console.error('Get Ivy Expert team meets for super admin error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch Ivy Expert team meets', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch Ivy Expert team meets' });
   }
 };
 
@@ -715,7 +732,7 @@ export const getIvyExpertTeamMeetsForSuperAdmin = async (req: Request, res: Resp
 export const getAllEduplanCoaches = async (_req: Request, res: Response): Promise<Response> => {
   try {
     const eduplanCoaches = await EduplanCoach.find()
-      .populate('userId', 'firstName middleName lastName email isActive')
+      .populate('userId', 'firstName middleName lastName email profilePicture isActive')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -735,7 +752,6 @@ export const getAllEduplanCoaches = async (_req: Request, res: Response): Promis
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch eduplan coaches',
-      error: error.message,
     });
   }
 };
@@ -817,7 +833,6 @@ export const createAdmin = async (req: Request, res: Response): Promise<Response
     return res.status(500).json({
       success: false,
       message: 'Failed to create admin',
-      error: error.message,
     });
   }
 };
@@ -831,6 +846,14 @@ export const getAdmins = async (_req: Request, res: Response): Promise<Response>
       .select('_id firstName middleName lastName email')
       .sort({ lastName: 1 });
 
+    // Enrich with companyName from Admin model
+    const adminProfiles = await Admin.find({ userId: { $in: admins.map(a => a._id) } })
+      .select('userId companyName');
+    const companyMap: Record<string, string> = {};
+    adminProfiles.forEach((ap: any) => {
+      companyMap[ap.userId.toString()] = ap.companyName;
+    });
+
     return res.status(200).json({
       success: true,
       data: {
@@ -840,6 +863,7 @@ export const getAdmins = async (_req: Request, res: Response): Promise<Response>
           middleName: admin.middleName,
           lastName: admin.lastName,
           email: admin.email,
+          companyName: companyMap[admin._id.toString()] || undefined,
         })),
       },
     });
@@ -848,7 +872,6 @@ export const getAdmins = async (_req: Request, res: Response): Promise<Response>
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch admins',
-      error: error.message,
     });
   }
 };
@@ -899,7 +922,6 @@ export const getAdminDetails = async (req: Request, res: Response): Promise<Resp
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch admin details',
-      error: error.message,
     });
   }
 };
@@ -910,7 +932,9 @@ export const getAdminDetails = async (req: Request, res: Response): Promise<Resp
  */
 export const createUserByRole = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { firstName, middleName, lastName, email, phoneNumber, role, adminId, customSlug, companyName, address } = req.body;
+    const { firstName, middleName, lastName, email, role, adminId, customSlug, companyName, address } = req.body;
+    // Accept both phoneNumber (FormData path) and mobileNumber (JSON path)
+    const phoneNumber: string | undefined = req.body.phoneNumber || req.body.mobileNumber;
     const companyLogo = (req as any).file ? `/uploads/admin/${(req as any).file.filename}` : undefined;
 
     // Validation
@@ -945,6 +969,30 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
       });
     }
 
+    // For ADVISOR role, companyName and allowedServices are required
+    if (role === USER_ROLE.ADVISOR && !companyName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Company name is required for Advisor creation',
+      });
+    }
+
+    if (role === USER_ROLE.ADVISOR) {
+      let allowedServices = req.body.allowedServices;
+      // FormData sends arrays as JSON strings — parse if needed
+      if (typeof allowedServices === 'string') {
+        try { allowedServices = JSON.parse(allowedServices); } catch { allowedServices = null; }
+      }
+      if (!allowedServices || !Array.isArray(allowedServices) || allowedServices.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'At least one allowed service is required for Advisor creation',
+        });
+      }
+      // Store parsed array back for later use
+      req.body.allowedServices = allowedServices;
+    }
+
     // Validate role is allowed
     const allowedRoles = [
       USER_ROLE.ADMIN,
@@ -952,6 +1000,9 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
       USER_ROLE.EDUPLAN_COACH,
       USER_ROLE.IVY_EXPERT,
       USER_ROLE.COUNSELOR,
+      USER_ROLE.ADVISOR,
+      USER_ROLE.B2B_SALES,
+      USER_ROLE.B2B_OPS,
     ];
 
     if (!allowedRoles.includes(role as USER_ROLE)) {
@@ -1001,6 +1052,12 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
     });
 
     await newUser.save();
+
+    // Set company logo as profile picture for admin/advisor roles
+    if (companyLogo && (role === USER_ROLE.ADMIN || role === USER_ROLE.ADVISOR)) {
+      newUser.profilePicture = companyLogo;
+      await newUser.save();
+    }
 
     let enquiryFormSlug: string | undefined;
 
@@ -1071,6 +1128,53 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
       await newCounselor.save();
     }
 
+    // If creating ADVISOR role, create Advisor profile with slug and allowedServices
+    if (role === USER_ROLE.ADVISOR) {
+      const { allowedServices } = req.body;
+      let baseSlug: string;
+      if (customSlug) {
+        baseSlug = generateSlug(customSlug);
+      } else if (companyName) {
+        baseSlug = generateSlug(companyName);
+      } else {
+        const fullName = [firstName, middleName, lastName].filter(Boolean).join(' ');
+        baseSlug = generateSlug(fullName);
+      }
+      enquiryFormSlug = await getUniqueSlug(baseSlug);
+
+      const newAdvisor = new Advisor({
+        userId: newUser._id,
+        email: email.toLowerCase().trim(),
+        mobileNumber: phoneNumber?.trim() || undefined,
+        companyName: companyName.trim(),
+        companyLogo: companyLogo || undefined,
+        address: address?.trim() || undefined,
+        enquiryFormSlug: enquiryFormSlug,
+        allowedServices: allowedServices,
+      });
+      await newAdvisor.save();
+    }
+
+    // If creating B2B_SALES role, create B2BSales profile
+    if (role === USER_ROLE.B2B_SALES) {
+      const newB2BSales = new B2BSales({
+        userId: newUser._id,
+        email: email.toLowerCase().trim(),
+        mobileNumber: phoneNumber?.trim() || undefined,
+      });
+      await newB2BSales.save();
+    }
+
+    // If creating B2B_OPS role, create B2BOps profile
+    if (role === USER_ROLE.B2B_OPS) {
+      const newB2BOps = new B2BOps({
+        userId: newUser._id,
+        email: email.toLowerCase().trim(),
+        mobileNumber: phoneNumber?.trim() || undefined,
+      });
+      await newB2BOps.save();
+    }
+
     return res.status(201).json({
       success: true,
       message: `${role.replace(/_/g, ' ')} created successfully. They can log in using OTP.`,
@@ -1091,7 +1195,6 @@ export const createUserByRole = async (req: Request, res: Response): Promise<Res
     return res.status(500).json({
       success: false,
       message: 'Failed to create user',
-      error: error.message,
     });
   }
 };
@@ -1149,12 +1252,13 @@ export const getAdminDashboardStats = async (req: Request, res: Response): Promi
           companyLogo: adminProfile.companyLogo,
           address: adminProfile.address,
           mobileNumber: adminProfile.mobileNumber,
+          b2bLeadId: adminProfile.b2bLeadId,
         },
       },
     });
   } catch (error: any) {
     console.error('Get admin dashboard stats error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch admin dashboard stats', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch admin dashboard stats' });
   }
 };
 
@@ -1171,7 +1275,7 @@ export const getAdminCounselorsForSuperAdmin = async (req: Request, res: Respons
     }
 
     const counselors = await Counselor.find({ adminId: adminId })
-      .populate('userId', 'firstName middleName lastName name email isActive isVerified')
+      .populate('userId', 'firstName middleName lastName name email profilePicture isActive isVerified')
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -1188,7 +1292,7 @@ export const getAdminCounselorsForSuperAdmin = async (req: Request, res: Respons
     });
   } catch (error: any) {
     console.error('Get admin counselors error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch admin counselors', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch admin counselors' });
   }
 };
 
@@ -1246,7 +1350,7 @@ export const getAdminLeadsForSuperAdmin = async (req: Request, res: Response): P
     });
   } catch (error: any) {
     console.error('Get admin leads error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch admin leads', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch admin leads' });
   }
 };
 
@@ -1268,7 +1372,7 @@ export const getAdminStudentsForSuperAdmin = async (req: Request, res: Response)
     }
 
     const students = await Student.find({ adminId: adminProfile._id })
-      .populate('userId', 'firstName middleName lastName email isVerified isActive createdAt')
+      .populate('userId', 'firstName middleName lastName email profilePicture isVerified isActive createdAt')
       .populate({
         path: 'adminId',
         populate: { path: 'userId', select: 'firstName middleName lastName email' }
@@ -1324,7 +1428,7 @@ export const getAdminStudentsForSuperAdmin = async (req: Request, res: Response)
     });
   } catch (error: any) {
     console.error('Get admin students error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch admin students', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch admin students' });
   }
 };
 
@@ -1369,7 +1473,7 @@ export const getAdminTeamMeetsForSuperAdmin = async (req: Request, res: Response
     });
   } catch (error: any) {
     console.error('Get admin team meets error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch admin team meets', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch admin team meets' });
   }
 };
 
@@ -1440,7 +1544,7 @@ export const getAllLeadsForSuperAdmin = async (req: Request, res: Response): Pro
     });
   } catch (error: any) {
     console.error('Get all leads for super admin error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch leads', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch leads' });
   }
 };
 
@@ -1455,11 +1559,11 @@ export const getCounselorDetailForSuperAdmin = async (req: Request, res: Respons
 
     // Find counselor by _id first, then fallback to userId
     let counselor = await Counselor.findById(counselorId)
-      .populate('userId', 'firstName middleName lastName name email isActive isVerified');
+      .populate('userId', 'firstName middleName lastName name email profilePicture isActive isVerified');
 
     if (!counselor) {
       counselor = await Counselor.findOne({ userId: counselorId })
-        .populate('userId', 'firstName middleName lastName name email isActive isVerified');
+        .populate('userId', 'firstName middleName lastName name email profilePicture isActive isVerified');
     }
 
     if (!counselor) {
@@ -1491,7 +1595,7 @@ export const getCounselorDetailForSuperAdmin = async (req: Request, res: Respons
     });
   } catch (error: any) {
     console.error('Get counselor detail for super admin error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch counselor detail', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch counselor detail' });
   }
 };
 
@@ -1518,7 +1622,7 @@ export const getCounselorFollowUpsForSuperAdmin = async (req: Request, res: Resp
     return res.status(200).json({ success: true, data: { followUps } });
   } catch (error: any) {
     console.error('Get counselor follow-ups for super admin error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch counselor follow-ups', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch counselor follow-ups' });
   }
 };
 
@@ -1583,7 +1687,7 @@ export const getCounselorFollowUpSummaryForSuperAdmin = async (req: Request, res
     });
   } catch (error: any) {
     console.error('Get counselor follow-up summary for super admin error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch follow-up summary', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch follow-up summary' });
   }
 };
 
@@ -1616,7 +1720,7 @@ export const getCounselorTeamMeetsForSuperAdmin = async (req: Request, res: Resp
     return res.status(200).json({ success: true, data: { teamMeets } });
   } catch (error: any) {
     console.error('Get counselor team meets for super admin error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch counselor team meets', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch counselor team meets' });
   }
 };
 
@@ -1629,7 +1733,7 @@ export const getOpsDetailForSuperAdmin = async (req: Request, res: Response): Pr
   try {
     const { opsUserId } = req.params;
 
-    const opsUser = await User.findById(opsUserId).select('-password');
+    const opsUser = await User.findById(opsUserId).select('-password -emailVerificationToken -passwordResetToken');
     if (!opsUser || opsUser.role !== USER_ROLE.OPS) {
       return res.status(404).json({ success: false, message: 'OPS user not found' });
     }
@@ -1647,7 +1751,7 @@ export const getOpsDetailForSuperAdmin = async (req: Request, res: Response): Pr
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: 'Failed to fetch ops details', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch ops details' });
   }
 };
 
@@ -1680,7 +1784,7 @@ export const getOpsSchedulesForSuperAdmin = async (req: Request, res: Response):
       data: { schedules },
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: 'Failed to fetch ops schedules', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch ops schedules' });
   }
 };
 
@@ -1752,7 +1856,7 @@ export const getOpsScheduleSummaryForSuperAdmin = async (req: Request, res: Resp
       data: { today, missed, tomorrow, counts },
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: 'Failed to fetch ops schedule summary', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch ops schedule summary' });
   }
 };
 
@@ -1782,7 +1886,7 @@ export const getOpsStudentsForSuperAdmin = async (req: Request, res: Response): 
     })
       .populate({
         path: 'userId',
-        select: 'firstName middleName lastName email isActive isVerified createdAt',
+        select: 'firstName middleName lastName email profilePicture isActive isVerified createdAt',
       })
       .populate({
         path: 'adminId',
@@ -1821,7 +1925,7 @@ export const getOpsStudentsForSuperAdmin = async (req: Request, res: Response): 
       data: { students: studentsWithServices },
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: 'Failed to fetch ops students', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch ops students' });
   }
 };
 
@@ -1866,7 +1970,7 @@ export const getOpsTeamMeetsForSuperAdmin = async (req: Request, res: Response):
     });
   } catch (error: any) {
     console.error('Get OPS team meets for super admin error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch OPS team meets', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch OPS team meets' });
   }
 };
 
@@ -1909,7 +2013,6 @@ export const getServiceProviderDetail = async (req: Request, res: Response): Pro
     return res.status(500).json({
       success: false,
       message: "Failed to fetch service provider details",
-      error: error.message,
     });
   }
 };
@@ -1923,7 +2026,7 @@ export const getEduplanCoachDetailForSuperAdmin = async (req: Request, res: Resp
   try {
     const { coachUserId } = req.params;
 
-    const coachUser = await User.findById(coachUserId).select('-password');
+    const coachUser = await User.findById(coachUserId).select('-password -emailVerificationToken -passwordResetToken');
     if (!coachUser || coachUser.role !== USER_ROLE.EDUPLAN_COACH) {
       return res.status(404).json({ success: false, message: 'Eduplan Coach user not found' });
     }
@@ -1941,7 +2044,7 @@ export const getEduplanCoachDetailForSuperAdmin = async (req: Request, res: Resp
       },
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: 'Failed to fetch eduplan coach details', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch eduplan coach details' });
   }
 };
 
@@ -2011,7 +2114,7 @@ export const getEduplanCoachStudentsForSuperAdmin = async (req: Request, res: Re
       data: { students: studentsWithServices },
     });
   } catch (error: any) {
-    return res.status(500).json({ success: false, message: 'Failed to fetch eduplan coach students', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch eduplan coach students' });
   }
 };
 
@@ -2056,7 +2159,7 @@ export const getEduplanCoachTeamMeetsForSuperAdmin = async (req: Request, res: R
     });
   } catch (error: any) {
     console.error('Get eduplan coach team meets for super admin error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch eduplan coach team meets', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch eduplan coach team meets' });
   }
 };
 
@@ -2176,6 +2279,12 @@ export const editUserByRole = async (req: Request, res: Response): Promise<Respo
       if (body.companyName !== undefined) adminUpdate.companyName = body.companyName.trim();
       if (body.address !== undefined) adminUpdate.address = body.address.trim();
       if (body.enquiryFormSlug !== undefined) adminUpdate.enquiryFormSlug = body.enquiryFormSlug.toLowerCase().trim();
+      // Handle company logo upload
+      if ((req as any).file) {
+        const logoPath = `/uploads/admin/${(req as any).file.filename}`;
+        adminUpdate.companyLogo = logoPath;
+        await User.findByIdAndUpdate(userId, { profilePicture: logoPath });
+      }
       if (Object.keys(adminUpdate).length > 0) {
         await Admin.findOneAndUpdate({ userId }, adminUpdate, { new: true, runValidators: false });
       }
@@ -2280,6 +2389,46 @@ export const editUserByRole = async (req: Request, res: Response): Promise<Respo
         }
         }
       }
+    } else if (role === USER_ROLE.ADVISOR) {
+      const advisorUpdate: any = {};
+      if (email !== undefined) advisorUpdate.email = email.toLowerCase().trim();
+      if (mobileNumber !== undefined) advisorUpdate.mobileNumber = mobileNumber.trim();
+      if (body.companyName !== undefined) advisorUpdate.companyName = body.companyName.trim();
+      if (body.address !== undefined) advisorUpdate.address = body.address.trim();
+      if (body.enquiryFormSlug !== undefined) advisorUpdate.enquiryFormSlug = body.enquiryFormSlug.toLowerCase().trim();
+      if (body.allowedServices !== undefined) {
+        let services = body.allowedServices;
+        if (typeof services === 'string') {
+          try { services = JSON.parse(services); } catch { services = null; }
+        }
+        if (Array.isArray(services) && services.length > 0) {
+          advisorUpdate.allowedServices = services;
+        }
+      }
+      // Handle company logo upload
+      if ((req as any).file) {
+        const logoPath = `/uploads/admin/${(req as any).file.filename}`;
+        advisorUpdate.companyLogo = logoPath;
+        // Also update user profile picture
+        await User.findByIdAndUpdate(userId, { profilePicture: logoPath });
+      }
+      if (Object.keys(advisorUpdate).length > 0) {
+        await Advisor.findOneAndUpdate({ userId }, advisorUpdate, { new: true, runValidators: false });
+      }
+    } else if (role === USER_ROLE.B2B_SALES) {
+      const profileUpdate: any = {};
+      if (email !== undefined) profileUpdate.email = email.toLowerCase().trim();
+      if (mobileNumber !== undefined) profileUpdate.mobileNumber = mobileNumber.trim();
+      if (Object.keys(profileUpdate).length > 0) {
+        await B2BSales.findOneAndUpdate({ userId }, profileUpdate, { new: true, runValidators: false });
+      }
+    } else if (role === USER_ROLE.B2B_OPS) {
+      const profileUpdate: any = {};
+      if (email !== undefined) profileUpdate.email = email.toLowerCase().trim();
+      if (mobileNumber !== undefined) profileUpdate.mobileNumber = mobileNumber.trim();
+      if (Object.keys(profileUpdate).length > 0) {
+        await B2BOps.findOneAndUpdate({ userId }, profileUpdate, { new: true, runValidators: false });
+      }
     }
 
     // Fetch updated user
@@ -2295,7 +2444,7 @@ export const editUserByRole = async (req: Request, res: Response): Promise<Respo
     if (error.code === 11000) {
       return res.status(400).json({ success: false, message: 'Email already exists in role profile' });
     }
-    return res.status(500).json({ success: false, message: 'Failed to update user', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to update user' });
   }
 };
 
@@ -2329,8 +2478,14 @@ export const getUserWithProfile = async (req: Request, res: Response): Promise<R
       }
     } else if (role === USER_ROLE.ADMIN) {
       profile = await Admin.findOne({ userId });
+    } else if (role === USER_ROLE.ADVISOR) {
+      profile = await Advisor.findOne({ userId });
     } else if (role === USER_ROLE.SERVICE_PROVIDER) {
       profile = await ServiceProvider.findOne({ userId });
+    } else if (role === USER_ROLE.B2B_SALES) {
+      profile = await B2BSales.findOne({ userId });
+    } else if (role === USER_ROLE.B2B_OPS) {
+      profile = await B2BOps.findOne({ userId });
     }
 
     return res.status(200).json({
@@ -2339,6 +2494,379 @@ export const getUserWithProfile = async (req: Request, res: Response): Promise<R
     });
   } catch (error: any) {
     console.error('Get user with profile error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to fetch user profile', error: error.message });
+    return res.status(500).json({ success: false, message: 'Failed to fetch user profile' });
+  }
+};
+
+/**
+ * Get all advisories (Super Admin)
+ */
+export const getAdvisors = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const advisors = await Advisor.find()
+      .populate('userId', 'firstName middleName lastName email role isActive')
+      .sort({ createdAt: -1 });
+
+    // Get lead and student counts for each advisor
+    const data = await Promise.all(
+      advisors.map(async (advisor) => {
+        const [leadCount, studentCount] = await Promise.all([
+          Lead.countDocuments({ advisorId: advisor._id }),
+          Student.countDocuments({ advisorId: advisor._id }),
+        ]);
+        return {
+          ...advisor.toObject(),
+          leadCount,
+          studentCount,
+        };
+      })
+    );
+
+    return res.status(200).json({ success: true, data });
+  } catch (error: any) {
+    console.error('Get advisors error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch advisors' });
+  }
+};
+
+/**
+ * Get advisor details (Super Admin)
+ */
+export const getAdvisorDetails = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { id } = req.params;
+
+    const advisor = await Advisor.findById(id)
+      .populate('userId', 'firstName middleName lastName email role isActive');
+
+    if (!advisor) {
+      return res.status(404).json({ success: false, message: 'Advisor not found' });
+    }
+
+    const [leadCount, studentCount, transferCount] = await Promise.all([
+      Lead.countDocuments({ advisorId: advisor._id }),
+      Student.countDocuments({ advisorId: advisor._id }),
+      (await import('../models/StudentTransfer')).default.countDocuments({ fromAdvisorId: advisor._id }),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        ...advisor.toObject(),
+        leadCount,
+        studentCount,
+        transferCount,
+      },
+    });
+  } catch (error: any) {
+    console.error('Get advisor details error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch advisor details' });
+  }
+};
+
+/**
+ * Update advisor allowed services (Super Admin)
+ */
+export const updateAdvisorServices = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { id } = req.params;
+    let allowedServices = req.body.allowedServices;
+
+    // FormData sends arrays as JSON strings — parse if needed
+    if (typeof allowedServices === 'string') {
+      try { allowedServices = JSON.parse(allowedServices); } catch { allowedServices = null; }
+    }
+
+    if (!allowedServices || !Array.isArray(allowedServices) || allowedServices.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one allowed service is required',
+      });
+    }
+
+    const advisor = await Advisor.findByIdAndUpdate(
+      id,
+      { allowedServices },
+      { new: true }
+    ).populate('userId', 'firstName middleName lastName email role isActive');
+
+    if (!advisor) {
+      return res.status(404).json({ success: false, message: 'Advisor not found' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Advisor services updated successfully',
+      data: advisor,
+    });
+  } catch (error: any) {
+    console.error('Update advisor services error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update advisor services' });
+  }
+};
+
+/**
+ * Toggle advisor active status (Super Admin)
+ */
+export const toggleAdvisorStatus = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { id } = req.params;
+
+    const advisor = await Advisor.findById(id);
+    if (!advisor) {
+      return res.status(404).json({ success: false, message: 'Advisor not found' });
+    }
+
+    advisor.isActive = !advisor.isActive;
+    await advisor.save();
+
+    // Also toggle the user's isActive status
+    await User.findByIdAndUpdate(advisor.userId, { isActive: advisor.isActive });
+
+    return res.status(200).json({
+      success: true,
+      message: `Advisor ${advisor.isActive ? 'activated' : 'deactivated'} successfully`,
+      data: advisor,
+    });
+  } catch (error: any) {
+    console.error('Toggle advisor status error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to toggle advisor status' });
+  }
+};
+
+// ============= ADVISOR DASHBOARD/LEADS/STUDENTS/TEAM-MEETS =============
+
+/**
+ * Get advisor dashboard stats (for super admin)
+ */
+export const getAdvisorDashboardStats = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { advisorId } = req.params;
+
+    const advisorUser = await User.findOne({ _id: advisorId, role: USER_ROLE.ADVISOR });
+    if (!advisorUser) {
+      return res.status(404).json({ success: false, message: 'Advisor not found' });
+    }
+
+    const advisorProfile = await Advisor.findOne({ userId: advisorId });
+    if (!advisorProfile) {
+      return res.status(404).json({ success: false, message: 'Advisor profile not found' });
+    }
+
+    // Get lead stats — Lead.advisorId references Advisor._id, not User._id
+    const allLeads = await Lead.find({ advisorId: advisorProfile._id });
+    const totalLeads = allLeads.length;
+    const newLeads = allLeads.filter((l) => l.stage === LEAD_STAGE.NEW).length;
+
+    // Get student count
+    const totalStudents = await Student.countDocuments({ advisorId: advisorProfile._id });
+
+    // Enquiry form URL
+    const enquiryFormUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/enquiry/${advisorProfile.enquiryFormSlug}`;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        totalLeads,
+        newLeads,
+        totalStudents,
+        enquiryFormUrl,
+        enquiryFormSlug: advisorProfile.enquiryFormSlug,
+        allowedServices: advisorProfile.allowedServices,
+        advisor: {
+          _id: advisorUser._id,
+          firstName: advisorUser.firstName,
+          middleName: advisorUser.middleName,
+          lastName: advisorUser.lastName,
+          email: advisorUser.email,
+          isActive: advisorUser.isActive,
+          isVerified: advisorUser.isVerified,
+          companyName: advisorProfile.companyName,
+          companyLogo: advisorProfile.companyLogo,
+          address: advisorProfile.address,
+          mobileNumber: advisorProfile.mobileNumber,
+          b2bLeadId: advisorProfile.b2bLeadId,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Get advisor dashboard stats error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch advisor dashboard stats' });
+  }
+};
+
+/**
+ * Get leads under a specific advisor (for super admin)
+ */
+export const getAdvisorLeadsForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { advisorId } = req.params;
+    const { stage, serviceTypes, search } = req.query;
+
+    const advisorUser = await User.findOne({ _id: advisorId, role: USER_ROLE.ADVISOR });
+    if (!advisorUser) {
+      return res.status(404).json({ success: false, message: 'Advisor not found' });
+    }
+
+    // Lead.advisorId references Advisor._id, not User._id
+    const advisorProfile = await Advisor.findOne({ userId: advisorUser._id });
+    if (!advisorProfile) {
+      return res.status(404).json({ success: false, message: 'Advisor profile not found' });
+    }
+
+    const filter: any = { advisorId: advisorProfile._id };
+
+    if (stage) filter.stage = stage;
+    if (serviceTypes) filter.serviceTypes = { $in: [serviceTypes] };
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { mobileNumber: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const leads = await Lead.find(filter)
+      .populate({
+        path: "assignedCounselorId",
+        populate: { path: "userId", select: "firstName middleName lastName email" }
+      })
+      .sort({ createdAt: -1 });
+
+    // Get stats
+    const allLeads = await Lead.find({ advisorId: advisorProfile._id });
+    const stats = {
+      total: allLeads.length,
+      new: allLeads.filter((l) => l.stage === LEAD_STAGE.NEW).length,
+      hot: allLeads.filter((l) => l.stage === LEAD_STAGE.HOT).length,
+      warm: allLeads.filter((l) => l.stage === LEAD_STAGE.WARM).length,
+      cold: allLeads.filter((l) => l.stage === LEAD_STAGE.COLD).length,
+      converted: allLeads.filter((l) => l.stage === LEAD_STAGE.CONVERTED).length,
+      closed: allLeads.filter((l) => l.stage === LEAD_STAGE.CLOSED).length,
+      unassigned: allLeads.filter((l) => !l.assignedCounselorId).length,
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: { leads, stats },
+    });
+  } catch (error: any) {
+    console.error('Get advisor leads error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch advisor leads' });
+  }
+};
+
+/**
+ * Get students under a specific advisor (for super admin)
+ */
+export const getAdvisorStudentsForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { advisorId } = req.params;
+
+    const advisorUser = await User.findOne({ _id: advisorId, role: USER_ROLE.ADVISOR });
+    if (!advisorUser) {
+      return res.status(404).json({ success: false, message: 'Advisor not found' });
+    }
+
+    const advisorProfile = await Advisor.findOne({ userId: advisorId });
+    if (!advisorProfile) {
+      return res.status(404).json({ success: false, message: 'Advisor profile not found' });
+    }
+
+    const students = await Student.find({ advisorId: advisorProfile._id })
+      .populate('userId', 'firstName middleName lastName email profilePicture isVerified isActive createdAt')
+      .populate({
+        path: 'advisorId',
+        populate: { path: 'userId', select: 'firstName middleName lastName email' }
+      })
+      .sort({ createdAt: -1 });
+
+    const studentsWithStats = await Promise.all(
+      students.map(async (student: any) => {
+        const registrations = await StudentServiceRegistration.find({
+          studentId: student._id,
+        }).populate('serviceId', 'name');
+
+        const serviceNames = registrations
+          .map((r: any) => r.serviceId?.name)
+          .filter(Boolean);
+
+        const conversion = await LeadStudentConversion.findOne({
+          studentId: student.userId?._id,
+        }).populate('leadId', 'name email mobileNumber');
+
+        return {
+          _id: student._id,
+          user: student.userId,
+          mobileNumber: student.mobileNumber,
+          advisorId: student.advisorId,
+          registrationCount: registrations.length,
+          serviceNames,
+          createdAt: student.createdAt,
+          convertedFromLead: conversion?.leadId || null,
+        };
+      })
+    );
+
+    const activeStudents = studentsWithStats.filter((s: any) => s.user?.isActive).length;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        students: studentsWithStats,
+        stats: {
+          total: studentsWithStats.length,
+          active: activeStudents,
+        },
+      },
+    });
+  } catch (error: any) {
+    console.error('Get advisor students error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch advisor students' });
+  }
+};
+
+/**
+ * Get team meets for a specific advisor (for super admin - read only)
+ */
+export const getAdvisorTeamMeetsForSuperAdmin = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { advisorId } = req.params;
+    const { month, year } = req.query;
+
+    const advisorUser = await User.findOne({ _id: advisorId, role: USER_ROLE.ADVISOR });
+    if (!advisorUser) {
+      return res.status(404).json({ success: false, message: 'Advisor not found' });
+    }
+
+    let startDate: Date;
+    let endDate: Date;
+
+    if (month && year) {
+      const monthNum = parseInt(month as string);
+      const yearNum = parseInt(year as string);
+      startDate = new Date(yearNum, monthNum - 1, -6);
+      endDate = new Date(yearNum, monthNum, 7, 23, 59, 59, 999);
+    } else {
+      const now = new Date();
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0, 23, 59, 59, 999);
+    }
+
+    const teamMeets = await TeamMeet.find({
+      $or: [{ requestedBy: advisorId }, { requestedTo: advisorId }],
+      scheduledDate: { $gte: startDate, $lte: endDate },
+    })
+      .populate("requestedBy", "firstName middleName lastName email role")
+      .populate("requestedTo", "firstName middleName lastName email role")
+      .sort({ scheduledDate: 1, scheduledTime: 1 });
+
+    return res.status(200).json({
+      success: true,
+      data: { teamMeets },
+    });
+  } catch (error: any) {
+    console.error('Get advisor team meets error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch advisor team meets' });
   }
 };
