@@ -1022,6 +1022,11 @@ export const paymentAPI = {
   verifyUpgradePayment: (data: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) =>
     api.post('/payments/verify-upgrade', data),
 
+  // Reviewer test payment flow
+  createReviewerOrder: () => api.post('/payments/reviewer/create-order'),
+  verifyReviewerPayment: (data: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) =>
+    api.post('/payments/reviewer/verify', data),
+
   // Read operations
   getPaymentsByRegistration: (registrationId: string) => api.get(`/payments/registration/${registrationId}`),
   getPaymentsByStudent: (studentId: string) => api.get(`/payments/student/${studentId}`),

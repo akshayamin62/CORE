@@ -1,5 +1,6 @@
 ﻿import Link from 'next/link';
 import type { Metadata } from 'next';
+import PolicyHomeLink from '@/components/PolicyHomeLink';
 
 export const metadata: Metadata = {
   title: 'Cookie Policy – CORE by ADMITra',
@@ -13,7 +14,7 @@ export default function CookiePolicyPage() {
       <div className="bg-linear-to-br from-gray-900 via-amber-950 to-gray-900 text-white py-16 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-2 text-amber-400 text-sm mb-4">
-            <Link href="/" className="hover:text-white transition-colors">Home</Link>
+            <PolicyHomeLink />
             <span>/</span>
             <span>Cookie Policy</span>
           </div>

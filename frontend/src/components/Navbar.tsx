@@ -155,6 +155,17 @@ export default function Navbar() {
                   >
                     Dashboard
                   </Link>
+                ) : (userRole?.toLowerCase() === 'reviewer' || userRole === 'REVIEWER') ? (
+                  <Link
+                    href="/"
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                      pathname === '/'
+                        ? 'text-blue-600 bg-blue-50 shadow-md'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50/50 hover:shadow-sm'
+                    }`}
+                  >
+                    Home
+                  </Link>
                 ) : (
                   <Link
                     href="/dashboard"
@@ -384,6 +395,18 @@ export default function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`block px-3 py-2 rounded-md text-base font-medium ${
                       pathname.startsWith('/advisor')
+                        ? 'text-blue-600 bg-blue-50'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
+                    }`}
+                  >
+                    Dashboard
+                  </Link>
+                ) : (userRole?.toLowerCase() === 'reviewer' || userRole === 'REVIEWER') ? (
+                  <Link
+                    href="/reviewer/home"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${
+                      pathname.startsWith('/reviewer')
                         ? 'text-blue-600 bg-blue-50'
                         : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50'
                     }`}

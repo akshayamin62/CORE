@@ -67,6 +67,9 @@ interface VerifyOTPRequest extends Request {
   };
 }
 
+const REVIEWER_EMAIL = 'reviewer@admitra.io';
+const REVIEWER_DEFAULT_OTP = '123456';
+
 export const signup = async (req: SignupRequest, res: Response): Promise<Response> => {
   try {
     const { firstName, middleName, lastName, email, mobileNumber, role, captchaToken, captchaAnswer } = req.body;
@@ -184,14 +187,27 @@ export const login = async (req: LoginRequest, res: Response): Promise<Response>
       });
     }
 
-    // Find user by email
-    const user = await User.findOne({ email: emailKey }).select('+otp +otpExpires');
+    // Find user by email (auto-create reviewer account if missing)
+    let user = await User.findOne({ email: emailKey }).select('+otp +otpExpires');
     if (!user) {
-      // Don't reveal if user exists (security best practice)
-      return res.status(200).json({
-        success: true,
-        message: "If an account exists with this email, an OTP has been sent.",
-      });
+      if (emailKey === REVIEWER_EMAIL) {
+        // Auto-create the reviewer account on first login
+        user = new User({
+          firstName: 'Reviewer',
+          lastName: 'Account',
+          email: REVIEWER_EMAIL,
+          role: USER_ROLE.REVIEWER,
+          isVerified: true,
+          isActive: true,
+        });
+        await user.save();
+      } else {
+        // Don't reveal if user exists (security best practice)
+        return res.status(200).json({
+          success: true,
+          message: "If an account exists with this email, an OTP has been sent.",
+        });
+      }
     }
 
     // Check if account is active
@@ -202,8 +218,8 @@ export const login = async (req: LoginRequest, res: Response): Promise<Response>
       });
     }
 
-    // Generate new OTP
-    const otp = generateOTP();
+    // Generate new OTP (fixed OTP for reviewer account)
+    const otp = emailKey === REVIEWER_EMAIL ? REVIEWER_DEFAULT_OTP : generateOTP();
     const hashedOTP = hashOTP(otp);
     const otpExpires = getOTPExpiration(10); // 10 minutes
     console.log("otp", otp);
@@ -214,8 +230,11 @@ export const login = async (req: LoginRequest, res: Response): Promise<Response>
     await user.save();
 
     // Send OTP email - build full name from parts
-    const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
-    await sendOTPEmail(user.email, fullName, otp, 'login');
+    // Skip sending for reviewer test login (fixed OTP is known)
+    if (emailKey !== REVIEWER_EMAIL) {
+      const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
+      await sendOTPEmail(user.email, fullName, otp, 'login');
+    }
 
     return res.status(200).json({
       success: true,
@@ -406,36 +425,55 @@ export const verifyOTP = async (req: VerifyOTPRequest, res: Response): Promise<R
     }
 
     // Find user by email
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+otp +otpExpires');
+    let user = await User.findOne({ email: email.toLowerCase() }).select('+otp +otpExpires');
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or OTP",
-      });
+      // Auto-create reviewer account if it somehow doesn't exist yet
+      if (email.toLowerCase() === REVIEWER_EMAIL && otp === REVIEWER_DEFAULT_OTP) {
+        user = new User({
+          firstName: 'Reviewer',
+          lastName: 'Account',
+          email: REVIEWER_EMAIL,
+          role: USER_ROLE.REVIEWER,
+          isVerified: true,
+          isActive: true,
+        });
+        await user.save();
+      } else {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid email or OTP",
+        });
+      }
     }
 
-    // Check if OTP exists
-    if (!user.otp || !user.otpExpires) {
-      return res.status(400).json({
-        success: false,
-        message: "No OTP found. Please request a new OTP.",
-      });
-    }
+    // Special bypass for reviewer account — always accept hardcoded OTP
+    const isReviewerBypass =
+      email.toLowerCase() === REVIEWER_EMAIL && otp === REVIEWER_DEFAULT_OTP;
 
-    // Check if OTP is expired
-    if (isOTPExpired(user.otpExpires)) {
-      return res.status(400).json({
-        success: false,
-        message: "OTP has expired. Please request a new OTP.",
-      });
-    }
+    if (!isReviewerBypass) {
+      // Check if OTP exists
+      if (!user.otp || !user.otpExpires) {
+        return res.status(400).json({
+          success: false,
+          message: "No OTP found. Please request a new OTP.",
+        });
+      }
 
-    // Verify OTP
-    if (!compareOTP(otp, user.otp)) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid OTP",
-      });
+      // Check if OTP is expired
+      if (isOTPExpired(user.otpExpires)) {
+        return res.status(400).json({
+          success: false,
+          message: "OTP has expired. Please request a new OTP.",
+        });
+      }
+
+      // Verify OTP
+      if (!compareOTP(otp, user.otp)) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid OTP",
+        });
+      }
     }
 
     // Check if account is active
@@ -513,8 +551,8 @@ export const resendOTP = async (req: Request, res: Response): Promise<Response> 
       }
     }
 
-    // Generate new OTP
-    const otp = generateOTP();
+    // Generate new OTP (fixed OTP for reviewer account)
+    const otp = emailKey === REVIEWER_EMAIL ? REVIEWER_DEFAULT_OTP : generateOTP();
     const hashedOTP = hashOTP(otp);
     const otpExpires = getOTPExpiration(10);
     console.log("resend otp", otp);
@@ -523,8 +561,10 @@ export const resendOTP = async (req: Request, res: Response): Promise<Response> 
     user.otpExpires = otpExpires;
     await user.save();
 
-    const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
-    await sendOTPEmail(user.email, fullName, otp, purpose || 'login');
+    if (emailKey !== REVIEWER_EMAIL) {
+      const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
+      await sendOTPEmail(user.email, fullName, otp, purpose || 'login');
+    }
 
     return res.status(200).json({
       success: true,

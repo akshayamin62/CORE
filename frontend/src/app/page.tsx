@@ -8,6 +8,7 @@ import { authAPI, serviceAPI } from '@/lib/api';
 import { Service, StudentServiceRegistration, User, USER_ROLE } from '@/types';
 import { toast, Toaster } from 'react-hot-toast';
 import ServiceCard from '@/components/ServiceCard';
+import ReviewerPaymentButton from '@/components/ReviewerPaymentButton';
 import { 
   Users, 
   UserCheck, 
@@ -196,18 +197,41 @@ export default function Home() {
   const checkAuth = async () => {
     try {
       const token = localStorage.getItem('token');
+      const userStr = localStorage.getItem('user');
+      
       if (token) {
-        const response = await authAPI.getProfile();
-        setUser(response.data.data.user);
-        setIsLoggedIn(true);
-        if (response.data.data.allowedServices) {
-          setAllowedServices(response.data.data.allowedServices);
+        // First use localStorage user data
+        let localUser = null;
+        if (userStr) {
+          try {
+            localUser = JSON.parse(userStr);
+            setUser(localUser);
+          } catch (e) {
+            // ignore
+          }
         }
-        if (response.data.data.user.role === USER_ROLE.STUDENT) {
-          fetchMyServices();
+        
+        try {
+          const response = await authAPI.getProfile();
+          setUser(response.data.data.user);
+          setIsLoggedIn(true);
+          if (response.data.data.allowedServices) {
+            setAllowedServices(response.data.data.allowedServices);
+          }
+          if (response.data.data.user.role === USER_ROLE.STUDENT) {
+            fetchMyServices();
+          }
+        } catch (profileError) {
+          if (localUser) {
+            setUser(localUser);
+            setIsLoggedIn(true);
+          } else {
+            throw profileError;
+          }
         }
       }
     } catch (error) {
+      console.error('Auth check error:', error);
       setIsLoggedIn(false);
     } finally {
       setLoading(false);
@@ -343,6 +367,9 @@ export default function Home() {
                 – Powered by <span className="font-bold text-[#0876b8]">ADMITra</span>
               </span>
             </motion.p>
+
+            {/* Make Payment button for reviewer only */}
+            <ReviewerPaymentButton />
           </motion.div>
 
           <motion.div 

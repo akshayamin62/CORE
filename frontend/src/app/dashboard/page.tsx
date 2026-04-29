@@ -23,8 +23,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
+      if (user.role === 'REVIEWER') {
+        router.push('/');
+      }
       // Redirect admin/OPS to their dashboard
-      if (user.role === 'SUPER_ADMIN') {
+      else if (user.role === 'SUPER_ADMIN') {
         router.push('/super-admin/dashboard');
       } else if (user.role === 'ADMIN') {
         router.push('/admin/dashboard');
