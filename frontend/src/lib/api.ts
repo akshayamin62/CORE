@@ -475,6 +475,8 @@ export const programAPI = {
   deleteAvailableProgramOps: (programId: string) => api.delete(`/programs/ops/programs/${programId}`),
   deleteAvailableProgramSuperAdmin: (programId: string) => api.delete(`/programs/super-admin/programs/${programId}`),
   createSuperAdminProgram: (studentId: string, data: any) => api.post('/programs/super-admin/programs/create', { ...data, studentId }),
+  createAdminStudentProgram: (studentId: string, data: any) => api.post(`/programs/admin/student/${studentId}/programs`, { ...data, studentId }),
+  createAdvisorStudentProgram: (studentId: string, data: any) => api.post(`/programs/advisor/student/${studentId}/programs`, { ...data, studentId }),
   uploadSuperAdminProgramsExcel: (file: File, studentId: string) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -1022,11 +1024,6 @@ export const paymentAPI = {
   verifyUpgradePayment: (data: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) =>
     api.post('/payments/verify-upgrade', data),
 
-  // Reviewer test payment flow
-  createReviewerOrder: () => api.post('/payments/reviewer/create-order'),
-  verifyReviewerPayment: (data: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) =>
-    api.post('/payments/reviewer/verify', data),
-
   // Read operations
   getPaymentsByRegistration: (registrationId: string) => api.get(`/payments/registration/${registrationId}`),
   getPaymentsByStudent: (studentId: string) => api.get(`/payments/student/${studentId}`),
@@ -1119,6 +1116,7 @@ export const b2bAPI = {
     lastName: string;
     email: string;
     mobileNumber: string;
+    city: string;
     type: string;
   }) => api.post('/b2b/public/enquiry', data),
 

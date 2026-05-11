@@ -165,11 +165,15 @@ export const sendWhatsAppStaffMessage = async (
   studentName: string,
   serviceName: string,
   message: string,
-  senderWithRole: string
+  senderWithRole: string,
+  senderMobile?: string,
+  senderEmail?: string
 ): Promise<void> => {
   // Replace commas in the message body to avoid breaking the webhook's CSV-style param parsing
   const safeMessage = message.replace(/,/g, ';');
-  const whatsappMessage = `staff message to student,${studentName},${serviceName},${safeMessage},${senderWithRole}`;
+  const boldService = `*${serviceName}*`;
+  const senderDetail = [senderWithRole, senderMobile, senderEmail].filter(Boolean).join(' | ');
+  const whatsappMessage = `staff message to student,${studentName},${boldService},${safeMessage},${senderDetail}`;
   console.log(whatsappMessage)
   const url = buildWhatsAppUrl(mobileNumber, whatsappMessage);
   console.log(url)
@@ -205,5 +209,99 @@ export const sendWhatsAppOfferReceived = async (
     console.log(`✅ WhatsApp offer received notification sent:`, response.status);
   } catch (error: any) {
     console.error(`⚠️ Failed to send WhatsApp offer received notification:`, error.message);
+  }
+};
+
+/**
+ * Template: enquiry_welcome (merged Template 12 for Lead / Referral / B2B)
+ *
+ * WhatsApp message format:
+ *   enquiry welcome,{name},{receivedMessage}
+ *
+ * receivedMessage variants:
+ *   Lead:     "your request for {serviceTypes}"
+ *   B2B:      "your {type} partnership enquiry"
+ *   Referral: "your request for referral with {adminCompanyName}"
+ */
+export const sendWhatsAppEnquiryWelcome = async (
+  mobileNumber: string,
+  name: string,
+  receivedMessage: string
+): Promise<void> => {
+  // Sanitize: replace commas to avoid breaking the comma-delimited webhook format
+  const safeName = name.replace(/,/g, ';');
+  const safeReceivedMessage = receivedMessage.replace(/,/g, ';');
+  const message = `enquiry welcome,${safeName},${safeReceivedMessage}`;
+  const url = buildWhatsAppUrl(mobileNumber, message);
+  if (!url) return;
+
+  try {
+    const response = await axios.get(url, { timeout: 15000 });
+    console.log(`✅ WhatsApp enquiry welcome sent to ${mobileNumber}:`, response.status);
+  } catch (error: any) {
+    console.error(`⚠️ Failed to send WhatsApp enquiry welcome to ${mobileNumber}:`, error.message);
+  }
+};
+
+/**
+ * Template: general_3_line_notification
+ * Reused for follow-up (Templates 14–15) and team meet (Templates 16–19) notifications.
+ *
+ * WhatsApp message format:
+ *   general 3 line notification,{name},{line2},{line3}
+ *
+ * {{1}} = name
+ * {{2}} = main message (e.g. "A follow-up session has been scheduled for you.")
+ * {{3}} = detail line (e.g. "Follow-up #1 with Priya Sharma on 28 Apr 2026 at 11:00 AM (30 mins). Join at: https://...")
+ */
+export const sendWhatsAppGeneralNotification = async (
+  mobileNumber: string,
+  name: string,
+  line2: string,
+  line3: string
+): Promise<void> => {
+  // Replace commas in detail lines to avoid breaking the webhook's CSV-style param parsing
+  const safeLine2 = line2.replace(/,/g, ';');
+  const safeLine3 = line3.replace(/,/g, ';');
+  const message = `general 3 line notification,${name},${safeLine2},${safeLine3}`;
+  const url = buildWhatsAppUrl(mobileNumber, message);
+  if (!url) return;
+
+  try {
+    const response = await axios.get(url, { timeout: 15000 });
+    console.log(`✅ WhatsApp general notification sent:`, response.status);
+  } catch (error: any) {
+    console.error(`⚠️ Failed to send WhatsApp general notification:`, error.message);
+  }
+};
+
+/**
+ * Template: general 4 line notification
+ * Hello, {{1}}
+ * {{2}}
+ * Please find the details below for your reference.
+ * {{3}}
+ * {{4}}
+ * Thank you for keeping us in business.
+ */
+export const sendWhatsAppGeneral4LineNotification = async (
+  mobileNumber: string,
+  name: string,
+  line2: string,
+  line3: string,
+  line4: string
+): Promise<void> => {
+  const safeLine2 = line2.replace(/,/g, ';');
+  const safeLine3 = line3.replace(/,/g, ';');
+  const safeLine4 = line4.replace(/,/g, ';');
+  const message = `general 4 line notification,${name},${safeLine2},${safeLine3},${safeLine4}`;
+  const url = buildWhatsAppUrl(mobileNumber, message);
+  if (!url) return;
+
+  try {
+    const response = await axios.get(url, { timeout: 15000 });
+    console.log(`✅ WhatsApp 4-line notification sent:`, response.status);
+  } catch (error: any) {
+    console.error(`⚠️ Failed to send WhatsApp 4-line notification:`, error.message);
   }
 };

@@ -13,7 +13,6 @@ export enum USER_ROLE {
     ADVISOR = "ADVISOR",
     B2B_SALES = "B2B_SALES",
     B2B_OPS = "B2B_OPS",
-    REVIEWER = "REVIEWER",
   }
   
 

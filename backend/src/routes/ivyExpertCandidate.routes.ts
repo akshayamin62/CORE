@@ -8,6 +8,8 @@ import {
   getTestResultForExpert,
   saveInterviewForExpert,
   getInterviewForExpert,
+  getRegistrationForCandidate,
+  clearIvyStageForExpert,
 } from '../controllers/ivyExpertCandidate.controller';
 
 const router = express.Router();
@@ -21,8 +23,14 @@ router.get('/my-ivy-students', authorize(USER_ROLE.IVY_EXPERT), getMyIvyStudents
 // POST /api/ivy/ivy-expert-candidates/convert-to-student — Convert candidate to student
 router.post('/convert-to-student', authorize(USER_ROLE.IVY_EXPERT), ivyExpertConvertToStudent);
 
+// POST /api/ivy/ivy-expert-candidates/clear-stage/:userId — Clear a stage for a candidate
+router.post('/clear-stage/:userId', authorize(USER_ROLE.IVY_EXPERT), clearIvyStageForExpert);
+
 // GET /api/ivy/ivy-expert-candidates/test-result/:userId — Get test result
 router.get('/test-result/:userId', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.SUPER_ADMIN]), getTestResultForExpert);
+
+// GET /api/ivy/ivy-expert-candidates/registration/:userId — Get IvyLeagueRegistration (parent data)
+router.get('/registration/:userId', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.SUPER_ADMIN, USER_ROLE.STUDENT]), getRegistrationForCandidate);
 
 // GET /api/ivy/ivy-expert-candidates/interview/:userId — Get interview data
 router.get('/interview/:userId', authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.SUPER_ADMIN]), getInterviewForExpert);

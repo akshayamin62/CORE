@@ -56,7 +56,6 @@ import ivyExcelUploadRoutes from "./routes/excelUpload.routes";
 import ivyGrammarCheckRoutes from "./routes/grammarCheck.routes";
 import ivyScoreRoutes from "./routes/ivyScore.routes";
 import ivyPointer1Routes from "./routes/pointer1.routes";
-import ivyPointer234ActivityRoutes from "./routes/pointer234Activity.routes";
 import ivyPointer5Routes from "./routes/pointer5.routes";
 import ivyPointer6Routes from "./routes/pointer6.routes";
 import ivyPointerActivityRoutes from "./routes/pointerActivity.routes";
@@ -66,6 +65,7 @@ import ivyUserRoutes from "./routes/user.routes";
 import ivyTestQuestionRoutes from "./routes/ivyTestQuestion.routes";
 import ivyTestSessionRoutes from "./routes/ivyTestSession.routes";
 import ivyExpertCandidateRoutes from "./routes/ivyExpertCandidate.routes";
+import ivyParentInterviewScheduleRoutes from "./routes/ivyParentInterviewSchedule.routes";
 
 import { authenticate } from "./middleware/auth";
 
@@ -142,6 +142,7 @@ import "./models/ivy/StudentPointerScore";
 import "./models/ivy/TaskConversation";
 import "./models/ivy/IvyTestQuestion";
 import "./models/ivy/IvyTestSession";
+import "./models/ivy/IvyParentInterviewSchedule";
 
 dotenv.config(); // already called at top — this line is now redundant, kept for safety
 
@@ -270,7 +271,6 @@ app.use("/api/ivy/excel-upload", authenticate, ivyExcelUploadRoutes);
 app.use("/api/ivy/grammar-check", authenticate, ivyGrammarCheckRoutes);
 app.use("/api/ivy/ivy-score", authenticate, ivyScoreRoutes);
 app.use("/api/ivy/pointer1", authenticate, ivyPointer1Routes);
-app.use("/api/ivy/pointer234", authenticate, ivyPointer234ActivityRoutes);
 app.use("/api/ivy/pointer5", authenticate, ivyPointer5Routes);
 app.use("/api/ivy/pointer6", authenticate, ivyPointer6Routes);
 app.use("/api/ivy/pointer/activity", authenticate, ivyPointerActivityRoutes);
@@ -280,6 +280,7 @@ app.use("/api/ivy/users", authenticate, ivyUserRoutes);
 app.use("/api/ivy/test-questions", authenticate, ivyTestQuestionRoutes);
 app.use("/api/ivy/test-session", authenticate, ivyTestSessionRoutes);
 app.use("/api/ivy/ivy-expert-candidates", authenticate, ivyExpertCandidateRoutes);
+app.use("/api/ivy/parent-interview-schedule", authenticate, ivyParentInterviewScheduleRoutes);
 
 // Basic test route
 app.get('/', (_req, res) => {

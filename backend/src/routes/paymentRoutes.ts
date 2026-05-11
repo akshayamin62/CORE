@@ -13,8 +13,6 @@ import {
   verifyRegistrationPayment,
   createUpgradeOrder,
   verifyUpgradePayment,
-  createReviewerOrder,
-  verifyReviewerPayment,
 } from '../controllers/paymentController';
 import { authenticate } from '../middleware/auth';
 import { authorize } from '../middleware/authorize';
@@ -105,10 +103,6 @@ router.post(
   authorize([USER_ROLE.STUDENT]),
   verifyUpgradePayment
 );
-
-// Reviewer test flow (₹1 payment)
-router.post('/reviewer/create-order', authenticate, createReviewerOrder);
-router.post('/reviewer/verify', authenticate, verifyReviewerPayment);
 
 // Request next installment (staff triggers)
 router.post(

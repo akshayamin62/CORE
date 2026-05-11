@@ -122,18 +122,15 @@ export default function LoginPage() {
     try {
       const response = await authAPI.verifyOTP({ email, otp });
       const { token, user } = response.data.data;
-      const isReviewer = (user?.email || '').toLowerCase().trim() === 'reviewer@admitra.io';
-      const storedUser = isReviewer ? { ...user, role: 'REVIEWER' } : user;
       
       // Store token in localStorage
       localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(storedUser));
+      localStorage.setItem('user', JSON.stringify(user));
       
       toast.success('Login successful!');
       
       // Redirect based on role
       const redirectPath = 
-        isReviewer ? '/' :
         user.role === 'SUPER_ADMIN' ? '/super-admin/dashboard' :
         user.role === 'ADMIN' ? '/admin/dashboard' :
         user.role === 'OPS' ? '/ops/dashboard' :

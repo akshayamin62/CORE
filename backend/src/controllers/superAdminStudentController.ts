@@ -5,9 +5,9 @@ import User from '../models/User';
 import Ops from '../models/Ops';
 import IvyExpert from '../models/IvyExpert';
 import EduplanCoach from '../models/EduplanCoach';
-import { sendCustomMessageToStudent } from '../utils/email';
+import { sendCustomMessageToStudent, sendEmail } from '../utils/email';
 import { sendStaffMessageSms } from '../utils/sms';
-import { sendWhatsAppStaffMessage } from '../utils/whatsapp';
+import { sendWhatsAppStaffMessage, sendWhatsAppGeneralNotification } from '../utils/whatsapp';
 // import Admin from '../models/Admin';
 // import Counselor from '../models/Counselor';
 import StudentServiceRegistration, { ServiceRegistrationStatus } from '../models/StudentServiceRegistration';
@@ -649,6 +649,7 @@ export const updateStudentFormAnswers = async (req: AuthRequest, res: Response):
           if (student) {
             student.mobileNumber = String(phone).trim();
             await student.save();
+            await User.findByIdAndUpdate(student.userId, { mobileNumber: String(phone).trim() });
           }
         }
       }
@@ -753,6 +754,9 @@ export const assignOps = async (req: AuthRequest, res: Response): Promise<Respon
     const service = registration.serviceId as any;
     const serviceName = service?.name;
 
+    // Track whether active was auto-set for the first time (for notification)
+    let activeAutoSetId: string | null = null;
+
     // Handle Study Abroad service -> OPS role
     if (serviceName === 'Study Abroad') {
       if (!primaryOpsId && !secondaryOpsId) {
@@ -773,6 +777,7 @@ export const assignOps = async (req: AuthRequest, res: Response): Promise<Respon
         registration.primaryOpsId = primaryOpsId;
         if (!registration.activeOpsId) {
           registration.activeOpsId = primaryOpsId;
+          activeAutoSetId = primaryOpsId;
         }
       }
 
@@ -807,6 +812,7 @@ export const assignOps = async (req: AuthRequest, res: Response): Promise<Respon
         registration.primaryIvyExpertId = primaryIvyExpertId;
         if (!registration.activeIvyExpertId) {
           registration.activeIvyExpertId = primaryIvyExpertId;
+          activeAutoSetId = primaryIvyExpertId;
         }
       }
 
@@ -841,6 +847,7 @@ export const assignOps = async (req: AuthRequest, res: Response): Promise<Respon
         registration.primaryEduplanCoachId = primaryEduplanCoachId;
         if (!registration.activeEduplanCoachId) {
           registration.activeEduplanCoachId = primaryEduplanCoachId;
+          activeAutoSetId = primaryEduplanCoachId;
         }
       }
 
@@ -863,6 +870,76 @@ export const assignOps = async (req: AuthRequest, res: Response): Promise<Respon
     }
 
     await registration.save();
+
+    // Notify student + auto-assigned active staff (Event 43 — first assignment)
+    // Only fires for whichever role was just auto-set as active for the first time
+    try {
+      const studentDoc = await Student.findById(registration.studentId).lean() as any;
+      const studentUser = studentDoc?.userId ? await User.findById(studentDoc.userId).lean() as any : null;
+      const studentName = studentUser ? [studentUser.firstName, studentUser.middleName, studentUser.lastName].filter(Boolean).join(' ') : 'Student';
+
+      let staffName = '', staffMobile = '', staffEmail = '', staffRoleLabel = '';
+
+      if (serviceName === 'Study Abroad' && activeAutoSetId) {
+        staffRoleLabel = 'OPS Executive';
+        const ops = await Ops.findById(activeAutoSetId).populate('userId', 'firstName middleName lastName email') as any;
+        if (ops) {
+          staffName = [ops.userId?.firstName, ops.userId?.middleName, ops.userId?.lastName].filter(Boolean).join(' ');
+          staffMobile = ops.mobileNumber || '';
+          staffEmail = ops.userId?.email || '';
+        }
+      } else if (serviceName === 'Ivy League Preparation' && activeAutoSetId) {
+        staffRoleLabel = 'Ivy Expert';
+        const ie = await IvyExpert.findById(activeAutoSetId).populate('userId', 'firstName middleName lastName email') as any;
+        if (ie) {
+          staffName = [ie.userId?.firstName, ie.userId?.middleName, ie.userId?.lastName].filter(Boolean).join(' ');
+          staffMobile = ie.mobileNumber || '';
+          staffEmail = ie.userId?.email || '';
+        }
+      } else if (serviceName === 'Education Planning' && activeAutoSetId) {
+        staffRoleLabel = 'EduPlan Coach';
+        const ec = await EduplanCoach.findById(activeAutoSetId).populate('userId', 'firstName middleName lastName email') as any;
+        if (ec) {
+          staffName = [ec.userId?.firstName, ec.userId?.middleName, ec.userId?.lastName].filter(Boolean).join(' ');
+          staffMobile = ec.mobileNumber || '';
+          staffEmail = ec.userId?.email || '';
+        }
+      }
+
+      if (staffName) {
+        const studentMobile = studentDoc?.mobileNumber || studentUser?.mobileNumber;
+        if (studentMobile) {
+          await sendWhatsAppGeneralNotification(
+            studentMobile, studentName,
+            `An *${staffRoleLabel}* has been assigned to guide you through your *${serviceName}*.`,
+            `${staffName} | ${staffMobile} | ${staffEmail}`
+          );
+        }
+        if (studentUser?.email) {
+          await sendEmail({
+            to: studentUser.email,
+            subject: `${staffRoleLabel} Assigned — ${staffName} will guide you`,
+            html: `<p>Hi ${studentName},</p><p>An ${staffRoleLabel} has been assigned to guide you through your ${serviceName}:</p><p>👤 <strong>Name:</strong> ${staffName}<br/>📱 <strong>Mobile:</strong> ${staffMobile}<br/>📧 <strong>Email:</strong> ${staffEmail}</p><p><a href="https://core.admitra.io/dashboard">Log in to your dashboard</a></p><p>Best regards,<br/>ADMITra Team</p>`,
+          });
+        }
+        if (staffMobile) {
+          await sendWhatsAppGeneralNotification(
+            staffMobile, staffName,
+            `You have been assigned a new student for *${serviceName}*.`,
+            `${studentName} | ${studentDoc?.mobileNumber || studentUser?.mobileNumber || 'N/A'} | ${studentUser?.email || 'N/A'}`
+          );
+        }
+        if (staffEmail) {
+          await sendEmail({
+            to: staffEmail,
+            subject: `New Student Assigned — ${studentName} (${serviceName})`,
+            html: `<p>Hi ${staffName},</p><p>A new student has been assigned to you for ${serviceName}:</p><p>👤 <strong>Student Name:</strong> ${studentName}<br/>📱 <strong>Mobile:</strong> ${studentDoc?.mobileNumber || studentUser?.mobileNumber || 'N/A'}<br/>📧 <strong>Email:</strong> ${studentUser?.email || 'N/A'}</p><p><a href="https://core.admitra.io/ops/dashboard">Log in to your dashboard</a></p><p>Best regards,<br/>ADMITra Team</p>`,
+          });
+        }
+      }
+    } catch (notifErr) {
+      console.error('Failed to send staff assignment notification:', notifErr);
+    }
 
     const updatedRegistration = await StudentServiceRegistration.findById(registrationId)
       .populate('serviceId', 'name slug shortDescription icon')
@@ -986,6 +1063,79 @@ export const switchActiveOps = async (req: AuthRequest, res: Response): Promise<
 
     await registration.save();
 
+    // Notify student + newly-active staff member (Event 43)
+    try {
+      const studentDoc = await Student.findById(registration.studentId).lean() as any;
+      const studentUser = studentDoc?.userId ? await User.findById(studentDoc.userId).lean() as any : null;
+      const studentName = studentUser ? [studentUser.firstName, studentUser.middleName, studentUser.lastName].filter(Boolean).join(' ') : 'Student';
+
+      let staffName = '', staffMobile = '', staffEmail = '', staffRoleLabel = '';
+
+      if (serviceName === 'Study Abroad' && activeOpsId) {
+        staffRoleLabel = 'OPS Executive';
+        const ops = await Ops.findById(activeOpsId).populate('userId', 'firstName middleName lastName email') as any;
+        if (ops) {
+          staffName = [ops.userId?.firstName, ops.userId?.middleName, ops.userId?.lastName].filter(Boolean).join(' ');
+          staffMobile = ops.mobileNumber || '';
+          staffEmail = ops.userId?.email || '';
+        }
+      } else if (serviceName === 'Ivy League Preparation' && activeIvyExpertId) {
+        staffRoleLabel = 'Ivy Expert';
+        const ie = await IvyExpert.findById(activeIvyExpertId).populate('userId', 'firstName middleName lastName email') as any;
+        if (ie) {
+          staffName = [ie.userId?.firstName, ie.userId?.middleName, ie.userId?.lastName].filter(Boolean).join(' ');
+          staffMobile = ie.mobileNumber || '';
+          staffEmail = ie.userId?.email || '';
+        }
+      } else if (serviceName === 'Education Planning' && activeEduplanCoachId) {
+        staffRoleLabel = 'EduPlan Coach';
+        const ec = await EduplanCoach.findById(activeEduplanCoachId).populate('userId', 'firstName middleName lastName email') as any;
+        if (ec) {
+          staffName = [ec.userId?.firstName, ec.userId?.middleName, ec.userId?.lastName].filter(Boolean).join(' ');
+          staffMobile = ec.mobileNumber || '';
+          staffEmail = ec.userId?.email || '';
+        }
+      }
+
+      if (staffName) {
+        const studentMobile = studentDoc?.mobileNumber || studentUser?.mobileNumber;
+        // Notify student
+        if (studentMobile) {
+          await sendWhatsAppGeneralNotification(
+            studentMobile,
+            studentName,
+            `An *${staffRoleLabel}* has been assigned to guide you through your *${serviceName}*.`,
+            `${staffName} | ${staffMobile} | ${staffEmail}`
+          );
+        }
+        if (studentUser?.email) {
+          await sendEmail({
+            to: studentUser.email,
+            subject: `${staffRoleLabel} Assigned — ${staffName} will guide you`,
+            html: `<p>Hi ${studentName},</p><p>An ${staffRoleLabel} has been assigned to guide you through your ${serviceName}:</p><p>👤 <strong>Name:</strong> ${staffName}<br/>📱 <strong>Mobile:</strong> ${staffMobile}<br/>📧 <strong>Email:</strong> ${staffEmail}</p><p><a href="https://core.admitra.io/dashboard">Log in to your dashboard</a></p><p>Best regards,<br/>ADMITra Team</p>`,
+          });
+        }
+        // Notify the staff member
+        if (staffMobile) {
+          await sendWhatsAppGeneralNotification(
+            staffMobile,
+            staffName,
+            `You have been assigned a new student for *${serviceName}*.`,
+            `${studentName} | ${studentDoc?.mobileNumber || studentUser?.mobileNumber || 'N/A'} | ${studentUser?.email || 'N/A'}`
+          );
+        }
+        if (staffEmail) {
+          await sendEmail({
+            to: staffEmail,
+            subject: `New Student Assigned — ${studentName} (${serviceName})`,
+            html: `<p>Hi ${staffName},</p><p>A new student has been assigned to you for ${serviceName}:</p><p>👤 <strong>Student Name:</strong> ${studentName}<br/>📱 <strong>Mobile:</strong> ${studentDoc?.mobileNumber || studentUser?.mobileNumber || 'N/A'}<br/>📧 <strong>Email:</strong> ${studentUser?.email || 'N/A'}</p><p><a href="https://core.admitra.io/ops/dashboard">Log in to your dashboard</a></p><p>Best regards,<br/>ADMITra Team</p>`,
+          });
+        }
+      }
+    } catch (notifErr) {
+      console.error('Failed to send staff assignment notification:', notifErr);
+    }
+
     const updatedRegistration = await StudentServiceRegistration.findById(registrationId)
       .populate('serviceId', 'name slug shortDescription icon')
       .populate('primaryOpsId')
@@ -1031,7 +1181,7 @@ export const sendMessageToStudent = async (req: AuthRequest, res: Response): Pro
     }
 
     // Get sender info
-    const sender = await User.findById(userId).select('firstName middleName lastName role');
+    const sender = await User.findById(userId).select('firstName middleName lastName role email mobileNumber');
     if (!sender) {
       return res.status(404).json({
         success: false,
@@ -1080,7 +1230,9 @@ export const sendMessageToStudent = async (req: AuthRequest, res: Response): Pro
       senderName,
       senderRole,
       message.trim(),
-      serviceName
+      serviceName,
+      (sender as any).mobileNumber || '',
+      (sender as any).email || ''
     );
     results.push('Email sent');
 
@@ -1100,13 +1252,15 @@ export const sendMessageToStudent = async (req: AuthRequest, res: Response): Pro
 
     // Send WhatsApp — Template 6: staff_message_to_student (always; fire-and-forget)
     if (mobile) {
-      const senderWithRole = `${senderName} - ${senderRole}`;
+      const senderWithRole = `${senderName} (${senderRole})`;
       sendWhatsAppStaffMessage(
         mobile,
         studentName,
         serviceName || 'CORE Platform',
         message.trim(),
-        senderWithRole
+        senderWithRole,
+        (sender as any).mobileNumber || '',
+        (sender as any).email || ''
       ).catch((err: any) =>
         console.error('WhatsApp staff message notification failed:', err.message)
       );

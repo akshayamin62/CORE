@@ -17,7 +17,8 @@ import Parent from '../models/Parent';
 import Referrer from '../models/Referrer';
 import EduplanCoach from '../models/EduplanCoach';
 import { USER_ROLE } from '../types/roles';
-import { sendServiceRegistrationEmailToSuperAdmin } from '../utils/email';
+import { sendServiceRegistrationEmailToSuperAdmin, sendEmail } from '../utils/email';
+import { sendWhatsAppGeneralNotification } from '../utils/whatsapp';
 import {
   createTaxInvoice,
   createProformaInvoice,
@@ -26,8 +27,6 @@ import {
 } from '../services/paymentService';
 import { LedgerEntryType } from '../models/Ledger';
 import Ledger from '../models/Ledger';
-
-const REVIEWER_EMAIL = 'reviewer@admitra.io';
 
 // Verify requesting user is connected to the student
 const verifyStudentAccess = async (userId: string, role: string, studentId: string): Promise<boolean> => {
@@ -1101,14 +1100,34 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
     // Notify super admin
     try {
       const superAdmin = await User.findOne({ role: USER_ROLE.SUPER_ADMIN });
-      if (superAdmin) {
-        const studentUser = await User.findById(student.userId);
+      const studentUser = await User.findById(student.userId);
+      if (superAdmin && studentUser) {
         await sendServiceRegistrationEmailToSuperAdmin(
           superAdmin.email,
-          [studentUser?.firstName, studentUser?.middleName, studentUser?.lastName].filter(Boolean).join(' ') || 'Unknown Student',
-          studentUser?.email || 'Unknown Email',
+          [studentUser.firstName, studentUser.middleName, studentUser.lastName].filter(Boolean).join(' ') || 'Unknown Student',
+          studentUser.email || 'Unknown Email',
           `${service.name} (${planTier})`
         );
+      }
+      // Notify the student
+      if (studentUser) {
+        const studentName = [studentUser.firstName, studentUser.middleName, studentUser.lastName].filter(Boolean).join(' ') || 'Student';
+        const studentMobile = student.mobileNumber || studentUser.mobileNumber;
+        if (studentMobile) {
+          await sendWhatsAppGeneralNotification(
+            studentMobile,
+            studentName,
+            'Your registration has been completed successfully.',
+            `You are now registered for ${service.name}. Our team will be in touch with you shortly to get started`
+          );
+        }
+        if (studentUser.email) {
+          await sendEmail({
+            to: studentUser.email,
+            subject: `Registration Confirmed — ${service.name}`,
+            html: `<p>Hi ${studentName},</p><p>Your registration has been completed successfully! 🎉</p><p>📌 <strong>Service:</strong> ${service.name}</p><p>Our team will review your details and be in touch with you shortly to guide you through the next steps.</p><p>Log in to your dashboard to get started:<br/><a href="https://core.admitra.io/dashboard">https://core.admitra.io/dashboard</a></p><p>Best regards,<br/>ADMITra Team</p>`,
+          });
+        }
       }
     } catch (emailError) {
       console.error('Failed to send notification email:', emailError);
@@ -1527,80 +1546,6 @@ export const verifyUpgradePayment = async (req: AuthRequest, res: Response): Pro
     });
   } catch (error: any) {
     console.error('Error verifying upgrade payment:', error);
-    return res.status(500).json({ success: false, message: 'Server error' });
-  }
-};
-
-// ===== Reviewer Test Payment (₹1) =====
-export const createReviewerOrder = async (req: AuthRequest, res: Response): Promise<Response> => {
-  try {
-    const requesterEmail = (req.user?.email || '').toLowerCase().trim();
-    if (requesterEmail !== REVIEWER_EMAIL) {
-      return res.status(403).json({ success: false, message: 'Access denied' });
-    }
-
-    const amountInr = 1;
-    const amountInPaise = amountInr * 100;
-    const receiptSuffix = Date.now().toString().slice(-8);
-
-    const order = await razorpay.orders.create({
-      amount: amountInPaise,
-      currency: 'INR',
-      receipt: `reviewer_${receiptSuffix}`,
-      notes: {
-        purpose: 'reviewer-test-payment',
-        reviewerEmail: REVIEWER_EMAIL,
-      },
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: 'Reviewer order created successfully',
-      data: {
-        orderId: order.id,
-        amount: amountInPaise,
-        amountInr,
-        currency: 'INR',
-        keyId: process.env.RAZORPAY_KEY_ID,
-      },
-    });
-  } catch (error: any) {
-    console.error('Error creating reviewer order:', error);
-    return res.status(500).json({ success: false, message: 'Server error' });
-  }
-};
-
-export const verifyReviewerPayment = async (req: AuthRequest, res: Response): Promise<Response> => {
-  try {
-    const requesterEmail = (req.user?.email || '').toLowerCase().trim();
-    if (requesterEmail !== REVIEWER_EMAIL) {
-      return res.status(403).json({ success: false, message: 'Access denied' });
-    }
-
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return res.status(400).json({ success: false, message: 'Missing payment verification fields' });
-    }
-
-    const secret = process.env.RAZORPAY_KEY_SECRET || '';
-    const body = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const expectedSignature = crypto.createHmac('sha256', secret).update(body).digest('hex');
-
-    if (expectedSignature !== razorpay_signature) {
-      return res.status(400).json({ success: false, message: 'Payment verification failed - invalid signature' });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: 'Reviewer payment verified successfully',
-      data: {
-        razorpayOrderId: razorpay_order_id,
-        razorpayPaymentId: razorpay_payment_id,
-        amountInr: 1,
-      },
-    });
-  } catch (error: any) {
-    console.error('Error verifying reviewer payment:', error);
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 };

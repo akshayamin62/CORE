@@ -2,18 +2,27 @@ import mongoose from 'mongoose';
 import path from 'path';
 import fs from 'fs';
 import AgentSuggestion from '../models/ivy/AgentSuggestion';
-import IvyExpertSelectedSuggestion from '../models/ivy/IvyExpertSelectedSuggestion';
+import IvyExpertSelectedSuggestion, { IIvyExpertSelectedSuggestion } from '../models/ivy/IvyExpertSelectedSuggestion';
 import StudentSubmission from '../models/ivy/StudentSubmission';
 import IvyExpertEvaluation from '../models/ivy/IvyExpertEvaluation';
 import StudentServiceRegistration from '../models/StudentServiceRegistration';
 import IvyExpert from '../models/IvyExpert';
 import Student from '../models/Student';
+import User from '../models/User';
 import Service from '../models/Service';
 import { PointerNo } from '../types/PointerNo';
 import { updateScoreAfterEvaluation } from './ivyScore.service';
 import { extractTOC } from './tocExtractor.service';
 import { createNotification } from './notification.service';
 import { getUploadBaseDir, ensureDir } from '../utils/uploadDir';
+import { sendWhatsAppGeneral4LineNotification } from '../utils/whatsapp';
+import { sendEmail } from '../utils/email';
+
+const POINTER_LABELS: Record<number, string> = {
+  2: 'Spike in One Area',
+  3: 'Leadership Initiative',
+  4: 'Global & Social Impact',
+};
 
 const SUPPORTED_POINTERS = [
   PointerNo.SpikeInOneArea,
@@ -273,14 +282,55 @@ export const selectActivities = async (
 
   // Create notification to alert student about new activities
   if (updatedSelections.length > 0) {
-    await createNotification({
-      studentIvyServiceId: service._id.toString(),
-      userId: service.studentId,
-      userRole: 'student',
-      pointerNumber: pointerNo,
-      notificationType: 'activities_assigned',
-      referenceId: updatedSelections[0]._id,
-    });
+    try {
+      await createNotification({
+        studentIvyServiceId: service._id.toString(),
+        userId: service.studentId,
+        userRole: 'student',
+        pointerNumber: pointerNo,
+        notificationType: 'activities_assigned',
+        referenceId: updatedSelections[0]._id,
+      });
+    } catch (notifCreateErr) {
+      console.error('[PointerActivity] createNotification failed:', notifCreateErr);
+    }
+  }
+
+  // WhatsApp + email notification to student (Template 25)
+  try {
+    const studentDoc = await Student.findById(service.studentId).lean() as any;
+    const studentUserDoc = studentDoc?.userId
+      ? await User.findById(studentDoc.userId).select('firstName middleName lastName email mobileNumber').lean() as any
+      : null;
+    const studentName = studentUserDoc
+      ? [studentUserDoc.firstName, studentUserDoc.middleName, studentUserDoc.lastName].filter(Boolean).join(' ')
+      : 'Student';
+    const studentMobile = studentDoc?.mobileNumber || studentUserDoc?.mobileNumber;
+    const studentEmail = studentDoc?.email || studentUserDoc?.email;
+
+    const pointerLabel = POINTER_LABELS[pointerNo] || `Pointer ${pointerNo}`;
+    const activityCount = updatedSelections.length;
+    const activityTitles = updatedSelections
+      .map((sel) => suggestionMap.get(sel.agentSuggestionId.toString())?.title || '')
+      .filter(Boolean)
+      .join(', ');
+    const line2 = `Your IVY League Expert has suggested ${activityCount} activit${activityCount === 1 ? 'y' : 'ies'} for Pointer *${pointerNo} - ${pointerLabel}*.`;
+
+    if (studentMobile) {
+      await sendWhatsAppGeneral4LineNotification(studentMobile, studentName, line2, activityTitles, 'Log in to your dashboard to review and get started.');
+    }
+    if (studentEmail) {
+      const activityListHtml = updatedSelections
+        .map((sel, i) => `<li>${i + 1}. ${suggestionMap.get(sel.agentSuggestionId.toString())?.title || ''}</li>`)
+        .join('');
+      await sendEmail({
+        to: studentEmail,
+        subject: `New Activities Suggested — Pointer ${pointerNo}: ${pointerLabel}`,
+        html: `<p>Hi ${studentName},</p><p>Your IVY League Expert has suggested <strong>${activityCount} activit${activityCount === 1 ? 'y' : 'ies'}</strong> for you under:</p><p>📌 <strong>Pointer ${pointerNo}: ${pointerLabel}</strong></p><ul>${activityListHtml}</ul><p>Log in to your dashboard to review them and start working:</p><p><a href="https://core.admitra.io/dashboard">https://core.admitra.io/dashboard</a></p><p>Best regards,<br/>ADMITra Team</p>`,
+      });
+    }
+  } catch (notifErr) {
+    console.error('[PointerActivity Notif] Failed to send notification:', notifErr);
   }
 
   return updatedSelections.map((sel) => ({
@@ -719,4 +769,80 @@ export const setActivityDeadline = async (
   await selection.save();
 
   return selection;
+};
+
+/**
+ * Update weightages for selected activities (Ivy Expert only)
+ * Input: studentIvyServiceId, ivyExpertId, weightages map { agentSuggestionId: weightage }, pointerNo
+ */
+export const updateWeightages = async (
+  studentIvyServiceId: string,
+  ivyExpertId: string,
+  weightages: { [agentSuggestionId: string]: number },
+  pointerNo?: number,
+): Promise<IIvyExpertSelectedSuggestion[]> => {
+  if (!mongoose.Types.ObjectId.isValid(studentIvyServiceId)) {
+    throw new Error('Invalid studentIvyServiceId');
+  }
+  if (!mongoose.Types.ObjectId.isValid(ivyExpertId)) {
+    throw new Error('Invalid ivyExpertId');
+  }
+
+  const service = await StudentServiceRegistration.findById(studentIvyServiceId);
+  if (!service) {
+    throw new Error('Student Service Registration not found');
+  }
+  if (!service.activeIvyExpertId || service.activeIvyExpertId.toString() !== ivyExpertId) {
+    throw new Error('Unauthorized: Ivy Expert does not match this service');
+  }
+
+  const ivyExpert = await IvyExpert.findById(ivyExpertId);
+  if (!ivyExpert) {
+    throw new Error('Unauthorized: IvyExpert not found');
+  }
+
+  const query: any = { studentIvyServiceId };
+  if (pointerNo && [2, 3, 4].includes(pointerNo)) {
+    query.pointerNo = pointerNo;
+  } else {
+    query.pointerNo = { $in: [PointerNo.SpikeInOneArea, PointerNo.LeadershipInitiative, PointerNo.GlobalSocialImpact] };
+  }
+
+  const selectedActivities = await IvyExpertSelectedSuggestion.find(query);
+  if (selectedActivities.length === 0) {
+    throw new Error('No activities selected');
+  }
+
+  const activitiesToUpdate = selectedActivities.filter(
+    (act) => weightages[act.agentSuggestionId.toString()] !== undefined,
+  );
+  if (activitiesToUpdate.length === 0) {
+    throw new Error('No matching activities found for provided weightages');
+  }
+
+  const weightageValues = activitiesToUpdate.map((act) => weightages[act.agentSuggestionId.toString()]);
+  if (activitiesToUpdate.length === 1) {
+    if (weightageValues[0] !== 100) {
+      throw new Error('Single activity must have weightage of 100');
+    }
+  } else {
+    const sum = weightageValues.reduce((acc, w) => acc + w, 0);
+    if (Math.abs(sum - 100) > 0.01) {
+      throw new Error(`Total weightage must equal 100, got ${sum.toFixed(2)}`);
+    }
+    for (const w of weightageValues) {
+      if (typeof w !== 'number' || w <= 0 || w > 100) {
+        throw new Error('Each weightage must be a number between 0 and 100');
+      }
+    }
+  }
+
+  const updatedActivities: IIvyExpertSelectedSuggestion[] = [];
+  for (const activity of activitiesToUpdate) {
+    activity.weightage = weightages[activity.agentSuggestionId.toString()];
+    await activity.save();
+    updatedActivities.push(activity);
+  }
+
+  return updatedActivities;
 };

@@ -7,13 +7,14 @@ import { USER_ROLE } from "../types/roles";
 import mongoose from "mongoose";
 import { sendEmail, sendB2BEnquiryConfirmationEmail } from "../utils/email";
 import UserModel from "../models/User";
+import { sendWhatsAppEnquiryWelcome, sendWhatsAppGeneralNotification } from "../utils/whatsapp";
 
 /**
  * PUBLIC: Submit B2B enquiry form (no auth required)
  */
 export const submitB2BEnquiry = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { firstName, middleName, lastName, email, mobileNumber, type } = req.body;
+    const { firstName, middleName, lastName, email, mobileNumber, city, type } = req.body;
 
     // Validation
     if (!firstName || !lastName || !email || !mobileNumber || !type) {
@@ -50,12 +51,20 @@ export const submitB2BEnquiry = async (req: Request, res: Response): Promise<Res
       lastName: lastName.trim(),
       email: email.toLowerCase().trim(),
       mobileNumber: mobileNumber.trim(),
+      city: city?.trim() || undefined,
       type: type as B2B_LEAD_TYPE,
       stage: B2B_LEAD_STAGE.NEW,
       source: "B2B Enquiry Form",
     });
 
     await newLead.save();
+
+    // WhatsApp welcome notification to B2B enquirer (non-blocking)
+    sendWhatsAppEnquiryWelcome(
+      mobileNumber.trim(),
+      firstName.trim(),
+      `your ${type} partnership enquiry`
+    ).catch((err) => console.error('Failed to send WhatsApp B2B enquiry welcome:', err));
 
     // Send confirmation email to enquirer and notify Super Admins
     try {
@@ -65,24 +74,35 @@ export const submitB2BEnquiry = async (req: Request, res: Response): Promise<Res
     }
 
     try {
-      const superAdmins = await UserModel.find({ role: USER_ROLE.SUPER_ADMIN, isActive: true }).select("email").lean();
+      const superAdmins = await UserModel.find({ role: USER_ROLE.SUPER_ADMIN, isActive: true }).select('email firstName middleName lastName mobileNumber').lean();
       for (const sa of superAdmins) {
         await sendEmail({
           to: sa.email,
           subject: `New B2B Enquiry: ${firstName} ${lastName} (${type})`,
           html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
             <h2 style="color:#2563eb;">New B2B Partnership Enquiry</h2>
-            <p>A new B2B enquiry has been submitted:</p>
+            <p>A new B2B enquiry has been received from;</p>
             <table style="width:100%;border-collapse:collapse;margin:15px 0;">
               <tr><td style="padding:6px 0;font-weight:bold;">Name:</td><td>${firstName} ${middleName || ''} ${lastName}</td></tr>
               <tr><td style="padding:6px 0;font-weight:bold;">Email:</td><td>${email}</td></tr>
               <tr><td style="padding:6px 0;font-weight:bold;">Phone:</td><td>${mobileNumber}</td></tr>
+              <tr><td style="padding:6px 0;font-weight:bold;">City:</td><td>${city?.trim() || 'N/A'}</td></tr>
               <tr><td style="padding:6px 0;font-weight:bold;">Type:</td><td>${type}</td></tr>
             </table>
             <p>Please log in to assign a B2B Sales person to this lead.</p>
           </div>`,
           text: `New B2B Enquiry: ${firstName} ${lastName} (${type}) - Email: ${email} - Phone: ${mobileNumber}`,
         });
+        // WhatsApp notification to super admin
+        if (sa.mobileNumber) {
+          const saName = [sa.firstName, sa.middleName, sa.lastName].filter(Boolean).join(' ');
+          sendWhatsAppGeneralNotification(
+            sa.mobileNumber,
+            saName,
+            `New B2B enquiry from ${firstName.trim()} ${lastName.trim()}.`,
+            `${type} partnership | Mobile: ${mobileNumber.trim()}`
+          ).catch((err) => console.error('Failed to send WhatsApp B2B enquiry notification to super admin:', err));
+        }
       }
     } catch (emailErr) {
       console.error("Failed to send B2B enquiry notification email:", emailErr);
