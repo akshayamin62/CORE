@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { b2bAPI } from '@/lib/api';
 import { B2B_LEAD_TYPE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
+import { Country, State, City } from 'country-state-city';
 
 export default function B2BEnquiryPage() {
   const [formData, setFormData] = useState({
@@ -12,6 +13,10 @@ export default function B2BEnquiryPage() {
     lastName: '',
     email: '',
     mobileNumber: '',
+    country: '',
+    countryCode: '',
+    state: '',
+    stateCode: '',
     city: '',
     type: B2B_LEAD_TYPE.FRANCHISE as string,
   });
@@ -25,7 +30,7 @@ export default function B2BEnquiryPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim() || !formData.mobileNumber.trim() || !formData.city.trim()) {
+    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim() || !formData.mobileNumber.trim() || !formData.country || !formData.city.trim()) {
       toast.error('Please fill all required fields');
       return;
     }
@@ -50,6 +55,8 @@ export default function B2BEnquiryPage() {
         lastName: formData.lastName.trim(),
         email: formData.email.trim().toLowerCase(),
         mobileNumber: formData.mobileNumber.trim(),
+        country: formData.country,
+        state: formData.state || undefined,
         city: formData.city.trim(),
         type: formData.type,
       });
@@ -96,7 +103,7 @@ export default function B2BEnquiryPage() {
     <>
       <Toaster position="top-right" />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 max-w-lg w-full">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 max-w-2xl w-full">
           <div className="text-center mb-8">
             <img
               src="/admitra-logo.jpeg"
@@ -146,44 +153,101 @@ export default function B2BEnquiryPage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="your@email.com"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                required
-              />
+            {/* Email + Mobile in one row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="your@email.com"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number *</label>
+                <input
+                  type="tel"
+                  name="mobileNumber"
+                  value={formData.mobileNumber}
+                  onChange={handleChange}
+                  placeholder="10-digit mobile number"
+                  maxLength={10}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  required
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number *</label>
-              <input
-                type="tel"
-                name="mobileNumber"
-                value={formData.mobileNumber}
-                onChange={handleChange}
-                placeholder="10-digit mobile number"
-                maxLength={10}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
-              <input
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                placeholder="Enter your city"
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                required
-              />
+            {/* Country + State + City in one row */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
+                <select
+                  name="country"
+                  value={formData.countryCode}
+                  onChange={(e) => {
+                    const selected = Country.getAllCountries().find(c => c.isoCode === e.target.value);
+                    setFormData({ ...formData, country: selected?.name || '', countryCode: e.target.value, state: '', stateCode: '', city: '' });
+                  }}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                  required
+                >
+                  <option value="">Select country</option>
+                  {Country.getAllCountries().map((c) => (
+                    <option key={c.isoCode} value={c.isoCode}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">State / Province</label>
+                <select
+                  name="state"
+                  value={formData.stateCode}
+                  onChange={(e) => {
+                    const selected = State.getStatesOfCountry(formData.countryCode).find(s => s.isoCode === e.target.value);
+                    setFormData({ ...formData, state: selected?.name || '', stateCode: e.target.value, city: '' });
+                  }}
+                  disabled={!formData.countryCode}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                >
+                  <option value="">Select state</option>
+                  {State.getStatesOfCountry(formData.countryCode).map((s) => (
+                    <option key={s.isoCode} value={s.isoCode}>{s.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                {City.getCitiesOfState(formData.countryCode, formData.stateCode).length > 0 ? (
+                  <select
+                    name="city"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    disabled={!formData.stateCode}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    required
+                  >
+                    <option value="">Select city</option>
+                    {City.getCitiesOfState(formData.countryCode, formData.stateCode).map((c, i) => (
+                      <option key={i} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    placeholder="Enter your city"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    required
+                  />
+                )}
+              </div>
             </div>
 
             <div>

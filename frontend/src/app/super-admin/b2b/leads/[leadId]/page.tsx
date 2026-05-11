@@ -357,6 +357,14 @@ export default function SuperAdminB2BLeadDetailPage() {
                   <a href={`mailto:${lead.email}`} className="text-blue-600 hover:underline text-sm break-all">{lead.email}</a>
                 </div>
                 <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Country</label>
+                  <p className="text-gray-900 font-medium">{lead.country || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">State</label>
+                  <p className="text-gray-900 font-medium">{lead.state || 'N/A'}</p>
+                </div>
+                <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1">City</label>
                   <p className="text-gray-900 font-medium">{lead.city || 'N/A'}</p>
                 </div>

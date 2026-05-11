@@ -131,7 +131,8 @@ export const submitEnquiry = async (req: Request, res: Response): Promise<Respon
     sendWhatsAppEnquiryWelcome(
       mobileNumber.trim(),
       name.trim(),
-      `your request for ${serviceTypesList}`
+      `your request for ${serviceTypesList}`,
+      'For more details, reply with *"business"*.'
     ).catch((err) => console.error('Failed to send WhatsApp enquiry welcome to lead:', err));
 
     // Email confirmation to lead — branded per admin/advisor (non-blocking)

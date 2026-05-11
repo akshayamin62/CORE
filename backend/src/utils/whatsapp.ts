@@ -226,12 +226,14 @@ export const sendWhatsAppOfferReceived = async (
 export const sendWhatsAppEnquiryWelcome = async (
   mobileNumber: string,
   name: string,
-  receivedMessage: string
+  receivedMessage: string,
+  line3: string
 ): Promise<void> => {
   // Sanitize: replace commas to avoid breaking the comma-delimited webhook format
   const safeName = name.replace(/,/g, ';');
   const safeReceivedMessage = receivedMessage.replace(/,/g, ';');
-  const message = `enquiry welcome,${safeName},${safeReceivedMessage}`;
+  const safeLine3 = line3.replace(/,/g, ';');
+  const message = `enquiry welcome,${safeName},${safeReceivedMessage},${safeLine3}`;
   const url = buildWhatsAppUrl(mobileNumber, message);
   if (!url) return;
 

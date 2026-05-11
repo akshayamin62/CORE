@@ -14,7 +14,7 @@ import { sendWhatsAppEnquiryWelcome, sendWhatsAppGeneralNotification } from "../
  */
 export const submitB2BEnquiry = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { firstName, middleName, lastName, email, mobileNumber, city, type } = req.body;
+    const { firstName, middleName, lastName, email, mobileNumber, country, state, city, type } = req.body;
 
     // Validation
     if (!firstName || !lastName || !email || !mobileNumber || !type) {
@@ -51,6 +51,8 @@ export const submitB2BEnquiry = async (req: Request, res: Response): Promise<Res
       lastName: lastName.trim(),
       email: email.toLowerCase().trim(),
       mobileNumber: mobileNumber.trim(),
+      country: country?.trim() || undefined,
+      state: state?.trim() || undefined,
       city: city?.trim() || undefined,
       type: type as B2B_LEAD_TYPE,
       stage: B2B_LEAD_STAGE.NEW,
@@ -60,10 +62,12 @@ export const submitB2BEnquiry = async (req: Request, res: Response): Promise<Res
     await newLead.save();
 
     // WhatsApp welcome notification to B2B enquirer (non-blocking)
+    const fullName = [firstName.trim(), middleName?.trim(), lastName.trim()].filter(Boolean).join(' ');
     sendWhatsAppEnquiryWelcome(
       mobileNumber.trim(),
-      firstName.trim(),
-      `your ${type} partnership enquiry`
+      fullName,
+      `your ${type} partnership enquiry`,
+      'For more details, reply with *"business"*.'
     ).catch((err) => console.error('Failed to send WhatsApp B2B enquiry welcome:', err));
 
     // Send confirmation email to enquirer and notify Super Admins
