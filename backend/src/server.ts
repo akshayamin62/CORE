@@ -29,7 +29,7 @@ import spServiceRoutes from "./routes/spServiceRoutes";
 import brainographyRoutes from "./routes/brainographyRoutes";
 import portfolioRoutes from "./routes/portfolioRoutes";
 import parentRoutes from "./routes/parentRoutes";
-import activityRoutes from "./routes/activityRoutes";
+import activityRoutes from "./routes/studentActivityRoutes";
 import referrerRoutes from "./routes/referrerRoutes";
 import archiveRoutes from "./routes/archiveRoutes";
 import ivyLeagueRegistrationRoutes from "./routes/ivyLeagueRegistrationRoutes";
@@ -49,7 +49,7 @@ import onboardingRoutes from "./routes/onboardingRoutes";
 
 // Ivy League route imports
 import ivyServiceRoutes from "./routes/ivyService.routes";
-import ivyActivityRoutes from "./routes/activity.routes";
+import ivyActivityRoutes from "./routes/ivyActivity.routes";
 import ivyAdminRoutes from "./routes/admin.routes";
 import ivyAgentSuggestionRoutes from "./routes/agentSuggestion.routes";
 import ivyExcelUploadRoutes from "./routes/excelUpload.routes";

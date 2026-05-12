@@ -12,7 +12,7 @@ import {
   upsertFeedback,
   getFeedback,
   deleteFeedback,
-} from '../controllers/activityController';
+} from '../controllers/studentActivityController';
 
 const router = Router();
 

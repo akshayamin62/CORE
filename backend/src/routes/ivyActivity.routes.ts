@@ -5,7 +5,7 @@ import {
   getActivityById,
   deleteActivity,
   activityFileUploadMiddleware,
-} from '../controllers/activity.controller';
+} from '../controllers/ivyActivityController';
 import { authorize } from '../middleware/authorize';
 import { USER_ROLE } from '../types/roles';
 

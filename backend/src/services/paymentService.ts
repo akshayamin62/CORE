@@ -63,7 +63,7 @@ export const createProformaInvoice = async (params: {
       ? [studentUser.firstName, studentUser.middleName, studentUser.lastName].filter(Boolean).join(' ')
       : 'Student',
     studentEmail: studentUser?.email || '',
-    studentPhone: studentUser?.phone || undefined,
+    studentPhone: studentUser?.mobileNumber || undefined,
     serviceName: params.serviceName,
     serviceSlug: params.serviceSlug,
     planTier: params.planTier,
@@ -123,7 +123,7 @@ export const createTaxInvoice = async (params: {
       ? [studentUser.firstName, studentUser.middleName, studentUser.lastName].filter(Boolean).join(' ')
       : 'Student',
     studentEmail: studentUser?.email || '',
-    studentPhone: studentUser?.phone || undefined,
+    studentPhone: studentUser?.mobileNumber || undefined,
     serviceName: params.serviceName,
     serviceSlug: params.serviceSlug,
     planTier: params.planTier,
