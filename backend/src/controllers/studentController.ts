@@ -12,7 +12,7 @@ export const getStudentProfile = async (req: AuthRequest, res: Response) => {
 
     // If student profile doesn't exist, create a basic one
     if (!student) {
-      const user = await Student.findOne({ userId }).populate("userId");
+      const user = await User.findOne({ userId });
       if (!user) {
         return res.status(404).json({
           success: false,

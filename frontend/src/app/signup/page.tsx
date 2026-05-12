@@ -45,6 +45,13 @@ export default function SignupPage() {
   const [resendTimer, setResendTimer] = useState(60);
   const [resending, setResending] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const otpInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (step === 'verify-otp') {
+      otpInputRef.current?.focus();
+    }
+  }, [step]);
   const [userEmail, setUserEmail] = useState('');
   const [userMobileNumber, setUserMobileNumber] = useState('');
   const [userRole, setUserRole] = useState('');
@@ -842,6 +849,7 @@ export default function SignupPage() {
                     </svg>
                   </div>
                   <input
+                    ref={otpInputRef}
                     id="otp"
                     name="otp"
                     type="text"

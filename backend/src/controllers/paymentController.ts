@@ -264,26 +264,33 @@ export const verifyPayment = async (req: AuthRequest, res: Response): Promise<Re
       return res.status(400).json({ success: false, message: 'Payment verification failed - invalid signature' });
     }
 
-    // Find the payment record
-    const payment = await Payment.findOne({ razorpayOrderId: razorpay_order_id });
-    if (!payment) {
-      return res.status(404).json({ success: false, message: 'Payment record not found' });
-    }
+    // Atomically claim the payment: only succeeds if status is not yet CAPTURED.
+    // This prevents double-processing from concurrent webhook/callback retries.
+    const payment = await Payment.findOneAndUpdate(
+      { razorpayOrderId: razorpay_order_id, status: { $ne: PaymentStatus.CAPTURED } },
+      {
+        $set: {
+          razorpayPaymentId: razorpay_payment_id,
+          razorpaySignature: razorpay_signature,
+          status: PaymentStatus.CAPTURED,
+          paidAt: new Date(),
+        },
+      },
+      { new: true }
+    );
 
-    if (payment.status === PaymentStatus.CAPTURED) {
+    if (!payment) {
+      // Either record doesn't exist or was already captured
+      const existingPayment = await Payment.findOne({ razorpayOrderId: razorpay_order_id });
+      if (!existingPayment) {
+        return res.status(404).json({ success: false, message: 'Payment record not found' });
+      }
       return res.status(200).json({
         success: true,
         message: 'Payment already verified',
-        data: { payment },
+        data: { payment: existingPayment },
       });
     }
-
-    // Update payment status
-    payment.razorpayPaymentId = razorpay_payment_id;
-    payment.razorpaySignature = razorpay_signature;
-    payment.status = PaymentStatus.CAPTURED;
-    payment.paidAt = new Date();
-    await payment.save();
 
     // Update registration
     const registration = await StudentServiceRegistration.findById(payment.registrationId);

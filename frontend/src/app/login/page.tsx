@@ -18,6 +18,13 @@ export default function LoginPage() {
   const [resendTimer, setResendTimer] = useState(60);
   const [resending, setResending] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const otpInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (step === 'verify') {
+      otpInputRef.current?.focus();
+    }
+  }, [step]);
 
   const startResendTimer = useCallback(() => {
     setResendTimer(60);
@@ -309,6 +316,7 @@ export default function LoginPage() {
                     </svg>
                   </div>
                   <input
+                    ref={otpInputRef}
                     id="otp"
                     name="otp"
                     type="text"

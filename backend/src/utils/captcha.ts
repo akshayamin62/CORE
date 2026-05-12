@@ -41,8 +41,8 @@ export function generateCaptchaChallenge(): { token: string; question: string } 
       answer = a - b;
       break;
     case '×':
-      a = Math.floor(Math.random() * 12) + 2;  // 2-13
-      b = Math.floor(Math.random() * 12) + 2;  // 2-13
+      a = Math.floor(Math.random() * 9) + 2;  // 2-10
+      b = Math.floor(Math.random() * 9) + 2;  // 2-10
       answer = a * b;
       break;
     default:

@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 /**
  * Generate a 6-digit OTP
  */
@@ -6,17 +8,17 @@ export const generateOTP = (): string => {
 };
 
 /**
- * Hash OTP for storage
+ * Hash OTP for storage using SHA-256
  */
 export const hashOTP = (otp: string): string => {
-  return Buffer.from(otp).toString('base64');
+  return crypto.createHash('sha256').update(otp).digest('hex');
 };
 
 /**
  * Compare OTP
  */
 export const compareOTP = (otp: string, hashedOTP: string): boolean => {
-  const hashedInput = Buffer.from(otp).toString('base64');
+  const hashedInput = crypto.createHash('sha256').update(otp).digest('hex');
   return hashedInput === hashedOTP;
 };
 
