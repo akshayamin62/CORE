@@ -24,6 +24,20 @@ export const submitB2BEnquiry = async (req: Request, res: Response): Promise<Res
       });
     }
 
+    if (!country || !country.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Country is required",
+      });
+    }
+
+    if (!state || !state.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "State is required",
+      });
+    }
+
     // Validate type
     if (!Object.values(B2B_LEAD_TYPE).includes(type as B2B_LEAD_TYPE)) {
       return res.status(400).json({
@@ -67,7 +81,7 @@ export const submitB2BEnquiry = async (req: Request, res: Response): Promise<Res
       mobileNumber.trim(),
       fullName,
       `your ${type} partnership enquiry`,
-      'For more details, reply with *"business"*.'
+      'For more details, reply with "*business*".'
     ).catch((err) => console.error('Failed to send WhatsApp B2B enquiry welcome:', err));
 
     // Send confirmation email to enquirer and notify Super Admins
@@ -90,6 +104,8 @@ export const submitB2BEnquiry = async (req: Request, res: Response): Promise<Res
               <tr><td style="padding:6px 0;font-weight:bold;">Name:</td><td>${firstName} ${middleName || ''} ${lastName}</td></tr>
               <tr><td style="padding:6px 0;font-weight:bold;">Email:</td><td>${email}</td></tr>
               <tr><td style="padding:6px 0;font-weight:bold;">Phone:</td><td>${mobileNumber}</td></tr>
+              <tr><td style="padding:6px 0;font-weight:bold;">Country:</td><td>${country?.trim() || 'N/A'}</td></tr>
+              <tr><td style="padding:6px 0;font-weight:bold;">State:</td><td>${state?.trim() || 'N/A'}</td></tr>
               <tr><td style="padding:6px 0;font-weight:bold;">City:</td><td>${city?.trim() || 'N/A'}</td></tr>
               <tr><td style="padding:6px 0;font-weight:bold;">Type:</td><td>${type}</td></tr>
             </table>

@@ -2,27 +2,25 @@ import Invoice, { InvoiceType, InvoiceStatus } from '../models/Invoice';
 import Ledger, { LedgerEntryType } from '../models/Ledger';
 import User from '../models/User';
 import Student from '../models/Student';
+import InvoiceSequence from '../models/InvoiceSequence';
 
-// ===== Invoice Number Generation =====
+// ===== Invoice Number Generation (atomic — race-condition safe) =====
+// Uses a dedicated Counter document with $inc — a single atomic MongoDB operation.
+// Under any level of concurrency, no two calls can receive the same sequence number.
+// Preferred over sort-based approaches for high-volume invoice generation.
 
 export const generateInvoiceNumber = async (type: InvoiceType): Promise<string> => {
   const prefix = type === InvoiceType.PROFORMA ? 'KS-PF' : 'KS-INV';
   const year = new Date().getFullYear();
+  const counterId = `${prefix}-${year}`;
 
-  const lastInvoice = await Invoice.findOne({
-    invoiceNumber: { $regex: `^${prefix}-${year}-` },
-  })
-    .sort({ invoiceNumber: -1 })
-    .lean();
+  const counter = await InvoiceSequence.findOneAndUpdate(
+    { _id: counterId },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  );
 
-  let nextNum = 1;
-  if (lastInvoice) {
-    const parts = lastInvoice.invoiceNumber.split('-');
-    const lastNum = parseInt(parts[parts.length - 1], 10);
-    if (!isNaN(lastNum)) nextNum = lastNum + 1;
-  }
-
-  return `${prefix}-${year}-${String(nextNum).padStart(5, '0')}`;
+  return `${prefix}-${year}-${String(counter.seq).padStart(5, '0')}`;
 };
 
 // ===== Create Proforma Invoice =====

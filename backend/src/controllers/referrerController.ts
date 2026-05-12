@@ -668,7 +668,7 @@ export const submitReferralEnquiry = async (req: Request, res: Response): Promis
       mobileNumber.trim(),
       name.trim(),
       `your request for referral with ${companyNameForWA}`,
-      'For more details, reply with *"business"*.'
+      'For more details, reply with "*business*".'
     ).catch((err) => console.error('Failed to send WhatsApp enquiry welcome to referral lead:', err));
 
     return res.status(201).json({
