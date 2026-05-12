@@ -8,6 +8,7 @@ import Admin from "../models/Admin";
 import Advisor from "../models/Advisor";
 import Counselor from "../models/Counselor";
 import Lead, { LEAD_STAGE } from "../models/Lead";
+import B2BLead from "../models/B2BLead";
 import Student from "../models/Student";
 import StudentServiceRegistration from "../models/StudentServiceRegistration";
 import TeamMeet from "../models/TeamMeet";
@@ -220,6 +221,11 @@ export const getUserStats = async (_req: Request, res: Response): Promise<Respon
       return acc;
     }, {} as Record<string, number>);
 
+    const [totalLeads, totalB2BLeads] = await Promise.all([
+      Lead.countDocuments(),
+      B2BLead.countDocuments(),
+    ]);
+
     return res.json({
       success: true,
       data: {
@@ -228,6 +234,8 @@ export const getUserStats = async (_req: Request, res: Response): Promise<Respon
         active: activeUsers,
         pendingApproval,
         byRole: roleStats,
+        totalLeads,
+        totalB2BLeads,
       },
     });
   } catch (error) {

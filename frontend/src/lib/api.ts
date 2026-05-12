@@ -98,6 +98,11 @@ export const authAPI = {
     api.delete('/auth/profile-picture'),
 };
 
+export const siteStatsAPI = {
+  recordVisit: () => api.post('/stats/visit'),
+  getVisitorCount: () => api.get('/stats/visitors'),
+};
+
 export const superAdminAPI = {
   getUsers: (params?: {
     role?: string;

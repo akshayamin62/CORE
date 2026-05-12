@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { authAPI, superAdminAPI, teamMeetAPI } from '@/lib/api';
+import { authAPI, superAdminAPI, teamMeetAPI, siteStatsAPI } from '@/lib/api';
 import { User, USER_ROLE, TeamMeet, TEAMMEET_STATUS } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
@@ -21,6 +21,10 @@ interface RoleStats {
   PARENT?: number;
   ALUMNI?: number;
   SERVICE_PROVIDER?: number;
+  ADVISOR?: number;
+  REFERRER?: number;
+  B2B_SALES?: number;
+  B2B_OPS?: number;
 }
 
 export default function SuperAdminDashboardPage() {
@@ -28,6 +32,9 @@ export default function SuperAdminDashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [roleStats, setRoleStats] = useState<RoleStats>({});
+  const [totalVisitors, setTotalVisitors] = useState<number | null>(null);
+  const [totalLeads, setTotalLeads] = useState<number | null>(null);
+  const [totalB2BLeads, setTotalB2BLeads] = useState<number | null>(null);
 
   // TeamMeet state
   const [teamMeets, setTeamMeets] = useState<TeamMeet[]>([]);
@@ -44,6 +51,7 @@ export default function SuperAdminDashboardPage() {
     if (user) {
       fetchStats();
       fetchTeamMeets();
+      fetchVisitorCount();
     }
   }, [user]);
 
@@ -80,8 +88,19 @@ export default function SuperAdminDashboardPage() {
     try {
       const response = await superAdminAPI.getStats();
       setRoleStats(response.data.data.byRole || {});
+      setTotalLeads(response.data.data.totalLeads ?? 0);
+      setTotalB2BLeads(response.data.data.totalB2BLeads ?? 0);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+    }
+  };
+
+  const fetchVisitorCount = async () => {
+    try {
+      const response = await siteStatsAPI.getVisitorCount();
+      setTotalVisitors(response.data.data.totalVisitors);
+    } catch (error) {
+      console.error('Failed to fetch visitor count:', error);
     }
   };
 
@@ -140,14 +159,24 @@ export default function SuperAdminDashboardPage() {
   // Define role cards with their display info
   const roleCards = [
     { key: 'ADMIN', label: 'Admins', color: 'red', path: '/super-admin/roles/admin' },
+    { key: 'ADVISOR', label: 'Advisors', color: 'cyan', path: '/super-admin/roles/advisor' },
     { key: 'OPS', label: 'Ops', color: 'green', path: '/super-admin/roles/ops' },
     { key: 'COUNSELOR', label: 'Counselors', color: 'teal', path: '/super-admin/roles/counselor' },
     { key: 'STUDENT', label: 'Students', color: 'blue', path: '/super-admin/roles/student' },
     { key: 'PARENT', label: 'Parents', color: 'amber', path: '/super-admin/roles/parent' },
     { key: 'IVY_EXPERT', label: 'Ivy Experts', color: 'purple', path: '/super-admin/roles/ivy-expert' },
     { key: 'EDUPLAN_COACH', label: 'EduPlan Coaches', color: 'indigo', path: '/super-admin/roles/eduplan-coach' },
+    { key: 'B2B_SALES', label: 'B2B Sales', color: 'violet', path: '/super-admin/roles/b2b-sales' },
+    { key: 'B2B_OPS', label: 'B2B Ops', color: 'fuchsia', path: '/super-admin/roles/b2b-ops' },
     { key: 'ALUMNI', label: 'Alumni', color: 'pink', path: '/super-admin/roles/alumni' },
     { key: 'SERVICE_PROVIDER', label: 'Service Providers', color: 'orange', path: '/super-admin/roles/service-provider' },
+    { key: 'REFERRER', label: 'Referrers', color: 'lime', path: '/super-admin/roles/referrer' },
+  ];
+
+  // Leads + B2B Leads as stat cards alongside role cards
+  const leadCards = [
+    { label: 'Leads', value: totalLeads ?? 0, color: 'sky', path: '/super-admin/leads' },
+    { label: 'B2B Leads', value: totalB2BLeads ?? 0, color: 'rose', path: '/super-admin/b2b-leads' },
   ];
 
   return (
@@ -163,13 +192,34 @@ export default function SuperAdminDashboardPage() {
             {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="text-right"><p className="text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></div>); })()}
           </div>
 
-          {/* Role Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 mb-8">
+          {/* Role Stats Cards (site visits + roles + leads together) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+            <RoleStatCard
+              title="Total Site Visits"
+              value={totalVisitors ?? 0}
+              color="cyan"
+              onClick={() => {}}
+              icon={
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              }
+            />
             {roleCards.map((card) => (
               <RoleStatCard
                 key={card.key}
                 title={`${card.label}`}
                 value={roleStats[card.key as keyof RoleStats] || 0}
+                color={card.color as any}
+                onClick={() => router.push(card.path)}
+              />
+            ))}
+            {leadCards.map((card) => (
+              <RoleStatCard
+                key={card.label}
+                title={card.label}
+                value={card.value}
                 color={card.color as any}
                 onClick={() => router.push(card.path)}
               />
@@ -260,22 +310,29 @@ export default function SuperAdminDashboardPage() {
 interface RoleStatCardProps {
   title: string;
   value: number;
-  color: 'blue' | 'green' | 'purple' | 'yellow' | 'red' | 'indigo' | 'teal' | 'amber' | 'pink' | 'orange';
+  color: 'blue' | 'green' | 'purple' | 'yellow' | 'red' | 'indigo' | 'teal' | 'amber' | 'pink' | 'orange' | 'cyan' | 'lime' | 'violet' | 'fuchsia' | 'sky' | 'rose';
   onClick?: () => void;
+  icon?: React.ReactNode;
 }
 
-function RoleStatCard({ title, value, color, onClick }: RoleStatCardProps) {
+function RoleStatCard({ title, value, color, onClick, icon }: RoleStatCardProps) {
   const colorClasses: Record<string, { bg: string; text: string }> = {
-    blue: { bg: 'bg-blue-100', text: 'text-blue-600' },
-    green: { bg: 'bg-green-100', text: 'text-green-600' },
-    purple: { bg: 'bg-purple-100', text: 'text-purple-600' },
-    yellow: { bg: 'bg-yellow-100', text: 'text-yellow-600' },
-    red: { bg: 'bg-red-100', text: 'text-red-600' },
-    indigo: { bg: 'bg-indigo-100', text: 'text-indigo-600' },
-    teal: { bg: 'bg-teal-100', text: 'text-teal-600' },
-    amber: { bg: 'bg-amber-100', text: 'text-amber-600' },
-    pink: { bg: 'bg-pink-100', text: 'text-pink-600' },
-    orange: { bg: 'bg-orange-100', text: 'text-orange-600' },
+    blue:    { bg: 'bg-blue-100',    text: 'text-blue-600' },
+    green:   { bg: 'bg-green-100',   text: 'text-green-600' },
+    purple:  { bg: 'bg-purple-100',  text: 'text-purple-600' },
+    yellow:  { bg: 'bg-yellow-100',  text: 'text-yellow-600' },
+    red:     { bg: 'bg-red-100',     text: 'text-red-600' },
+    indigo:  { bg: 'bg-indigo-100',  text: 'text-indigo-600' },
+    teal:    { bg: 'bg-teal-100',    text: 'text-teal-600' },
+    amber:   { bg: 'bg-amber-100',   text: 'text-amber-600' },
+    pink:    { bg: 'bg-pink-100',    text: 'text-pink-600' },
+    orange:  { bg: 'bg-orange-100',  text: 'text-orange-600' },
+    cyan:    { bg: 'bg-cyan-100',    text: 'text-cyan-600' },
+    lime:    { bg: 'bg-lime-100',    text: 'text-lime-600' },
+    violet:  { bg: 'bg-violet-100',  text: 'text-violet-600' },
+    fuchsia: { bg: 'bg-fuchsia-100', text: 'text-fuchsia-600' },
+    sky:     { bg: 'bg-sky-100',     text: 'text-sky-600' },
+    rose:    { bg: 'bg-rose-100',    text: 'text-rose-600' },
   };
 
   const colorStyle = colorClasses[color] || colorClasses.blue;
@@ -291,9 +348,11 @@ function RoleStatCard({ title, value, color, onClick }: RoleStatCardProps) {
           <p className="text-3xl font-bold text-gray-900">{value}</p>
         </div>
         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorStyle.bg} ${colorStyle.text}`}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
+          {icon ?? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          )}
         </div>
       </div>
     </div>

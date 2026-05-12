@@ -66,6 +66,7 @@ import ivyTestQuestionRoutes from "./routes/ivyTestQuestion.routes";
 import ivyTestSessionRoutes from "./routes/ivyTestSession.routes";
 import ivyExpertCandidateRoutes from "./routes/ivyExpertCandidate.routes";
 import ivyParentInterviewScheduleRoutes from "./routes/ivyParentInterviewSchedule.routes";
+import siteStatsRoutes from "./routes/siteStatsRoutes";
 
 import { authenticate } from "./middleware/auth";
 
@@ -222,6 +223,7 @@ app.use('/uploads', authenticate, express.static(getUploadBaseDir()));
 app.use("/api/auth/verify-otp", otpLimiter);
 app.use("/api/auth/verify-signup-otp", otpLimiter);
 
+app.use("/api/stats", siteStatsRoutes); // Site visitor stats
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/super-admin/students", superAdminStudentRoutes); // More specific route must come first
 app.use("/api/super-admin/ivy-league", authenticate, ivyLeagueAdminRoutes); // Ivy League admin routes
