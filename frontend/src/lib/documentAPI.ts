@@ -64,6 +64,7 @@ export const documentAPI = {
   downloadDocument: async (documentId: string) => {
     const response = await api.get(`/documents/${documentId}/download`, {
       responseType: 'blob',
+      timeout: 60000, // 60s — file downloads can be slow
     });
     return response;
   },
@@ -72,6 +73,7 @@ export const documentAPI = {
   viewDocument: async (documentId: string) => {
     const response = await api.get(`/documents/${documentId}/view`, {
       responseType: 'blob',
+      timeout: 60000, // 60s — file downloads can be slow
     });
     return response;
   },

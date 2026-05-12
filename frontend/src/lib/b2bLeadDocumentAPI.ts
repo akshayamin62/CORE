@@ -98,6 +98,7 @@ export const b2bLeadDocumentAPI = {
   viewDocument: (documentId: string) => {
     return api.get(`/b2b-lead-documents/${documentId}/view`, {
       responseType: 'blob',
+      timeout: 60000, // 60s — file downloads can be slow
     });
   },
 

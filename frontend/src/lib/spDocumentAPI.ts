@@ -52,6 +52,7 @@ export const spDocumentAPI = {
   viewDocument: async (documentId: string) => {
     return api.get(`/sp-documents/${documentId}/view`, {
       responseType: 'blob',
+      timeout: 60000, // 60s — file downloads can be slow
     });
   },
 
@@ -59,6 +60,7 @@ export const spDocumentAPI = {
   downloadDocument: async (documentId: string) => {
     return api.get(`/sp-documents/${documentId}/download`, {
       responseType: 'blob',
+      timeout: 60000, // 60s — file downloads can be slow
     });
   },
 
