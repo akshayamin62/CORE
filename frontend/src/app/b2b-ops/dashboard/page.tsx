@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { authAPI, b2bAPI } from '@/lib/api';
-import { User, USER_ROLE, B2B_LEAD_STAGE, FOLLOWUP_STATUS, LEAD_STAGE, FollowUp } from '@/types';
+import { authAPI, b2bAPI, teamMeetAPI } from '@/lib/api';
+import { User, USER_ROLE, B2B_LEAD_STAGE, FOLLOWUP_STATUS, LEAD_STAGE, FollowUp, TeamMeet, TEAMMEET_STATUS } from '@/types';
 import B2BOpsLayout from '@/components/B2BOpsLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
-import FollowUpCalendar from '@/components/FollowUpCalendar';
-import FollowUpSidebar from '@/components/FollowUpSidebar';
 import B2BFollowUpFormPanel from '@/components/B2BFollowUpFormPanel';
+import ScheduleCalendar from '@/components/ScheduleCalendar';
+import ScheduleOverview from '@/components/ScheduleOverview';
+import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 
 // Adapter: map B2B follow-up data to FollowUp shape for calendar/sidebar
 function adaptB2BFollowUps(b2bFollowUps: any[]): FollowUp[] {
@@ -52,12 +53,22 @@ export default function B2BOpsDashboardPage() {
   const [missedFollowUps, setMissedFollowUps] = useState<FollowUp[]>([]);
   const [upcomingFollowUps, setUpcomingFollowUps] = useState<FollowUp[]>([]);
 
+  // TeamMeet state
+  const [teamMeets, setTeamMeets] = useState<TeamMeet[]>([]);
+  const [selectedTeamMeet, setSelectedTeamMeet] = useState<TeamMeet | null>(null);
+  const [showTeamMeetPanel, setShowTeamMeetPanel] = useState(false);
+  const [teamMeetPanelMode, setTeamMeetPanelMode] = useState<'create' | 'view' | 'respond'>('create');
+  const [selectedTeamMeetDate, setSelectedTeamMeetDate] = useState<Date | undefined>(undefined);;
+
   useEffect(() => {
     checkAuth();
   }, []);
 
   useEffect(() => {
-    if (user) fetchData();
+    if (user) {
+      fetchData();
+      fetchTeamMeets();
+    }
   }, [user]);
 
   const checkAuth = async () => {
@@ -112,6 +123,53 @@ export default function B2BOpsDashboardPage() {
     } catch {
       console.error('Failed to fetch dashboard data');
     }
+  };
+
+  const fetchTeamMeets = useCallback(async () => {
+    try {
+      const response = await teamMeetAPI.getTeamMeetsForCalendar();
+      setTeamMeets(response.data.data.teamMeets);
+    } catch (error) {
+      console.error('Error fetching team meets:', error);
+    }
+  }, []);
+
+  const handleTeamMeetSelect = (teamMeet: TeamMeet) => {
+    setSelectedTeamMeet(teamMeet);
+    const currentUserId = user?.id || user?._id;
+    if (teamMeet.requestedTo._id === currentUserId && teamMeet.status === TEAMMEET_STATUS.PENDING_CONFIRMATION) {
+      setTeamMeetPanelMode('respond');
+    } else {
+      setTeamMeetPanelMode('view');
+    }
+    setShowTeamMeetPanel(true);
+  };
+
+  const handleTeamMeetDateSelect = (date: Date) => {
+    setSelectedTeamMeetDate(date);
+    setSelectedTeamMeet(null);
+    setTeamMeetPanelMode('create');
+    setShowTeamMeetPanel(true);
+  };
+
+  const handleScheduleTeamMeet = () => {
+    setSelectedTeamMeet(null);
+    setSelectedTeamMeetDate(undefined);
+    setTeamMeetPanelMode('create');
+    setShowTeamMeetPanel(true);
+  };
+
+  const handleTeamMeetSave = async () => {
+    setShowTeamMeetPanel(false);
+    setSelectedTeamMeet(null);
+    setSelectedTeamMeetDate(undefined);
+    await fetchTeamMeets();
+  };
+
+  const handleTeamMeetPanelClose = () => {
+    setShowTeamMeetPanel(false);
+    setSelectedTeamMeet(null);
+    setSelectedTeamMeetDate(undefined);
   };
 
   const stats = {
@@ -202,68 +260,49 @@ export default function B2BOpsDashboardPage() {
             </div>
           </div>
 
-          {/* Follow-Up Calendar and Overview */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-            <div className="lg:col-span-3">
-              <FollowUpCalendar followUps={adaptB2BFollowUps(allFollowUps)} onFollowUpSelect={(fu: any) => { const orig = allFollowUps.find((f: any) => f._id === fu._id); setSelectedFollowUp(orig || fu); setShowFollowUpPanel(true); }} />
-            </div>
-            <div className="lg:col-span-1">
-              <FollowUpSidebar today={todayFollowUps} missed={missedFollowUps} upcoming={upcomingFollowUps} onFollowUpClick={(fu: any) => { const orig = allFollowUps.find((f: any) => f._id === fu._id); setSelectedFollowUp(orig || fu); setShowFollowUpPanel(true); }} basePath="/b2b-ops/leads" showLeadLink={true} />
-            </div>
-          </div>
 
-          {/* Recent Leads */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Assigned Leads</h3>
-              <button
-                onClick={() => router.push('/b2b-ops/leads')}
-                className="text-sm text-purple-600 hover:text-purple-800 font-medium"
-              >
-                View All →
-              </button>
+
+          {/* Schedule Section */}
+          <div className="mt-8">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              <div className="lg:col-span-3">
+                <ScheduleCalendar
+                  followUps={adaptB2BFollowUps(allFollowUps)}
+                  teamMeets={teamMeets}
+                  onFollowUpSelect={(fu: any) => { const orig = allFollowUps.find((f: any) => f._id === fu._id); setSelectedFollowUp(orig || fu); setShowFollowUpPanel(true); }}
+                  onTeamMeetSelect={handleTeamMeetSelect}
+                  onDateSelect={handleTeamMeetDateSelect}
+                  currentUserId={user?.id || user?._id}
+                />
+              </div>
+              <div className="lg:col-span-1">
+                <ScheduleOverview
+                  followUps={adaptB2BFollowUps(allFollowUps)}
+                  teamMeets={teamMeets}
+                  onFollowUpClick={(fu: any) => { const orig = allFollowUps.find((f: any) => f._id === fu._id); setSelectedFollowUp(orig || fu); setShowFollowUpPanel(true); }}
+                  onTeamMeetClick={handleTeamMeetSelect}
+                  onScheduleClick={handleScheduleTeamMeet}
+                  currentUserId={user?.id || user?._id}
+                  showLeadLink={true}
+                  basePath="/b2b-ops/leads"
+                />
+              </div>
             </div>
-            {leads.length === 0 ? (
-              <div className="p-8 text-center">
-                <p className="text-gray-400">No leads assigned yet</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-200">
-                {leads.slice(0, 5).map((lead: any) => (
-                  <div
-                    key={lead._id}
-                    className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                    onClick={() => router.push(`/b2b-ops/leads/${lead._id}`)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {lead.firstName} {lead.middleName || ''} {lead.lastName}
-                        </p>
-                        <p className="text-xs text-gray-500">{lead.email} • {lead.mobileNumber}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2.5 py-0.5 text-xs font-semibold rounded-full ${
-                          lead.stage === 'Proceed for Documentation' ? 'bg-purple-100 text-purple-800' :
-                          lead.stage === 'Converted' ? 'bg-green-100 text-green-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {lead.stage}
-                        </span>
-                        <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600">
-                          {lead.type}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </B2BOpsLayout>
 
       <B2BFollowUpFormPanel followUp={selectedFollowUp} isOpen={showFollowUpPanel} onClose={() => { setShowFollowUpPanel(false); setSelectedFollowUp(null); }} onSave={() => { setShowFollowUpPanel(false); setSelectedFollowUp(null); fetchData(); }} />
+
+      <TeamMeetFormPanel
+        teamMeet={selectedTeamMeet}
+        isOpen={showTeamMeetPanel}
+        onClose={handleTeamMeetPanelClose}
+        onSave={handleTeamMeetSave}
+        selectedDate={selectedTeamMeetDate}
+        mode={teamMeetPanelMode}
+        currentUserId={user?.id || user?._id}
+      />
     </>
   );
 }

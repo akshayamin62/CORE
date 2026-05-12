@@ -13,6 +13,8 @@ import EduplanCoach from "../models/EduplanCoach";
 import IvyExpert from "../models/IvyExpert";
 import Advisor from "../models/Advisor";
 import Parent from "../models/Parent";
+import B2BSales from "../models/B2BSales";
+import B2BOps from "../models/B2BOps";
 import StudentServiceRegistration from "../models/StudentServiceRegistration";
 import mongoose from "mongoose";
 import { USER_ROLE } from "../types/roles";
@@ -63,6 +65,14 @@ const getUserMobileNumber = async (userId: string, role: string): Promise<string
       }
       case USER_ROLE.PARENT: {
         const p = await Parent.findOne({ userId }).select('mobileNumber');
+        return p?.mobileNumber || null;
+      }
+      case USER_ROLE.B2B_SALES: {
+        const p = await B2BSales.findOne({ userId }).select('mobileNumber');
+        return p?.mobileNumber || null;
+      }
+      case USER_ROLE.B2B_OPS: {
+        const p = await B2BOps.findOne({ userId }).select('mobileNumber');
         return p?.mobileNumber || null;
       }
       default:
@@ -152,6 +162,12 @@ const getAdminIdForUser = async (userId: string, userRole: string): Promise<mong
     if (!student?.adminId) return new mongoose.Types.ObjectId(userId);
     const admin = await Admin.findOne({ _id: student.adminId });
     return admin ? admin.userId : new mongoose.Types.ObjectId(userId);
+  } else if (userRole === USER_ROLE.B2B_SALES) {
+    // B2B Sales is cross-org like super admin; return a sentinel
+    return new mongoose.Types.ObjectId(userId);
+  } else if (userRole === USER_ROLE.B2B_OPS) {
+    // B2B OPS is cross-org like super admin; return a sentinel
+    return new mongoose.Types.ObjectId(userId);
   }
   return null;
 };
@@ -291,7 +307,7 @@ export const createTeamMeet = async (
     const allowedRecipientRoles = [
       USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN,
       USER_ROLE.STUDENT, USER_ROLE.OPS, USER_ROLE.EDUPLAN_COACH, USER_ROLE.IVY_EXPERT,
-      USER_ROLE.PARENT, USER_ROLE.ADVISOR,
+      USER_ROLE.PARENT, USER_ROLE.ADVISOR, USER_ROLE.B2B_SALES, USER_ROLE.B2B_OPS,
     ];
     if (!allowedRecipientRoles.includes(recipient.role as USER_ROLE)) {
       return res.status(400).json({
@@ -1338,7 +1354,7 @@ export const getParticipants = async (
     // ── SUPER_ADMIN: all users with meeting-eligible roles ──
     if (userRole === USER_ROLE.SUPER_ADMIN) {
       const users = await User.find({
-        role: { $in: [USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.STUDENT, USER_ROLE.OPS, USER_ROLE.EDUPLAN_COACH, USER_ROLE.IVY_EXPERT, USER_ROLE.ADVISOR] },
+        role: { $in: [USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.STUDENT, USER_ROLE.OPS, USER_ROLE.EDUPLAN_COACH, USER_ROLE.IVY_EXPERT, USER_ROLE.ADVISOR, USER_ROLE.B2B_SALES, USER_ROLE.B2B_OPS] },
         _id: { $ne: userId },
       }).select("_id firstName middleName lastName email role");
       users.forEach(addUser);
@@ -1775,6 +1791,46 @@ export const getParticipants = async (
 
       // Parents of advisor's students
       await addParentsForStudents(studentIds, seen, participants, userId!);
+
+      return res.status(200).json({ success: true, data: { participants } });
+    }
+
+    // ── B2B_SALES: super admins + all B2B_OPS users ──
+    if (userRole === USER_ROLE.B2B_SALES) {
+      // Super admins
+      const superAdmins = await User.find({ role: USER_ROLE.SUPER_ADMIN })
+        .select("_id firstName middleName lastName email role");
+      superAdmins.forEach(addUser);
+
+      // All B2B_OPS users
+      const b2bOpsUsers = await User.find({ role: USER_ROLE.B2B_OPS })
+        .select("_id firstName middleName lastName email role");
+      b2bOpsUsers.forEach(addUser);
+
+      return res.status(200).json({ success: true, data: { participants } });
+    }
+
+    // ── B2B_OPS: super admins + all B2B_SALES users + all ADMIN + all ADVISOR users ──
+    if (userRole === USER_ROLE.B2B_OPS) {
+      // Super admins
+      const superAdmins = await User.find({ role: USER_ROLE.SUPER_ADMIN })
+        .select("_id firstName middleName lastName email role");
+      superAdmins.forEach(addUser);
+
+      // All B2B_SALES users
+      const b2bSalesUsers = await User.find({ role: USER_ROLE.B2B_SALES })
+        .select("_id firstName middleName lastName email role");
+      b2bSalesUsers.forEach(addUser);
+
+      // All ADMIN users
+      const adminUsers = await User.find({ role: USER_ROLE.ADMIN })
+        .select("_id firstName middleName lastName email role");
+      adminUsers.forEach(addUser);
+
+      // All ADVISOR users
+      const advisorUsers = await User.find({ role: USER_ROLE.ADVISOR })
+        .select("_id firstName middleName lastName email role");
+      advisorUsers.forEach(addUser);
 
       return res.status(200).json({ success: true, data: { participants } });
     }

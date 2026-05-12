@@ -147,19 +147,29 @@ export default function SuperAdminLayout({ children, user }: SuperAdminLayoutPro
       path: '/super-admin/roles/advisor',
     },
     {
-      name: 'Ops',
-      icon: Icons.ops,
-      path: '/super-admin/roles/ops',
-    },
-    {
-      name: 'EduPlan Coach',
-      icon: Icons.coach,
-      path: '/super-admin/roles/eduplan-coach',
-    },
-    {
-      name: 'Ivy Expert',
-      icon: Icons.expert,
-      path: '/super-admin/roles/ivy-expert',
+      name: 'B2C',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      ),
+      children: [
+        {
+          name: 'Ops',
+          icon: Icons.ops,
+          path: '/super-admin/roles/ops',
+        },
+        {
+          name: 'EduPlan Coach',
+          icon: Icons.coach,
+          path: '/super-admin/roles/eduplan-coach',
+        },
+        {
+          name: 'Ivy Expert',
+          icon: Icons.expert,
+          path: '/super-admin/roles/ivy-expert',
+        },
+      ],
     },
     {
       name: 'Counselor',
