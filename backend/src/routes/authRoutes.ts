@@ -22,8 +22,8 @@ import { generateCaptchaChallenge } from "../utils/captcha";
 const router = Router();
 
 // Captcha endpoint — returns a math question + token
-router.get("/captcha", (_req, res) => {
-  const { token, question } = generateCaptchaChallenge();
+router.get("/captcha", async (_req, res) => {
+  const { token, question } = await generateCaptchaChallenge();
   res.json({ success: true, data: { token, question } });
 });
 

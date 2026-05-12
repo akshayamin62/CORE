@@ -82,7 +82,7 @@ export const signup = async (req: SignupRequest, res: Response): Promise<Respons
     }
 
     const answerNum = parseInt(captchaAnswer, 10);
-    if (isNaN(answerNum) || !verifyCaptcha(captchaToken, answerNum)) {
+    if (isNaN(answerNum) || !await verifyCaptcha(captchaToken, answerNum)) {
       return res.status(401).json({
         success: false,
         message: "Invalid captcha. Please try again.",
@@ -177,7 +177,7 @@ export const login = async (req: LoginRequest, res: Response): Promise<Response>
     }
 
     const answerNum = parseInt(captchaAnswer, 10);
-    if (isNaN(answerNum) || !verifyCaptcha(captchaToken, answerNum)) {
+    if (isNaN(answerNum) || !await verifyCaptcha(captchaToken, answerNum)) {
       return res.status(401).json({
         success: false,
         message: "Invalid captcha. Please try again.",

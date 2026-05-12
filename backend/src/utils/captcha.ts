@@ -1,29 +1,12 @@
 import crypto from 'crypto';
-
-interface CaptchaChallenge {
-  question: string;
-  answer: number;
-  expiresAt: number;
-}
-
-// In-memory store for captcha challenges (keyed by token)
-const captchaStore = new Map<string, CaptchaChallenge>();
-
-// Clean up expired captchas every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [token, challenge] of captchaStore) {
-    if (challenge.expiresAt < now) {
-      captchaStore.delete(token);
-    }
-  }
-}, 5 * 60 * 1000);
+import CaptchaStore from '../models/CaptchaStore';
 
 /**
  * Generate a simple math captcha challenge.
+ * Stores the challenge in MongoDB (TTL-indexed) so it works across multiple server instances.
  * Returns a token (to identify the challenge) and the question string.
  */
-export function generateCaptchaChallenge(): { token: string; question: string } {
+export async function generateCaptchaChallenge(): Promise<{ token: string; question: string }> {
   const operators = ['+', '-', '×'] as const;
   const op = operators[Math.floor(Math.random() * operators.length)];
 
@@ -52,10 +35,10 @@ export function generateCaptchaChallenge(): { token: string; question: string } 
   const question = `${a} ${op} ${b} = ?`;
   const token = crypto.randomBytes(16).toString('hex');
 
-  captchaStore.set(token, {
-    question,
+  await CaptchaStore.create({
+    token,
     answer,
-    expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
+    expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes
   });
 
   return { token, question };
@@ -63,17 +46,15 @@ export function generateCaptchaChallenge(): { token: string; question: string } 
 
 /**
  * Verify a captcha answer against a stored challenge.
- * Single-use: the challenge is deleted after verification regardless of result.
+ * Single-use: the document is atomically deleted on first verification attempt.
  */
-export function verifyCaptcha(token: string, userAnswer: number): boolean {
-  const challenge = captchaStore.get(token);
-  if (!challenge) return false;
+export async function verifyCaptcha(token: string, userAnswer: number): Promise<boolean> {
+  // findOneAndDelete is atomic — prevents replay attacks even under concurrent requests
+  const doc = await CaptchaStore.findOneAndDelete({
+    token,
+    expiresAt: { $gt: new Date() },
+  });
 
-  // Delete immediately (single-use)
-  captchaStore.delete(token);
-
-  // Check expiry
-  if (challenge.expiresAt < Date.now()) return false;
-
-  return challenge.answer === userAnswer;
+  if (!doc) return false;
+  return (doc as any).answer === userAnswer;
 }
