@@ -491,7 +491,7 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
                             </span>
                           )}
                           <span className={`text-xs px-2 py-0.5 rounded-full ${getRoleBadgeColor(msg.senderRole)}`}>
-                            {msg.senderRole.toLowerCase()}
+                            {msg.senderRole === 'SUPER_ADMIN' ? 'Program Director' : msg.senderRole.charAt(0).toUpperCase() + msg.senderRole.slice(1).toLowerCase()}
                           </span>
                         </div>
                       </div>
