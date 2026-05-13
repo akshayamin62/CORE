@@ -166,17 +166,17 @@ export default function SuperAdminDashboardPage() {
     { key: 'PARENT', label: 'Parents', color: 'amber', path: '/super-admin/roles/parent' },
     { key: 'IVY_EXPERT', label: 'Ivy Experts', color: 'purple', path: '/super-admin/roles/ivy-expert' },
     { key: 'EDUPLAN_COACH', label: 'EduPlan Coaches', color: 'indigo', path: '/super-admin/roles/eduplan-coach' },
-    { key: 'B2B_SALES', label: 'B2B Sales', color: 'violet', path: '/super-admin/roles/b2b-sales' },
-    { key: 'B2B_OPS', label: 'B2B Ops', color: 'fuchsia', path: '/super-admin/roles/b2b-ops' },
+    { key: 'B2B_SALES', label: 'B2B Sales', color: 'violet', path: '/super-admin/b2b/sales' },
+    { key: 'B2B_OPS', label: 'B2B Ops', color: 'fuchsia', path: '/super-admin/b2b/ops' },
     { key: 'ALUMNI', label: 'Alumni', color: 'pink', path: '/super-admin/roles/alumni' },
     { key: 'SERVICE_PROVIDER', label: 'Service Providers', color: 'orange', path: '/super-admin/roles/service-provider' },
-    { key: 'REFERRER', label: 'Referrers', color: 'lime', path: '/super-admin/roles/referrer' },
+    { key: 'REFERRER', label: 'Referrers', color: 'lime', path: '/super-admin/referrers' },
   ];
 
   // Leads + B2B Leads as stat cards alongside role cards
   const leadCards = [
     { label: 'Leads', value: totalLeads ?? 0, color: 'sky', path: '/super-admin/leads' },
-    { label: 'B2B Leads', value: totalB2BLeads ?? 0, color: 'rose', path: '/super-admin/b2b-leads' },
+    { label: 'B2B Leads', value: totalB2BLeads ?? 0, color: 'rose', path: '/super-admin/b2b/leads' },
   ];
 
   return (

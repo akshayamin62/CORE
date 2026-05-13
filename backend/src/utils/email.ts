@@ -690,10 +690,12 @@ export const sendProgramSuggestedEmail = async (
     country: string;
     intake?: string;
     year?: string;
-  }
+  },
+  senderRole?: string
 ): Promise<void> => {
   const { programName, university, country, intake, year } = programDetails;
   const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/student/dashboard`;
+  const senderLabel = senderRole || 'team';
 
   const html = `
     <!DOCTYPE html>
@@ -707,7 +709,7 @@ export const sendProgramSuggestedEmail = async (
       <div style="max-width: 600px; margin: 20px auto; background-color: white; padding: 30px; border: 1px solid #ddd; border-radius: 8px;">
         <h2 style="color: #2563eb; margin-bottom: 20px;">New Program Suggestion</h2>
         <p style="font-size: 16px;">Hi ${studentName},</p>
-        <p style="font-size: 16px;">Your team has suggested new programs for you:</p>
+        <p style="font-size: 16px;">Your ${senderLabel} has suggested new programs for you:</p>
         
         <div style="background-color: #f0f9ff; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
           <p style="margin: 5px 0;"><strong>Program:</strong> ${programName}</p>
@@ -730,7 +732,7 @@ export const sendProgramSuggestedEmail = async (
     </html>
   `;
 
-  const text = `New Program Suggestion\n\nHi ${studentName},\n\nYour team has suggested a new program for you:\n\nProgram: ${programName}\nUniversity: ${university}\nCountry: ${country}${intake ? `\nIntake: ${intake}${year ? ` ${year}` : ''}` : ''}\n\nLog in to review and select this program:\n${dashboardUrl}\n\nBest regards,\nADMITra Team`;
+  const text = `New Program Suggestion\n\nHi ${studentName},\n\nYour ${senderLabel} has suggested a new program for you:\n\nProgram: ${programName}\nUniversity: ${university}\nCountry: ${country}${intake ? `\nIntake: ${intake}${year ? ` ${year}` : ''}` : ''}\n\nLog in to review and select this program:\n${dashboardUrl}\n\nBest regards,\nADMITra Team`;
 
   await sendEmail({
     to: studentEmail,

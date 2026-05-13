@@ -462,7 +462,8 @@ export const createProgram = async (req: AuthRequest, res: Response): Promise<Re
 
           // Email to student
           if (studentUser?.email) {
-            sendProgramSuggestedEmail(studentUser.email, studentName, { programName, university, country }).catch(err =>
+            const senderLabel = user.role === USER_ROLE.SUPER_ADMIN ? 'Program Director' : 'team';
+            sendProgramSuggestedEmail(studentUser.email, studentName, { programName, university, country }, senderLabel).catch(err =>
               console.error('Email program suggested notification failed:', err.message)
             );
           }
@@ -1193,11 +1194,12 @@ export const uploadProgramsFromExcel = async (req: AuthRequest & { file?: Expres
 
           // Email to student
           if (studentUser?.email) {
+            const senderLabel = req.user?.role === USER_ROLE.SUPER_ADMIN ? 'Program Director' : 'team';
             sendProgramSuggestedEmail(studentUser.email, studentName, {
               programName: programLabel,
               university: firstProgram.university,
               country: firstProgram.country,
-            }).catch(err =>
+            }, senderLabel).catch(err =>
               console.error('Email program suggested (excel) notification failed:', err.message)
             );
           }

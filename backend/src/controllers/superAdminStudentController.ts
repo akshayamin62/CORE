@@ -1212,7 +1212,7 @@ export const sendMessageToStudent = async (req: AuthRequest, res: Response): Pro
 
     // Map role to display name
     const roleDisplayMap: Record<string, string> = {
-      SUPER_ADMIN: 'Super Admin',
+      SUPER_ADMIN: 'Program Director',
       ADMIN: 'Admin',
       COUNSELOR: 'Counselor',
       OPS: 'OPS',
