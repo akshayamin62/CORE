@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { authAPI, b2bAPI, teamMeetAPI } from '@/lib/api';
-import { User, USER_ROLE, B2B_LEAD_STAGE, FOLLOWUP_STATUS, LEAD_STAGE, FollowUp, TeamMeet, TEAMMEET_STATUS } from '@/types';
+import { User, USER_ROLE, B2B_LEAD_STAGE, LEAD_STAGE, FollowUp, TeamMeet, TEAMMEET_STATUS } from '@/types';
 import B2BOpsLayout from '@/components/B2BOpsLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
@@ -49,16 +49,13 @@ export default function B2BOpsDashboardPage() {
   const [allFollowUps, setAllFollowUps] = useState<any[]>([]);
   const [selectedFollowUp, setSelectedFollowUp] = useState<any | null>(null);
   const [showFollowUpPanel, setShowFollowUpPanel] = useState(false);
-  const [todayFollowUps, setTodayFollowUps] = useState<FollowUp[]>([]);
-  const [missedFollowUps, setMissedFollowUps] = useState<FollowUp[]>([]);
-  const [upcomingFollowUps, setUpcomingFollowUps] = useState<FollowUp[]>([]);
 
   // TeamMeet state
   const [teamMeets, setTeamMeets] = useState<TeamMeet[]>([]);
   const [selectedTeamMeet, setSelectedTeamMeet] = useState<TeamMeet | null>(null);
   const [showTeamMeetPanel, setShowTeamMeetPanel] = useState(false);
   const [teamMeetPanelMode, setTeamMeetPanelMode] = useState<'create' | 'view' | 'respond'>('create');
-  const [selectedTeamMeetDate, setSelectedTeamMeetDate] = useState<Date | undefined>(undefined);;
+  const [selectedTeamMeetDate, setSelectedTeamMeetDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     checkAuth();
@@ -100,18 +97,6 @@ export default function B2BOpsDashboardPage() {
 
       const fus = followUpsRes.data.data.followUps || [];
       setAllFollowUps(fus);
-      const adapted = adaptB2BFollowUps(fus);
-      const today = new Date(); today.setHours(0, 0, 0, 0);
-      const tList: FollowUp[] = []; const mList: FollowUp[] = []; const uList: FollowUp[] = [];
-      adapted.forEach((fu) => {
-        const fuDate = new Date(fu.scheduledDate); fuDate.setHours(0, 0, 0, 0);
-        if (fu.status === FOLLOWUP_STATUS.SCHEDULED) {
-          if (fuDate.getTime() === today.getTime()) tList.push(fu);
-          else if (fuDate < today) mList.push(fu);
-          else uList.push(fu);
-        }
-      });
-      setTodayFollowUps(tList); setMissedFollowUps(mList); setUpcomingFollowUps(uList);
 
       // Try to get conversions for context
       try {

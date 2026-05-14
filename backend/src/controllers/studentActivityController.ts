@@ -54,7 +54,7 @@ export const getMonthlyFocus = async (req: AuthRequest, res: Response) => {
     const focus = await MonthlyFocus.findOne({ studentId, registrationId, month });
     return res.json({ success: true, data: focus });
   } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
@@ -88,7 +88,7 @@ export const upsertMonthlyFocus = async (req: AuthRequest, res: Response) => {
 
     return res.json({ success: true, data: focus });
   } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
@@ -110,7 +110,7 @@ export const getDailyPlanner = async (req: AuthRequest, res: Response) => {
     const planner = await DailyPlanner.findOne({ studentId, registrationId, date });
     return res.json({ success: true, data: planner });
   } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
@@ -134,7 +134,7 @@ export const upsertDailyPlanner = async (req: AuthRequest, res: Response) => {
 
     return res.json({ success: true, data: planner });
   } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
@@ -178,7 +178,7 @@ export const getMonthSummary = async (req: AuthRequest, res: Response) => {
 
     return res.json({ success: true, data: summary });
   } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
@@ -376,7 +376,7 @@ export const getActivityAnalytics = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
@@ -484,7 +484,7 @@ export const upsertFeedback = async (req: AuthRequest, res: Response) => {
 
     return res.json({ success: true, data: result });
   } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
@@ -507,7 +507,7 @@ export const getFeedback = async (req: AuthRequest, res: Response) => {
 
     return res.json({ success: true, data: feedbacks });
   } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };
 
@@ -531,6 +531,6 @@ export const deleteFeedback = async (req: AuthRequest, res: Response) => {
     await ActivityFeedback.findByIdAndDelete(feedbackId);
     return res.json({ success: true, message: 'Feedback deleted' });
   } catch (err: any) {
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: 'Internal server error' });
   }
 };

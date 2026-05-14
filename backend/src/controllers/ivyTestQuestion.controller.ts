@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import IvyTestQuestion from '../models/ivy/IvyTestQuestion';
 import multer from 'multer';
 import path from 'path';
@@ -21,6 +22,14 @@ const upload = multer({
 });
 
 export const ivyTestQuestionImageUpload = upload.single('questionImage');
+
+const ensureValidQuestionId = (id: string, res: Response): boolean => {
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(400).json({ success: false, message: 'Invalid question ID' });
+    return false;
+  }
+  return true;
+};
 
 // ── Create question ──────────────────────────────────────────────────
 export const createIvyTestQuestion = async (req: Request, res: Response): Promise<void> => {
@@ -116,6 +125,8 @@ export const getIvyTestQuestions = async (req: Request, res: Response): Promise<
 // ── Get single question ──────────────────────────────────────────────
 export const getIvyTestQuestionById = async (req: Request, res: Response): Promise<void> => {
   try {
+    if (!ensureValidQuestionId(req.params.id, res)) return;
+
     const question = await IvyTestQuestion.findById(req.params.id);
     if (!question) {
       res.status(404).json({ success: false, message: 'Question not found' });
@@ -131,6 +142,8 @@ export const getIvyTestQuestionById = async (req: Request, res: Response): Promi
 // ── Update question ──────────────────────────────────────────────────
 export const updateIvyTestQuestion = async (req: Request, res: Response): Promise<void> => {
   try {
+    if (!ensureValidQuestionId(req.params.id, res)) return;
+
     const question = await IvyTestQuestion.findById(req.params.id);
     if (!question) {
       res.status(404).json({ success: false, message: 'Question not found' });
@@ -182,6 +195,8 @@ export const updateIvyTestQuestion = async (req: Request, res: Response): Promis
 // ── Delete question ──────────────────────────────────────────────────
 export const deleteIvyTestQuestion = async (req: Request, res: Response): Promise<void> => {
   try {
+    if (!ensureValidQuestionId(req.params.id, res)) return;
+
     const question = await IvyTestQuestion.findById(req.params.id);
     if (!question) {
       res.status(404).json({ success: false, message: 'Question not found' });
@@ -206,6 +221,8 @@ export const deleteIvyTestQuestion = async (req: Request, res: Response): Promis
 // ── Toggle active status ─────────────────────────────────────────────
 export const toggleIvyTestQuestionActive = async (req: Request, res: Response): Promise<void> => {
   try {
+    if (!ensureValidQuestionId(req.params.id, res)) return;
+
     const question = await IvyTestQuestion.findById(req.params.id);
     if (!question) {
       res.status(404).json({ success: false, message: 'Question not found' });

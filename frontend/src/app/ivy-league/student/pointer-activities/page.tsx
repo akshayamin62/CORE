@@ -54,7 +54,9 @@ const pointerLabel = (pointerNo: number) => {
 function StudentPointerActivitiesContent() {
   const searchParams = useSearchParams();
   const studentIvyServiceIdFromUrl = searchParams.get('studentIvyServiceId') || '';
-  const studentIdFromUrl = searchParams.get('studentId') || '1'; // TODO: auth
+  const studentIdFromUrl = searchParams.get('studentId') || (() => {
+    try { return JSON.parse(localStorage.getItem('user') || '{}')._id || ''; } catch { return ''; }
+  })();
 
   const [studentIvyServiceId, setStudentIvyServiceId] = useState(studentIvyServiceIdFromUrl);
   const [studentId, setStudentId] = useState(studentIdFromUrl);

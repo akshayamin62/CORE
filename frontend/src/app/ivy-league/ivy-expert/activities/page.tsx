@@ -759,7 +759,9 @@ function ActivitiesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const studentIvyServiceId = searchParams.get('studentIvyServiceId');
-  const ivyExpertId = searchParams.get('ivyExpertId') || '695b93a44df1114a001dc23d';
+  const ivyExpertId = searchParams.get('ivyExpertId') || (() => {
+    try { return JSON.parse(localStorage.getItem('user') || '{}')._id || ''; } catch { return ''; }
+  })();
 
   const [selectedPointer, setSelectedPointer] = useState<number | ''>(() => {
     const p = searchParams.get('pointerNo');

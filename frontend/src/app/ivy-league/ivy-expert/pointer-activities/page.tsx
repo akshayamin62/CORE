@@ -69,7 +69,9 @@ const pointerLabel = (pointerNo: number) => {
 function IvyExpertPointerActivitiesContent() {
   const searchParams = useSearchParams();
   const studentIvyServiceIdFromUrl = searchParams.get('studentIvyServiceId') || '';
-  const ivyExpertIdFromUrl = searchParams.get('ivyExpertId') || '695b93a44df1114a001dc23d'; // TODO: plug into auth
+  const ivyExpertIdFromUrl = searchParams.get('ivyExpertId') || (() => {
+    try { return JSON.parse(localStorage.getItem('user') || '{}')._id || ''; } catch { return ''; }
+  })();
 
   const [studentIvyServiceId, setStudentIvyServiceId] = useState(studentIvyServiceIdFromUrl);
   const [ivyExpertId, setIvyExpertId] = useState(ivyExpertIdFromUrl);
