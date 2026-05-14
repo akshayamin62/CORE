@@ -735,12 +735,13 @@ export const chatAPI = {
   sendMessage: (programId: string, message: string, chatType: 'open' | 'private' = 'open') => 
     api.post(`/chat/program/${programId}/messages`, { message, chatType }),
   
-  // Upload document in chat (open chat)
-  uploadDocument: (programId: string, file: File) => {
+  // Upload document in chat (open or private)
+  uploadDocument: (programId: string, file: File, chatType: 'open' | 'private' = 'open') => {
     const formData = new FormData();
     formData.append('file', file);
     return api.post(`/chat/program/${programId}/upload-document`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      params: { chatType },
     });
   },
 

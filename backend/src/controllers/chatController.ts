@@ -518,13 +518,25 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Upload a document in chat (open chat only)
+// Upload a document in chat (open or private)
 export const uploadChatDocument = async (req: AuthRequest, res: Response) => {
   try {
     const { programId } = req.params;
+    const { chatType = 'open' } = req.query as { chatType?: 'open' | 'private' };
     const userId = req.user!.userId;
     const userRole = req.user!.role;
     const file = req.file;
+
+    if (chatType !== 'open' && chatType !== 'private') {
+      if (file) fs.unlinkSync(file.path);
+      return res.status(400).json({ message: 'Invalid chat type. Must be "open" or "private"' });
+    }
+
+    // Students cannot upload to private chat
+    if (chatType === 'private' && userRole === USER_ROLE.STUDENT) {
+      if (file) fs.unlinkSync(file.path);
+      return res.status(403).json({ success: false, message: 'Students cannot access private chats.' });
+    }
 
     if (!file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
@@ -593,8 +605,8 @@ export const uploadChatDocument = async (req: AuthRequest, res: Response) => {
 
     const relativePath = `uploads/${studentIdValue.toString()}/chat-documents/${finalFilename}`;
 
-    // Find or create open chat
-    let chat = await ProgramChat.findOne({ programId, studentId: studentIdValue, chatType: 'open' });
+    // Find or create chat (open or private)
+    let chat = await ProgramChat.findOne({ programId, studentId: studentIdValue, chatType });
     if (!chat) {
       const registrations = await StudentServiceRegistration.find({ studentId: studentIdValue })
         .populate('activeOpsId', 'userId')
@@ -606,12 +618,12 @@ export const uploadChatDocument = async (req: AuthRequest, res: Response) => {
         if (activeOps || primaryOps) { ops = activeOps || primaryOps; break; }
       }
       chat = await ProgramChat.findOneAndUpdate(
-        { programId, studentId: studentIdValue, chatType: 'open' },
+        { programId, studentId: studentIdValue, chatType },
         {
           $setOnInsert: {
             programId,
             studentId: studentIdValue,
-            chatType: 'open',
+            chatType,
             participants: {
               student: studentUserId,
               OPS: ops?.userId || undefined,

@@ -60,6 +60,39 @@ interface ProgramChatViewProps {
   chatType?: 'open' | 'private';
 }
 
+// WhatsApp-style formatting: *bold*, _italic_, __underline__, ~strikethrough~
+// Recursive so multiple styles can be combined: *_bold italic_*, *__bold underline__*, etc.
+function formatMessage(text: string): React.ReactNode[] {
+  // __ must be checked before _ to avoid partial match
+  const regex = /(__[^_\n]+__|\*[^*\n]+\*|_[^_\n]+_|~[^~\n]+~)/g;
+  const result: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      result.push(text.slice(lastIndex, match.index));
+    }
+    const token = match[0];
+    const key = match.index;
+    if (token.startsWith('__') && token.endsWith('__')) {
+      result.push(<u key={key}>{formatMessage(token.slice(2, -2))}</u>);
+    } else if (token.startsWith('*') && token.endsWith('*')) {
+      result.push(<strong key={key}>{formatMessage(token.slice(1, -1))}</strong>);
+    } else if (token.startsWith('_') && token.endsWith('_')) {
+      result.push(<em key={key}>{formatMessage(token.slice(1, -1))}</em>);
+    } else if (token.startsWith('~') && token.endsWith('~')) {
+      result.push(<del key={key}>{formatMessage(token.slice(1, -1))}</del>);
+    }
+    lastIndex = match.index + token.length;
+  }
+
+  if (lastIndex < text.length) {
+    result.push(text.slice(lastIndex));
+  }
+  return result;
+}
+
 export default function ProgramChatView({ program, onClose, userRole, isReadOnly = false, chatType = 'open' }: ProgramChatViewProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -71,6 +104,7 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Save to extra modal state
   const [saveModalOpen, setSaveModalOpen] = useState(false);
@@ -166,6 +200,24 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
     }
   };
 
+  // Wrap the currently selected text in the textarea with the given marker pair
+  const applyFormat = (marker: string) => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const before = newMessage.slice(0, start);
+    const selected = newMessage.slice(start, end);
+    const after = newMessage.slice(end);
+    const inserted = `${marker}${selected || 'text'}${marker}`;
+    setNewMessage(`${before}${inserted}${after}`);
+    // Restore focus and highlight the inner text
+    setTimeout(() => {
+      ta.focus();
+      ta.setSelectionRange(start + marker.length, start + marker.length + (selected || 'text').length);
+    }, 0);
+  };
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -179,7 +231,7 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
 
     setUploading(true);
     try {
-      const response = await chatAPI.uploadDocument(program._id, file);
+      const response = await chatAPI.uploadDocument(program._id, file, chatType);
       setMessages(prev => [...prev, response.data.data.message]);
       toast.success('Document uploaded');
     } catch (error: any) {
@@ -431,210 +483,236 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
         </div>
       </div>
 
-          {/* Messages Container */}
-          <div
-            ref={messageContainerRef}
-            className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50"
-          >
-            {loading ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="flex flex-col items-center space-y-3">
-                  <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                  <p className="text-gray-500 text-sm">Loading messages...</p>
-                </div>
+      {/* Messages Container */}
+      <div
+        ref={messageContainerRef}
+        className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50"
+      >
+        {loading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center space-y-3">
+              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-gray-500 text-sm">Loading messages...</p>
+            </div>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
               </div>
-            ) : messages.length === 0 ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                  </div>
-                  <p className="text-gray-700 font-medium">No messages yet</p>
-                  <p className="text-gray-600 text-sm mt-1">Start the conversation!</p>
-                </div>
-              </div>
-            ) : (
-              messages.map((msg, index) => {
-                const msgSenderId = typeof msg.senderId === 'object' ? (msg.senderId as any)?._id : msg.senderId;
-                const prevMsgSenderId = index > 0 
-                  ? (typeof messages[index - 1].senderId === 'object' 
-                    ? (messages[index - 1].senderId as any)?._id 
-                    : messages[index - 1].senderId)
-                  : null;
-                
-                const isConsecutive = index > 0 && prevMsgSenderId === msgSenderId;
-                const isCurrentUser = msgSenderId === currentUserId || msgSenderId?.toString() === currentUserId;
-                
-                return (
-                  <div key={msg._id} className={`flex flex-col ${isConsecutive ? 'mt-1' : 'mt-4'} ${
-                    isCurrentUser ? 'items-end' : 'items-start'
-                  }`}>
-                    {!isConsecutive && (
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm ${
-                          msg.senderRole === 'STUDENT' ? 'bg-blue-500' :
-                          msg.senderRole === 'OPS' ? 'bg-green-500' :
+              <p className="text-gray-700 font-medium">No messages yet</p>
+              <p className="text-gray-600 text-sm mt-1">Start the conversation!</p>
+            </div>
+          </div>
+        ) : (
+          messages.map((msg, index) => {
+            const msgSenderId = typeof msg.senderId === 'object' ? (msg.senderId as any)?._id : msg.senderId;
+            const prevMsgSenderId = index > 0
+              ? (typeof messages[index - 1].senderId === 'object'
+                ? (messages[index - 1].senderId as any)?._id
+                : messages[index - 1].senderId)
+              : null;
+
+            const isConsecutive = index > 0 && prevMsgSenderId === msgSenderId;
+            const isCurrentUser = msgSenderId === currentUserId || msgSenderId?.toString() === currentUserId;
+
+            return (
+              <div key={msg._id} className={`flex flex-col ${isConsecutive ? 'mt-1' : 'mt-4'} ${isCurrentUser ? 'items-end' : 'items-start'
+                }`}>
+                {!isConsecutive && (
+                  <div className="flex items-center space-x-2 mb-2">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm ${msg.senderRole === 'STUDENT' ? 'bg-blue-500' :
+                        msg.senderRole === 'OPS' ? 'bg-green-500' :
                           msg.senderRole === 'SUPER_ADMIN' ? 'bg-purple-500' :
-                          msg.senderRole === 'ADMIN' ? 'bg-orange-500' :
-                          msg.senderRole === 'COUNSELOR' ? 'bg-teal-500' :
-                          'bg-gray-500'
-                        }`}>
-                          {msg.senderName ? msg.senderName.charAt(0).toUpperCase() : '?'}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm font-semibold text-gray-900">{msg.senderName || 'Unknown'}</span>
-                          {msg.senderRole === 'OPS' && msg.opsType && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-medium">
-                              {msg.opsType === 'PRIMARY' ? 'Primary' : 'Secondary'}
-                            </span>
-                          )}
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${getRoleBadgeColor(msg.senderRole)}`}>
-                            {msg.senderRole === 'SUPER_ADMIN' ? 'Program Director' : msg.senderRole.charAt(0).toUpperCase() + msg.senderRole.slice(1).toLowerCase()}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    <div className={`${isConsecutive ? (isCurrentUser ? 'mr-10' : 'ml-10') : (isCurrentUser ? 'mr-10' : 'ml-10')}`}>
-                      {msg.messageType === 'document' && msg.documentMeta ? (
-                        /* Document message */
-                        <div className="inline-block max-w-sm rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                          <div 
-                            className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 transition-colors"
-                            onClick={() => openPreviewModal(msg.documentMeta!.fileName, msg.documentMeta!.filePath, msg.documentMeta!.mimeType)}
-                          >
-                            <div className="shrink-0">{getFileIcon(msg.documentMeta.mimeType)}</div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">{msg.documentMeta.fileName}</p>
-                              <p className="text-xs text-gray-500">{formatFileSize(msg.documentMeta.fileSize)}</p>
-                            </div>
-                          </div>
-                          <div className="flex border-t border-gray-100">
-                            <button
-                              onClick={() => handleDocDownload(msg.documentMeta!.filePath)}
-                              className="flex-1 text-center text-xs font-medium text-blue-600 hover:bg-blue-50 py-2 transition-colors"
-                            >
-                              Download
-                            </button>
-                            {canSaveToExtra && chatType === 'open' && (
-                              <>
-                                <div className="w-px bg-gray-100" />
-                                {msg.savedToExtra ? (
-                                  <span className="flex-1 text-center text-xs font-medium text-green-600 py-2">
-                                    ✓ Saved
-                                  </span>
-                                ) : (
-                                  <button
-                                    onClick={() => openSaveModal(msg._id, msg.documentMeta!.fileName.replace(/\.[^.]+$/, ''))}
-                                    className="flex-1 text-center text-xs font-medium text-purple-600 hover:bg-purple-50 py-2 transition-colors"
-                                  >
-                                    Save to Extra
-                                  </button>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        /* Text message */
-                        <div className={`inline-block max-w-md rounded-2xl px-4 py-2.5 shadow-sm ${
-                          isCurrentUser 
-                            ? 'bg-blue-600 text-white' 
-                            : msg.senderRole === 'STUDENT' ? 'bg-blue-100 text-gray-900' :
-                              msg.senderRole === 'OPS' ? 'bg-green-100 text-gray-900' :
-                              msg.senderRole === 'SUPER_ADMIN' ? 'bg-purple-100 text-gray-900' :
-                              msg.senderRole === 'ADMIN' ? 'bg-orange-100 text-gray-900' :
-                              msg.senderRole === 'COUNSELOR' ? 'bg-teal-100 text-gray-900' :
-                              'bg-gray-100 text-gray-900'
-                        }`}>
-                          <p className="text-sm leading-relaxed break-words whitespace-pre-wrap select-text">{msg.message}</p>
-                        </div>
+                            msg.senderRole === 'ADMIN' ? 'bg-orange-500' :
+                              msg.senderRole === 'COUNSELOR' ? 'bg-teal-500' :
+                                'bg-gray-500'
+                      }`}>
+                      {msg.senderName ? msg.senderName.charAt(0).toUpperCase() : '?'}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-semibold text-gray-900">{msg.senderName || 'Unknown'}</span>
+                      {msg.senderRole === 'OPS' && msg.opsType && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-800 font-medium">
+                          {msg.opsType === 'PRIMARY' ? 'Primary' : 'Secondary'}
+                        </span>
                       )}
-                      <p className="text-xs text-gray-600 mt-1 ml-1">{formatTimestamp(msg.timestamp)}</p>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${getRoleBadgeColor(msg.senderRole)}`}>
+                        {msg.senderRole === 'SUPER_ADMIN' ? 'Program Director' : msg.senderRole.charAt(0).toUpperCase() + msg.senderRole.slice(1).toLowerCase()}
+                      </span>
                     </div>
                   </div>
-                );
-              })
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Message Input */}
-          {isReadOnly ? (
-            <div className="bg-gray-50 border-t border-gray-200 p-4">
-              <p className="text-sm text-gray-500 text-center">Chat is in read-only mode</p>
-            </div>
-          ) : (
-          <div className="bg-white border-t border-gray-200 p-4">
-            <form onSubmit={handleSendMessage} className="flex items-end space-x-3">
-              {/* Attachment button (open chat only) */}
-              {chatType === 'open' && (
-                <>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                    className="p-3 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors disabled:opacity-50"
-                    title="Attach document"
-                  >
-                    {uploading ? (
-                      <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                      </svg>
-                    )}
-                  </button>
-                </>
-              )}
-              <div className="flex-1">
-                <textarea
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage(e);
-                    }
-                  }}
-                  placeholder="Type your message..."
-                  rows={2}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-sm text-gray-900"
-                  disabled={sending}
-                />
-                <p className="text-xs text-gray-600 mt-1 ml-1">Press Enter to send, Shift+Enter for new line</p>
-              </div>
-              <button
-                type="submit"
-                disabled={!newMessage.trim() || sending}
-                className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-md hover:shadow-lg"
-              >
-                {sending ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Sending...</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-2">
-                    <span>Send</span>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                  </div>
                 )}
-              </button>
-            </form>
-          </div>
-          )}
+                <div className={`${isConsecutive ? (isCurrentUser ? 'mr-10' : 'ml-10') : (isCurrentUser ? 'mr-10' : 'ml-10')}`}>
+                  {msg.messageType === 'document' && msg.documentMeta ? (
+                    /* Document message */
+                    <div className="inline-block max-w-sm rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                      <div
+                        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => openPreviewModal(msg.documentMeta!.fileName, msg.documentMeta!.filePath, msg.documentMeta!.mimeType)}
+                      >
+                        <div className="shrink-0">{getFileIcon(msg.documentMeta.mimeType)}</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{msg.documentMeta.fileName}</p>
+                          <p className="text-xs text-gray-500">{formatFileSize(msg.documentMeta.fileSize)}</p>
+                        </div>
+                      </div>
+                      <div className="flex border-t border-gray-100">
+                        <button
+                          onClick={() => handleDocDownload(msg.documentMeta!.filePath)}
+                          className="flex-1 text-center text-xs font-medium text-blue-600 hover:bg-blue-50 py-2 transition-colors"
+                        >
+                          Download
+                        </button>
+                        {canSaveToExtra && chatType === 'open' && (
+                          <>
+                            <div className="w-px bg-gray-100" />
+                            {msg.savedToExtra ? (
+                              <span className="flex-1 text-center text-xs font-medium text-green-600 py-2">
+                                ✓ Saved
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => openSaveModal(msg._id, msg.documentMeta!.fileName.replace(/\.[^.]+$/, ''))}
+                                className="flex-1 text-center text-xs font-medium text-purple-600 hover:bg-purple-50 py-2 transition-colors"
+                              >
+                                Save to Extra
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    /* Text message */
+                    <div className={`inline-block max-w-md rounded-2xl px-4 py-2.5 shadow-sm ${isCurrentUser
+                        ? 'bg-blue-600 text-white'
+                        : msg.senderRole === 'STUDENT' ? 'bg-blue-100 text-gray-900' :
+                          msg.senderRole === 'OPS' ? 'bg-green-100 text-gray-900' :
+                            msg.senderRole === 'SUPER_ADMIN' ? 'bg-purple-100 text-gray-900' :
+                              msg.senderRole === 'ADMIN' ? 'bg-orange-100 text-gray-900' :
+                                msg.senderRole === 'COUNSELOR' ? 'bg-teal-100 text-gray-900' :
+                                  'bg-gray-100 text-gray-900'
+                      }`}>
+                      <p className="text-sm leading-relaxed break-words whitespace-pre-wrap select-text">{formatMessage(msg.message)}</p>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-600 mt-1 ml-1">{formatTimestamp(msg.timestamp)}</p>
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Message Input */}
+      {isReadOnly ? (
+        <div className="bg-gray-50 border-t border-gray-200 p-4">
+          <p className="text-sm text-gray-500 text-center">Chat is in read-only mode</p>
         </div>
-    );
-  }
+      ) : (
+        <div className="bg-white border-t border-gray-200 p-4">
+          <form onSubmit={handleSendMessage} className="flex items-end space-x-3">
+            <div className="flex-1">
+              {/* Formatting toolbar + attachment */}
+              <div className="flex items-center gap-1 mb-1.5">
+                
+                {/* Attachment — available in both open and private chat */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-500 hover:text-blue-600 border border-gray-200 disabled:opacity-50"
+                  title="Attach document"
+                >
+                  {uploading ? (
+                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                    </svg>
+                  )}
+                </button>
+
+                <div className="w-px h-4 bg-gray-200 mx-1" />
+
+                <button
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); applyFormat('*'); }}
+                  className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600 font-bold text-sm border border-gray-200"
+                  title="Bold (*text*)"
+                >B</button>
+                <button
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); applyFormat('_'); }}
+                  className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600 italic text-sm border border-gray-200"
+                  title="Italic (_text_)"
+                >I</button>
+                <button
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); applyFormat('__'); }}
+                  className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600 underline text-sm border border-gray-200"
+                  title="Underline (__text__)"
+                >U</button>
+                <button
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); applyFormat('~'); }}
+                  className="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600 line-through text-sm border border-gray-200"
+                  title="Strikethrough (~text~)"
+                >S</button>
+                
+              </div>
+              <textarea
+                ref={textareaRef}
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage(e);
+                  }
+                }}
+                placeholder="Type your message..."
+                rows={2}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-sm text-gray-900"
+                disabled={sending}
+              />
+              <p className="text-xs text-gray-600 mt-1 ml-1">Press Enter to send & Shift+Enter for new line · </p>
+            </div>
+            <button
+              type="submit"
+              disabled={!newMessage.trim() || sending}
+              className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-md hover:shadow-lg"
+            >
+              {sending ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Sending...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <span>Send</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                </div>
+              )}
+            </button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
 
