@@ -86,12 +86,6 @@ export default function AdminLeadsPage() {
 
       const response = await leadAPI.getAdminLeads(params);
       const fetchedLeads = response.data.data.leads;
-      console.log('📋 Fetched leads sample:', fetchedLeads.slice(0, 2).map((l: any) => ({
-        id: l._id,
-        name: l.name,
-        conversionStatus: l.conversionStatus,
-        conversionRequestId: l.conversionRequestId
-      })));
       setAllLeads(fetchedLeads);
     } catch (error) {
       console.error('Error fetching leads:', error);
@@ -180,7 +174,6 @@ export default function AdminLeadsPage() {
     
     try {
       setApproving(lead._id);
-      console.log('🚀 Approving conversion:', { leadId: lead._id, conversionRequestId: lead.conversionRequestId });
       await leadConversionAPI.approveConversion(lead.conversionRequestId);
       toast.success(`${lead.name} has been converted to a student`);
       fetchLeads();

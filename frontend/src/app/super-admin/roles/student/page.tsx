@@ -158,7 +158,6 @@ export default function StudentUsersPage() {
       const fetchedStudents = response.data.data.students;
       const pendingOpsAssignments = response.data.data.pendingOpsAssignments || 0;
       const pendingStudentIds = response.data.data.pendingStudentIds || [];
-      console.log('📊 Pending student IDs from backend:', pendingStudentIds);
       setStudents(fetchedStudents.map((s: StudentData) => {
         const isPending = pendingStudentIds.includes(s._id.toString());
         return {

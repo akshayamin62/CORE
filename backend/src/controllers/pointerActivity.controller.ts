@@ -14,6 +14,7 @@ import {
 } from '../services/pointerActivity.service';
 import { updateWeightages } from '../services/pointerActivity.service';
 import StudentPointerScore from '../models/ivy/StudentPointerScore';
+import StudentServiceRegistration from '../models/StudentServiceRegistration';
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -25,6 +26,34 @@ const upload = multer({
 
 export const proofUploadMiddleware = upload.array('proofFiles', 5);
 export const ivyExpertDocsMiddleware = upload.array('ivyExpertDocs', 5);
+
+const validatePointerActivityServiceAccess = async (
+  authReq: AuthRequest,
+  studentIvyServiceId: string,
+) => {
+  const service = await StudentServiceRegistration.findById(studentIvyServiceId)
+    .select('_id studentId activeIvyExpertId');
+
+  if (!service) {
+    throw new Error('Student Service Registration not found');
+  }
+
+  if (authReq.user!.role === USER_ROLE.STUDENT) {
+    const studentId = await resolveStudentId(authReq.user!.userId);
+    if (service.studentId?.toString() !== studentId) {
+      throw new Error('Unauthorized: Student does not match this service');
+    }
+  }
+
+  if (authReq.user!.role === USER_ROLE.IVY_EXPERT) {
+    const ivyExpertId = await resolveIvyExpertId(authReq.user!.userId);
+    if (service.activeIvyExpertId?.toString() !== ivyExpertId) {
+      throw new Error('Unauthorized: Ivy Expert does not match this service');
+    }
+  }
+
+  return service;
+};
 
 export const selectActivitiesHandler = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -85,11 +114,12 @@ export const selectActivitiesHandler = async (req: Request, res: Response): Prom
 
 export const getStudentActivitiesHandler = async (req: Request, res: Response): Promise<void> => {
   try {
+    const authReq = req as AuthRequest;
     const { studentId } = req.params;
     const { studentIvyServiceId, includeInvisible } = req.query;
 
     const identifier = studentIvyServiceId ? (studentIvyServiceId as string) : (studentId as string);
-    const useServiceId = !!studentIvyServiceId;
+    let useServiceId = !!studentIvyServiceId;
 
     if (!identifier) {
       res.status(400).json({
@@ -99,8 +129,15 @@ export const getStudentActivitiesHandler = async (req: Request, res: Response): 
       return;
     }
 
+    let authorizedIdentifier = identifier;
+    if (studentIvyServiceId) {
+      const service = await validatePointerActivityServiceAccess(authReq, studentIvyServiceId as string);
+      authorizedIdentifier = service._id.toString();
+      useServiceId = true;
+    }
+
     const data = await getStudentActivities(
-      identifier,
+      authorizedIdentifier,
       useServiceId,
       includeInvisible === 'true',
     );
@@ -342,6 +379,7 @@ export const updateWeightagesHandler = async (req: Request, res: Response): Prom
 
 export const getPointerActivityScoreHandler = async (req: Request, res: Response): Promise<void> => {
   try {
+    const authReq = req as AuthRequest;
     const studentIvyServiceId = req.params.studentIvyServiceId || req.query.studentIvyServiceId;
     const pointerNo = req.params.pointerNo || req.query.pointerNo;
 
@@ -354,10 +392,12 @@ export const getPointerActivityScoreHandler = async (req: Request, res: Response
       return;
     }
 
+    const service = await validatePointerActivityServiceAccess(authReq, studentIvyServiceId as string);
+
     // Read from StudentPointerScore which has the weighted average score
     // This ensures consistency with the dashboard
     const pointerScore = await StudentPointerScore.findOne({
-      studentIvyServiceId,
+      studentIvyServiceId: service._id,
       pointerNo: Number(pointerNo),
     });
 

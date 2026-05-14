@@ -528,7 +528,6 @@ export default function RoleUserListPage({
     };
     return colors[userRole] || "bg-gray-100 text-gray-800";
   };
-  console.log(roleDisplayName);
   let pluralSuffix;
 
   if (roleDisplayName.toLowerCase() === "eduplan coach") {

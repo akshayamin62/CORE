@@ -36,8 +36,6 @@ export const academicUploadMiddleware = upload.single('document');
 
 export const uploadAcademicDocumentHandler = async (req: Request, res: Response): Promise<void> => {
     try {
-        console.log('[P1-Controller] Body:', req.body);
-        console.log('[P1-Controller] File:', req.file ? req.file.originalname : 'MISSING');
         const { studentIvyServiceId, documentType, studentId, customLabel } = req.body;
         const file = req.file;
 

@@ -54,12 +54,11 @@ const pointerLabel = (pointerNo: number) => {
 function StudentPointerActivitiesContent() {
   const searchParams = useSearchParams();
   const studentIvyServiceIdFromUrl = searchParams.get('studentIvyServiceId') || '';
-  const studentIdFromUrl = searchParams.get('studentId') || (() => {
+  const studentId = searchParams.get('studentId') || (() => {
     try { return JSON.parse(localStorage.getItem('user') || '{}')._id || ''; } catch { return ''; }
   })();
 
   const [studentIvyServiceId, setStudentIvyServiceId] = useState(studentIvyServiceIdFromUrl);
-  const [studentId, setStudentId] = useState(studentIdFromUrl);
   const [activitiesData, setActivitiesData] = useState<ActivitiesResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
@@ -91,8 +90,7 @@ function StudentPointerActivitiesContent() {
 
   useEffect(() => {
     setStudentIvyServiceId(studentIvyServiceIdFromUrl);
-    setStudentId(studentIdFromUrl);
-  }, [studentIvyServiceIdFromUrl, studentIdFromUrl]);
+  }, [studentIvyServiceIdFromUrl]);
 
   useEffect(() => {
     if (studentIvyServiceId) {
@@ -179,22 +177,13 @@ function StudentPointerActivitiesContent() {
           </div>
         </header>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Student Ivy Service ID</label>
             <input
               value={studentIvyServiceId}
               onChange={(e) => setStudentIvyServiceId(e.target.value)}
               placeholder="studentIvyServiceId"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Student ID</label>
-            <input
-              value={studentId}
-              onChange={(e) => setStudentId(e.target.value)}
-              placeholder="studentId"
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             />
           </div>

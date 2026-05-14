@@ -123,11 +123,8 @@ export const createFollowUp = async (
       // Removed status filter - check ALL statuses
     }).populate('leadId', 'name');
 
-    console.log(`Checking ${existingFollowUps.length} existing follow-ups for counselor on ${scheduledDate}`);
-
     for (const existing of existingFollowUps) {
       const existingLeadName = (existing.leadId as any)?.name || 'Unknown Lead';
-      console.log(`Checking against: ${existing.scheduledTime} (${existing.duration}min) for lead: ${existingLeadName}`);
       
       if (
         doTimeSlotsOverlap(
@@ -137,7 +134,6 @@ export const createFollowUp = async (
           existing.duration
         )
       ) {
-        console.log('CONFLICT DETECTED!');
         return res.status(400).json({
           success: false,
           message: `Time slot conflicts with another follow-up scheduled at ${existing.scheduledTime} for ${existingLeadName}`,
@@ -160,7 +156,6 @@ export const createFollowUp = async (
             ? (meet.requestedTo as any)
             : (meet.requestedBy as any);
           const otherParty = [otherUser?.firstName, otherUser?.middleName, otherUser?.lastName].filter(Boolean).join(' ');
-          console.log('CONFLICT DETECTED with TeamMeet!');
           return res.status(400).json({
             success: false,
             message: `Time slot conflicts with a TeamMeet at ${meet.scheduledTime} with ${otherParty || 'Unknown'}`,
@@ -168,8 +163,6 @@ export const createFollowUp = async (
         }
       }
     }
-    
-    console.log('No conflicts found - time slot is available');
 
     // Count existing follow-ups for this lead to determine followUpNumber
     const existingFollowUpsForLead = await FollowUp.countDocuments({ leadId });
@@ -653,11 +646,8 @@ export const updateFollowUp = async (
       }
       const conflictingFollowUps = await FollowUp.find(conflictQuery).populate('leadId', 'name');
 
-      console.log(`Checking ${conflictingFollowUps.length} existing follow-ups for next follow-up on ${nextFollowUp.scheduledDate}`);
-
       for (const existing of conflictingFollowUps) {
         const existingLeadName = (existing.leadId as any)?.name || 'Unknown Lead';
-        console.log(`Checking against: ${existing.scheduledTime} (${existing.duration}min) for lead: ${existingLeadName}`);
         
         if (
           doTimeSlotsOverlap(
@@ -667,7 +657,6 @@ export const updateFollowUp = async (
             existing.duration
           )
         ) {
-          console.log('CONFLICT DETECTED for next follow-up!');
           return res.status(400).json({
             success: false,
             message: `Next follow-up time conflicts with another follow-up at ${existing.scheduledTime} for ${existingLeadName}`,
@@ -691,7 +680,6 @@ export const updateFollowUp = async (
                 ? (meet.requestedTo as any)
                 : (meet.requestedBy as any);
               const otherParty = [otherUser?.firstName, otherUser?.middleName, otherUser?.lastName].filter(Boolean).join(' ');
-              console.log('CONFLICT DETECTED with TeamMeet for next follow-up!');
               return res.status(400).json({
                 success: false,
                 message: `Next follow-up conflicts with a TeamMeet at ${meet.scheduledTime} with ${otherParty || 'Unknown'}`,
@@ -700,8 +688,6 @@ export const updateFollowUp = async (
           }
         }
       }
-      
-      console.log('No conflicts found for next follow-up - time slot is available');
 
       // Get current lead stage
       const lead = await Lead.findById(followUp.leadId);
@@ -1025,8 +1011,6 @@ export const checkTimeSlotAvailability = async (
     }
     const existingFollowUps = await FollowUp.find(queryFilter).populate('leadId', 'name');
 
-    console.log(`Check availability: Found ${existingFollowUps.length} follow-ups on ${date}`);
-
     let isAvailable = true;
     let conflictingTime = null;
     let conflictingLead = null;
@@ -1034,7 +1018,6 @@ export const checkTimeSlotAvailability = async (
 
     for (const existing of existingFollowUps) {
       const existingLeadName = (existing.leadId as any)?.name || 'Unknown Lead';
-      console.log(`Checking slot ${time} (${duration}min) against existing: ${existing.scheduledTime} (${existing.duration}min) for ${existingLeadName}`);
       
       if (
         doTimeSlotsOverlap(
@@ -1044,7 +1027,6 @@ export const checkTimeSlotAvailability = async (
           existing.duration
         )
       ) {
-        console.log('CONFLICT FOUND with FollowUp!');
         isAvailable = false;
         conflictingTime = existing.scheduledTime;
         conflictingLead = existingLeadName;
@@ -1069,7 +1051,6 @@ export const checkTimeSlotAvailability = async (
               ? (meet.requestedTo as any)
               : (meet.requestedBy as any);
             const otherParty = [otherUser?.firstName, otherUser?.middleName, otherUser?.lastName].filter(Boolean).join(' ');
-            console.log('CONFLICT FOUND with TeamMeet!');
             isAvailable = false;
             conflictingTime = meet.scheduledTime;
             conflictingLead = otherParty || 'Unknown';
@@ -1079,8 +1060,6 @@ export const checkTimeSlotAvailability = async (
         }
       }
     }
-
-    console.log(isAvailable ? 'Time slot is AVAILABLE' : `Time slot CONFLICTS with ${conflictType} at ${conflictingTime} (${conflictingLead})`);
 
     return res.status(200).json({
       success: true,

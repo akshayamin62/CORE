@@ -462,8 +462,6 @@ export const markMissedSchedules = async () => {
         status: OPS_SCHEDULE_STATUS.MISSED,
       }
     );
-
-    console.log(`Marked ${result.modifiedCount} schedules as missed`);
     return result;
   } catch (error) {
     console.error("Error marking missed schedules:", error);

@@ -294,13 +294,11 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
       });
 
       await newUser.save();
-      console.log('✅ User created:', newUser._id);
 
       // Send account creation email with login link
       try {
         const loginUrl = process.env.FRONTEND_URL || 'http://localhost:3000/';
         await sendStudentAccountCreatedEmail(lead.email, lead.name, loginUrl);
-        console.log('✅ Account creation email sent to:', lead.email);
       } catch (emailError) {
         console.error("⚠️ Failed to send account creation email:", emailError);
         // Continue with conversion even if email fails
@@ -310,7 +308,6 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
       if (lead.mobileNumber) {
         try {
           await sendWhatsAppRegistrationMessage(lead.mobileNumber, lead.name, lead.email);
-          console.log('✅ WhatsApp registration message sent to:', lead.mobileNumber);
         } catch (whatsappError) {
           console.error("⚠️ Failed to send WhatsApp message:", whatsappError);
           // Continue with conversion even if WhatsApp fails
@@ -318,7 +315,6 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
       }
     } else {
       newUser = existingUser;
-      console.log('✅ Using existing user:', newUser._id);
     }
 
     // Create student record
@@ -336,7 +332,6 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
     });
 
     await newStudent.save();
-    console.log('✅ Student created:', newStudent._id);
 
     // Parse lead name into first, middle, and last name
     const { firstName, middleName, lastName } = parseName(lead.name);
@@ -372,7 +367,6 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
             }
           ]
         };
-        console.log('✅ Parental details pre-populated in form');
       }
 
       const profileAnswers = new StudentFormAnswer({
@@ -383,12 +377,6 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
       });
 
       await profileAnswers.save();
-      console.log('✅ Profile form pre-populated with lead data:', {
-        firstName,
-        middleName,
-        lastName,
-        phone: lead.mobileNumber,
-      });
     } catch (formError) {
       console.error("⚠️ Failed to pre-populate form data:", formError);
       // Continue with conversion even if form pre-population fails
@@ -415,9 +403,6 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
             mobileNumber: lead.parentDetail.mobileNumber || undefined,
           });
           await parentUser.save();
-          console.log('✅ Parent user created:', parentUser._id);
-        } else {
-          console.log('✅ Using existing user for parent:', parentUser._id);
         }
 
         // Check if Parent doc already exists
@@ -428,7 +413,6 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
           if (!parentDoc.studentIds.map(id => id.toString()).includes(studentIdStr)) {
             parentDoc.studentIds.push(newStudent._id as mongoose.Types.ObjectId);
             await parentDoc.save();
-            console.log('✅ Added student to existing parent doc');
           }
         } else {
           parentDoc = new Parent({
@@ -442,7 +426,6 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
             convertedFromLeadId: lead._id,
           });
           await parentDoc.save();
-          console.log('✅ Parent doc created:', parentDoc._id);
         }
       } catch (parentError) {
         console.error("⚠️ Failed to create parent user/doc:", parentError);
@@ -456,13 +439,11 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
     conversion.approvedAt = new Date();
     conversion.createdStudentId = newStudent._id as mongoose.Types.ObjectId;
     await conversion.save();
-    console.log('✅ Conversion request updated');
 
     // Update lead
     lead.stage = LEAD_STAGE.CONVERTED;
     lead.conversionStatus = 'APPROVED';
     await lead.save();
-    console.log('✅ Lead updated to CONVERTED');
 
     // Update the latest follow-up status if it's "Scheduled"
     try {
@@ -476,9 +457,6 @@ export const approveConversion = async (req: AuthRequest, res: Response): Promis
         latestFollowUp.completedAt = new Date();
         latestFollowUp.updatedBy = new mongoose.Types.ObjectId(userId);
         await latestFollowUp.save();
-        console.log('✅ Latest scheduled follow-up updated to CONVERTED_TO_STUDENT:', latestFollowUp._id);
-      } else {
-        console.log('ℹ️ No scheduled follow-ups found for this lead');
       }
     } catch (followUpError) {
       console.error("⚠️ Failed to update follow-up status:", followUpError);

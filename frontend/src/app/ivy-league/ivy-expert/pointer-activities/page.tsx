@@ -69,12 +69,11 @@ const pointerLabel = (pointerNo: number) => {
 function IvyExpertPointerActivitiesContent() {
   const searchParams = useSearchParams();
   const studentIvyServiceIdFromUrl = searchParams.get('studentIvyServiceId') || '';
-  const ivyExpertIdFromUrl = searchParams.get('ivyExpertId') || (() => {
+  const ivyExpertId = searchParams.get('ivyExpertId') || (() => {
     try { return JSON.parse(localStorage.getItem('user') || '{}')._id || ''; } catch { return ''; }
   })();
 
   const [studentIvyServiceId, setStudentIvyServiceId] = useState(studentIvyServiceIdFromUrl);
-  const [ivyExpertId, setIvyExpertId] = useState(ivyExpertIdFromUrl);
   const [careerRole, setCareerRole] = useState('');
   const [selectedPointer, setSelectedPointer] = useState<number | ''>(2);
   const [suggestions, setSuggestions] = useState<AgentSuggestion[]>([]);
@@ -150,10 +149,7 @@ function IvyExpertPointerActivitiesContent() {
     if (studentIvyServiceIdFromUrl) {
       setStudentIvyServiceId(studentIvyServiceIdFromUrl);
     }
-    if (ivyExpertIdFromUrl) {
-      setIvyExpertId(ivyExpertIdFromUrl);
-    }
-  }, [studentIvyServiceIdFromUrl, ivyExpertIdFromUrl]);
+  }, [studentIvyServiceIdFromUrl]);
 
   useEffect(() => {
     if (studentIvyServiceId) {
@@ -181,8 +177,6 @@ function IvyExpertPointerActivitiesContent() {
       const res = await axios.get<AgentSuggestion[]>(`${apiBase}/api/agent-suggestions`, {
         params: { careerRole: careerRole.trim(), pointerNo: selectedPointer },
       });
-      console.log('Fetched suggestions:', res.data);
-      console.log('First suggestion document data:', res.data[0]);
       setSuggestions(res.data);
       if (res.data.length === 0) {
         setMessage({
@@ -361,22 +355,13 @@ function IvyExpertPointerActivitiesContent() {
         )}
 
         {/* Inputs */}
-        <div className="grid gap-4 md:grid-cols-2">
+        <div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Student Ivy Service ID</label>
             <input
               value={studentIvyServiceId}
               onChange={(e) => setStudentIvyServiceId(e.target.value)}
               placeholder="studentIvyServiceId"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Ivy Expert ID</label>
-            <input
-              value={ivyExpertId}
-              onChange={(e) => setIvyExpertId(e.target.value)}
-              placeholder="ivyExpertId"
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
             />
           </div>
@@ -493,7 +478,6 @@ function IvyExpertPointerActivitiesContent() {
                           {/* Always show button for debugging - will update condition after */}
                           <button
                             onClick={() => {
-                              console.log('Activity document data:', { documentUrl: sug.documentUrl, documentName: sug.documentName });
                               if (sug.documentUrl) {
                                 setViewingDocument({ url: sug.documentUrl, name: sug.documentName || 'Activity Document' });
                               } else {
