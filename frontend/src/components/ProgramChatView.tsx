@@ -548,7 +548,7 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
                               msg.senderRole === 'COUNSELOR' ? 'bg-teal-100 text-gray-900' :
                               'bg-gray-100 text-gray-900'
                         }`}>
-                          <p className="text-sm leading-relaxed break-words">{msg.message}</p>
+                          <p className="text-sm leading-relaxed break-words whitespace-pre-wrap select-text">{msg.message}</p>
                         </div>
                       )}
                       <p className="text-xs text-gray-600 mt-1 ml-1">{formatTimestamp(msg.timestamp)}</p>
