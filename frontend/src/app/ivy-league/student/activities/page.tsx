@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useSearchParams, useRouter } from 'next/navigation';
 import mammoth from 'mammoth';
+import DOMPurify from 'dompurify';
 import { useStudentService } from '../useStudentService';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { useBlobUrl, fetchBlobUrl, fileApi } from '@/lib/useBlobUrl';
@@ -104,7 +105,7 @@ function WordDocViewer({ url }: { url: string }) {
       `}</style>
       <div 
         className="word-doc-content text-gray-800"
-        dangerouslySetInnerHTML={{ __html: htmlContent }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent) }}
       />
     </div>
   );

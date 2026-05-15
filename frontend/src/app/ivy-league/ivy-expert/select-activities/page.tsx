@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense, useMemo } from 'react';
 import axios from 'axios';
 import { useSearchParams, useRouter } from 'next/navigation';
 import mammoth from 'mammoth';
+import DOMPurify from 'dompurify';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { useBlobUrl, fileApi } from '@/lib/useBlobUrl';
 
@@ -54,7 +55,7 @@ function InlineDocViewer({ url }: { url: string }) {
       <div
         className="prose max-w-none p-4"
         style={{ userSelect: 'none' }}
-        dangerouslySetInnerHTML={{ __html: wordContent }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(wordContent) }}
       />
     );
   }

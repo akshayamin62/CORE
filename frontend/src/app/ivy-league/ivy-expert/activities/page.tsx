@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useSearchParams, useRouter } from 'next/navigation';
 import mammoth from 'mammoth';
+import DOMPurify from 'dompurify';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { useBlobUrl, fetchBlobUrl, fileApi } from '@/lib/useBlobUrl';
 
@@ -122,7 +123,7 @@ function InlineDocViewer({ url, onClose }: { url: string, onClose: () => void })
                 `}</style>
                 <div 
                   className="ivy-expert-word-content text-gray-800"
-                  dangerouslySetInnerHTML={{ __html: wordContent }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(wordContent) }}
                 />
               </>
             )}
