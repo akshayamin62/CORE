@@ -152,8 +152,19 @@ const PORT = process.env.PORT || 5000;
 
 // --- Security Headers (helmet) ---
 app.use(helmet({
-  contentSecurityPolicy: false, // Disabled — frontend is a separate origin; re-enable with proper directives for production
-  crossOriginEmbedderPolicy: false, // Allow cross-origin resources (fonts, images, etc.)
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      fontSrc: ["'self'", "data:"],
+      connectSrc: ["'self'", "https://core.admitra.io", "https://temp-core.admitra.io"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+  crossOriginEmbedderPolicy: { policy: "require-corp" },
 }));
 
 // --- CORS whitelist ---
@@ -191,10 +202,10 @@ const generalLimiter = rateLimit({
   message: { success: false, message: 'Too many requests. Please try again later.' },
 });
 
-// Auth limiter: 100 requests per 5 minutes per IP (signup, login)
+// Auth limiter: 15 requests per 5 minutes per IP (signup, login)
 const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
-  max: 100,
+  max: 15,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many authentication attempts. Please try again after 5 minutes.' },
@@ -217,7 +228,10 @@ app.use('/uploads/admin', (_req: import('express').Request, res: import('express
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 }, express.static(path.join(getUploadBaseDir(), 'admin')));
-app.use('/uploads', authenticate, express.static(getUploadBaseDir()));
+app.use('/uploads', authenticate, (_req: import('express').Request, res: import('express').Response, next: import('express').NextFunction) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(getUploadBaseDir()));
 
 // OTP verify routes get the stricter limiter (5 attempts per 10 min) on top of authLimiter
 app.use("/api/auth/verify-otp", otpLimiter);
