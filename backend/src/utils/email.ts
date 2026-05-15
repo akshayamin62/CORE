@@ -1005,6 +1005,82 @@ ${ownerName}${companyName ? `\n${companyName}` : ''}`;
 };
 
 /**
+ * Send new lead enquiry notification email to admin/advisor owner
+ */
+export const sendLeadEnquiryNotificationEmailToOwner = async (
+  ownerEmail: string,
+  ownerName: string,
+  leadName: string,
+  serviceTypes: string[],
+  city: string,
+  leadMobileNumber: string,
+  leadEmail: string,
+  companyName?: string
+): Promise<void> => {
+  const serviceList = serviceTypes.join(', ');
+  const brandName = companyName || 'KAREER Studio';
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>New LEAD Enquiry Received</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.8; color: #333; background-color: #f9f9f9; margin: 0; padding: 0;">
+      <div style="max-width: 620px; margin: 30px auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+        <div style="background-color: #1e3a5f; padding: 24px 32px;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 600;">${brandName}</h1>
+          <p style="color: #c8d7e8; margin: 4px 0 0; font-size: 13px;">New Lead Enquiry Notification</p>
+        </div>
+
+        <div style="padding: 32px;">
+          <p style="margin-top: 0;">Hello, ${ownerName}</p>
+
+          <p>New enquiry received from <strong>${leadName}</strong>.</p>
+
+          <p>Please find the details below for your reference.</p>
+
+          <table style="width:100%;border-collapse:collapse;margin:12px 0 20px;">
+            <tr><td style="padding:6px 0;font-weight:bold;width:140px;">Services:</td><td style="color:#444;">${serviceList}</td></tr>
+            <tr><td style="padding:6px 0;font-weight:bold;width:140px;">City:</td><td style="color:#444;">${city}</td></tr>
+            <tr><td style="padding:6px 0;font-weight:bold;width:140px;">Lead Mobile:</td><td style="color:#444;">${leadMobileNumber}</td></tr>
+            <tr><td style="padding:6px 0;font-weight:bold;width:140px;">Lead Email:</td><td style="color:#444;">${leadEmail}</td></tr>
+          </table>
+
+          <p>Thank you for keeping us in business.</p>
+        </div>
+
+        <div style="background-color: #f5f7fa; padding: 16px 32px; border-top: 1px solid #e0e0e0;">
+          <p style="margin: 0; font-size: 12px; color: #999;">This is an automated notification from ${brandName}.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const text = `Hello, ${ownerName}
+
+New enquiry received from ${leadName}.
+
+Please find the details below for your reference.
+
+Services: ${serviceList} | City: ${city}
+Lead Mobile: ${leadMobileNumber}
+Lead Email: ${leadEmail}
+
+Thank you for keeping us in business.`;
+
+  await sendEmail({
+    to: ownerEmail,
+    subject: `New Enquiry Received - ${leadName}`,
+    html,
+    text,
+  });
+};
+
+/**
  * Send B2B enquiry confirmation email to the enquirer
  */
 export const sendB2BEnquiryConfirmationEmail = async (

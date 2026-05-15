@@ -8,8 +8,11 @@ import User from "../models/User";
 import { USER_ROLE } from "../types/roles";
 import { Request } from "express";
 import mongoose from "mongoose";
-import { sendWhatsAppEnquiryWelcome, sendWhatsAppGeneralNotification } from "../utils/whatsapp";
-import { sendLeadEnquiryConfirmationEmail } from "../utils/email";
+import { sendWhatsAppEnquiryWelcome, sendWhatsAppGeneral4LineNotification } from "../utils/whatsapp";
+import {
+  sendLeadEnquiryConfirmationEmail,
+  sendLeadEnquiryNotificationEmailToOwner,
+} from "../utils/email";
 
 /**
  * Generate a unique slug from a name
@@ -128,22 +131,31 @@ export const submitEnquiry = async (req: Request, res: Response): Promise<Respon
 
     // WhatsApp welcome notification to lead (non-blocking)
     const serviceTypesList = serviceTypes.join('; ');
+    const ownerUserId = admin ? admin.userId : advisor!.userId;
+    const ownerContactUser = await User.findById(ownerUserId).select('email');
+    const ownerMobileNumber = admin?.mobileNumber || advisor?.mobileNumber;
+    const ownerEmailAddress = ownerContactUser?.email;
+    const leadContactLine = ownerMobileNumber || ownerEmailAddress
+      ? `For quick assistance, contact ${ownerMobileNumber || ''}${ownerMobileNumber && ownerEmailAddress ? ' | ' : ''}${ownerEmailAddress || ''}.`
+      : 'Our team will contact you shortly.';
+
     sendWhatsAppEnquiryWelcome(
       mobileNumber.trim(),
       name.trim(),
       `your request for ${serviceTypesList}`,
-      'For more details, reply with "*business*".'
+      leadContactLine
     ).catch((err) => console.error('Failed to send WhatsApp enquiry welcome to lead:', err));
 
     // Email confirmation to lead — branded per admin/advisor (non-blocking)
     (async () => {
       try {
         const ownerUserId = admin ? admin.userId : advisor!.userId;
-        const ownerUser = await User.findById(ownerUserId).select('firstName middleName lastName');
+        const ownerUser = await User.findById(ownerUserId).select('firstName middleName lastName email');
         const ownerName = ownerUser
           ? [ownerUser.firstName, ownerUser.middleName, ownerUser.lastName].filter(Boolean).join(' ')
           : admin ? 'Admin' : 'Advisor';
         const companyName = admin?.companyName || advisor?.companyName;
+
         await sendLeadEnquiryConfirmationEmail(
           email.toLowerCase().trim(),
           name.trim(),
@@ -151,8 +163,22 @@ export const submitEnquiry = async (req: Request, res: Response): Promise<Respon
           ownerName,
           companyName || undefined
         );
+
+        const ownerEmail = ownerUser?.email;
+        if (ownerEmail) {
+          await sendLeadEnquiryNotificationEmailToOwner(
+            ownerEmail,
+            ownerName,
+            name.trim(),
+            serviceTypes,
+            city.trim(),
+            mobileNumber.trim(),
+            email.toLowerCase().trim(),
+            companyName || undefined
+          );
+        }
       } catch (err) {
-        console.error('Failed to send lead enquiry confirmation email:', err);
+        console.error('Failed to send lead enquiry notification emails:', err);
       }
     })();
 
@@ -166,11 +192,12 @@ export const submitEnquiry = async (req: Request, res: Response): Promise<Respon
           const notifyName = notifyUser
             ? [notifyUser.firstName, notifyUser.middleName, notifyUser.lastName].filter(Boolean).join(' ')
             : admin ? 'Admin' : 'Advisor';
-          await sendWhatsAppGeneralNotification(
+          await sendWhatsAppGeneral4LineNotification(
             notifyMobile,
             notifyName,
-            `New enquiry received from ${name.trim()}.`,
-            `Services: ${serviceTypesList} | City: ${city.trim()}`
+            `New lead enquiry received from ${name.trim()}.`,
+            `Services: ${serviceTypesList} | City: ${city.trim()}`,
+            `Lead Mobile: ${mobileNumber.trim()} | Lead Email: ${email.toLowerCase().trim()}`
           );
         }
       } catch (err) {
