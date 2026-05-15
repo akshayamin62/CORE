@@ -295,7 +295,7 @@ export default function ServiceProviderDetailPage() {
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Services Offered</label>
                   <div className="flex flex-wrap gap-2">
                     {serviceProvider.servicesOffered.map((service, index) => (
-                      <span key={index} className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                      <span key={`service-${index}-${service}`} className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
                         {service}
                       </span>
                     ))}

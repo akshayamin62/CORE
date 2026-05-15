@@ -380,9 +380,9 @@ export default function SuperAdminLayout({ children, user }: SuperAdminLayoutPro
               <AuthImage
                 path={user?.profilePicture}
                 alt=""
-                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                className="w-8 h-8 rounded-full object-cover shrink-0"
                 fallback={
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
                     <span className="text-blue-600 font-semibold text-sm">{getInitials(user)}</span>
                   </div>
                 }

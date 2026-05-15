@@ -152,6 +152,7 @@ export default function AdminStudentsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [isMainAdmin, setIsMainAdmin] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { checkAuth(); }, []);
 
   const checkAuth = async () => {

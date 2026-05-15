@@ -36,6 +36,7 @@ export default function B2BOpsVerifyPage() {
   // Request approval
   const [converting, setConverting] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { checkAuth(); }, []);
   useEffect(() => { if (user) fetchLead(); }, [user, leadId]);
   useEffect(() => {

@@ -316,7 +316,7 @@ function ConversationWindow({
             </div>
           ) : (
             messages.map((msg, index) => (
-              <div key={index} className={`flex ${msg.sender === 'student' ? 'justify-end' : 'justify-start'}`}>
+              <div key={msg._id || index} className={`flex ${msg.sender === 'student' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[75%] ${msg.sender === 'student' ? 'order-2' : 'order-1'}`}>
                   {msg.messageType === 'feedback' && msg.sender === 'student' ? (
                     // Advice message from student
@@ -1107,7 +1107,7 @@ function ActivitiesContent() {
                     <div className="flex flex-wrap gap-2 mb-4">
                       {activity.tags.map((tag, index) => (
                         <span
-                          key={index}
+                          key={`tag-${index}-${tag}`}
                           className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
                         >
                           {tag}
@@ -1278,7 +1278,7 @@ function ActivitiesContent() {
                         const isWord = ['doc', 'docx'].includes(fileExt || '');
                         
                         return (
-                          <div key={index} className="flex items-center justify-between p-3 bg-white rounded-lg border border-brand-200 hover:border-brand-400 transition-all">
+                          <div key={fileUrl} className="flex items-center justify-between p-3 bg-white rounded-lg border border-brand-200 hover:border-brand-400 transition-all">
                             <div className="flex items-center gap-3 flex-1 min-w-0">
                               <div className="flex-shrink-0">
                                 {isPdf && (

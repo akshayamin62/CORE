@@ -73,6 +73,7 @@ export default function B2BSalesLeadDetailPage() {
   const [missedFollowUps, setMissedFollowUps] = useState<FollowUp[]>([]);
   const [upcomingFollowUps, setUpcomingFollowUps] = useState<FollowUp[]>([]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { checkAuth(); }, []);
   useEffect(() => { if (user) { fetchLead(); fetchFollowUps(); } }, [user, leadId]);
 

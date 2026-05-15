@@ -345,7 +345,7 @@ function ConversationWindow({
             </div>
           ) : (
             messages.map((msg, index) => (
-              <div key={index} className={`flex ${msg.sender === 'ivyExpert' ? 'justify-end' : 'justify-start'}`}>
+              <div key={msg._id || index} className={`flex ${msg.sender === 'ivyExpert' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[75%] ${msg.sender === 'ivyExpert' ? 'order-2' : 'order-1'}`}>
                   {msg.messageType === 'feedback' && msg.sender === 'ivyExpert' ? (
                     // Feedback message from Ivy Expert
@@ -1667,7 +1667,7 @@ function ActivitiesContent() {
                           </p>
                           <div className="space-y-4">
                             {activity.submission!.files.map((fileUrl, index) => (
-                              <div key={index} className="flex flex-col gap-2">
+                              <div key={fileUrl} className="flex flex-col gap-2">
                                 <button
                                   onClick={() => setViewingFileUrl(viewingFileUrl === fileUrl ? null : fileUrl)}
                                   className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all w-fit ${viewingFileUrl === fileUrl ? 'bg-brand-600 text-white shadow-lg' : 'bg-white text-brand-600 border border-brand-100 hover:bg-brand-50'}`}

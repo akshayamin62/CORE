@@ -46,6 +46,7 @@ export default function AdvisorEducationPlanningPricingPage() {
   const plans = getServicePlans('education-planning');
   const features = getServiceFeatures('education-planning');
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { checkAuth(); }, []);
 
   const checkAuth = async () => {

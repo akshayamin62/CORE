@@ -34,6 +34,7 @@ export default function SuperAdminB2BLeadProfilePage() {
   const [savingSection, setSavingSection] = useState<string | null>(null);
   const [uploadingDocId, setUploadingDocId] = useState<string | null>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { checkAuth(); }, []);
   useEffect(() => { if (user) fetchLead(); }, [user, leadId]);
   useEffect(() => {

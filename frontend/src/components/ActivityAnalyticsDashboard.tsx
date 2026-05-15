@@ -424,7 +424,7 @@ function ChartCard({ title, icon, children }: { title: string; icon: string; chi
 
 function EmptyChart() {
   return (
-    <div className="flex items-center justify-center h-[260px]">
+    <div className="flex items-center justify-center h-65">
       <p className="text-base text-gray-400">Not enough data yet</p>
     </div>
   );

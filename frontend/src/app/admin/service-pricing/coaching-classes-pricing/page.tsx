@@ -18,6 +18,7 @@ export default function CoachingClassesPricingPage() {
   const [batches, setBatches] = useState<BatchData[]>([]);
   const plans = getServicePlans('coaching-classes');
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { checkAuth(); }, []);
 
   const checkAuth = async () => {

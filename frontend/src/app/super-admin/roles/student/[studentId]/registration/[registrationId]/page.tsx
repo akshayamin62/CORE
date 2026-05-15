@@ -826,7 +826,7 @@ export default function SuperAdminStudentFormEditPage() {
                   )}
                 </div>
               )}
-              {currentSection && !currentSection.title.toLowerCase().includes('document') && (
+              {currentSection && !currentSection.title.toLowerCase().includes('document') && currentPart?.key !== 'APPLICATION' && (
                 <FormSaveButtons onSave={handleSaveSection} saving={saving} />
               )}
             </>

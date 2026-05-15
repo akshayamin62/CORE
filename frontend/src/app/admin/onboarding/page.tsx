@@ -23,6 +23,7 @@ export default function AdminOnboardingPage() {
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [uploadingDocId, setUploadingDocId] = useState<string | null>(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { checkAuth(); }, []);
 
   const checkAuth = async () => {

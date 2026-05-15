@@ -20,6 +20,7 @@ export default function AdvisorStudyAbroadPricingPage() {
   const plans = getServicePlans('study-abroad');
   const features = getServiceFeatures('study-abroad');
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { checkAuth(); }, []);
 
   const checkAuth = async () => {

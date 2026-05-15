@@ -356,7 +356,7 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
   const canSaveToExtra = userRole === 'OPS' || userRole === 'SUPER_ADMIN';
 
   return (
-    <div className="w-full h-[600px] bg-white rounded-lg shadow-lg overflow-hidden flex flex-col relative">
+    <div className="w-full h-150 bg-white rounded-lg shadow-lg overflow-hidden flex flex-col relative">
       {/* Save to Extra Modal */}
       {saveModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -461,7 +461,7 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
       )}
 
       {/* Chat Header */}
-      <div className={`${chatType === 'private' ? 'bg-gradient-to-r from-teal-600 to-cyan-600' : 'bg-gradient-to-r from-blue-600 to-indigo-600'} text-white p-6 shadow-lg`}>
+      <div className={`${chatType === 'private' ? 'bg-linear-to-r from-teal-600 to-cyan-600' : 'bg-linear-to-r from-blue-600 to-indigo-600'} text-white p-6 shadow-lg`}>
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -597,7 +597,7 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
                                 msg.senderRole === 'COUNSELOR' ? 'bg-teal-100 text-gray-900' :
                                   'bg-gray-100 text-gray-900'
                       }`}>
-                      <p className="text-sm leading-relaxed break-words whitespace-pre-wrap select-text">{formatMessage(msg.message)}</p>
+                      <p className="text-sm leading-relaxed wrap-break-word whitespace-pre-wrap select-text">{formatMessage(msg.message)}</p>
                     </div>
                   )}
                   <p className="text-xs text-gray-600 mt-1 ml-1">{formatTimestamp(msg.timestamp)}</p>
