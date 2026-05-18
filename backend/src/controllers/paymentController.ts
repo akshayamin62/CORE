@@ -765,21 +765,67 @@ export const createRegistrationOrder = async (req: AuthRequest, res: Response): 
 
     // Get pricing
     let basePrice = 0;
+    let pricingFound = false;
     if (student.adminId) {
       const pricing = await ServicePricing.findOne({ adminId: student.adminId, serviceSlug }).lean();
       if (pricing && pricing.prices) {
         const pricesObj = pricing.prices as unknown as Record<string, number>;
-        basePrice = pricesObj[planTier] || 0;
+        const tierPrice = pricesObj[planTier];
+        if (tierPrice !== undefined && tierPrice !== null) {
+          basePrice = tierPrice;
+          pricingFound = true;
+        }
       }
     } else if (student.advisorId) {
       const pricing = await ServicePricing.findOne({ advisorId: student.advisorId, serviceSlug }).lean();
       if (pricing && pricing.prices) {
         const pricesObj = pricing.prices as unknown as Record<string, number>;
-        basePrice = pricesObj[planTier] || 0;
+        const tierPrice = pricesObj[planTier];
+        if (tierPrice !== undefined && tierPrice !== null) {
+          basePrice = tierPrice;
+          pricingFound = true;
+        }
       }
     }
-    if (basePrice <= 0) {
+    if (!pricingFound) {
       return res.status(400).json({ success: false, message: 'Pricing not available for this plan' });
+    }
+
+    // Free plan (price = ₹0): complete registration directly without Razorpay
+    if (basePrice === 0) {
+      const classTiming = req.body.classTiming ? {
+        batchDate: new Date(req.body.classTiming.batchDate),
+        timeFrom: req.body.classTiming.timeFrom,
+        timeTo: req.body.classTiming.timeTo,
+      } : undefined;
+
+      const isStudyAbroad = serviceSlug === 'study-abroad';
+
+      const registration = await StudentServiceRegistration.create({
+        studentId: student._id,
+        serviceId: service._id,
+        planTier,
+        ...(classTiming ? { classTiming } : {}),
+        status: ServiceRegistrationStatus.REGISTERED,
+        paymentAmount: 0,
+        totalAmount: 0,
+        paymentModel: isStudyAbroad ? 'installment' : 'one-time',
+        paymentStatus: 'paid',
+        totalPaid: 0,
+        paymentDate: new Date(),
+        ...(student.adminId ? { registeredViaAdminId: student.adminId } : {}),
+        ...(student.advisorId && !student.adminId ? { registeredViaAdvisorId: student.advisorId } : {}),
+        paymentComplete: true,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Registration completed (free plan)',
+        data: {
+          freeRegistration: true,
+          registrationId: registration._id,
+        },
+      });
     }
 
     // Apply discount

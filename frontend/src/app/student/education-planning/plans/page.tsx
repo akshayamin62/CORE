@@ -71,6 +71,12 @@ export default function StudentEducationPlanningPlansPage() {
       const orderRes = await paymentAPI.createRegistrationOrder('education-planning', planKey);
       const orderData = orderRes.data.data;
 
+      if (orderData.freeRegistration) {
+        toast.success('Registration completed!');
+        await fetchData();
+        return;
+      }
+
       if (!window.Razorpay) {
         toast.error('Payment gateway is loading. Please try again.');
         return;

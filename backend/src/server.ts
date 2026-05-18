@@ -205,7 +205,7 @@ const generalLimiter = rateLimit({
 // Auth limiter: 15 requests per 5 minutes per IP (signup, login)
 const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
-  max: 15,
+  max: 25,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many authentication attempts. Please try again after 5 minutes.' },
@@ -236,6 +236,17 @@ app.use('/uploads', authenticate, (_req: import('express').Request, res: import(
 // OTP verify routes get the stricter limiter (5 attempts per 10 min) on top of authLimiter
 app.use("/api/auth/verify-otp", otpLimiter);
 app.use("/api/auth/verify-signup-otp", otpLimiter);
+
+// Captcha is fetched on every login page load — exclude it from the tight auth limiter
+// and give it its own generous limit (60 per 5 min per IP)
+const captchaLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 150,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many captcha requests. Please try again later.' },
+});
+app.use("/api/auth/captcha", captchaLimiter);
 
 app.use("/api/stats", siteStatsRoutes); // Site visitor stats
 app.use("/api/auth", authLimiter, authRoutes);

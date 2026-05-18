@@ -72,6 +72,13 @@ export default function StudentStudyAbroadPlansPage() {
       const orderRes = await paymentAPI.createRegistrationOrder('study-abroad', planKey);
       const orderData = orderRes.data.data;
 
+      if (orderData.freeRegistration) {
+        toast.success('Registration completed!');
+        await fetchData();
+        router.push('/student/payment');
+        return;
+      }
+
       if (!window.Razorpay) {
         toast.error('Payment gateway is loading. Please try again.');
         return;

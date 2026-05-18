@@ -75,6 +75,13 @@ export default function StudentCoachingClassesPlansPage() {
       const orderRes = await paymentAPI.createRegistrationOrder('coaching-classes', planKey, classTiming);
       const orderData = orderRes.data.data;
 
+      if (orderData.freeRegistration) {
+        toast.success('Registration completed!');
+        setBatchSelectPlan(null);
+        await fetchData();
+        return;
+      }
+
       if (!window.Razorpay) {
         toast.error('Payment gateway is loading. Please try again.');
         return;
