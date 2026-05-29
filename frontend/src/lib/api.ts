@@ -252,6 +252,13 @@ export const superAdminAPI = {
   updateReferrerStage: (referrerId: string, stage: string) =>
     api.patch(`/super-admin/referrer/${referrerId}/stage`, { stage }),
 
+  addReferrerNote: (referrerId: string, data: { text: string; noteDate: string }) =>
+    api.post(`/super-admin/referrer/${referrerId}/notes`, data),
+  updateReferrerNote: (referrerId: string, noteId: string, data: { text: string; noteDate: string }) =>
+    api.patch(`/super-admin/referrer/${referrerId}/notes/${noteId}`, data),
+  deleteReferrerNote: (referrerId: string, noteId: string) =>
+    api.delete(`/super-admin/referrer/${referrerId}/notes/${noteId}`),
+
   // Advisor management
   getAdvisors: () => api.get('/super-admin/advisors'),
   getAdvisorDetails: (id: string) => api.get(`/super-admin/advisors/${id}`),
@@ -560,6 +567,13 @@ export const adminAPI = {
 
   updateReferrerStage: (referrerId: string, stage: string) =>
     api.patch(`/admin/referrer/${referrerId}/stage`, { stage }),
+
+  addReferrerNote: (referrerId: string, data: { text: string; noteDate: string }) =>
+    api.post(`/admin/referrer/${referrerId}/notes`, data),
+  updateReferrerNote: (referrerId: string, noteId: string, data: { text: string; noteDate: string }) =>
+    api.patch(`/admin/referrer/${referrerId}/notes/${noteId}`, data),
+  deleteReferrerNote: (referrerId: string, noteId: string) =>
+    api.delete(`/admin/referrer/${referrerId}/notes/${noteId}`),
 };
 
 // Lead API

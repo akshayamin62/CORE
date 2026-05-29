@@ -1251,6 +1251,7 @@ export const getReferrerDashboardForAdmin = async (req: AuthRequest, res: Respon
           currentRole: referrer.currentRole,
           stage: referrer.stage || REFERRER_STAGE.NEW,
           referralSlug: referrer.referralSlug,
+          notes: referrer.notes || [],
           createdAt: referrer.createdAt,
         },
         leads,
@@ -1309,6 +1310,7 @@ export const getReferrerDashboardForSuperAdmin = async (req: AuthRequest, res: R
           currentRole: referrer.currentRole,
           stage: referrer.stage || REFERRER_STAGE.NEW,
           referralSlug: referrer.referralSlug,
+          notes: referrer.notes || [],
           createdAt: referrer.createdAt,
         },
         leads,
@@ -1422,6 +1424,245 @@ export const updateReferrerStageForSuperAdmin = async (req: AuthRequest, res: Re
 };
 
 // ============= PUBLIC REFERRER REGISTRATION =============
+
+/**
+ * ADMIN: Add a note to a referrer
+ */
+export const addReferrerNoteForAdmin = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { referrerId } = req.params;
+    const { text, noteDate } = req.body;
+    const adminUserId = req.user?.userId;
+
+    if (!text?.trim()) {
+      return res.status(400).json({ success: false, message: 'Note text is required' });
+    }
+    if (!noteDate) {
+      return res.status(400).json({ success: false, message: 'Note date is required' });
+    }
+
+    const referrer = await Referrer.findOne({ _id: referrerId, adminId: adminUserId });
+    if (!referrer) {
+      return res.status(404).json({ success: false, message: 'Referrer not found or unauthorized' });
+    }
+
+    (referrer.notes as any[]).push({
+      text: text.trim(),
+      noteDate: new Date(noteDate),
+      createdByRole: 'ADMIN',
+      createdAt: new Date(),
+    });
+    await referrer.save();
+
+    return res.json({
+      success: true,
+      message: 'Note added successfully',
+      data: { notes: referrer.notes },
+    });
+  } catch (error: any) {
+    console.error('Add referrer note (admin) error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to add note' });
+  }
+};
+
+/**
+ * SUPER ADMIN: Add a note to a referrer
+ */
+export const addReferrerNoteForSuperAdmin = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { referrerId } = req.params;
+    const { text, noteDate } = req.body;
+
+    if (!text?.trim()) {
+      return res.status(400).json({ success: false, message: 'Note text is required' });
+    }
+    if (!noteDate) {
+      return res.status(400).json({ success: false, message: 'Note date is required' });
+    }
+
+    const referrer = await Referrer.findById(referrerId);
+    if (!referrer) {
+      return res.status(404).json({ success: false, message: 'Referrer not found' });
+    }
+
+    (referrer.notes as any[]).push({
+      text: text.trim(),
+      noteDate: new Date(noteDate),
+      createdByRole: 'SUPER_ADMIN',
+      createdAt: new Date(),
+    });
+    await referrer.save();
+
+    return res.json({
+      success: true,
+      message: 'Note added successfully',
+      data: { notes: referrer.notes },
+    });
+  } catch (error: any) {
+    console.error('Add referrer note (super admin) error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to add note' });
+  }
+};
+
+/**
+ * ADMIN: Update a note on a referrer
+ */
+export const updateReferrerNoteForAdmin = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { referrerId, noteId } = req.params;
+    const { text, noteDate } = req.body;
+    const adminUserId = req.user?.userId;
+
+    if (!text?.trim()) {
+      return res.status(400).json({ success: false, message: 'Note text is required' });
+    }
+    if (!noteDate) {
+      return res.status(400).json({ success: false, message: 'Note date is required' });
+    }
+
+    const referrer = await Referrer.findOne({ _id: referrerId, adminId: adminUserId });
+    if (!referrer) {
+      return res.status(404).json({ success: false, message: 'Referrer not found or unauthorized' });
+    }
+
+    const noteIndex = (referrer.notes as any[]).findIndex((n: any) => n._id.toString() === noteId);
+    if (noteIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Note not found' });
+    }
+    const note = (referrer.notes as any[])[noteIndex];
+    if (note.createdByRole !== 'ADMIN') {
+      return res.status(403).json({ success: false, message: 'You can only edit notes you created' });
+    }
+
+    note.text = text.trim();
+    note.noteDate = new Date(noteDate);
+    await referrer.save();
+
+    return res.json({
+      success: true,
+      message: 'Note updated successfully',
+      data: { notes: referrer.notes },
+    });
+  } catch (error: any) {
+    console.error('Update referrer note (admin) error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update note' });
+  }
+};
+
+/**
+ * ADMIN: Delete a note from a referrer
+ */
+export const deleteReferrerNoteForAdmin = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { referrerId, noteId } = req.params;
+    const adminUserId = req.user?.userId;
+
+    const referrer = await Referrer.findOne({ _id: referrerId, adminId: adminUserId });
+    if (!referrer) {
+      return res.status(404).json({ success: false, message: 'Referrer not found or unauthorized' });
+    }
+
+    const noteIndex = (referrer.notes as any[]).findIndex((n: any) => n._id.toString() === noteId);
+    if (noteIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Note not found' });
+    }
+    const note = (referrer.notes as any[])[noteIndex];
+    if (note.createdByRole !== 'ADMIN') {
+      return res.status(403).json({ success: false, message: 'You can only delete notes you created' });
+    }
+
+    (referrer.notes as any[]).splice(noteIndex, 1);
+    await referrer.save();
+
+    return res.json({
+      success: true,
+      message: 'Note deleted successfully',
+      data: { notes: referrer.notes },
+    });
+  } catch (error: any) {
+    console.error('Delete referrer note (admin) error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete note' });
+  }
+};
+
+/**
+ * SUPER ADMIN: Update a note on a referrer
+ */
+export const updateReferrerNoteForSuperAdmin = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { referrerId, noteId } = req.params;
+    const { text, noteDate } = req.body;
+
+    if (!text?.trim()) {
+      return res.status(400).json({ success: false, message: 'Note text is required' });
+    }
+    if (!noteDate) {
+      return res.status(400).json({ success: false, message: 'Note date is required' });
+    }
+
+    const referrer = await Referrer.findById(referrerId);
+    if (!referrer) {
+      return res.status(404).json({ success: false, message: 'Referrer not found' });
+    }
+
+    const noteIndex = (referrer.notes as any[]).findIndex((n: any) => n._id.toString() === noteId);
+    if (noteIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Note not found' });
+    }
+    const note = (referrer.notes as any[])[noteIndex];
+    if (note.createdByRole !== 'SUPER_ADMIN') {
+      return res.status(403).json({ success: false, message: 'You can only edit notes you created' });
+    }
+
+    note.text = text.trim();
+    note.noteDate = new Date(noteDate);
+    await referrer.save();
+
+    return res.json({
+      success: true,
+      message: 'Note updated successfully',
+      data: { notes: referrer.notes },
+    });
+  } catch (error: any) {
+    console.error('Update referrer note (super admin) error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update note' });
+  }
+};
+
+/**
+ * SUPER ADMIN: Delete a note from a referrer
+ */
+export const deleteReferrerNoteForSuperAdmin = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { referrerId, noteId } = req.params;
+
+    const referrer = await Referrer.findById(referrerId);
+    if (!referrer) {
+      return res.status(404).json({ success: false, message: 'Referrer not found' });
+    }
+
+    const noteIndex = (referrer.notes as any[]).findIndex((n: any) => n._id.toString() === noteId);
+    if (noteIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Note not found' });
+    }
+    const note = (referrer.notes as any[])[noteIndex];
+    if (note.createdByRole !== 'SUPER_ADMIN') {
+      return res.status(403).json({ success: false, message: 'You can only delete notes you created' });
+    }
+
+    (referrer.notes as any[]).splice(noteIndex, 1);
+    await referrer.save();
+
+    return res.json({
+      success: true,
+      message: 'Note deleted successfully',
+      data: { notes: referrer.notes },
+    });
+  } catch (error: any) {
+    console.error('Delete referrer note (super admin) error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete note' });
+  }
+};
 
 /**
  * PUBLIC: Get admin info for referrer registration form

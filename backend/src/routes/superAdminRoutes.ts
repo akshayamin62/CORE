@@ -56,6 +56,9 @@ import {
   toggleReferrerStatusForSuperAdmin,
   getReferrerDashboardForSuperAdmin,
   updateReferrerStageForSuperAdmin,
+  addReferrerNoteForSuperAdmin,
+  updateReferrerNoteForSuperAdmin,
+  deleteReferrerNoteForSuperAdmin,
 } from "../controllers/referrerController";
 
 const router = Router();
@@ -375,6 +378,9 @@ router.get("/referrer/:referrerId/dashboard", getReferrerDashboardForSuperAdmin)
  * @access  Super Admin only
  */
 router.patch("/referrer/:referrerId/stage", updateReferrerStageForSuperAdmin);
+router.post("/referrer/:referrerId/notes", addReferrerNoteForSuperAdmin);
+router.patch("/referrer/:referrerId/notes/:noteId", updateReferrerNoteForSuperAdmin);
+router.delete("/referrer/:referrerId/notes/:noteId", deleteReferrerNoteForSuperAdmin);
 
 // ============= ADVISOR ROUTES =============
 

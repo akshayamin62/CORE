@@ -9,6 +9,13 @@ export enum REFERRER_STAGE {
   CLOSED = "Closed",
 }
 
+export interface IReferrerNote {
+  text: string;
+  noteDate: Date;
+  createdByRole: string;
+  createdAt: Date;
+}
+
 export interface IReferrer extends Document {
   userId: mongoose.Types.ObjectId;
   adminId: mongoose.Types.ObjectId;
@@ -21,6 +28,7 @@ export interface IReferrer extends Document {
   qualification: string;
   currentRole: string;
   stage: REFERRER_STAGE;
+  notes: IReferrerNote[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -92,6 +100,17 @@ const referrerSchema = new Schema<IReferrer>(
       type: String,
       enum: Object.values(REFERRER_STAGE),
       default: REFERRER_STAGE.NEW,
+    },
+    notes: {
+      type: [
+        {
+          text: { type: String, required: true, trim: true },
+          noteDate: { type: Date, required: true },
+          createdByRole: { type: String, required: true },
+          createdAt: { type: Date, default: Date.now },
+        },
+      ],
+      default: [],
     },
   },
   { timestamps: true }

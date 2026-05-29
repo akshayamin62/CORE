@@ -14,6 +14,9 @@ import {
   toggleReferrerStatus,
   getReferrerDashboardForAdmin,
   updateReferrerStage,
+  addReferrerNoteForAdmin,
+  updateReferrerNoteForAdmin,
+  deleteReferrerNoteForAdmin,
 } from "../controllers/referrerController";
 import {
   getPendingTransfers,
@@ -117,6 +120,9 @@ router.get("/referrer/:referrerId/dashboard", getReferrerDashboardForAdmin);
  * @access  Admin only
  */
 router.patch("/referrer/:referrerId/stage", updateReferrerStage);
+router.post("/referrer/:referrerId/notes", addReferrerNoteForAdmin);
+router.patch("/referrer/:referrerId/notes/:noteId", updateReferrerNoteForAdmin);
+router.delete("/referrer/:referrerId/notes/:noteId", deleteReferrerNoteForAdmin);
 
 // ============= STUDENT TRANSFER ROUTES =============
 

@@ -21,6 +21,14 @@ interface LeadData {
   createdAt: string;
 }
 
+interface ReferrerNote {
+  _id: string;
+  text: string;
+  noteDate: string;
+  createdByRole: string;
+  createdAt: string;
+}
+
 interface ReferrerDashboard {
   referrer: {
     _id: string;
@@ -44,6 +52,7 @@ interface ReferrerDashboard {
       currentRole?: string;
     stage?: string;
     referralSlug: string;
+    notes: ReferrerNote[];
     createdAt: string;
   };
   leads: LeadData[];
@@ -63,6 +72,14 @@ export default function AdminReferrerDetailPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReferrerStage, setSelectedReferrerStage] = useState<string>('');
   const [savingStage, setSavingStage] = useState(false);
+  const [newNote, setNewNote] = useState('');
+  const [noteDate, setNoteDate] = useState(() => new Date().toISOString().slice(0, 16));
+  const [addingNote, setAddingNote] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editNoteText, setEditNoteText] = useState('');
+  const [editNoteDate, setEditNoteDate] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -109,6 +126,56 @@ export default function AdminReferrerDetailPage() {
       toast.error(error.response?.data?.message || 'Failed to update stage');
     } finally {
       setSavingStage(false);
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!newNote.trim() || !noteDate) return;
+    setAddingNote(true);
+    try {
+      const response = await adminAPI.addReferrerNote(referrerId, { text: newNote.trim(), noteDate });
+      setDashboard(prev => prev ? { ...prev, referrer: { ...prev.referrer, notes: response.data.data.notes } } : prev);
+      setNewNote('');
+      setNoteDate(new Date().toISOString().slice(0, 16));
+      toast.success('Note added');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to add note');
+    } finally {
+      setAddingNote(false);
+    }
+  };
+
+  const handleStartEditNote = (note: ReferrerNote) => {
+    setEditingNoteId(note._id);
+    setEditNoteText(note.text);
+    setEditNoteDate(new Date(note.noteDate).toISOString().slice(0, 16));
+  };
+
+  const handleSaveEditNote = async () => {
+    if (!editingNoteId || !editNoteText.trim() || !editNoteDate) return;
+    setSavingEdit(true);
+    try {
+      const response = await adminAPI.updateReferrerNote(referrerId, editingNoteId, { text: editNoteText.trim(), noteDate: editNoteDate });
+      setDashboard(prev => prev ? { ...prev, referrer: { ...prev.referrer, notes: response.data.data.notes } } : prev);
+      setEditingNoteId(null);
+      toast.success('Note updated');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update note');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    setDeletingNoteId(noteId);
+    try {
+      const response = await adminAPI.deleteReferrerNote(referrerId, noteId);
+      setDashboard(prev => prev ? { ...prev, referrer: { ...prev.referrer, notes: response.data.data.notes } } : prev);
+      toast.success('Note deleted');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete note');
+    } finally {
+      setDeletingNoteId(null);
     }
   };
 
@@ -179,88 +246,214 @@ export default function AdminReferrerDetailPage() {
             <p className="text-gray-600 mt-1">Leads referred by this referrer</p>
           </div>
 
-          {/* Referrer Info Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6 flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <AuthImage
-                path={referrerUser.profilePicture}
-                alt=""
-                className="w-14 h-14 rounded-full object-cover"
-                fallback={
-                  <div className="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span className="text-purple-600 font-bold text-lg">{getInitials(referrerUser)}</span>
+          {/* Referrer Profile Card */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
+            <div className="h-1.5 bg-linear-to-r from-blue-500 to-indigo-500" />
+            <div className="p-6">
+              <div className="flex flex-col lg:flex-row gap-6">
+                {/* Left column: avatar, name, status, stage, copy link */}
+                <div className="flex flex-col items-center lg:items-start gap-3 lg:w-56 shrink-0">
+                  <AuthImage
+                    path={referrerUser.profilePicture}
+                    alt=""
+                    className="w-20 h-20 rounded-xl object-cover shadow-md"
+                    fallback={
+                      <div className="w-20 h-20 bg-blue-100 rounded-xl shadow-md flex items-center justify-center">
+                        <span className="text-blue-600 font-bold text-2xl">{getInitials(referrerUser)}</span>
+                      </div>
+                    }
+                  />
+                  <div className="text-center lg:text-left">
+                    <h2 className="text-xl font-bold text-gray-900">{getFullName(referrerUser)}</h2>
+                    <div className="flex flex-wrap items-center gap-2 mt-1 justify-center lg:justify-start">
+                      {!referrerUser.isVerified ? (
+                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-700">Pending</span>
+                      ) : referrerUser.isActive ? (
+                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700">Active</span>
+                      ) : (
+                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Inactive</span>
+                      )}
+                    </div>
                   </div>
-                }
-              />
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-lg font-bold text-gray-900">{getFullName(referrerUser)}</h2>
-                  {!referrerUser.isVerified ? (
-                    <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-700">Pending</span>
-                  ) : referrerUser.isActive ? (
-                    <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700">Active</span>
-                  ) : (
-                    <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Inactive</span>
-                  )}
+                  {/* Stage Selector */}
+                  <div className="w-full">
+                    <p className="text-xs font-medium text-gray-500 mb-1">Referrer Stage</p>
+                    {dashboard.referrer.stage === 'Converted' ? (
+                      <span className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium border border-green-200 inline-block">Converted (locked)</span>
+                    ) : (
+                      <div className="flex gap-2">
+                        <select
+                          value={selectedReferrerStage}
+                          onChange={(e) => setSelectedReferrerStage(e.target.value)}
+                          className="flex-1 px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          {['New', 'Hot', 'Warm', 'Cold', 'Closed'].map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={handleSaveReferrerStage}
+                          disabled={savingStage || selectedReferrerStage === (dashboard.referrer.stage || 'New')}
+                          className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          {savingStage ? '...' : 'Save'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={copyReferralLink}
+                    className="w-full px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    Copy Referral Link
+                  </button>
                 </div>
-                <p className="text-sm text-gray-500">{referrerUser.email}</p>
-                {dashboard.referrer.mobileNumber && (
-                  <p className="text-sm text-gray-500">{dashboard.referrer.mobileNumber}</p>
-                )}
-                {dashboard.referrer.country && (
-                  <p className="text-sm text-gray-500">{[dashboard.referrer.city, dashboard.referrer.state, dashboard.referrer.country].filter(Boolean).join(', ')}</p>
-                )}
-                {dashboard.referrer.qualification && (
-                  <p className="text-sm text-gray-500">Qualification: {dashboard.referrer.qualification}</p>
-                )}
-                {dashboard.referrer.currentRole && (
-                  <p className="text-sm text-gray-500">Current Role: {dashboard.referrer.currentRole}</p>
-                )}
+                {/* Right column: detail grid */}
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <ReferrerInfoItem label="Email" value={referrerUser.email} />
+                  <ReferrerInfoItem label="Mobile" value={dashboard.referrer.mobileNumber || '—'} />
+                  <ReferrerInfoItem label="Location" value={[dashboard.referrer.city, dashboard.referrer.state, dashboard.referrer.country].filter(Boolean).join(', ') || '—'} />
+                  <ReferrerInfoItem label="Qualification" value={dashboard.referrer.qualification || '—'} />
+                  <ReferrerInfoItem label="Current Role" value={dashboard.referrer.currentRole || '—'} />
+                  <ReferrerInfoItem label="Member Since" value={new Date(referrerUser.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} />
+                  <ReferrerInfoItem label="Referral Slug" value={dashboard.referrer.referralSlug} />
+                  <ReferrerInfoItem label="Total Leads" value={String(allLeads.length)} />
+                </div>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              {/* Referrer Stage Selector */}
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-600 whitespace-nowrap">Stage:</label>
-                {dashboard.referrer.stage === 'Converted' ? (
-                  <span className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium border border-green-200">Converted (locked)</span>
-                ) : (
-                  <>
-                    <select
-                      value={selectedReferrerStage}
-                      onChange={(e) => setSelectedReferrerStage(e.target.value)}
-                      className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    >
-                      {['New', 'Hot', 'Warm', 'Cold', 'Closed'].map((s) => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={handleSaveReferrerStage}
-                      disabled={savingStage || selectedReferrerStage === (dashboard.referrer.stage || 'New')}
-                      className="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
-                    >
-                      {savingStage ? 'Saving...' : 'Save'}
-                    </button>
-                  </>
-                )}
+          </div>
+
+          {/* Notes Section */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Notes</h3>
+            {/* Add Note Form */}
+            <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2">
+                  <textarea
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    placeholder="Enter a note..."
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="datetime-local"
+                    value={noteDate}
+                    onChange={(e) => setNoteDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    onClick={handleAddNote}
+                    disabled={addingNote || !newNote.trim() || !noteDate}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  >
+                    {addingNote ? 'Adding...' : 'Add Note'}
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={copyReferralLink}
-                className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-200 transition-colors flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-                Copy Referral Link
-              </button>
             </div>
+            {/* Notes List */}
+            {(!dashboard.referrer.notes || dashboard.referrer.notes.length === 0) ? (
+              <p className="text-sm text-gray-400 text-center py-4">No notes yet</p>
+            ) : (
+              <div className="space-y-3">
+                {[...dashboard.referrer.notes].reverse().map((note) => (
+                  <div key={note._id} className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                    {editingNoteId === note._id ? (
+                      /* Edit mode */
+                      <div className="space-y-2">
+                        <textarea
+                          value={editNoteText}
+                          onChange={(e) => setEditNoteText(e.target.value)}
+                          rows={2}
+                          className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 resize-none"
+                        />
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="datetime-local"
+                            value={editNoteDate}
+                            onChange={(e) => setEditNoteDate(e.target.value)}
+                            className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                          />
+                          <button
+                            onClick={handleSaveEditNote}
+                            disabled={savingEdit || !editNoteText.trim()}
+                            title="Save"
+                            className="p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => setEditingNoteId(null)}
+                            title="Cancel"
+                            className="p-1.5 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* View mode */
+                      <div className="flex gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-800 whitespace-pre-wrap">{note.text}</p>
+                          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                            <span className="text-xs text-gray-400">
+                              {new Date(note.noteDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}{' '}
+                              {new Date(note.noteDate).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                              note.createdByRole === 'SUPER_ADMIN' ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'
+                            }`}>
+                              {note.createdByRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'}
+                            </span>
+                          </div>
+                        </div>
+                        {note.createdByRole === 'ADMIN' && (
+                          <div className="flex gap-1 shrink-0">
+                            <button
+                              onClick={() => handleStartEditNote(note)}
+                              title="Edit note"
+                              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteNote(note._id)}
+                              disabled={deletingNoteId === note._id}
+                              title="Delete note"
+                              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Search and Filter */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
             <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[200px]">
+              <div className="flex-1 min-w-50">
                 <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
                 <div className="relative">
                   <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -275,7 +468,7 @@ export default function AdminReferrerDetailPage() {
                   />
                 </div>
               </div>
-              <div className="flex-1 min-w-[150px]">
+              <div className="flex-1 min-w-37.5">
                 <label className="block text-xs font-medium text-gray-500 mb-1">Stage</label>
                 <select
                   value={stageFilter}
@@ -418,6 +611,16 @@ function StatCard({ title, value, icon, color, onClick, isActive, percentage, sh
           <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
         )}
       </div>
+    </div>
+  );
+}
+
+// Referrer Info Item Component
+function ReferrerInfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+      <p className="text-xs font-medium text-gray-500 mb-0.5">{label}</p>
+      <p className="text-sm font-semibold text-gray-800 wrap-break-word">{value}</p>
     </div>
   );
 }
