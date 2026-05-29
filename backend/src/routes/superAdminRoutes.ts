@@ -55,6 +55,7 @@ import {
   createReferrerForSuperAdmin,
   toggleReferrerStatusForSuperAdmin,
   getReferrerDashboardForSuperAdmin,
+  updateReferrerStageForSuperAdmin,
 } from "../controllers/referrerController";
 
 const router = Router();
@@ -367,6 +368,13 @@ router.patch("/referrer/:referrerId/toggle-status", toggleReferrerStatusForSuper
  * @access  Super Admin only
  */
 router.get("/referrer/:referrerId/dashboard", getReferrerDashboardForSuperAdmin);
+
+/**
+ * @route   PATCH /api/super-admin/referrer/:referrerId/stage
+ * @desc    Update referrer stage
+ * @access  Super Admin only
+ */
+router.patch("/referrer/:referrerId/stage", updateReferrerStageForSuperAdmin);
 
 // ============= ADVISOR ROUTES =============
 

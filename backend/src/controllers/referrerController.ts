@@ -2,7 +2,7 @@ import { Response, Request } from "express";
 import { AuthRequest } from "../types/auth";
 import User from "../models/User";
 import Admin from "../models/Admin";
-import Referrer from "../models/Referrer";
+import Referrer, { REFERRER_STAGE } from "../models/Referrer";
 import Lead, { LEAD_STAGE, SERVICE_TYPE } from "../models/Lead";
 import Student from "../models/Student";
 import StudentServiceRegistration from "../models/StudentServiceRegistration";
@@ -35,7 +35,7 @@ const getUniqueReferralSlug = async (baseSlug: string): Promise<string> => {
  */
 export const createReferrer = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
-    const { firstName, middleName, lastName, email, mobileNumber } = req.body;
+    const { firstName, middleName, lastName, email, mobileNumber, country, state, city, qualification, currentRole } = req.body;
     const adminUserId = req.user?.userId;
 
     if (!firstName || !lastName || !email) {
@@ -49,6 +49,20 @@ export const createReferrer = async (req: AuthRequest, res: Response): Promise<R
       return res.status(400).json({
         success: false,
         message: "Mobile number is required",
+      });
+    }
+
+    if (!country?.trim() || !state?.trim() || !city?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Country, state, and city are required",
+      });
+    }
+
+    if (!qualification?.trim() || !currentRole?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Qualification and current role are required",
       });
     }
 
@@ -91,6 +105,12 @@ export const createReferrer = async (req: AuthRequest, res: Response): Promise<R
       adminId: adminUserId,
       email: email.toLowerCase().trim(),
       mobileNumber: mobileNumber?.trim() || undefined,
+      country: country.trim(),
+      state: state.trim(),
+      city: city.trim(),
+      qualification: qualification.trim(),
+      currentRole: currentRole.trim(),
+      stage: REFERRER_STAGE.NEW,
       referralSlug: 'temp', // placeholder
     });
     await newReferrer.save();
@@ -114,6 +134,12 @@ export const createReferrer = async (req: AuthRequest, res: Response): Promise<R
           lastName: newUser.lastName,
           email: newUser.email,
           mobileNumber: newReferrer.mobileNumber,
+          country: newReferrer.country,
+          state: newReferrer.state,
+          city: newReferrer.city,
+          qualification: newReferrer.qualification,
+          currentRole: newReferrer.currentRole,
+          stage: newReferrer.stage,
           referralSlug: newReferrer.referralSlug,
         },
       },
@@ -153,15 +179,37 @@ export const getReferrers = async (req: AuthRequest, res: Response): Promise<Res
       countMap[lc._id.toString()] = lc.total;
     });
 
+    // Get overall lead stage breakdown across all referrers for this admin
+    const stageCountsArr = await Lead.aggregate([
+      { $match: { referrerId: { $in: referrerIds } } },
+      { $group: { _id: "$stage", total: { $sum: 1 } } },
+    ]);
+    const overallStageCounts: Record<string, number> = {};
+    let totalLeadsOverall = 0;
+    stageCountsArr.forEach((sc: any) => {
+      overallStageCounts[sc._id] = sc.total;
+      totalLeadsOverall += sc.total;
+    });
+
     return res.status(200).json({
       success: true,
       message: "Referrers fetched successfully",
       data: {
+        overallLeadStats: {
+          total: totalLeadsOverall,
+          stageCounts: overallStageCounts,
+        },
         referrers: referrers.map((r: any) => ({
           _id: r._id,
           userId: r.userId,
           email: r.email,
           mobileNumber: r.mobileNumber,
+          country: r.country,
+          state: r.state,
+          city: r.city,
+          qualification: r.qualification,
+          currentRole: r.currentRole,
+          stage: r.stage || REFERRER_STAGE.NEW,
           referralSlug: r.referralSlug,
           leadCount: countMap[r._id.toString()] || 0,
           createdAt: r.createdAt,
@@ -206,10 +254,12 @@ export const toggleReferrerStatus = async (req: AuthRequest, res: Response): Pro
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // If user is not verified, verify & activate
+    // If user is not verified, verify & activate and set stage to Converted
     if (!user.isVerified) {
       user.isVerified = true;
       user.isActive = true;
+      referrer.stage = REFERRER_STAGE.CONVERTED;
+      await referrer.save();
     } else {
       user.isActive = !user.isActive;
     }
@@ -259,10 +309,26 @@ export const getAllReferrersForSuperAdmin = async (req: AuthRequest, res: Respon
       countMap[lc._id.toString()] = lc.total;
     });
 
+    // Get overall lead stage breakdown across all referrers
+    const stageCountsArr = await Lead.aggregate([
+      { $match: { referrerId: { $in: referrerIds } } },
+      { $group: { _id: "$stage", total: { $sum: 1 } } },
+    ]);
+    const overallStageCounts: Record<string, number> = {};
+    let totalLeadsOverall = 0;
+    stageCountsArr.forEach((sc: any) => {
+      overallStageCounts[sc._id] = sc.total;
+      totalLeadsOverall += sc.total;
+    });
+
     return res.status(200).json({
       success: true,
       message: "All referrers fetched successfully",
       data: {
+        overallLeadStats: {
+          total: totalLeadsOverall,
+          stageCounts: overallStageCounts,
+        },
         referrers: referrers.map((r: any) => ({
           _id: r._id,
           userId: r.userId,
@@ -270,6 +336,12 @@ export const getAllReferrersForSuperAdmin = async (req: AuthRequest, res: Respon
           adminCompanyName: r.adminId ? companyMap[r.adminId._id.toString()] : undefined,
           email: r.email,
           mobileNumber: r.mobileNumber,
+          country: r.country,
+          state: r.state,
+          city: r.city,
+          qualification: r.qualification,
+          currentRole: r.currentRole,
+          stage: r.stage || REFERRER_STAGE.NEW,
           referralSlug: r.referralSlug,
           leadCount: countMap[r._id.toString()] || 0,
           createdAt: r.createdAt,
@@ -290,7 +362,7 @@ export const getAllReferrersForSuperAdmin = async (req: AuthRequest, res: Respon
  */
 export const createReferrerForSuperAdmin = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
-    const { firstName, middleName, lastName, email, mobileNumber, adminId } = req.body;
+    const { firstName, middleName, lastName, email, mobileNumber, adminId, country, state, city, qualification, currentRole } = req.body;
 
     if (!firstName || !lastName || !email) {
       return res.status(400).json({
@@ -310,6 +382,20 @@ export const createReferrerForSuperAdmin = async (req: AuthRequest, res: Respons
       return res.status(400).json({
         success: false,
         message: "Admin selection is required",
+      });
+    }
+
+    if (!country?.trim() || !state?.trim() || !city?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Country, state, and city are required",
+      });
+    }
+
+    if (!qualification?.trim() || !currentRole?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Qualification and current role are required",
       });
     }
 
@@ -356,6 +442,12 @@ export const createReferrerForSuperAdmin = async (req: AuthRequest, res: Respons
       adminId,
       email: email.toLowerCase().trim(),
       mobileNumber: mobileNumber?.trim() || undefined,
+      country: country.trim(),
+      state: state.trim(),
+      city: city.trim(),
+      qualification: qualification.trim(),
+      currentRole: currentRole.trim(),
+      stage: REFERRER_STAGE.NEW,
       referralSlug: 'temp', // placeholder
     });
     await newReferrer.save();
@@ -379,6 +471,12 @@ export const createReferrerForSuperAdmin = async (req: AuthRequest, res: Respons
           lastName: newUser.lastName,
           email: newUser.email,
           mobileNumber: newReferrer.mobileNumber,
+          country: newReferrer.country,
+          state: newReferrer.state,
+          city: newReferrer.city,
+          qualification: newReferrer.qualification,
+          currentRole: newReferrer.currentRole,
+          stage: newReferrer.stage,
           referralSlug: newReferrer.referralSlug,
         },
       },
@@ -412,10 +510,12 @@ export const toggleReferrerStatusForSuperAdmin = async (req: AuthRequest, res: R
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // If user is not verified, verify & activate
+    // If user is not verified, verify & activate and set stage to Converted
     if (!user.isVerified) {
       user.isVerified = true;
       user.isActive = true;
+      referrer.stage = REFERRER_STAGE.CONVERTED;
+      await referrer.save();
     } else {
       user.isActive = !user.isActive;
     }
@@ -1040,6 +1140,12 @@ export const getReferrerDashboardForAdmin = async (req: AuthRequest, res: Respon
           userId: referrer.userId,
           email: referrer.email,
           mobileNumber: referrer.mobileNumber,
+          country: referrer.country,
+          state: referrer.state,
+          city: referrer.city,
+          qualification: referrer.qualification,
+          currentRole: referrer.currentRole,
+          stage: referrer.stage || REFERRER_STAGE.NEW,
           referralSlug: referrer.referralSlug,
           createdAt: referrer.createdAt,
         },
@@ -1092,6 +1198,12 @@ export const getReferrerDashboardForSuperAdmin = async (req: AuthRequest, res: R
           adminCompanyName: adminProfile?.companyName,
           email: referrer.email,
           mobileNumber: referrer.mobileNumber,
+          country: referrer.country,
+          state: referrer.state,
+          city: referrer.city,
+          qualification: referrer.qualification,
+          currentRole: referrer.currentRole,
+          stage: referrer.stage || REFERRER_STAGE.NEW,
           referralSlug: referrer.referralSlug,
           createdAt: referrer.createdAt,
         },
@@ -1103,6 +1215,87 @@ export const getReferrerDashboardForSuperAdmin = async (req: AuthRequest, res: R
   } catch (error: any) {
     console.error("Get referrer dashboard for super admin error:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch referrer dashboard" });
+  }
+};
+
+/**
+ * ADMIN: Update referrer stage
+ */
+export const updateReferrerStage = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { referrerId } = req.params;
+    const { stage } = req.body;
+    const adminUserId = req.user?.userId;
+
+    if (!adminUserId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    if (!stage || !Object.values(REFERRER_STAGE).includes(stage as REFERRER_STAGE)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid stage. Must be one of: ${Object.values(REFERRER_STAGE).join(", ")}`,
+      });
+    }
+
+    const referrer = await Referrer.findOne({ _id: referrerId, adminId: adminUserId });
+    if (!referrer) {
+      return res.status(404).json({ success: false, message: "Referrer not found or unauthorized" });
+    }
+
+    if (referrer.stage === REFERRER_STAGE.CONVERTED) {
+      return res.status(400).json({ success: false, message: "Stage cannot be changed after referrer is Converted" });
+    }
+
+    referrer.stage = stage as REFERRER_STAGE;
+    await referrer.save();
+
+    return res.json({
+      success: true,
+      message: "Referrer stage updated successfully",
+      data: { stage: referrer.stage },
+    });
+  } catch (error: any) {
+    console.error("Update referrer stage error:", error);
+    return res.status(500).json({ success: false, message: "Failed to update referrer stage" });
+  }
+};
+
+/**
+ * SUPER ADMIN: Update referrer stage
+ */
+export const updateReferrerStageForSuperAdmin = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { referrerId } = req.params;
+    const { stage } = req.body;
+
+    if (!stage || !Object.values(REFERRER_STAGE).includes(stage as REFERRER_STAGE)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid stage. Must be one of: ${Object.values(REFERRER_STAGE).join(", ")}`,
+      });
+    }
+
+    const referrer = await Referrer.findById(referrerId);
+    if (!referrer) {
+      return res.status(404).json({ success: false, message: "Referrer not found" });
+    }
+
+    if (referrer.stage === REFERRER_STAGE.CONVERTED) {
+      return res.status(400).json({ success: false, message: "Stage cannot be changed after referrer is Converted" });
+    }
+
+    referrer.stage = stage as REFERRER_STAGE;
+    await referrer.save();
+
+    return res.json({
+      success: true,
+      message: "Referrer stage updated successfully",
+      data: { stage: referrer.stage },
+    });
+  } catch (error: any) {
+    console.error("Update referrer stage for super admin error:", error);
+    return res.status(500).json({ success: false, message: "Failed to update referrer stage" });
   }
 };
 
@@ -1144,7 +1337,7 @@ export const getAdminInfoForReferrerRegistration = async (req: Request, res: Res
 export const registerAsReferrer = async (req: Request, res: Response): Promise<Response> => {
   try {
     const { adminSlug } = req.params;
-    const { firstName, middleName, lastName, email, mobileNumber } = req.body;
+    const { firstName, middleName, lastName, email, mobileNumber, country, state, city, qualification, currentRole } = req.body;
 
     if (!firstName || !lastName || !email) {
       return res.status(400).json({
@@ -1165,6 +1358,20 @@ export const registerAsReferrer = async (req: Request, res: Response): Promise<R
       return res.status(400).json({
         success: false,
         message: "Invalid phone number format",
+      });
+    }
+
+    if (!country?.trim() || !state?.trim() || !city?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Country, state, and city are required",
+      });
+    }
+
+    if (!qualification?.trim() || !currentRole?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Qualification and current role are required",
       });
     }
 
@@ -1199,6 +1406,12 @@ export const registerAsReferrer = async (req: Request, res: Response): Promise<R
       adminId: admin.userId,
       email: email.toLowerCase().trim(),
       mobileNumber: mobileNumber?.trim() || undefined,
+      country: country.trim(),
+      state: state.trim(),
+      city: city.trim(),
+      qualification: qualification.trim(),
+      currentRole: currentRole.trim(),
+      stage: REFERRER_STAGE.NEW,
       referralSlug: "temp",
     });
     await newReferrer.save();

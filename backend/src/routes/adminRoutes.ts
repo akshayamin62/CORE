@@ -13,6 +13,7 @@ import {
   getReferrers,
   toggleReferrerStatus,
   getReferrerDashboardForAdmin,
+  updateReferrerStage,
 } from "../controllers/referrerController";
 import {
   getPendingTransfers,
@@ -109,6 +110,13 @@ router.patch("/referrer/:referrerId/toggle-status", toggleReferrerStatus);
  * @access  Admin only
  */
 router.get("/referrer/:referrerId/dashboard", getReferrerDashboardForAdmin);
+
+/**
+ * @route   PATCH /api/admin/referrer/:referrerId/stage
+ * @desc    Update referrer stage
+ * @access  Admin only
+ */
+router.patch("/referrer/:referrerId/stage", updateReferrerStage);
 
 // ============= STUDENT TRANSFER ROUTES =============
 

@@ -1,11 +1,26 @@
 import mongoose, { Document, Schema } from "mongoose";
 
+export enum REFERRER_STAGE {
+  NEW = "New",
+  HOT = "Hot",
+  WARM = "Warm",
+  COLD = "Cold",
+  CONVERTED = "Converted",
+  CLOSED = "Closed",
+}
+
 export interface IReferrer extends Document {
   userId: mongoose.Types.ObjectId;
   adminId: mongoose.Types.ObjectId;
   email: string;
   mobileNumber?: string;
   referralSlug: string;
+  country: string;
+  state: string;
+  city: string;
+  qualification: string;
+  currentRole: string;
+  stage: REFERRER_STAGE;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -47,6 +62,36 @@ const referrerSchema = new Schema<IReferrer>(
       unique: true,
       trim: true,
       lowercase: true,
+    },
+    country: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    state: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    city: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    qualification: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    currentRole: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    stage: {
+      type: String,
+      enum: Object.values(REFERRER_STAGE),
+      default: REFERRER_STAGE.NEW,
     },
   },
   { timestamps: true }

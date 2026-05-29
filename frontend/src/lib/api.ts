@@ -249,6 +249,9 @@ export const superAdminAPI = {
   getReferrerDashboard: (referrerId: string) =>
     api.get(`/super-admin/referrer/${referrerId}/dashboard`),
 
+  updateReferrerStage: (referrerId: string, stage: string) =>
+    api.patch(`/super-admin/referrer/${referrerId}/stage`, { stage }),
+
   // Advisor management
   getAdvisors: () => api.get('/super-admin/advisors'),
   getAdvisorDetails: (id: string) => api.get(`/super-admin/advisors/${id}`),
@@ -554,6 +557,9 @@ export const adminAPI = {
 
   getReferrerDashboard: (referrerId: string) =>
     api.get(`/admin/referrer/${referrerId}/dashboard`),
+
+  updateReferrerStage: (referrerId: string, stage: string) =>
+    api.patch(`/admin/referrer/${referrerId}/stage`, { stage }),
 };
 
 // Lead API

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Country, State, City } from 'country-state-city';
 import { useParams } from 'next/navigation';
 import { referrerRegistrationAPI } from '@/lib/api';
 import toast, { Toaster } from 'react-hot-toast';
@@ -28,10 +29,26 @@ export default function BecomeReferrerPage() {
     lastName: '',
     email: '',
     mobileNumber: '',
+    country: '',
+    state: '',
+    city: '',
+    qualification: '',
+    currentRole: '',
   });
+
+  const [countries, setCountries] = useState<any[]>([]);
+  const [states, setStates] = useState<any[]>([]);
+  const [cities, setCities] = useState<any[]>([]);
 
   useEffect(() => {
     fetchAdminInfo();
+    // load countries list
+    try {
+      const all = Country.getAllCountries();
+      setCountries(all || []);
+    } catch (err) {
+      setCountries([]);
+    }
   }, [adminSlug]);
 
   const fetchAdminInfo = async () => {
@@ -59,6 +76,27 @@ export default function BecomeReferrerPage() {
       return;
     }
 
+    if (!formData.country) {
+      toast.error('Country is required');
+      return;
+    }
+    if (!formData.state) {
+      toast.error('State is required');
+      return;
+    }
+    if (!formData.city) {
+      toast.error('City is required');
+      return;
+    }
+    if (!formData.qualification.trim()) {
+      toast.error('Qualification is required');
+      return;
+    }
+    if (!formData.currentRole.trim()) {
+      toast.error('Current role is required');
+      return;
+    }
+
     setSubmitting(true);
     try {
       await referrerRegistrationAPI.register(adminSlug, formData);
@@ -67,6 +105,35 @@ export default function BecomeReferrerPage() {
       toast.error(err.response?.data?.message || 'Failed to submit registration');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleCountryChange = (isoCode: string) => {
+    const c = countries.find((c) => c.isoCode === isoCode);
+    setFormData({ ...formData, country: c ? c.name : '' , state: '', city: '' });
+    if (isoCode) {
+      const st = State.getStatesOfCountry(isoCode) || [];
+      setStates(st);
+      setCities([]);
+    } else {
+      setStates([]);
+      setCities([]);
+    }
+  };
+
+  const handleStateChange = (stateIso: string) => {
+    const s = states.find((s) => s.isoCode === stateIso);
+    setFormData({ ...formData, state: s ? s.name : '', city: '' });
+    if (stateIso && countries.length) {
+      const countryIso = countries.find((c) => c.name === formData.country)?.isoCode;
+      if (countryIso) {
+        const ct = City.getCitiesOfState(countryIso, stateIso) || [];
+        setCities(ct);
+      } else {
+        setCities([]);
+      }
+    } else {
+      setCities([]);
     }
   };
 
@@ -220,6 +287,78 @@ export default function BecomeReferrerPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="+1234567890"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                  <select
+                    value={countries.find(c => c.name === formData.country)?.isoCode || ''}
+                    onChange={(e) => handleCountryChange(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select country</option>
+                    {countries.map((c) => (
+                      <option key={c.isoCode} value={c.isoCode}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                  <select
+                    value={states.find(s => s.name === formData.state)?.isoCode || ''}
+                    onChange={(e) => handleStateChange(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={!states.length}
+                  >
+                    <option value="">Select state</option>
+                    {states.map((s) => (
+                      <option key={s.isoCode} value={s.isoCode}>{s.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+                  <select
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={!cities.length}
+                  >
+                    <option value="">Select city</option>
+                    {cities.map((c) => (
+                      <option key={c.name} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Qualification <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={formData.qualification}
+                    onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g. MBA, BSc, etc."
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Current Role <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    value={formData.currentRole}
+                    onChange={(e) => setFormData({ ...formData, currentRole: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g. Counselor, Agent, Freelancer"
+                    required
+                  />
+                </div>
               </div>
 
               <button

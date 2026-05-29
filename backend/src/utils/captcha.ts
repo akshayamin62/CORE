@@ -14,12 +14,12 @@ export async function generateCaptchaChallenge(): Promise<{ token: string; quest
 
   switch (op) {
     case '+':
-      a = Math.floor(Math.random() * 50) + 1;  // 1-50
-      b = Math.floor(Math.random() * 50) + 1;  // 1-50
+      a = Math.floor(Math.random() * 10) + 1;  // 1-10
+      b = Math.floor(Math.random() * 10) + 1;  // 1-10
       answer = a + b;
       break;
     case '-':
-      a = Math.floor(Math.random() * 50) + 10; // 10-59
+      a = Math.floor(Math.random() * 10) + 1; // 1-10
       b = Math.floor(Math.random() * a);        // 0 to a-1 (result always positive)
       answer = a - b;
       break;

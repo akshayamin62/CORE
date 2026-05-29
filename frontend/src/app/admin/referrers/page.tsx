@@ -23,6 +23,7 @@ interface ReferrerData {
   };
   email: string;
   mobileNumber?: string;
+  stage?: string;
   referralSlug: string;
   leadCount: number;
   createdAt: string;
@@ -45,6 +46,11 @@ export default function ReferrersListPage() {
     lastName: '',
     email: '',
     mobileNumber: '',
+    country: '',
+    state: '',
+    city: '',
+    qualification: '',
+    currentRole: '',
   });
 
   useEffect(() => {
@@ -97,13 +103,23 @@ export default function ReferrersListPage() {
       return;
     }
 
+    if (!formData.country.trim() || !formData.state.trim() || !formData.city.trim()) {
+      toast.error('Country, state, and city are required');
+      return;
+    }
+
+    if (!formData.qualification.trim() || !formData.currentRole.trim()) {
+      toast.error('Qualification and current role are required');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
       await adminAPI.createReferrer(formData);
       toast.success('Referrer created successfully!');
       setShowModal(false);
-      setFormData({ firstName: '', middleName: '', lastName: '', email: '', mobileNumber: '' });
+      setFormData({ firstName: '', middleName: '', lastName: '', email: '', mobileNumber: '', country: '', state: '', city: '', qualification: '', currentRole: '' });
       fetchReferrers();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to create referrer');
@@ -264,6 +280,101 @@ export default function ReferrersListPage() {
             </div>
           </div>
 
+          {/* Referrer Pipeline Overview */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-600 uppercase mb-3">Referrer Pipeline Overview</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+              {/* Total */}
+              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  </div>
+                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.length}</h3>
+                </div>
+                <p className="text-sm font-semibold text-gray-700 mt-3">Total Referrers</p>
+              </div>
+              {/* New */}
+              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                  </div>
+                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => (r.stage || 'New') === 'New').length}</h3>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <p className="text-sm font-semibold text-gray-700">New</p>
+                  <p className="text-sm font-semibold text-gray-900">{referrers.length > 0 ? ((referrers.filter(r => (r.stage || 'New') === 'New').length / referrers.length) * 100).toFixed(1) : '0.0'}%</p>
+                </div>
+              </div>
+              {/* Hot */}
+              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 bg-red-100 text-red-600 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /></svg>
+                  </div>
+                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Hot').length}</h3>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <p className="text-sm font-semibold text-gray-700">Hot</p>
+                  <p className="text-sm font-semibold text-gray-900">{referrers.length > 0 ? ((referrers.filter(r => r.stage === 'Hot').length / referrers.length) * 100).toFixed(1) : '0.0'}%</p>
+                </div>
+              </div>
+              {/* Warm */}
+              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707" /></svg>
+                  </div>
+                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Warm').length}</h3>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <p className="text-sm font-semibold text-gray-700">Warm</p>
+                  <p className="text-sm font-semibold text-gray-900">{referrers.length > 0 ? ((referrers.filter(r => r.stage === 'Warm').length / referrers.length) * 100).toFixed(1) : '0.0'}%</p>
+                </div>
+              </div>
+              {/* Cold */}
+              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 bg-cyan-100 text-cyan-600 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                  </div>
+                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Cold').length}</h3>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <p className="text-sm font-semibold text-gray-700">Cold</p>
+                  <p className="text-sm font-semibold text-gray-900">{referrers.length > 0 ? ((referrers.filter(r => r.stage === 'Cold').length / referrers.length) * 100).toFixed(1) : '0.0'}%</p>
+                </div>
+              </div>
+              {/* Converted */}
+              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  </div>
+                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Converted').length}</h3>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <p className="text-sm font-semibold text-gray-700">Converted</p>
+                  <p className="text-sm font-semibold text-gray-900">{referrers.length > 0 ? ((referrers.filter(r => r.stage === 'Converted').length / referrers.length) * 100).toFixed(1) : '0.0'}%</p>
+                </div>
+              </div>
+              {/* Closed */}
+              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </div>
+                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Closed').length}</h3>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <p className="text-sm font-semibold text-gray-700">Closed</p>
+                  <p className="text-sm font-semibold text-gray-900">{referrers.length > 0 ? ((referrers.filter(r => r.stage === 'Closed').length / referrers.length) * 100).toFixed(1) : '0.0'}%</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Search and Filter */}
           <div className="mb-6 flex gap-4">
             <div className="flex-1 relative">
@@ -410,6 +521,77 @@ export default function ReferrersListPage() {
                     />
                   </div>
 
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Country <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.country}
+                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Country"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        State <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.state}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="State"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        City <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="City"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Qualification <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.qualification}
+                        onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="e.g. B.Com, MBA"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Current Role <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.currentRole}
+                        onChange={(e) => setFormData({ ...formData, currentRole: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="e.g. Teacher, Counselor"
+                      />
+                    </div>
+                  </div>
+
                   <div className="flex gap-3 pt-4">
                     <button
                       type="button"
@@ -471,6 +653,9 @@ export default function ReferrersListPage() {
                       Leads
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Stage
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -510,6 +695,18 @@ export default function ReferrersListPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded-full">
                           {referrer.leadCount}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          referrer.stage === 'Hot' ? 'bg-red-100 text-red-800' :
+                          referrer.stage === 'Warm' ? 'bg-orange-100 text-orange-800' :
+                          referrer.stage === 'Cold' ? 'bg-cyan-100 text-cyan-800' :
+                          referrer.stage === 'Converted' ? 'bg-green-100 text-green-800' :
+                          referrer.stage === 'Closed' ? 'bg-gray-100 text-gray-800' :
+                          'bg-blue-100 text-blue-800'
+                        }`}>
+                          {referrer.stage || 'New'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
