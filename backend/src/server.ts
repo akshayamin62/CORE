@@ -287,6 +287,7 @@ app.use("/api/student-plan-discounts", studentPlanDiscountRoutes); // Student pl
 app.use("/api/invoices", invoiceRoutes); // Invoice management
 app.use("/api/ledger", ledgerRoutes); // Ledger / financial tracking
 app.use("/api/ivy-league-registration", ivyLeagueRegistrationRoutes); // Ivy League registration form routes
+app.use("/api/stats", siteStatsRoutes); // Site statistics (visitor tracking)
 app.use("/api/referrer", referrerRoutes); // Referrer authenticated routes
 app.use("/api/b2b", b2bLeadRoutes); // B2B lead management routes
 app.use("/api/b2b/follow-ups", b2bFollowUpRoutes); // B2B follow-up routes

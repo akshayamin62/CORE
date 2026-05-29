@@ -26,6 +26,7 @@ interface ReferrerNote {
   text: string;
   noteDate: string;
   createdByRole: string;
+  createdByName?: string;
   createdAt: string;
 }
 
@@ -79,8 +80,13 @@ export default function SuperAdminReferrerDetailPage() {
   const [stageFilter, setStageFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [newNote, setNewNote] = useState('');
-  const [noteDate, setNoteDate] = useState(() => new Date().toISOString().slice(0, 16));
+  const [noteDate, setNoteDate] = useState(() => {
+    const now = new Date();
+    const ist = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+    return ist.toISOString().slice(0, 16);
+  });
   const [addingNote, setAddingNote] = useState(false);
+  const [activeSection, setActiveSection] = useState<'leads' | 'notes'>('leads');
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editNoteText, setEditNoteText] = useState('');
   const [editNoteDate, setEditNoteDate] = useState('');
@@ -146,7 +152,11 @@ export default function SuperAdminReferrerDetailPage() {
       const response = await superAdminAPI.addReferrerNote(referrerId, { text: newNote.trim(), noteDate });
       setDashboard(prev => prev ? { ...prev, referrer: { ...prev.referrer, notes: response.data.data.notes } } : prev);
       setNewNote('');
-      setNoteDate(new Date().toISOString().slice(0, 16));
+      setNoteDate(() => {
+        const now = new Date();
+        const ist = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+        return ist.toISOString().slice(0, 16);
+      });
       toast.success('Note added');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to add note');
@@ -309,7 +319,37 @@ export default function SuperAdminReferrerDetailPage() {
             </div>
           </div>
 
+          {/* Section Toggle Bar */}
+          <div className="flex justify-end mb-4">
+            {activeSection === 'leads' ? (
+              <button
+                onClick={() => setActiveSection('notes')}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 shadow-sm transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Notes
+                {dashboard.referrer.notes?.length > 0 && (
+                  <span className="ml-0.5 px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">{dashboard.referrer.notes.length}</span>
+                )}
+              </button>
+            ) : (
+              <button
+                onClick={() => setActiveSection('leads')}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 shadow-sm transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Leads
+                <span className="ml-0.5 px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">{allLeads.length}</span>
+              </button>
+            )}
+          </div>
+
           {/* Notes Section */}
+          {activeSection === 'notes' && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Notes</h3>
             {/* Add Note Form */}
@@ -392,13 +432,12 @@ export default function SuperAdminReferrerDetailPage() {
                           <p className="text-sm text-gray-800 whitespace-pre-wrap">{note.text}</p>
                           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                             <span className="text-xs text-gray-400">
-                              {new Date(note.noteDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}{' '}
-                              {new Date(note.noteDate).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                              {new Date(note.noteDate).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                             </span>
                             <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                               note.createdByRole === 'SUPER_ADMIN' ? 'bg-indigo-100 text-indigo-700' : 'bg-blue-100 text-blue-700'
                             }`}>
-                              {note.createdByRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'}
+                              {note.createdByName || (note.createdByRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin')}{' '}({note.createdByRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Admin'})
                             </span>
                           </div>
                         </div>
@@ -432,7 +471,11 @@ export default function SuperAdminReferrerDetailPage() {
               </div>
             )}
           </div>
+          )}
 
+          {/* Leads Section */}
+          {activeSection === 'leads' && (
+          <>
           {/* Search and Filter */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
             <div className="flex flex-wrap gap-4">
@@ -546,6 +589,8 @@ export default function SuperAdminReferrerDetailPage() {
               </div>
             )}
           </div>
+          </>
+          )}
         </div>
       </SuperAdminLayout>
     </>

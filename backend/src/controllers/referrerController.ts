@@ -1446,10 +1446,16 @@ export const addReferrerNoteForAdmin = async (req: AuthRequest, res: Response): 
       return res.status(404).json({ success: false, message: 'Referrer not found or unauthorized' });
     }
 
+    const creatorUser = await User.findById(adminUserId).select('firstName middleName lastName');
+    const createdByName = creatorUser
+      ? [creatorUser.firstName, creatorUser.middleName, creatorUser.lastName].filter(Boolean).join(' ')
+      : '';
+
     (referrer.notes as any[]).push({
       text: text.trim(),
       noteDate: new Date(noteDate),
       createdByRole: 'ADMIN',
+      createdByName,
       createdAt: new Date(),
     });
     await referrer.save();
@@ -1472,6 +1478,7 @@ export const addReferrerNoteForSuperAdmin = async (req: AuthRequest, res: Respon
   try {
     const { referrerId } = req.params;
     const { text, noteDate } = req.body;
+    const superAdminUserId = req.user?.userId;
 
     if (!text?.trim()) {
       return res.status(400).json({ success: false, message: 'Note text is required' });
@@ -1485,10 +1492,16 @@ export const addReferrerNoteForSuperAdmin = async (req: AuthRequest, res: Respon
       return res.status(404).json({ success: false, message: 'Referrer not found' });
     }
 
+    const creatorUser = await User.findById(superAdminUserId).select('firstName middleName lastName');
+    const createdByName = creatorUser
+      ? [creatorUser.firstName, creatorUser.middleName, creatorUser.lastName].filter(Boolean).join(' ')
+      : '';
+
     (referrer.notes as any[]).push({
       text: text.trim(),
       noteDate: new Date(noteDate),
       createdByRole: 'SUPER_ADMIN',
+      createdByName,
       createdAt: new Date(),
     });
     await referrer.save();

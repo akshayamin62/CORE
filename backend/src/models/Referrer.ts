@@ -13,6 +13,7 @@ export interface IReferrerNote {
   text: string;
   noteDate: Date;
   createdByRole: string;
+  createdByName: string;
   createdAt: Date;
 }
 
@@ -107,6 +108,7 @@ const referrerSchema = new Schema<IReferrer>(
           text: { type: String, required: true, trim: true },
           noteDate: { type: Date, required: true },
           createdByRole: { type: String, required: true },
+          createdByName: { type: String, default: '' },
           createdAt: { type: Date, default: Date.now },
         },
       ],
