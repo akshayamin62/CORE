@@ -22,6 +22,7 @@ const ROLE_LABELS: Record<string, string> = {
   EDUPLAN_COACH: 'EduPlan Coach',
   ALUMNI: 'Alumni',
   SERVICE_PROVIDER: 'Service Provider',
+  REFERRER: 'Referrer',
 };
 
 const ROLE_COLORS: Record<string, string> = {
@@ -34,6 +35,7 @@ const ROLE_COLORS: Record<string, string> = {
   EDUPLAN_COACH: 'bg-cyan-100 text-cyan-800',
   ALUMNI: 'bg-gray-100 text-gray-800',
   SERVICE_PROVIDER: 'bg-rose-100 text-rose-800',
+  REFERRER: 'bg-orange-100 text-orange-800',
 };
 
 function StatCard({ title, value, color, onClick, active }: { title: string; value: string; color: string; onClick?: () => void; active?: boolean }) {
@@ -122,15 +124,25 @@ export default function SuperAdminArchivePage() {
     return matchesSearch && matchesRole;
   });
 
-  const handleReactivate = async (userId: string) => {
+  const handleReactivate = async (u: any) => {
+    const loadingKey = u._id;
     try {
-      setActionLoading(userId);
+      setActionLoading(loadingKey);
       const token = localStorage.getItem('token');
-      await axios.patch(
-        `${API_URL}/super-admin/users/${userId}/toggle-status`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      if (u.role === 'REFERRER' && u.profile?._id) {
+        // Use the referrer-specific endpoint so stage is reset to New
+        await axios.patch(
+          `${API_URL}/super-admin/referrer/${u.profile._id}/toggle-status`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        await axios.patch(
+          `${API_URL}/super-admin/users/${u._id}/toggle-status`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
       toast.success('User reactivated successfully');
       await fetchArchive();
     } catch (error: any) {
@@ -174,6 +186,8 @@ export default function SuperAdminArchivePage() {
         return `/super-admin/roles/eduplan-coach/${u._id}`;
       case 'SERVICE_PROVIDER':
         return `/super-admin/roles/service-provider/${u._id}`;
+      case 'REFERRER':
+        return profileId ? `/super-admin/referrers/${profileId}` : '';
       default:
         return '';
     }
@@ -339,7 +353,7 @@ export default function SuperAdminArchivePage() {
                               </button>
                             )}
                             <button
-                              onClick={() => handleReactivate(u._id)}
+                              onClick={() => handleReactivate(u)}
                               disabled={actionLoading === u._id}
                               className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 text-xs font-medium"
                             >

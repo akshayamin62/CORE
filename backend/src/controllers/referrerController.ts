@@ -254,13 +254,65 @@ export const toggleReferrerStatus = async (req: AuthRequest, res: Response): Pro
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // If user is not verified, verify & activate and set stage to Converted
-    if (!user.isVerified) {
+    // If the referrer is in Closed stage — just reactivate and reset stage to New
+    // (do NOT run the verification flow, do NOT change isVerified)
+    if (referrer.stage === REFERRER_STAGE.CLOSED) {
+      user.isActive = true;
+      referrer.stage = REFERRER_STAGE.NEW;
+      await referrer.save();
+    } else if (!user.isVerified) {
+      // First-time activation: verify, activate, set stage to Converted
       user.isVerified = true;
       user.isActive = true;
       referrer.stage = REFERRER_STAGE.CONVERTED;
       await referrer.save();
+
+      // Send activation email
+      const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
+      const referralLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/referral/${referrer.referralSlug}`;
+      try {
+        await sendEmail({
+          to: referrer.email,
+          subject: 'Your Kareer Studio Referrer Account is Now Active!',
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1f2937">
+              <div style="background:#7c3aed;padding:24px;border-radius:12px 12px 0 0;text-align:center">
+                <h1 style="color:#fff;margin:0;font-size:24px">Account Activated!</h1>
+              </div>
+              <div style="background:#f9fafb;padding:32px;border-radius:0 0 12px 12px;border:1px solid #e5e7eb">
+                <p style="font-size:16px;margin-top:0">Hi <strong>${fullName}</strong>,</p>
+                <p style="font-size:15px;color:#374151">Congratulations! Your referrer account on the <strong>Kareer Studio</strong> platform has been verified and activated.</p>
+                <p style="font-size:15px;color:#374151">Use the referral link below to generate leads and connect people with our services.</p>
+                <div style="background:#ede9fe;border:1px solid #ddd6fe;border-radius:8px;padding:16px;margin:24px 0">
+                  <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#6d28d9;text-transform:uppercase">Your Referral Link</p>
+                  <a href="${referralLink}" style="color:#7c3aed;word-break:break-all;font-size:14px">${referralLink}</a>
+                </div>
+                <a href="${referralLink}" style="display:inline-block;background:#7c3aed;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Open Referral Link</a>
+                <p style="font-size:13px;color:#6b7280;margin-top:32px">If you have any questions, please reach out to your coordinator.</p>
+                <p style="font-size:13px;color:#6b7280;margin:0">– The Kareer Studio Team</p>
+              </div>
+            </div>
+          `,
+        });
+      } catch (emailErr) {
+        console.error('Failed to send referrer activation email:', emailErr);
+      }
+
+      // Send WhatsApp notification
+      if (referrer.mobileNumber) {
+        try {
+          await sendWhatsAppGeneralNotification(
+            referrer.mobileNumber,
+            fullName,
+            'Your Kareer Studio referrer account is now active!',
+            `Use your referral link to create leads: ${referralLink}`
+          );
+        } catch (waErr) {
+          console.error('Failed to send referrer activation WhatsApp:', waErr);
+        }
+      }
     } else {
+      // Already verified: just toggle active state
       user.isActive = !user.isActive;
     }
     await user.save();
@@ -510,13 +562,65 @@ export const toggleReferrerStatusForSuperAdmin = async (req: AuthRequest, res: R
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // If user is not verified, verify & activate and set stage to Converted
-    if (!user.isVerified) {
+    // If the referrer is in Closed stage — just reactivate and reset stage to New
+    // (do NOT run the verification flow, do NOT change isVerified)
+    if (referrer.stage === REFERRER_STAGE.CLOSED) {
+      user.isActive = true;
+      referrer.stage = REFERRER_STAGE.NEW;
+      await referrer.save();
+    } else if (!user.isVerified) {
+      // First-time activation: verify, activate, set stage to Converted
       user.isVerified = true;
       user.isActive = true;
       referrer.stage = REFERRER_STAGE.CONVERTED;
       await referrer.save();
+
+      // Send activation email
+      const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
+      const referralLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/referral/${referrer.referralSlug}`;
+      try {
+        await sendEmail({
+          to: referrer.email,
+          subject: 'Your Kareer Studio Referrer Account is Now Active!',
+          html: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1f2937">
+              <div style="background:#7c3aed;padding:24px;border-radius:12px 12px 0 0;text-align:center">
+                <h1 style="color:#fff;margin:0;font-size:24px">Account Activated!</h1>
+              </div>
+              <div style="background:#f9fafb;padding:32px;border-radius:0 0 12px 12px;border:1px solid #e5e7eb">
+                <p style="font-size:16px;margin-top:0">Hi <strong>${fullName}</strong>,</p>
+                <p style="font-size:15px;color:#374151">Congratulations! Your referrer account on the <strong>Kareer Studio</strong> platform has been verified and activated.</p>
+                <p style="font-size:15px;color:#374151">Use the referral link below to generate leads and connect people with our services.</p>
+                <div style="background:#ede9fe;border:1px solid #ddd6fe;border-radius:8px;padding:16px;margin:24px 0">
+                  <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#6d28d9;text-transform:uppercase">Your Referral Link</p>
+                  <a href="${referralLink}" style="color:#7c3aed;word-break:break-all;font-size:14px">${referralLink}</a>
+                </div>
+                <a href="${referralLink}" style="display:inline-block;background:#7c3aed;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Open Referral Link</a>
+                <p style="font-size:13px;color:#6b7280;margin-top:32px">If you have any questions, please reach out to your coordinator.</p>
+                <p style="font-size:13px;color:#6b7280;margin:0">– The Kareer Studio Team</p>
+              </div>
+            </div>
+          `,
+        });
+      } catch (emailErr) {
+        console.error('Failed to send referrer activation email:', emailErr);
+      }
+
+      // Send WhatsApp notification
+      if (referrer.mobileNumber) {
+        try {
+          await sendWhatsAppGeneralNotification(
+            referrer.mobileNumber,
+            fullName,
+            'Your Kareer Studio referrer account is now active!',
+            `Use your referral link to create leads: ${referralLink}`
+          );
+        } catch (waErr) {
+          console.error('Failed to send referrer activation WhatsApp:', waErr);
+        }
+      }
     } else {
+      // Already verified: just toggle active state
       user.isActive = !user.isActive;
     }
     await user.save();
@@ -1250,6 +1354,15 @@ export const updateReferrerStage = async (req: AuthRequest, res: Response): Prom
     referrer.stage = stage as REFERRER_STAGE;
     await referrer.save();
 
+    // Auto-deactivate user when stage is set to Closed
+    if (stage === REFERRER_STAGE.CLOSED) {
+      const referrerUser = await User.findById(referrer.userId);
+      if (referrerUser) {
+        referrerUser.isActive = false;
+        await referrerUser.save();
+      }
+    }
+
     return res.json({
       success: true,
       message: "Referrer stage updated successfully",
@@ -1287,6 +1400,15 @@ export const updateReferrerStageForSuperAdmin = async (req: AuthRequest, res: Re
 
     referrer.stage = stage as REFERRER_STAGE;
     await referrer.save();
+
+    // Auto-deactivate user when stage is set to Closed
+    if (stage === REFERRER_STAGE.CLOSED) {
+      const referrerUser = await User.findById(referrer.userId);
+      if (referrerUser) {
+        referrerUser.isActive = false;
+        await referrerUser.save();
+      }
+    }
 
     return res.json({
       success: true,

@@ -53,7 +53,8 @@ export default function SuperAdminReferrersPage() {
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending' | 'deactivated'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending' | 'archived'>('all');
+  const [stageFilter, setStageFilter] = useState<string>('');
   const [adminFilter, setAdminFilter] = useState<string>('all');
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -199,11 +200,18 @@ export default function SuperAdminReferrersPage() {
 
     const isActive = referrer.userId?.isActive;
     const isVerified = referrer.userId?.isVerified;
-    const matchesStatus =
-      statusFilter === 'all' ||
-      (statusFilter === 'active' && isVerified && isActive) ||
-      (statusFilter === 'pending' && !isVerified) ||
-      (statusFilter === 'deactivated' && isVerified && !isActive);
+    const isClosed = referrer.stage === 'Closed';
+    const isArchived = isClosed || (isVerified && !isActive);
+    let matchesStatus: boolean;
+    if (stageFilter) {
+      matchesStatus = (referrer.stage || 'New') === stageFilter;
+    } else {
+      matchesStatus =
+        (statusFilter === 'all' && !isArchived) ||
+        (statusFilter === 'active' && isVerified && isActive && !isClosed) ||
+        (statusFilter === 'pending' && !isVerified && !isClosed) ||
+        (statusFilter === 'archived' && isArchived);
+    }
 
     const matchesAdmin =
       adminFilter === 'all' ||
@@ -261,8 +269,8 @@ export default function SuperAdminReferrersPage() {
           {/* Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <div
-              onClick={() => setStatusFilter('all')}
-              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'all' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
+              onClick={() => { setStatusFilter('all'); setStageFilter(''); }}
+              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'all' && !stageFilter ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
             >
               <div className="flex items-center justify-between">
                 <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
@@ -273,8 +281,8 @@ export default function SuperAdminReferrersPage() {
               <p className="text-sm font-semibold text-gray-700 mt-3">Total</p>
             </div>
             <div
-              onClick={() => setStatusFilter('active')}
-              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'active' ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'}`}
+              onClick={() => { setStatusFilter('active'); setStageFilter(''); }}
+              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'active' && !stageFilter ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'}`}
             >
               <div className="flex items-center justify-between">
                 <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
@@ -285,8 +293,8 @@ export default function SuperAdminReferrersPage() {
               <p className="text-sm font-semibold text-gray-700 mt-3">Active</p>
             </div>
             <div
-              onClick={() => setStatusFilter('pending')}
-              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'pending' ? 'border-amber-500 ring-2 ring-amber-200' : 'border-gray-200'}`}
+              onClick={() => { setStatusFilter('pending'); setStageFilter(''); }}
+              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'pending' && !stageFilter ? 'border-amber-500 ring-2 ring-amber-200' : 'border-gray-200'}`}
             >
               <div className="flex items-center justify-between">
                 <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center">
@@ -297,8 +305,8 @@ export default function SuperAdminReferrersPage() {
               <p className="text-sm font-semibold text-gray-700 mt-3">Pending</p>
             </div>
             <div
-              onClick={() => setStatusFilter('deactivated')}
-              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'deactivated' ? 'border-gray-500 ring-2 ring-gray-200' : 'border-gray-200'}`}
+              onClick={() => { setStatusFilter('archived'); setStageFilter(''); }}
+              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'archived' && !stageFilter ? 'border-gray-500 ring-2 ring-gray-200' : 'border-gray-200'}`}
             >
               <div className="flex items-center justify-between">
                 <div className="w-10 h-10 bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center">
@@ -306,7 +314,7 @@ export default function SuperAdminReferrersPage() {
                 </div>
                 <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.userId?.isVerified && !r.userId?.isActive).length}</h3>
               </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Deactivated</p>
+              <p className="text-sm font-semibold text-gray-700 mt-3">Archived</p>
             </div>
           </div>
 
@@ -315,7 +323,10 @@ export default function SuperAdminReferrersPage() {
             <h3 className="text-sm font-semibold text-gray-600 uppercase mb-3">Referrer Pipeline Overview</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
               {/* Total */}
-              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+              <div
+                onClick={() => setStageFilter('')}
+                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${!stageFilter ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -325,7 +336,10 @@ export default function SuperAdminReferrersPage() {
                 <p className="text-sm font-semibold text-gray-700 mt-3">Total Referrers</p>
               </div>
               {/* New */}
-              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+              <div
+                onClick={() => setStageFilter(stageFilter === 'New' ? '' : 'New')}
+                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'New' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
@@ -338,7 +352,10 @@ export default function SuperAdminReferrersPage() {
                 </div>
               </div>
               {/* Hot */}
-              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+              <div
+                onClick={() => setStageFilter(stageFilter === 'Hot' ? '' : 'Hot')}
+                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Hot' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200'}`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-red-100 text-red-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /></svg>
@@ -351,7 +368,10 @@ export default function SuperAdminReferrersPage() {
                 </div>
               </div>
               {/* Warm */}
-              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+              <div
+                onClick={() => setStageFilter(stageFilter === 'Warm' ? '' : 'Warm')}
+                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Warm' ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-200'}`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707" /></svg>
@@ -364,7 +384,10 @@ export default function SuperAdminReferrersPage() {
                 </div>
               </div>
               {/* Cold */}
-              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+              <div
+                onClick={() => setStageFilter(stageFilter === 'Cold' ? '' : 'Cold')}
+                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Cold' ? 'border-cyan-500 ring-2 ring-cyan-200' : 'border-gray-200'}`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-cyan-100 text-cyan-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
@@ -377,7 +400,10 @@ export default function SuperAdminReferrersPage() {
                 </div>
               </div>
               {/* Converted */}
-              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+              <div
+                onClick={() => setStageFilter(stageFilter === 'Converted' ? '' : 'Converted')}
+                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Converted' ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'}`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -390,7 +416,10 @@ export default function SuperAdminReferrersPage() {
                 </div>
               </div>
               {/* Closed */}
-              <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+              <div
+                onClick={() => setStageFilter(stageFilter === 'Closed' ? '' : 'Closed')}
+                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Closed' ? 'border-gray-500 ring-2 ring-gray-200' : 'border-gray-200'}`}
+              >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -438,13 +467,13 @@ export default function SuperAdminReferrersPage() {
             </select>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'pending' | 'deactivated')}
+              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'pending' | 'archived')}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
               <option value="pending">Pending</option>
-              <option value="deactivated">Deactivated</option>
+              <option value="archived">Archived</option>
             </select>
           </div>
 

@@ -233,22 +233,28 @@ app.use('/uploads', authenticate, (_req: import('express').Request, res: import(
   next();
 }, express.static(getUploadBaseDir()));
 
-// OTP verify routes get the stricter limiter (5 attempts per 10 min) on top of authLimiter
+// Apply strict authLimiter only to actual login/signup/resend-otp attempts.
+// Profile, captcha and other utility endpoints are NOT authentication attempts
+// and must not share this quota (profile is called on every page navigation).
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/signup", authLimiter);
+app.use("/api/auth/resend-otp", authLimiter);
+
+// OTP verify routes get the stricter limiter (5 attempts per 10 min)
 app.use("/api/auth/verify-otp", otpLimiter);
 app.use("/api/auth/verify-signup-otp", otpLimiter);
 
-// Captcha is fetched on every login page load — exclude it from the tight auth limiter
-// and give it its own generous limit (60 per 5 min per IP)
+// Captcha gets its own generous limit (fetched on every login page load)
 const captchaLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
-  max: 150,
+  max: 200,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many captcha requests. Please try again later.' },
 });
 app.use("/api/auth/captcha", captchaLimiter);
 
-app.use("/api/stats", siteStatsRoutes); // Site visitor stats
+app.use("/api/auth", authRoutes);
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/super-admin/students", superAdminStudentRoutes); // More specific route must come first
 app.use("/api/super-admin/ivy-league", authenticate, ivyLeagueAdminRoutes); // Ivy League admin routes

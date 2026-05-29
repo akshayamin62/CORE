@@ -9,6 +9,7 @@ import Ops from "../models/Ops";
 import IvyExpert from "../models/IvyExpert";
 import EduplanCoach from "../models/EduplanCoach";
 import ServiceProvider from "../models/ServiceProvider";
+import Referrer from "../models/Referrer";
 import StudentServiceRegistration from "../models/StudentServiceRegistration";
 import { USER_ROLE } from "../types/roles";
 
@@ -107,6 +108,9 @@ export const getSuperAdminArchive = async (
         } else if (u.role === USER_ROLE.SERVICE_PROVIDER) {
           const sp = await ServiceProvider.findOne({ userId: u._id }).lean();
           obj.profile = sp;
+        } else if (u.role === USER_ROLE.REFERRER) {
+          const referrerProfile = await Referrer.findOne({ userId: u._id }).lean();
+          obj.profile = referrerProfile;
         }
 
         return obj;

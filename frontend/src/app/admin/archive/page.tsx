@@ -12,6 +12,7 @@ export default function AdminArchivePage() {
       studentDetailPath="/admin/students"
       parentDetailPath="/admin/parents"
       counselorDetailPath="/admin/counselors"
+      referrerDetailPath="/admin/referrers"
     />
   );
 }

@@ -11,9 +11,10 @@ import AuthImage from '@/components/AuthImage';
 interface StaffArchiveContentProps {
   allowedRoles: string[];
   Layout: React.ComponentType<{ children: React.ReactNode; user: User }>;
-  studentDetailPath: string; // e.g. '/admin/students' → navigates to /admin/students/[studentId]
-  parentDetailPath?: string; // e.g. '/admin/parents' → navigates to /admin/parents/[parentId]
-  counselorDetailPath?: string; // e.g. '/admin/counselors' → navigates to /admin/counselors/[counselorId]
+  studentDetailPath: string;
+  parentDetailPath?: string;
+  counselorDetailPath?: string;
+  referrerDetailPath?: string;
 }
 
 function StatCard({ title, value, color, onClick, active }: { title: string; value: string; color: string; onClick?: () => void; active?: boolean }) {
@@ -22,6 +23,7 @@ function StatCard({ title, value, color, onClick, active }: { title: string; val
     blue: 'bg-blue-100 text-blue-600',
     purple: 'bg-purple-100 text-purple-600',
     teal: 'bg-teal-100 text-teal-600',
+    orange: 'bg-orange-100 text-orange-600',
   };
   return (
     <div
@@ -43,12 +45,13 @@ function StatCard({ title, value, color, onClick, active }: { title: string; val
   );
 }
 
-export default function StaffArchiveContent({ allowedRoles, Layout, studentDetailPath, parentDetailPath, counselorDetailPath }: StaffArchiveContentProps) {
+export default function StaffArchiveContent({ allowedRoles, Layout, studentDetailPath, parentDetailPath, counselorDetailPath, referrerDetailPath }: StaffArchiveContentProps) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [students, setStudents] = useState<any[]>([]);
   const [parents, setParents] = useState<any[]>([]);
   const [counselors, setCounselors] = useState<any[]>([]);
+  const [referrers, setReferrers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -68,6 +71,9 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
       }
       setUser(userData);
       fetchArchive();
+      if (userData.role === USER_ROLE.ADMIN) {
+        fetchReferrers();
+      }
     } catch {
       toast.error('Please login to continue');
       router.push('/login');
@@ -87,6 +93,19 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
       console.error('Fetch archive error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchReferrers = async () => {
+    try {
+      const response = await adminAPI.getReferrers();
+      const all = response.data.data.referrers || [];
+      const archived = all.filter((r: any) =>
+        r.stage === 'Closed' || (r.userId?.isVerified && !r.userId?.isActive)
+      );
+      setReferrers(archived);
+    } catch (error: any) {
+      console.error('Fetch archived referrers error:', error);
     }
   };
 
@@ -134,6 +153,19 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
           detailPath: counselorDetailPath ? `${counselorDetailPath}/${c._id}` : '',
         }))
       : []),
+    ...(!typeFilter || typeFilter === 'referrer'
+      ? referrers.map((r) => ({
+          type: 'Referrer' as const,
+          _id: r._id,
+          userId: r.userId,
+          name: getFullName(r.userId),
+          email: r.email || r.userId?.email || '',
+          details: `Stage: ${r.stage || 'Closed'} · Slug: ${r.referralSlug || 'N/A'}`,
+          createdAt: r.createdAt,
+          profilePicture: r.userId?.profilePicture,
+          detailPath: referrerDetailPath ? `${referrerDetailPath}/${r._id}` : '',
+        }))
+      : []),
   ];
 
   const filteredItems = allItems.filter((item) => {
@@ -149,7 +181,8 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
   const totalStudents = students.length;
   const totalParents = parents.length;
   const totalCounselors = counselors.length;
-  const totalArchived = totalStudents + totalParents + totalCounselors;
+  const totalReferrers = referrers.length;
+  const totalArchived = totalStudents + totalParents + totalCounselors + totalReferrers;
   const isAdmin = user?.role === USER_ROLE.ADMIN;
 
   const handleActivateCounselor = async (counselorId: string) => {
@@ -159,6 +192,16 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
       fetchArchive();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to activate counselor');
+    }
+  };
+
+  const handleActivateReferrer = async (referrerId: string) => {
+    try {
+      await adminAPI.toggleReferrerStatus(referrerId);
+      toast.success('Referrer activated and stage reset to New');
+      fetchReferrers();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to activate referrer');
     }
   };
 
@@ -181,11 +224,11 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
           {/* Header */}
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900">Archive</h1>
-            <p className="text-gray-600 mt-1">Deactivated students{isAdmin ? ', parents and counselors' : ' and parents'}</p>
+            <p className="text-gray-600 mt-1">Deactivated students{isAdmin ? ', parents, counselors and referrers' : ' and parents'}</p>
           </div>
 
           {/* Stats Cards */}
-          <div className={`grid grid-cols-1 ${isAdmin ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-6 mb-6`}>
+          <div className={`grid grid-cols-2 ${isAdmin ? 'md:grid-cols-5' : 'md:grid-cols-3'} gap-6 mb-6`}>
             <StatCard
               title="Total Archived"
               value={totalArchived.toString()}
@@ -216,6 +259,15 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
                 active={typeFilter === 'counselor'}
               />
             )}
+            {isAdmin && (
+              <StatCard
+                title="Archived Referrers"
+                value={totalReferrers.toString()}
+                color="orange"
+                onClick={() => setTypeFilter(typeFilter === 'referrer' ? '' : 'referrer')}
+                active={typeFilter === 'referrer'}
+              />
+            )}
           </div>
 
           {/* Search & Filters */}
@@ -238,6 +290,7 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
                   <option value="student">Students ({totalStudents})</option>
                   <option value="parent">Parents ({totalParents})</option>
                   {isAdmin && <option value="counselor">Counselors ({totalCounselors})</option>}
+                  {isAdmin && <option value="referrer">Referrers ({totalReferrers})</option>}
                 </select>
                 <button
                   onClick={() => {
@@ -291,7 +344,7 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.email}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                            item.type === 'Student' ? 'bg-blue-100 text-blue-800' : item.type === 'Counselor' ? 'bg-teal-100 text-teal-800' : 'bg-purple-100 text-purple-800'
+                            item.type === 'Student' ? 'bg-blue-100 text-blue-800' : item.type === 'Counselor' ? 'bg-teal-100 text-teal-800' : item.type === 'Referrer' ? 'bg-orange-100 text-orange-800' : 'bg-purple-100 text-purple-800'
                           }`}>
                             {item.type}
                           </span>
@@ -315,6 +368,14 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
                             {isAdmin && item.type === 'Counselor' && (
                               <button
                                 onClick={() => handleActivateCounselor(item._id)}
+                                className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs font-medium"
+                              >
+                                Activate
+                              </button>
+                            )}
+                            {isAdmin && item.type === 'Referrer' && (
+                              <button
+                                onClick={() => handleActivateReferrer(item._id)}
                                 className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs font-medium"
                               >
                                 Activate
