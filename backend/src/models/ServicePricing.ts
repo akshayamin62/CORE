@@ -5,6 +5,9 @@ export interface IServicePricing extends Document {
   advisorId?: mongoose.Types.ObjectId;
   serviceSlug: string;
   prices: Map<string, number>;
+  // Tax (GST) percentage applied on top of the base price for this admin/advisor + service.
+  // Defaults to 18%. Each admin/advisor can override it per service.
+  gstPercentage?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -29,6 +32,12 @@ const servicePricingSchema = new Schema<IServicePricing>(
       type: Map,
       of: { type: Number, min: 0 },
       required: true,
+    },
+    gstPercentage: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 18,
     },
   },
   { timestamps: true }

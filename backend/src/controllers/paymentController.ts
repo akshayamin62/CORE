@@ -24,6 +24,8 @@ import {
   createProformaInvoice,
   createOrUpdateLedger,
   buildInstallmentSchedule,
+  resolveGstRate,
+  DEFAULT_GST_RATE,
 } from '../services/paymentService';
 import { LedgerEntryType } from '../models/Ledger';
 import Ledger from '../models/Ledger';
@@ -113,9 +115,22 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<Resp
     const adminId = student?.adminId?.toString();
     const advisorId = student?.advisorId?.toString();
 
+    // Resolve GST rate for this registration.
+    // - If snapshotted on the registration, always use that (consistency for its lifecycle).
+    // - If a plan already exists but has no snapshot (legacy), keep the original 18%.
+    // - Otherwise (fresh), use the admin/advisor's configured rate and snapshot it.
+    let GST_RATE: number;
+    if (registration.gstRate != null) {
+      GST_RATE = registration.gstRate;
+    } else if (registration.paymentModel) {
+      GST_RATE = DEFAULT_GST_RATE;
+    } else {
+      GST_RATE = await resolveGstRate({ adminId, advisorId, serviceSlug: service.slug });
+      registration.gstRate = GST_RATE;
+    }
+
     // Auto-initialize payment model if not set
     if (!registration.paymentModel) {
-      const GST_RATE = 18;
       if (service.slug === 'study-abroad') {
         const baseAmount = registration.discountedAmount ?? registration.totalAmount ?? registration.paymentAmount ?? 0;
         if (baseAmount > 0) {
@@ -168,7 +183,6 @@ export const createOrder = async (req: AuthRequest, res: Response): Promise<Resp
       instPercentage = installment.percentage;
     } else {
       // One-time payment — add GST on top of base amount
-      const GST_RATE = 18;
       const baseAmount = registration.discountedAmount ?? registration.totalAmount ?? registration.paymentAmount;
       if (!baseAmount || baseAmount <= 0) {
         return res.status(400).json({ success: false, message: 'Invalid payment amount' });
@@ -362,6 +376,7 @@ export const verifyPayment = async (req: AuthRequest, res: Response): Promise<Re
         amount: payment.amountInr, // GST-inclusive
         installmentNumber: payment.installmentNumber,
         installmentPercentage: payment.installmentPercentage,
+        gstRate: registration.gstRate ?? DEFAULT_GST_RATE,
       });
 
       // Calculate net payable for ledger (sum of all installment amounts)
@@ -726,7 +741,6 @@ export const createRegistrationOrder = async (req: AuthRequest, res: Response): 
   try {
     const { serviceSlug, planTier, classTiming } = req.body;
     const userId = req.user?.userId;
-    const GST_RATE = 18;
 
     if (!userId) {
       return res.status(401).json({ success: false, message: 'Not authenticated' });
@@ -763,9 +777,10 @@ export const createRegistrationOrder = async (req: AuthRequest, res: Response): 
       }
     }
 
-    // Get pricing
+    // Get pricing (and the configured GST rate for this admin/advisor + service)
     let basePrice = 0;
     let pricingFound = false;
+    let GST_RATE = DEFAULT_GST_RATE;
     if (student.adminId) {
       const pricing = await ServicePricing.findOne({ adminId: student.adminId, serviceSlug }).lean();
       if (pricing && pricing.prices) {
@@ -774,6 +789,7 @@ export const createRegistrationOrder = async (req: AuthRequest, res: Response): 
         if (tierPrice !== undefined && tierPrice !== null) {
           basePrice = tierPrice;
           pricingFound = true;
+          if (typeof pricing.gstPercentage === 'number') GST_RATE = pricing.gstPercentage;
         }
       }
     } else if (student.advisorId) {
@@ -784,6 +800,7 @@ export const createRegistrationOrder = async (req: AuthRequest, res: Response): 
         if (tierPrice !== undefined && tierPrice !== null) {
           basePrice = tierPrice;
           pricingFound = true;
+          if (typeof pricing.gstPercentage === 'number') GST_RATE = pricing.gstPercentage;
         }
       }
     }
@@ -813,6 +830,7 @@ export const createRegistrationOrder = async (req: AuthRequest, res: Response): 
         paymentStatus: 'paid',
         totalPaid: 0,
         paymentDate: new Date(),
+        gstRate: GST_RATE,
         ...(student.adminId ? { registeredViaAdminId: student.adminId } : {}),
         ...(student.advisorId && !student.adminId ? { registeredViaAdvisorId: student.advisorId } : {}),
         paymentComplete: true,
@@ -872,6 +890,7 @@ export const createRegistrationOrder = async (req: AuthRequest, res: Response): 
         basePrice: String(basePrice),
         discountAmt: String(discountAmt),
         netPayableTotal: String(netPayableTotal),
+        gstRate: String(GST_RATE),
         ...(classTiming ? {
           batchDate: classTiming.batchDate,
           timeFrom: classTiming.timeFrom,
@@ -959,6 +978,7 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
     const basePrice = Number(notes.basePrice);
     const discountAmt = Number(notes.discountAmt);
     const netPayableTotal = Number(notes.netPayableTotal);
+    const gstRate = notes.gstRate != null && notes.gstRate !== '' ? Number(notes.gstRate) : DEFAULT_GST_RATE;
 
     if (!serviceSlug || !planTier || !studentId) {
       return res.status(400).json({ success: false, message: 'Invalid order metadata' });
@@ -976,7 +996,6 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
 
     const adminId = student.adminId?.toString();
     const advisorId = student.advisorId?.toString();
-    const GST_RATE = 18;
     const netBase = Math.max(0, basePrice - discountAmt);
 
     // ===== Create Registration =====
@@ -1002,6 +1021,7 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
       paymentStatus: isInstallment ? 'partial' : 'paid',
       totalPaid: payment.amountInr,
       paymentDate: new Date(),
+      gstRate,
       ...(student.adminId ? { registeredViaAdminId: student.adminId } : {}),
       ...(student.advisorId && !student.adminId ? { registeredViaAdvisorId: student.advisorId } : {}),
       paymentComplete: !isInstallment,
@@ -1042,6 +1062,7 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
         discountAmount: discountAmt,
         installmentNumber: 1,
         installmentPercentage: 50,
+        gstRate,
       });
 
       // Invoice 2: Proforma invoice for full service plan amount
@@ -1055,6 +1076,7 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
         planTier,
         totalAmount: netPayableTotal, // Full service plan amount (GST-inclusive)
         discountAmount: 0,
+        gstRate,
       });
 
       // Ledger entry 1: Full service charge (debit)
@@ -1100,6 +1122,7 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
         planTier,
         totalAmount: netPayableTotal, // Full service plan amount (GST-inclusive)
         discountAmount: 0,
+        gstRate,
       });
 
       // Tax invoice for full payment
@@ -1116,6 +1139,7 @@ export const verifyRegistrationPayment = async (req: AuthRequest, res: Response)
         discountAmount: discountAmt,
         installmentNumber: 1,
         installmentPercentage: 100,
+        gstRate,
       });
 
       // Ledger entry 1: Full service charge
@@ -1209,7 +1233,6 @@ export const createUpgradeOrder = async (req: AuthRequest, res: Response): Promi
   try {
     const { serviceSlug, newPlanTier } = req.body;
     const userId = req.user?.userId;
-    const GST_RATE = 18;
 
     if (!userId) return res.status(401).json({ success: false, message: 'Not authenticated' });
     if (!serviceSlug || !newPlanTier) {
@@ -1235,9 +1258,11 @@ export const createUpgradeOrder = async (req: AuthRequest, res: Response): Promi
 
     const oldPlanTier = registration.planTier!;
 
-    // Get pricing for both plans
+    // Get pricing for both plans (and the configured GST rate for this admin/advisor)
     let newBasePrice = 0;
     let oldBasePrice = 0;
+    // Prefer the rate snapshotted on the registration (consistency); else use configured.
+    let GST_RATE = registration.gstRate ?? DEFAULT_GST_RATE;
     const pricingQuery = student.adminId
       ? { adminId: student.adminId, serviceSlug }
       : student.advisorId
@@ -1249,6 +1274,9 @@ export const createUpgradeOrder = async (req: AuthRequest, res: Response): Promi
         const pricesObj = pricing.prices as unknown as Record<string, number>;
         newBasePrice = pricesObj[newPlanTier] || 0;
         oldBasePrice = pricesObj[oldPlanTier] || 0;
+      }
+      if (registration.gstRate == null && typeof pricing?.gstPercentage === 'number') {
+        GST_RATE = pricing.gstPercentage;
       }
     }
     if (newBasePrice <= 0) {
@@ -1317,6 +1345,7 @@ export const createUpgradeOrder = async (req: AuthRequest, res: Response): Promi
         oldNetPayable: String(oldNetPayable),
         newBasePrice: String(newBasePrice),
         newDiscountAmt: String(newDiscountAmt),
+        gstRate: String(GST_RATE),
       },
     });
 
@@ -1397,6 +1426,7 @@ export const verifyUpgradePayment = async (req: AuthRequest, res: Response): Pro
     const oldNetPayable = Number(notes.oldNetPayable);
     const newBasePrice = Number(notes.newBasePrice);
     const newDiscountAmt = Number(notes.newDiscountAmt);
+    const gstRate = notes.gstRate != null && notes.gstRate !== '' ? Number(notes.gstRate) : DEFAULT_GST_RATE;
 
     if (!serviceSlug || !oldPlanTier || !newPlanTier || !studentId) {
       return res.status(400).json({ success: false, message: 'Invalid order metadata' });
@@ -1423,6 +1453,7 @@ export const verifyUpgradePayment = async (req: AuthRequest, res: Response): Pro
     registration.planTier = newPlanTier;
     registration.totalAmount = newBasePrice;
     registration.paymentAmount = newBasePrice;
+    if (registration.gstRate == null) registration.gstRate = gstRate;
     if (newDiscountAmt > 0) {
       registration.discountedAmount = newBasePrice - newDiscountAmt;
     } else {
@@ -1505,6 +1536,7 @@ export const verifyUpgradePayment = async (req: AuthRequest, res: Response): Pro
       planTier: newPlanTier,
       amount: payment.amountInr,
       discountAmount: 0,
+      gstRate,
     });
 
     // ===== 4. Proforma invoice for upgrade plan difference =====
@@ -1520,6 +1552,7 @@ export const verifyUpgradePayment = async (req: AuthRequest, res: Response): Pro
         planTier: newPlanTier,
         totalAmount: planDifference, // Difference in total plan amounts (GST-inclusive)
         discountAmount: 0,
+        gstRate,
       });
     }
 

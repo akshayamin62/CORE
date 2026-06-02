@@ -718,6 +718,7 @@ export default function AdminStudentFormViewPage() {
                 installmentPlan={registrationObj?.installmentPlan}
                 totalPaid={registrationObj?.totalPaid}
                 paymentComplete={registrationObj?.paymentComplete}
+                gstRate={registrationObj?.gstRate}
                 readOnly={true}
               />
             </div>

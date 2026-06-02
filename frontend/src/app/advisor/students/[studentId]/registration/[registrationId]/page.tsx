@@ -738,6 +738,7 @@ export default function AdvisorStudentFormViewPage() {
                 installmentPlan={registrationObj?.installmentPlan}
                 totalPaid={registrationObj?.totalPaid}
                 paymentComplete={registrationObj?.paymentComplete}
+                gstRate={registrationObj?.gstRate}
                 readOnly={true}
               />
             </div>

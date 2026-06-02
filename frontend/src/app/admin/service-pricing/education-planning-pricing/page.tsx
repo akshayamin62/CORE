@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { authAPI, servicePlanAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
+import TaxSettingsCard from '@/components/TaxSettingsCard';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -40,6 +41,7 @@ export default function EducationPlanningPricingPage() {
   const [loading, setLoading] = useState(true);
   const [pricing, setPricing] = useState<Record<string, number> | null>(null);
   const [basePricing, setBasePricing] = useState<Record<string, number> | null>(null);
+  const [gstPercentage, setGstPercentage] = useState<number>(18);
   const [editingPrice, setEditingPrice] = useState<string | null>(null);
   const [priceValue, setPriceValue] = useState('');
   const [savingPrice, setSavingPrice] = useState(false);
@@ -68,6 +70,7 @@ export default function EducationPlanningPricingPage() {
       ]);
       const p = pricingRes.data.data.pricing;
       if (p) setPricing(p);
+      if (typeof pricingRes.data.data.gstPercentage === 'number') setGstPercentage(pricingRes.data.data.gstPercentage);
       const bp = baseRes.data.data.basePricing;
       if (bp) setBasePricing(bp);
     } catch (error: any) { console.error('Failed to fetch pricing:', error); }
@@ -211,6 +214,11 @@ export default function EducationPlanningPricingPage() {
                 </div>
               );
             })}
+          </div>
+
+          {/* Tax / GST Settings */}
+          <div className="mt-8">
+            <TaxSettingsCard serviceSlug="education-planning" gstPercentage={gstPercentage} onSaved={setGstPercentage} accent="purple" />
           </div>
 
           {/* Info Note */}

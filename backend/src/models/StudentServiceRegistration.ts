@@ -60,6 +60,9 @@ export interface IStudentServiceRegistration extends Document {
   discountedAmount?: number;
   totalPaid?: number;
   paymentComplete?: boolean;
+  // GST rate (%) snapshotted at registration time. Keeps the rate consistent for the
+  // whole lifecycle of this registration even if the admin/advisor later changes it.
+  gstRate?: number;
   notes?: string;
   // Max number of report topics (career+dev pair) this student can generate
   maxReportGenerations?: number;
@@ -221,6 +224,10 @@ const studentServiceRegistrationSchema = new Schema<IStudentServiceRegistration>
     paymentComplete: {
       type: Boolean,
       default: false,
+    },
+    gstRate: {
+      type: Number,
+      default: undefined,
     },
     notes: {
       type: String,

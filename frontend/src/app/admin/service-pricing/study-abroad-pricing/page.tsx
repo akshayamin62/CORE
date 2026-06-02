@@ -6,6 +6,7 @@ import { authAPI, servicePlanAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
+import TaxSettingsCard from '@/components/TaxSettingsCard';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -16,6 +17,7 @@ export default function ServicePricingPage() {
   const [saving, setSaving] = useState(false);
   const [pricing, setPricing] = useState<Record<string, number> | null>(null);
   const [basePricing, setBasePricing] = useState<Record<string, number> | null>(null);
+  const [gstPercentage, setGstPercentage] = useState<number>(18);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const plans = getServicePlans('study-abroad');
   const features = getServiceFeatures('study-abroad');
@@ -47,6 +49,7 @@ export default function ServicePricingPage() {
         for (const [key, val] of Object.entries(p)) fd[key] = String(val);
         setFormData(fd);
       }
+      if (typeof pricingRes.data.data.gstPercentage === 'number') setGstPercentage(pricingRes.data.data.gstPercentage);
       const bp = baseRes.data.data.basePricing;
       if (bp) setBasePricing(bp);
     } catch (error: any) { console.error('Failed to fetch pricing:', error); }
@@ -168,6 +171,11 @@ export default function ServicePricingPage() {
               </button>
               {!pricing && <p className="text-sm text-amber-600">Students will not see any pricing until you set it here.</p>}
             </div>
+          </div>
+
+          {/* Tax / GST Settings */}
+          <div className="mt-6">
+            <TaxSettingsCard serviceSlug="study-abroad" gstPercentage={gstPercentage} onSaved={setGstPercentage} accent="blue" />
           </div>
 
           {/* Info Note */}

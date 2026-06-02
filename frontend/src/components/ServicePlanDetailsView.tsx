@@ -10,6 +10,8 @@ interface ServicePlanDetailsViewProps {
   showPricing?: boolean;
   noPricingMessage?: string;
   discounts?: Record<string, { type: string; value: number; calculatedAmount: number }>;
+  // Tax (GST) percentage to display (defaults to 18)
+  gstRate?: number;
   // Optional registration actions for the comparison table
   currentPlanTier?: string | null;
   onRegister?: (planKey: string) => void;
@@ -71,6 +73,7 @@ export default function ServicePlanDetailsView({
   showPricing = true,
   noPricingMessage,
   discounts,
+  gstRate = 18,
   currentPlanTier,
   onRegister,
   onUpgrade,
@@ -137,7 +140,9 @@ export default function ServicePlanDetailsView({
                     )}
                   </div>
                   {price == null && <p className="text-[11px] text-gray-400 mt-1">Price not set yet</p>}
-                  {price != null && <p className="text-xs text-gray-400 mt-1">+ 18% GST applicable</p>}
+                  {price != null && (gstRate > 0
+                    ? <p className="text-xs text-gray-400 mt-1">+ {gstRate}% GST applicable</p>
+                    : <p className="text-xs text-gray-400 mt-1">No GST applicable</p>)}
                 </div>
               </div>
             );

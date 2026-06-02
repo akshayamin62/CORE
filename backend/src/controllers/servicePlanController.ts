@@ -107,7 +107,11 @@ export const getPricingForStudent = async (req: AuthRequest, res: Response): Pro
 
     res.json({
       success: true,
-      data: { pricing: pricing.prices, discounts: discountMap },
+      data: {
+        pricing: pricing.prices,
+        discounts: discountMap,
+        gstPercentage: typeof pricing.gstPercentage === 'number' ? pricing.gstPercentage : 18,
+      },
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: 'Failed to fetch pricing' });
@@ -293,6 +297,7 @@ export const getAdminPricing = async (req: AuthRequest, res: Response): Promise<
       success: true,
       data: {
         pricing: pricing ? pricing.prices : null,
+        gstPercentage: pricing && typeof pricing.gstPercentage === 'number' ? pricing.gstPercentage : 18,
       },
     });
   } catch (error: any) {
@@ -305,17 +310,35 @@ export const setAdminPricing = async (req: AuthRequest, res: Response): Promise<
   try {
     const { serviceSlug } = req.params;
     const userId = req.user?.userId;
-    const { prices } = req.body;
+    const { prices, gstPercentage } = req.body;
 
     if (!userId) { res.status(401).json({ success: false, message: 'Not authenticated' }); return; }
 
-    if (!prices || typeof prices !== 'object' || Array.isArray(prices)) {
-      res.status(400).json({ success: false, message: 'Prices object is required' });
+    const hasPrices = prices !== undefined;
+    const hasGst = gstPercentage !== undefined;
+
+    if (!hasPrices && !hasGst) {
+      res.status(400).json({ success: false, message: 'Provide prices and/or a tax percentage to update' });
       return;
     }
-    for (const [key, val] of Object.entries(prices)) {
-      if (typeof val !== 'number' || val < 0) {
-        res.status(400).json({ success: false, message: `Invalid price for ${key}. Must be a non-negative number.` });
+
+    if (hasPrices) {
+      if (!prices || typeof prices !== 'object' || Array.isArray(prices)) {
+        res.status(400).json({ success: false, message: 'Prices object is required' });
+        return;
+      }
+      for (const [key, val] of Object.entries(prices)) {
+        if (typeof val !== 'number' || val < 0) {
+          res.status(400).json({ success: false, message: `Invalid price for ${key}. Must be a non-negative number.` });
+          return;
+        }
+      }
+    }
+
+    // GST percentage is optional; when provided it must be 0–100.
+    if (hasGst) {
+      if (typeof gstPercentage !== 'number' || isNaN(gstPercentage) || gstPercentage < 0 || gstPercentage > 100) {
+        res.status(400).json({ success: false, message: 'Tax percentage must be a number between 0 and 100.' });
         return;
       }
     }
@@ -329,9 +352,15 @@ export const setAdminPricing = async (req: AuthRequest, res: Response): Promise<
     if (!ownerDoc) { res.status(404).json({ success: false, message: 'Admin/Advisor not found' }); return; }
 
     const filterKey = isAdvisor ? 'advisorId' : 'adminId';
+    const setOps: Record<string, any> = { [filterKey]: ownerDoc._id, serviceSlug };
+    if (hasPrices) setOps.prices = prices;
+    if (hasGst) setOps.gstPercentage = gstPercentage;
+    const updateDoc: Record<string, any> = { $set: setOps };
+    // Ensure the required `prices` field exists when creating a tax-only record.
+    if (!hasPrices) updateDoc.$setOnInsert = { prices: {} };
     const pricing = await ServicePricing.findOneAndUpdate(
       { [filterKey]: ownerDoc._id, serviceSlug },
-      { [filterKey]: ownerDoc._id, serviceSlug, prices },
+      updateDoc,
       { upsert: true, new: true, runValidators: true }
     );
 
@@ -339,7 +368,10 @@ export const setAdminPricing = async (req: AuthRequest, res: Response): Promise<
     res.json({
       success: true,
       message: 'Pricing updated successfully',
-      data: { pricing: savedPrices },
+      data: {
+        pricing: savedPrices,
+        gstPercentage: typeof pricing.gstPercentage === 'number' ? pricing.gstPercentage : 18,
+      },
     });
   } catch (error: any) {
     res.status(500).json({ success: false, message: 'Failed to update pricing' });
@@ -446,6 +478,7 @@ export const getAdminPricingByAdminId = async (req: AuthRequest, res: Response):
       success: true,
       data: {
         pricing: pricing ? pricing.prices : null,
+        gstPercentage: pricing && typeof pricing.gstPercentage === 'number' ? pricing.gstPercentage : 18,
       },
     });
   } catch (error: any) {
@@ -485,7 +518,8 @@ export const upgradePlanTier = async (req: AuthRequest, res: Response): Promise<
     }
 
     const oldPlanTier = registration.planTier;
-    const GST_RATE = 18;
+    // Prefer the rate snapshotted on the registration; else use the configured rate.
+    let GST_RATE = registration.gstRate ?? 18;
 
     // Get new plan pricing
     let newBasePrice = 0;
@@ -504,6 +538,9 @@ export const upgradePlanTier = async (req: AuthRequest, res: Response): Promise<
         if (oldPlanTier && pricesObj[oldPlanTier]) {
           oldBasePrice = pricesObj[oldPlanTier];
         }
+      }
+      if (registration.gstRate == null && pricing && typeof pricing.gstPercentage === 'number') {
+        GST_RATE = pricing.gstPercentage;
       }
     }
     if (newBasePrice <= 0) {
@@ -555,6 +592,7 @@ export const upgradePlanTier = async (req: AuthRequest, res: Response): Promise<
     registration.planTier = newPlanTier;
     registration.totalAmount = newBasePrice;
     registration.paymentAmount = newBasePrice;
+    if (registration.gstRate == null) registration.gstRate = GST_RATE;
     if (newDiscountAmt > 0) {
       registration.discountedAmount = newNetBase;
     } else {
@@ -605,6 +643,7 @@ export const upgradePlanTier = async (req: AuthRequest, res: Response): Promise<
         planTier: newPlanTier,
         totalAmount: upgradeDifference, // only the difference
         discountAmount: 0,
+        gstRate: GST_RATE,
       });
     }
 

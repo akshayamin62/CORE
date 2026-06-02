@@ -981,7 +981,10 @@ export const getAdvisorPricing = async (req: AuthRequest, res: Response): Promis
 
     return res.json({
       success: true,
-      data: { pricing: pricing ? pricing.prices : null },
+      data: {
+        pricing: pricing ? pricing.prices : null,
+        gstPercentage: pricing && typeof pricing.gstPercentage === 'number' ? pricing.gstPercentage : 18,
+      },
     });
   } catch (error: any) {
     console.error("Get advisor pricing error:", error);
@@ -996,7 +999,7 @@ export const setAdvisorPricing = async (req: AuthRequest, res: Response): Promis
   try {
     const { serviceSlug } = req.params;
     const userId = req.user?.userId;
-    const { prices } = req.body;
+    const { prices, gstPercentage } = req.body;
 
     const advisor = await Advisor.findOne({ userId });
     if (!advisor) {
@@ -1017,9 +1020,18 @@ export const setAdvisorPricing = async (req: AuthRequest, res: Response): Promis
       }
     }
 
+    // GST percentage is optional; when provided it must be 0–100.
+    if (gstPercentage !== undefined) {
+      if (typeof gstPercentage !== "number" || isNaN(gstPercentage) || gstPercentage < 0 || gstPercentage > 100) {
+        return res.status(400).json({ success: false, message: "Tax percentage must be a number between 0 and 100." });
+      }
+    }
+
+    const update: Record<string, any> = { advisorId: advisor._id, serviceSlug, prices };
+    if (gstPercentage !== undefined) update.gstPercentage = gstPercentage;
     const pricing = await ServicePricing.findOneAndUpdate(
       { advisorId: advisor._id, serviceSlug },
-      { advisorId: advisor._id, serviceSlug, prices },
+      update,
       { upsert: true, new: true, runValidators: true }
     );
 
@@ -1028,7 +1040,10 @@ export const setAdvisorPricing = async (req: AuthRequest, res: Response): Promis
     return res.json({
       success: true,
       message: "Pricing updated successfully",
-      data: { pricing: savedPrices },
+      data: {
+        pricing: savedPrices,
+        gstPercentage: typeof pricing.gstPercentage === 'number' ? pricing.gstPercentage : 18,
+      },
     });
   } catch (error: any) {
     console.error("Set advisor pricing error:", error);

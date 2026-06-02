@@ -329,8 +329,11 @@ export const servicePlanAPI = {
     api.put(`/service-plans/${serviceSlug}/upgrade`, { newPlanTier }),
   // Admin
   getAdminPricing: (serviceSlug: string) => api.get(`/service-plans/${serviceSlug}/admin/pricing`),
-  setAdminPricing: (serviceSlug: string, prices: Record<string, number>) =>
-    api.put(`/service-plans/${serviceSlug}/admin/pricing`, { prices }),
+  setAdminPricing: (serviceSlug: string, prices: Record<string, number>, gstPercentage?: number) =>
+    api.put(`/service-plans/${serviceSlug}/admin/pricing`, gstPercentage !== undefined ? { prices, gstPercentage } : { prices }),
+  // Admin/Advisor — update only the tax (GST) percentage for a service
+  setAdminTax: (serviceSlug: string, gstPercentage: number) =>
+    api.put(`/service-plans/${serviceSlug}/admin/pricing`, { gstPercentage }),
   getBasePricingForAdmin: (serviceSlug: string) => api.get(`/service-plans/${serviceSlug}/admin/base-pricing`),
   // Get any admin's pricing by adminId (for viewing plans from any role)
   getAdminPricingById: (serviceSlug: string, adminId: string) =>

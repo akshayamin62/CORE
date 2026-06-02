@@ -16,6 +16,7 @@ export default function StudentStudyAbroadPlansPage() {
   const [loading, setLoading] = useState(true);
   const [pricing, setPricing] = useState<Record<string, number> | null>(null);
   const [discounts, setDiscounts] = useState<Record<string, { type: string; value: number; calculatedAmount: number; reason?: string }> | null>(null);
+  const [gstPercentage, setGstPercentage] = useState<number>(18);
   const [registering, setRegistering] = useState<string | null>(null);
   const [currentPlanTier, setCurrentPlanTier] = useState<string | null>(null);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
@@ -53,6 +54,7 @@ export default function StudentStudyAbroadPlansPage() {
       const p = pricingRes.data.data.pricing;
       if (p) setPricing(p);
       if (pricingRes.data.data.discounts) setDiscounts(pricingRes.data.data.discounts);
+      if (typeof pricingRes.data.data.gstPercentage === 'number') setGstPercentage(pricingRes.data.data.gstPercentage);
 
       // Find current Study Abroad registration
       const regs = servicesRes.data.data.registrations || [];
@@ -249,7 +251,7 @@ export default function StudentStudyAbroadPlansPage() {
           {/* Installment plan notice */}
           <div className="mb-6 flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl px-5 py-3">
             <svg className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <p className="text-sm text-blue-700">Your payments are split into <strong>3 installments (50% / 30% / 20%)</strong>. All prices are exclusive of <strong>18% GST</strong>. First 50% is due at registration.</p>
+            <p className="text-sm text-blue-700">Your payments are split into <strong>3 installments (50% / 30% / 20%)</strong>.{gstPercentage > 0 ? <> All prices are exclusive of <strong>{gstPercentage}% GST</strong>.</> : null} First 50% is due at registration.</p>
           </div>
 
           {/* Plan Cards */}
@@ -290,7 +292,7 @@ export default function StudentStudyAbroadPlansPage() {
                           ) : (
                             <p className={`text-4xl font-extrabold ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{pricing[plan.key].toLocaleString('en-IN')}</p>
                           )}
-                          <p className={`text-xs mt-1 ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>+ 18% GST applicable</p>
+                          <p className={`text-xs mt-1 ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>{gstPercentage > 0 ? `+ ${gstPercentage}% GST applicable` : 'No GST applicable'}</p>
                         {canUpgrade && priceDiff != null && priceDiff > 0 && (
                           <p className="text-sm text-emerald-600 font-semibold mt-2">
                             +₹{priceDiff.toLocaleString('en-IN')} upgrade difference
@@ -346,7 +348,7 @@ export default function StudentStudyAbroadPlansPage() {
                 <h2 className="text-xl font-bold text-gray-900">Plan Features Comparison</h2>
                 <p className="text-sm text-gray-500 mt-1">See what&apos;s included in each plan tier.</p>
               </div> */}
-              <ServicePlanDetailsView features={features} pricing={pricing} plans={plans} serviceName="Study Abroad" showPricing={false} currentPlanTier={currentPlanTier} onRegister={handleRegister} onUpgrade={handleUpgrade} registeringPlan={registering} />
+              <ServicePlanDetailsView features={features} pricing={pricing} plans={plans} serviceName="Study Abroad" showPricing={false} gstRate={gstPercentage} currentPlanTier={currentPlanTier} onRegister={handleRegister} onUpgrade={handleUpgrade} registeringPlan={registering} />
             </div>
           )}
         </div>

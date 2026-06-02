@@ -73,6 +73,7 @@ export default function StudentServicePlansPage() {
   const [loading, setLoading] = useState(true);
   const [pricingByService, setPricingByService] = useState<Record<string, Record<string, number> | null>>({});
   const [discountsByService, setDiscountsByService] = useState<Record<string, Record<string, { type: string; value: number; calculatedAmount: number; reason?: string }> | null>>({});
+  const [gstByService, setGstByService] = useState<Record<string, number>>({});
   const [unavailableSlugs, setUnavailableSlugs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -92,6 +93,7 @@ export default function StudentServicePlansPage() {
           const results = await Promise.allSettled(slugs.map(s => servicePlanAPI.getPricing(s)));
           const pMap: Record<string, Record<string, number> | null> = {};
           const dMap: Record<string, Record<string, { type: string; value: number; calculatedAmount: number; reason?: string }> | null> = {};
+          const gMap: Record<string, number> = {};
           const hidden = new Set<string>();
           slugs.forEach((slug, i) => {
             const r = results[i];
@@ -99,6 +101,7 @@ export default function StudentServicePlansPage() {
               const data = r.value.data.data;
               pMap[slug] = data.pricing || null;
               dMap[slug] = data.discounts || null;
+              if (typeof data.gstPercentage === 'number') gMap[slug] = data.gstPercentage;
               // Hide services explicitly unavailable through advisor
               if (!data.pricing && data.message && data.message.includes('not available')) {
                 hidden.add(slug);
@@ -107,6 +110,7 @@ export default function StudentServicePlansPage() {
           });
           setPricingByService(pMap);
           setDiscountsByService(dMap);
+          setGstByService(gMap);
           setUnavailableSlugs(hidden);
         } catch {
           // Non-critical — page works without pricing data
@@ -147,6 +151,7 @@ export default function StudentServicePlansPage() {
           {allServices.filter(s => !unavailableSlugs.has(s.slug)).map((service) => {
             const servicePricing = pricingByService[service.slug];
             const serviceDiscounts = discountsByService[service.slug];
+            const serviceGst = gstByService[service.slug] ?? 18;
             const prices = servicePricing ? Object.values(servicePricing).filter(v => v > 0) : [];
             const minPrice = prices.length > 0 ? Math.min(...prices) : null;
             const discountNotes = serviceDiscounts
@@ -169,7 +174,7 @@ export default function StudentServicePlansPage() {
                 <p className="text-sm text-gray-600 mb-2">{service.description}</p>
                 {minPrice != null && (
                   <p className="text-xs text-gray-500 font-medium mb-2">
-                    From <span className="text-gray-700 font-semibold">₹{minPrice.toLocaleString('en-IN')}</span> <span className="text-gray-400">+ 18% GST</span>
+                    From <span className="text-gray-700 font-semibold">₹{minPrice.toLocaleString('en-IN')}</span> <span className="text-gray-400">{serviceGst > 0 ? `+ ${serviceGst}% GST` : '(no GST)'}</span>
                   </p>
                 )}
                 {discountNotes.length > 0 && (

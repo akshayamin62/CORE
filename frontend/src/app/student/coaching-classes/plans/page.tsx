@@ -16,6 +16,7 @@ export default function StudentCoachingClassesPlansPage() {
   const [loading, setLoading] = useState(true);
   const [pricing, setPricing] = useState<Record<string, number> | null>(null);
   const [discounts, setDiscounts] = useState<Record<string, { type: string; value: number; calculatedAmount: number; reason?: string }> | null>(null);
+  const [gstPercentage, setGstPercentage] = useState<number>(18);
   const [registering, setRegistering] = useState<string | null>(null);
   const [batchSelectPlan, setBatchSelectPlan] = useState<{ key: string; name: string } | null>(null);
   const [registeredClasses, setRegisteredClasses] = useState<Record<string, ClassTiming | null>>({});
@@ -53,6 +54,7 @@ export default function StudentCoachingClassesPlansPage() {
       const p = pricingRes.data.data.pricing;
       if (p) setPricing(p);
       if (pricingRes.data.data.discounts) setDiscounts(pricingRes.data.data.discounts);
+      if (typeof pricingRes.data.data.gstPercentage === 'number') setGstPercentage(pricingRes.data.data.gstPercentage);
 
       // Build registeredClasses map from coaching registrations
       const regs = servicesRes.data.data.registrations || [];
@@ -187,6 +189,7 @@ export default function StudentCoachingClassesPlansPage() {
             pricing={pricing}
             registeredClasses={registeredClasses}
             discounts={discounts || undefined}
+            gstRate={gstPercentage}
             renderAction={(plan) => (
               <button
                 onClick={() => handleRegisterClick(plan.key, plan.name)}

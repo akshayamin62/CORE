@@ -6,6 +6,7 @@ import { authAPI, servicePlanAPI, coachingBatchAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import AdvisorLayout from '@/components/AdvisorLayout';
 import CoachingClassCards, { BatchData } from '@/components/CoachingClassCards';
+import TaxSettingsCard from '@/components/TaxSettingsCard';
 import { getServicePlans } from '@/config/servicePlans';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -15,6 +16,7 @@ export default function AdvisorCoachingClassesPricingPage() {
   const [loading, setLoading] = useState(true);
   const [pricing, setPricing] = useState<Record<string, number> | null>(null);
   const [basePricing, setBasePricing] = useState<Record<string, number> | null>(null);
+  const [gstPercentage, setGstPercentage] = useState<number>(18);
   const [batches, setBatches] = useState<BatchData[]>([]);
   const plans = getServicePlans('coaching-classes');
 
@@ -38,6 +40,7 @@ export default function AdvisorCoachingClassesPricingPage() {
       const pricingRes = await servicePlanAPI.getAdminPricing('coaching-classes');
       const p = pricingRes.data.data.pricing;
       if (p) setPricing(p);
+      if (typeof pricingRes.data.data.gstPercentage === 'number') setGstPercentage(pricingRes.data.data.gstPercentage);
     } catch (error: any) { console.error('Failed to fetch pricing:', error); }
     try {
       const baseRes = await servicePlanAPI.getBasePricingForAdmin('coaching-classes');
@@ -91,6 +94,11 @@ export default function AdvisorCoachingClassesPricingPage() {
               onPriceEdit={handlePriceEdit}
               basePricing={basePricing}
             />
+          </div>
+
+          {/* Tax / GST Settings */}
+          <div className="mt-6">
+            <TaxSettingsCard serviceSlug="coaching-classes" gstPercentage={gstPercentage} onSaved={setGstPercentage} accent="teal" />
           </div>
 
           <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-5 shadow-sm">

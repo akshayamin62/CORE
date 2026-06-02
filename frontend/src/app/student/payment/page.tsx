@@ -20,6 +20,7 @@ interface Registration {
   discountedAmount?: number;
   totalPaid?: number;
   paymentComplete?: boolean;
+  gstRate?: number;
   installmentPlan?: {
     totalInstallments: number;
     completedInstallments: number;
@@ -361,7 +362,7 @@ export default function StudentPaymentPage() {
 
 // ===== Summary Cards =====
 function SummaryCards({ reg, payments }: { reg: Registration; payments: SummaryPayment[] }) {
-  const GST_RATE = 18;
+  const GST_RATE = reg.gstRate ?? 18;
   const hasInstallments = (reg.installmentPlan?.schedule?.length ?? 0) > 0;
   let baseTotal = reg.discountedAmount ?? reg.totalAmount ?? reg.paymentAmount ?? 0;
   const paidFromPayments = payments
@@ -400,7 +401,7 @@ function SummaryCards({ reg, payments }: { reg: Registration; payments: SummaryP
             {reg.discountedAmount != null && reg.discountedAmount !== reg.totalAmount && (
               <p className="text-xs text-green-600">Discount applied: -{currency((reg.totalAmount || 0) - reg.discountedAmount)}</p>
             )}
-            <p className="text-xs text-gray-500">GST (18%): +{currency(gstAmount)}</p>
+            <p className="text-xs text-gray-500">GST ({GST_RATE}%): +{currency(gstAmount)}</p>
           </div>
         </div>
 
@@ -449,7 +450,7 @@ function SummaryCards({ reg, payments }: { reg: Registration; payments: SummaryP
 
 // ===== Overview Tab =====
 function OverviewTab({ reg, onPayNow }: { reg: Registration; onPayNow: (r: Registration, inst?: number) => void }) {
-  const GST_RATE = 18;
+  const GST_RATE = reg.gstRate ?? 18;
 
   if (reg.paymentModel === 'installment' && reg.installmentPlan) {
     return (
@@ -492,7 +493,7 @@ function OverviewTab({ reg, onPayNow }: { reg: Registration; onPayNow: (r: Regis
                   <div className="flex items-center gap-4">
                     <div className="text-right">
                       <p className="font-semibold text-gray-900">{currency(inst.amount)}</p>
-                      <p className="text-xs text-gray-400">(incl. 18% GST)</p>
+                      <p className="text-xs text-gray-400">{GST_RATE > 0 ? `(incl. ${GST_RATE}% GST)` : '(no GST)'}</p>
                       {inst.paidAt && <p className="text-xs text-green-600">Paid on {fmtDate(inst.paidAt)}</p>}
                     </div>
                     <span className={`px-3 py-1 rounded-full text-xs font-medium ${ist.bg} ${ist.text}`}>
@@ -514,7 +515,7 @@ function OverviewTab({ reg, onPayNow }: { reg: Registration; onPayNow: (r: Regis
             <svg className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <div>
               <p className="text-sm font-medium text-blue-800">Installment Payment Plan</p>
-              <p className="text-sm text-blue-600 mt-1">Your payments are split into 3 installments (50% / 30% / 20%). All amounts include 18% GST. Each installment must be completed before the next one becomes available.</p>
+              <p className="text-sm text-blue-600 mt-1">Your payments are split into 3 installments (50% / 30% / 20%).{GST_RATE > 0 ? ` All amounts include ${GST_RATE}% GST.` : ''} Each installment must be completed before the next one becomes available.</p>
             </div>
           </div>
         </div>
@@ -525,7 +526,7 @@ function OverviewTab({ reg, onPayNow }: { reg: Registration; onPayNow: (r: Regis
   let effectiveAmount = reg.discountedAmount ?? reg.totalAmount ?? 0;
   // Fallback: derive from totalPaid if base fields missing
   if (effectiveAmount <= 0 && (reg.totalPaid ?? 0) > 0) {
-    effectiveAmount = Math.round((reg.totalPaid ?? 0) * 100 / 118);
+    effectiveAmount = Math.round((reg.totalPaid ?? 0) * 100 / (100 + GST_RATE));
   }
   const isPaid = reg.paymentComplete || reg.paymentStatus === 'paid';
 

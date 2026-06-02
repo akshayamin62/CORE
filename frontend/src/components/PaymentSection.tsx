@@ -28,6 +28,8 @@ interface PaymentSectionProps {
   };
   totalPaid?: number;
   paymentComplete?: boolean;
+  // Tax (GST) rate (%) snapshotted on the registration (defaults to 18)
+  gstRate?: number;
   readOnly?: boolean;
   onStatusChange?: (status: string) => void;
   onAmountChange?: (amount: number) => void;
@@ -81,7 +83,7 @@ interface LedgerRecord {
   entries: LedgerEntry[];
 }
 
-const GST_RATE = 18;
+const DEFAULT_GST_RATE = 18;
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string }> = {
   paid: { bg: 'bg-green-50', text: 'text-green-700', dot: 'bg-green-500' },
@@ -122,8 +124,10 @@ export default function PaymentSection({
   installmentPlan,
   totalPaid: regTotalPaid,
   paymentComplete,
+  gstRate,
   readOnly = true,
 }: PaymentSectionProps) {
+  const GST_RATE = typeof gstRate === 'number' ? gstRate : DEFAULT_GST_RATE;
   const [tab, setTab] = useState<Tab>('overview');
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [invoices, setInvoices] = useState<InvoiceRecord[]>([]);
@@ -218,7 +222,7 @@ export default function PaymentSection({
               {discountedAmount != null && discountedAmount !== totalAmount && (
                 <p className="text-[10px] text-green-600">Discount: -{fmt((totalAmount || 0) - discountedAmount)}</p>
               )}
-              <p className="text-[10px] text-gray-400">GST (18%): +{fmt(gstAmount)}</p>
+              <p className="text-[10px] text-gray-400">GST ({GST_RATE}%): +{fmt(gstAmount)}</p>
             </div>
           </div>
           <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">

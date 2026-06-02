@@ -16,6 +16,7 @@ export default function StudentEducationPlanningPlansPage() {
   const [loading, setLoading] = useState(true);
   const [pricing, setPricing] = useState<Record<string, number> | null>(null);
   const [discounts, setDiscounts] = useState<Record<string, { type: string; value: number; calculatedAmount: number; reason?: string }> | null>(null);
+  const [gstPercentage, setGstPercentage] = useState<number>(18);
   const [registering, setRegistering] = useState<string | null>(null);
   const [currentPlanTier, setCurrentPlanTier] = useState<string | null>(null);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
@@ -53,6 +54,7 @@ export default function StudentEducationPlanningPlansPage() {
       const p = pricingRes.data.data.pricing;
       if (p) setPricing(p);
       if (pricingRes.data.data.discounts) setDiscounts(pricingRes.data.data.discounts);
+      if (typeof pricingRes.data.data.gstPercentage === 'number') setGstPercentage(pricingRes.data.data.gstPercentage);
 
       const regs = servicesRes.data.data.registrations || [];
       const epReg = regs.find((r: any) => {
@@ -280,7 +282,7 @@ export default function StudentEducationPlanningPlansPage() {
                           ) : (
                             <p className={`text-4xl font-extrabold ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{pricing[plan.key].toLocaleString('en-IN')}</p>
                           )}
-                          <p className={`text-xs mt-1 ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>+ 18% GST applicable</p>
+                          <p className={`text-xs mt-1 ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>{gstPercentage > 0 ? `+ ${gstPercentage}% GST applicable` : 'No GST applicable'}</p>
                         {canUpgrade && priceDiff != null && priceDiff > 0 && (
                           <p className="text-sm text-emerald-600 font-semibold mt-2">
                             +₹{priceDiff.toLocaleString('en-IN')} upgrade difference
@@ -331,7 +333,7 @@ export default function StudentEducationPlanningPlansPage() {
           {/* Features Comparison */}
           {features.length > 0 && (
             <div>
-              <ServicePlanDetailsView features={features} pricing={pricing} plans={plans} serviceName="Education Planning" showPricing={false} currentPlanTier={currentPlanTier} onRegister={handleRegister} onUpgrade={handleUpgrade} registeringPlan={registering} />
+              <ServicePlanDetailsView features={features} pricing={pricing} plans={plans} serviceName="Education Planning" showPricing={false} gstRate={gstPercentage} currentPlanTier={currentPlanTier} onRegister={handleRegister} onUpgrade={handleUpgrade} registeringPlan={registering} />
             </div>
           )}
         </div>
