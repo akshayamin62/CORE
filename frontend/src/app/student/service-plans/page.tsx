@@ -29,6 +29,7 @@ const allServices = [
     iconBg: 'bg-amber-100',
     iconColor: 'text-amber-600',
     plansPage: '/student/ivy-league/plans',
+    comingSoon: true,
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -159,35 +160,49 @@ export default function StudentServicePlansPage() {
                   .filter(d => d?.reason)
                   .map(d => d.reason!)
               : [];
+            const isComingSoon = (service as any).comingSoon === true;
             return (
             <button
               key={service.slug}
-              onClick={() => router.push(service.plansPage)}
+              onClick={() => {
+                if (isComingSoon) {
+                  toast('Coming Soon! This service will be available shortly.');
+                  return;
+                }
+                router.push(service.plansPage);
+              }}
               className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-100 overflow-hidden transition-all duration-300 hover:-translate-y-1 text-left"
             >
               <div className={`h-1.5 bg-gradient-to-r ${service.color}`} />
               <div className="p-6">
-                <div className={`w-12 h-12 ${service.iconBg} ${service.iconColor} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                  {service.icon}
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`w-12 h-12 ${service.iconBg} ${service.iconColor} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                    {service.icon}
+                  </div>
+                  {isComingSoon && (
+                    <span className="inline-block px-2.5 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full tracking-wide">Coming Soon</span>
+                  )}
                 </div>
                 <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">{service.name}</h3>
                 <p className="text-sm text-gray-600 mb-2">{service.description}</p>
-                {minPrice != null && (
+                {!isComingSoon && minPrice != null && (
                   <p className="text-xs text-gray-500 font-medium mb-2">
                     From <span className="text-gray-700 font-semibold">₹{minPrice.toLocaleString('en-IN')}</span> <span className="text-gray-400">{serviceGst > 0 ? `+ ${serviceGst}% GST` : '(no GST)'}</span>
                   </p>
                 )}
-                {discountNotes.length > 0 && (
+                {!isComingSoon && discountNotes.length > 0 && (
                   <div className="mb-3 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
                     <p className="text-xs text-green-700 font-medium">★ {discountNotes[0]}</p>
                   </div>
                 )}
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 group-hover:text-blue-700">
-                  View Plans
-                  <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </span>
+                {!isComingSoon && (
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 group-hover:text-blue-700">
+                    View Plans
+                    <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </span>
+                )}
               </div>
             </button>
             );
