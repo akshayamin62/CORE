@@ -192,7 +192,7 @@ export default function AdvisorStudyAbroadPricingPage() {
                 <h2 className="text-xl font-bold text-gray-900">Study Abroad Plan Details</h2>
                 <p className="text-sm text-gray-500 mt-1">This is what your students will see when browsing plans.</p>
               </div>
-              <ServicePlanDetailsView features={features} pricing={pricing} plans={plans} serviceName="Study Abroad" showPricing={false} />
+              <ServicePlanDetailsView features={features} pricing={pricing} plans={plans} serviceName="Study Abroad" showPricing={false} gstRate={gstPercentage} />
             </div>
           )}
         </div>

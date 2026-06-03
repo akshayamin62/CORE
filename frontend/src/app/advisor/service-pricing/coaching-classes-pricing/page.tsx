@@ -93,6 +93,7 @@ export default function AdvisorCoachingClassesPricingPage() {
               batches={batches}
               onPriceEdit={handlePriceEdit}
               basePricing={basePricing}
+              gstRate={gstPercentage}
             />
           </div>
 

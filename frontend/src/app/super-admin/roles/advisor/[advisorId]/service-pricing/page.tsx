@@ -25,6 +25,7 @@ export default function SuperAdminViewAdvisorPricingPage() {
   const [loading, setLoading] = useState(true);
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [pricing, setPricing] = useState<Record<string, number> | null>(null);
+  const [gstPercentage, setGstPercentage] = useState<number>(18);
   const [loadingPlans, setLoadingPlans] = useState(false);
 
   useEffect(() => {
@@ -52,11 +53,13 @@ export default function SuperAdminViewAdvisorPricingPage() {
     setSelectedService(slug);
     setLoadingPlans(true);
     setPricing(null);
+    setGstPercentage(18);
 
     try {
       const pricingRes = await servicePlanAPI.getAdminPricingById(slug, advisorId);
       const p = pricingRes.data.data.pricing;
       if (p) setPricing(p);
+      if (typeof pricingRes.data.data.gstPercentage === 'number') setGstPercentage(pricingRes.data.data.gstPercentage);
     } catch {
       toast.error('Failed to load plan details');
     } finally {
@@ -154,7 +157,7 @@ export default function SuperAdminViewAdvisorPricingPage() {
                   </div>
                 )}
 
-                <CoachingClassCards plans={getServicePlans(selectedService)} pricing={pricing} />
+                <CoachingClassCards plans={getServicePlans(selectedService)} pricing={pricing} gstRate={gstPercentage} />
 
                 <div className="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-5">
                   <p className="text-sm text-blue-800">
@@ -177,6 +180,7 @@ export default function SuperAdminViewAdvisorPricingPage() {
                   plans={getServicePlans(selectedService)}
                   serviceName={selectedServiceInfo?.name || ''}
                   showPricing={true}
+                  gstRate={gstPercentage}
                   noPricingMessage="This advisor has not set pricing yet."
                 />
               </>

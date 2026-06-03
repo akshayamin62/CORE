@@ -94,6 +94,7 @@ export default function CoachingClassesPricingPage() {
               batches={batches}
               onPriceEdit={handlePriceEdit}
               basePricing={basePricing}
+              gstRate={gstPercentage}
             />
           </div>
 
