@@ -10,7 +10,7 @@ import StudentFormAnswer from "../models/StudentFormAnswer";
 import LeadStudentConversion from "../models/LeadStudentConversion";
 import { USER_ROLE } from "../types/roles";
 import { generateSlug } from "./leadController";
-import { sendWhatsAppEnquiryWelcome, sendWhatsAppGeneralNotification } from "../utils/whatsapp";
+import { sendWhatsAppEnquiryWelcome, sendWhatsAppGeneralNotification, sendWhatsAppGeneral4LineNotification } from "../utils/whatsapp";
 import { sendEmail } from "../utils/email";
 
 /**
@@ -1807,11 +1807,12 @@ export const registerAsReferrer = async (req: Request, res: Response): Promise<R
       const referrerName = [firstName, middleName, lastName].filter(Boolean).join(' ');
 
       if (admin.mobileNumber) {
-        sendWhatsAppGeneralNotification(
+        sendWhatsAppGeneral4LineNotification(
           admin.mobileNumber,
           adminDisplayName,
           `New referrer registration from ${referrerName}.`,
-          `Email: ${email.toLowerCase().trim()} | Mobile: ${mobileNumber.trim()} | Status: Pending Approval`
+          `Email: ${email.toLowerCase().trim()} | Mobile: ${mobileNumber.trim()} | Status: Pending Approval`,
+          `City: ${city.trim()} | State: ${state.trim()} | Country: ${country.trim()} | Qualification: ${qualification.trim()} | Current Role: ${currentRole.trim()}`
         ).catch((err) => console.error('Failed to send WhatsApp to admin for new referrer registration:', err));
       }
 
@@ -1828,6 +1829,11 @@ export const registerAsReferrer = async (req: Request, res: Response): Promise<R
                 <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">Name</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${referrerName}</td></tr>
                 <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">Email</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${email.toLowerCase().trim()}</td></tr>
                 <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">Mobile</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${mobileNumber.trim()}</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">Country</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${country.trim()}</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">State</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${state.trim()}</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">City</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${city.trim()}</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">Qualification</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${qualification.trim()}</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">Current Role</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${currentRole.trim()}</td></tr>
                 <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">Status</td><td style="padding: 8px; border: 1px solid #e0e0e0;">Pending Approval</td></tr>
               </table>
               <p>Please log in to your dashboard to review and approve this registration.</p>
@@ -1848,7 +1854,7 @@ export const registerAsReferrer = async (req: Request, res: Response): Promise<R
           mobileNumber.trim(),
           referrerName,
           `Your *Referrer* registration has been submitted successfully.`,
-          `Your account is pending for approval. You will be notified once it's approved.`
+          `Your account is pending for approval. You will be notified once it's approved`
         ).catch((err) => console.error('Failed to send WhatsApp welcome to new referrer:', err));
       }
       sendEmail({

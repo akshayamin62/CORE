@@ -7,7 +7,7 @@ import { USER_ROLE } from "../types/roles";
 import mongoose from "mongoose";
 import { sendEmail, sendB2BEnquiryConfirmationEmail } from "../utils/email";
 import UserModel from "../models/User";
-import { sendWhatsAppEnquiryWelcome, sendWhatsAppGeneralNotification } from "../utils/whatsapp";
+import { sendWhatsAppEnquiryWelcome, sendWhatsAppGeneral4LineNotification } from "../utils/whatsapp";
 
 /**
  * PUBLIC: Submit B2B enquiry form (no auth required)
@@ -92,35 +92,42 @@ export const submitB2BEnquiry = async (req: Request, res: Response): Promise<Res
     }
 
     try {
+      const enquirerName = [firstName.trim(), middleName?.trim(), lastName.trim()].filter(Boolean).join(' ');
       const superAdmins = await UserModel.find({ role: USER_ROLE.SUPER_ADMIN, isActive: true }).select('email firstName middleName lastName mobileNumber').lean();
       for (const sa of superAdmins) {
+        const saName = [sa.firstName, sa.middleName, sa.lastName].filter(Boolean).join(' ') || 'Super Admin';
+
         await sendEmail({
           to: sa.email,
-          subject: `New B2B Enquiry: ${firstName} ${lastName} (${type})`,
-          html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">
-            <h2 style="color:#2563eb;">New B2B Partnership Enquiry</h2>
-            <p>A new B2B enquiry has been received from;</p>
-            <table style="width:100%;border-collapse:collapse;margin:15px 0;">
-              <tr><td style="padding:6px 0;font-weight:bold;">Name:</td><td>${firstName} ${middleName || ''} ${lastName}</td></tr>
-              <tr><td style="padding:6px 0;font-weight:bold;">Email:</td><td>${email}</td></tr>
-              <tr><td style="padding:6px 0;font-weight:bold;">Phone:</td><td>${mobileNumber}</td></tr>
-              <tr><td style="padding:6px 0;font-weight:bold;">Country:</td><td>${country?.trim() || 'N/A'}</td></tr>
-              <tr><td style="padding:6px 0;font-weight:bold;">State:</td><td>${state?.trim() || 'N/A'}</td></tr>
-              <tr><td style="padding:6px 0;font-weight:bold;">City:</td><td>${city?.trim() || 'N/A'}</td></tr>
-              <tr><td style="padding:6px 0;font-weight:bold;">Type:</td><td>${type}</td></tr>
-            </table>
-            <p>Please log in to assign a B2B Sales person to this lead.</p>
-          </div>`,
-          text: `New B2B Enquiry: ${firstName} ${lastName} (${type}) - Email: ${email} - Phone: ${mobileNumber}`,
+          subject: `New B2B Enquiry: ${enquirerName} (${type})`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #1e3a5f;">New B2B Partnership Enquiry</h2>
+              <p>Hi ${saName},</p>
+              <p>A new B2B partnership enquiry has been submitted via the public enquiry form.</p>
+              <table style="width:100%; border-collapse: collapse; margin: 16px 0;">
+                <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">Name</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${enquirerName}</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">Email</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${email.toLowerCase().trim()}</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">Mobile</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${mobileNumber.trim()}</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">Country</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${country.trim()}</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">State</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${state.trim()}</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">City</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${city?.trim() || 'N/A'}</td></tr>
+                <tr><td style="padding: 8px; border: 1px solid #e0e0e0; font-weight: bold; background: #f5f5f5;">Partnership Type</td><td style="padding: 8px; border: 1px solid #e0e0e0;">${type}</td></tr>
+              </table>
+              <p>Please log in to assign a B2B Sales person to this lead.</p>
+              <p style="color: #666; font-size: 12px;">This is an automated notification.</p>
+            </div>
+          `,
+          text: `New B2B Enquiry: ${enquirerName} (${type}) | Email: ${email.toLowerCase().trim()} | Mobile: ${mobileNumber.trim()} | Country: ${country.trim()} | State: ${state.trim()} | City: ${city?.trim() || 'N/A'}`,
         });
-        // WhatsApp notification to super admin
+
         if (sa.mobileNumber) {
-          const saName = [sa.firstName, sa.middleName, sa.lastName].filter(Boolean).join(' ');
-          sendWhatsAppGeneralNotification(
+          sendWhatsAppGeneral4LineNotification(
             sa.mobileNumber,
             saName,
-            `New B2B enquiry from ${firstName.trim()} ${lastName.trim()}.`,
-            `${type} partnership | Mobile: ${mobileNumber.trim()}`
+            `New B2B enquiry received from ${enquirerName}.`,
+            `Email: ${email.toLowerCase().trim()} | Mobile: ${mobileNumber.trim()}`,
+            `Type: ${type} | City: ${city?.trim() || 'N/A'} | State: ${state.trim()} | Country: ${country.trim()}`
           ).catch((err) => console.error('Failed to send WhatsApp B2B enquiry notification to super admin:', err));
         }
       }
