@@ -747,19 +747,19 @@ export const followUpAPI = {
 
 export const chatAPI = {
   // Get or create chat for a program
-  getOrCreateChat: (programId: string, chatType: 'open' | 'private' = 'open') => 
+  getOrCreateChat: (programId: string, chatType: 'open' | 'private' | 'notes' = 'open') => 
     api.get(`/chat/program/${programId}/chat`, { params: { chatType } }),
   
   // Get all messages for a program
-  getMessages: (programId: string, chatType: 'open' | 'private' = 'open') => 
+  getMessages: (programId: string, chatType: 'open' | 'private' | 'notes' = 'open') => 
     api.get(`/chat/program/${programId}/messages`, { params: { chatType } }),
   
   // Send a message
-  sendMessage: (programId: string, message: string, chatType: 'open' | 'private' = 'open') => 
+  sendMessage: (programId: string, message: string, chatType: 'open' | 'private' | 'notes' = 'open') => 
     api.post(`/chat/program/${programId}/messages`, { message, chatType }),
   
-  // Upload document in chat (open or private)
-  uploadDocument: (programId: string, file: File, chatType: 'open' | 'private' = 'open') => {
+  // Upload document in chat (open, private, or notes)
+  uploadDocument: (programId: string, file: File, chatType: 'open' | 'private' | 'notes' = 'open') => {
     const formData = new FormData();
     formData.append('file', file);
     return api.post(`/chat/program/${programId}/upload-document`, formData, {
@@ -773,7 +773,7 @@ export const chatAPI = {
     api.post(`/chat/messages/${messageId}/save-to-extra`, { documentName, description }),
 
   // Get all chats for current user
-  getMyChatsList: (chatType?: 'open' | 'private') => 
+  getMyChatsList: (chatType?: 'open' | 'private' | 'notes') => 
     api.get('/chat/my-chats', { params: chatType ? { chatType } : {} }),
 };
 

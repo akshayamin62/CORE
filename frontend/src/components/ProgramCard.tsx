@@ -95,7 +95,7 @@ export default function ProgramCard({
             {headerAction}
           </div>
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <p className="text-sm text-gray-600">{program.university}</p>
+            <p className="font-semibold text-md italic text-gray-800">{program.university}</p>
             {classifyUniversity(program.university) === 'ivy-league' && (
               <a
                 href="https://en.wikipedia.org/wiki/Ivy_League"

@@ -57,7 +57,7 @@ interface ProgramChatViewProps {
   onClose: () => void;
   userRole: 'STUDENT' | 'OPS' | 'SUPER_ADMIN' | 'ADMIN' | 'COUNSELOR' | 'PARENT' | 'EDUPLAN_COACH' | 'IVY_EXPERT' | 'REFERRER' | 'ADVISOR';
   isReadOnly?: boolean;
-  chatType?: 'open' | 'private';
+  chatType?: 'open' | 'private' | 'notes';
 }
 
 // WhatsApp-style formatting: *bold*, _italic_, __underline__, ~strikethrough~
@@ -461,16 +461,19 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
       )}
 
       {/* Chat Header */}
-      <div className={`${chatType === 'private' ? 'bg-linear-to-r from-teal-600 to-cyan-600' : 'bg-linear-to-r from-blue-600 to-indigo-600'} text-white p-6 shadow-lg`}>
+      <div className={`${chatType === 'notes' ? 'bg-linear-to-r from-amber-600 to-orange-600' : chatType === 'private' ? 'bg-linear-to-r from-teal-600 to-cyan-600' : 'bg-linear-to-r from-blue-600 to-indigo-600'} text-white p-6 shadow-lg`}>
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-xl font-bold">{chatType === 'private' ? 'Private Chat' : 'Open Chat'}</h3>
+              <h3 className="text-xl font-bold">{chatType === 'notes' ? 'Notes' : chatType === 'private' ? 'Private Chat' : 'Open Chat'}</h3>
               {chatType === 'private' && (
                 <span className="px-2 py-0.5 bg-white/20 rounded text-xs">Staff Only</span>
               )}
+              {chatType === 'notes' && (
+                <span className="px-2 py-0.5 bg-white/20 rounded text-xs">Super Admin &amp; OPS Only</span>
+              )}
             </div>
-            <p className={`text-sm ${chatType === 'private' ? 'text-orange-100' : 'text-blue-100'}`}>{program.programName} - {program.university}</p>
+            <p className={`text-sm ${chatType === 'notes' ? 'text-amber-100' : chatType === 'private' ? 'text-teal-100' : 'text-blue-100'}`}>{program.programName} - {program.university}</p>
           </div>
           <button
             onClick={onClose}
@@ -567,7 +570,7 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
                         >
                           Download
                         </button>
-                        {canSaveToExtra && chatType === 'open' && (
+                        {canSaveToExtra && (chatType === 'open' || chatType === 'notes') && (
                           <>
                             <div className="w-px bg-gray-100" />
                             {msg.savedToExtra ? (

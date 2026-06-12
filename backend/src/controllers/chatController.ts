@@ -23,8 +23,13 @@ export const getOrCreateChat = async (req: AuthRequest, res: Response) => {
     const userRole = req.user!.role;
 
     // Validate chatType
-    if (chatType !== 'open' && chatType !== 'private') {
-      return res.status(400).json({ message: 'Invalid chat type. Must be "open" or "private"' });
+    if (chatType !== 'open' && chatType !== 'private' && chatType !== 'notes') {
+      return res.status(400).json({ message: 'Invalid chat type. Must be "open", "private", or "notes"' });
+    }
+
+    // Notes chat is exclusively for Super Admin and OPS
+    if (chatType === 'notes' && userRole !== USER_ROLE.SUPER_ADMIN && userRole !== USER_ROLE.OPS) {
+      return res.status(403).json({ message: 'Notes chat is only accessible to Super Admin and OPS' });
     }
 
     // Students cannot access private chats
@@ -178,8 +183,13 @@ export const getChatMessages = async (req: AuthRequest, res: Response) => {
     const userRole = req.user!.role;
 
     // Validate chatType
-    if (chatType !== 'open' && chatType !== 'private') {
-      return res.status(400).json({ message: 'Invalid chat type. Must be "open" or "private"' });
+    if (chatType !== 'open' && chatType !== 'private' && chatType !== 'notes') {
+      return res.status(400).json({ message: 'Invalid chat type. Must be "open", "private", or "notes"' });
+    }
+
+    // Notes chat is exclusively for Super Admin and OPS
+    if (chatType === 'notes' && userRole !== USER_ROLE.SUPER_ADMIN && userRole !== USER_ROLE.OPS) {
+      return res.status(403).json({ message: 'Notes chat is only accessible to Super Admin and OPS' });
     }
 
     // Students cannot access private chats
@@ -270,8 +280,8 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
     const userRole = req.user!.role;
 
     // Validate chatType
-    if (chatType !== 'open' && chatType !== 'private') {
-      return res.status(400).json({ message: 'Invalid chat type. Must be "open" or "private"' });
+    if (chatType !== 'open' && chatType !== 'private' && chatType !== 'notes') {
+      return res.status(400).json({ message: 'Invalid chat type. Must be "open", "private", or "notes"' });
     }
 
     if (!message || message.trim().length === 0) {
@@ -285,17 +295,19 @@ export const sendMessage = async (req: AuthRequest, res: Response) => {
     }
     const userName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
 
-    // Check who can send messages
-    // For OPEN chats: All roles can send
-    // For PRIVATE chats: All roles EXCEPT students can send
-    if (chatType === 'private') {
-      // Private chat - students cannot send
-      if (userRole === USER_ROLE.STUDENT) {
-        return res.status(403).json({ 
-          success: false,
-          message: 'Students cannot access private chats.' 
-        });
+    // Notes chat: only Super Admin and OPS can send
+    if (chatType === 'notes') {
+      if (userRole !== USER_ROLE.SUPER_ADMIN && userRole !== USER_ROLE.OPS) {
+        return res.status(403).json({ success: false, message: 'Notes chat is only accessible to Super Admin and OPS' });
       }
+    }
+
+    // Private chat - students cannot send
+    if (chatType === 'private' && userRole === USER_ROLE.STUDENT) {
+      return res.status(403).json({ 
+        success: false,
+        message: 'Students cannot access private chats.' 
+      });
     }
     // Open chats - all roles can send (no restriction needed)
 
@@ -451,10 +463,14 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
     let query: any = {};
 
     // Filter by chatType if provided
-    if (chatType && (chatType === 'open' || chatType === 'private')) {
+    if (chatType && (chatType === 'open' || chatType === 'private' || chatType === 'notes')) {
       // Students can only see open chats
-      if (userRole === USER_ROLE.STUDENT && chatType === 'private') {
-        return res.status(403).json({ message: 'Students cannot access private chats' });
+      if (userRole === USER_ROLE.STUDENT && (chatType === 'private' || chatType === 'notes')) {
+        return res.status(403).json({ message: 'Students cannot access private or notes chats' });
+      }
+      // Notes chat restricted to Super Admin and OPS
+      if (chatType === 'notes' && userRole !== USER_ROLE.SUPER_ADMIN && userRole !== USER_ROLE.OPS) {
+        return res.status(403).json({ message: 'Notes chat is only accessible to Super Admin and OPS' });
       }
       query.chatType = chatType;
     } else if (userRole === USER_ROLE.STUDENT) {
@@ -522,14 +538,20 @@ export const getMyChatsList = async (req: AuthRequest, res: Response) => {
 export const uploadChatDocument = async (req: AuthRequest, res: Response) => {
   try {
     const { programId } = req.params;
-    const { chatType = 'open' } = req.query as { chatType?: 'open' | 'private' };
+    const { chatType = 'open' } = req.query as { chatType?: 'open' | 'private' | 'notes' };
     const userId = req.user!.userId;
     const userRole = req.user!.role;
     const file = req.file;
 
-    if (chatType !== 'open' && chatType !== 'private') {
+    if (chatType !== 'open' && chatType !== 'private' && chatType !== 'notes') {
       if (file) fs.unlinkSync(file.path);
-      return res.status(400).json({ message: 'Invalid chat type. Must be "open" or "private"' });
+      return res.status(400).json({ message: 'Invalid chat type. Must be "open", "private", or "notes"' });
+    }
+
+    // Notes chat: only Super Admin and OPS can upload
+    if (chatType === 'notes' && userRole !== USER_ROLE.SUPER_ADMIN && userRole !== USER_ROLE.OPS) {
+      if (file) fs.unlinkSync(file.path);
+      return res.status(403).json({ success: false, message: 'Notes chat is only accessible to Super Admin and OPS' });
     }
 
     // Students cannot upload to private chat

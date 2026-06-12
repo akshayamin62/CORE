@@ -99,7 +99,7 @@ export default function ProgramSection({
   
   // For chat feature
   const [selectedChatProgram, setSelectedChatProgram] = useState<Program | null>(null);
-  const [selectedChatType, setSelectedChatType] = useState<'open' | 'private'>('open');
+  const [selectedChatType, setSelectedChatType] = useState<'open' | 'private' | 'notes'>('open');
   
   // For student selecting programs
   const [expandedPrograms, setExpandedPrograms] = useState<Set<string>>(new Set());
@@ -543,7 +543,7 @@ export default function ProgramSection({
                             <h4 className="font-semibold text-gray-900">{program.programName}</h4>
                           </div>
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <p className="text-sm text-gray-600">{program.university}</p>
+                          <p className="font-semibold text-md italic text-gray-800">{program.university}</p>
                           {classifyUniversity(program.university) === 'ivy-league' && (
                             <a
                               href="https://en.wikipedia.org/wiki/Ivy_League"
@@ -915,6 +915,20 @@ export default function ProgramSection({
                                     </svg>
                                     <span>Private</span>
                                   </button>
+                                  {(userRole === 'SUPER_ADMIN' || userRole === 'OPS') && (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedChatProgram(program);
+                                        setSelectedChatType('notes');
+                                      }}
+                                      className="px-2 py-1 bg-amber-600 text-white rounded hover:bg-amber-700 transition-colors text-xs font-medium shadow flex items-center space-x-1"
+                                    >
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                      </svg>
+                                      <span>Notes</span>
+                                    </button>
+                                  )}
                                 </>
                               )}
                               {canEditApplied && !isReadOnly && (

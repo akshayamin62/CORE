@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
-export type ChatType = 'open' | 'private';
+export type ChatType = 'open' | 'private' | 'notes';
 
 export interface IProgramChat extends Document {
   programId: mongoose.Types.ObjectId;
@@ -32,7 +32,7 @@ const ProgramChatSchema = new Schema<IProgramChat>(
     },
     chatType: {
       type: String,
-      enum: ['open', 'private'],
+      enum: ['open', 'private', 'notes'],
       default: 'open',
       required: true,
     },
