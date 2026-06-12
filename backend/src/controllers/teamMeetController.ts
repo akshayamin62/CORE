@@ -21,6 +21,7 @@ import { USER_ROLE } from "../types/roles";
 import { createZohoMeeting, deleteZohoMeeting } from "../utils/zohoMeeting";
 import { sendMeetingPendingEmail, sendMeetingScheduledEmail, sendMeetingConfirmedEmail } from "../utils/email";
 import { sendMeetingRequestSms } from "../utils/sms";
+import { formatTeamMeetTypeLabel, getTeamMeetWhatsAppDetails } from "../utils/meetingTypeLabels";
 import { sendWhatsAppGeneralNotification } from "../utils/whatsapp";
 import { getUploadBaseDir, ensureDir, validateFilePath } from "../utils/uploadDir";
 
@@ -459,7 +460,7 @@ export const createTeamMeet = async (
         date: formattedDate,
         time: scheduledTime,
         duration: parsedDuration,
-        meetingType: effectiveMeetingType === TEAMMEET_TYPE.ONLINE ? 'Online' : 'Face to Face',
+        meetingType: formatTeamMeetTypeLabel(effectiveMeetingType),
         meetingUrl: teamMeet.zohoMeetingUrl || undefined,
         meetingId: teamMeet.zohoMeetingId || undefined,
         meetingPassword: teamMeet.zohoMeetingPassword || undefined,
@@ -476,10 +477,16 @@ export const createTeamMeet = async (
       // WhatsApp to recipient (student)
       const recipientMobileWA = await getUserMobileNumber(recipient._id.toString(), recipient.role);
       if (recipientMobileWA) {
-        const meetingTypeLabel = effectiveMeetingType === TEAMMEET_TYPE.ONLINE ? 'Online' : 'In-Person';
-        const meetDetails = teamMeet.zohoMeetingUrl
-          ? `"${subject}" on ${formattedDate} at ${scheduledTime} (${parsedDuration} mins). Meeting ID: ${teamMeet.zohoMeetingId} | Password: ${teamMeet.zohoMeetingPassword} | Join: ${teamMeet.zohoMeetingUrl}`
-          : `"${subject}" on ${formattedDate} at ${scheduledTime} (${parsedDuration} mins; ${meetingTypeLabel}). Please be on time.`;
+        const meetDetails = getTeamMeetWhatsAppDetails({
+          subject,
+          formattedDate,
+          scheduledTime,
+          duration: parsedDuration,
+          meetingType: effectiveMeetingType,
+          zohoMeetingUrl: teamMeet.zohoMeetingUrl,
+          zohoMeetingId: teamMeet.zohoMeetingId,
+          zohoMeetingPassword: teamMeet.zohoMeetingPassword,
+        });
         sendWhatsAppGeneralNotification(
           recipientMobileWA,
           recipientFullName,
@@ -496,7 +503,7 @@ export const createTeamMeet = async (
           date: formattedDate,
           time: scheduledTime,
           duration: parsedDuration,
-          meetingType: effectiveMeetingType === TEAMMEET_TYPE.ONLINE ? "Online" : "Face to Face",
+          meetingType: formatTeamMeetTypeLabel(effectiveMeetingType),
           otherPartyName: senderFullName,
           agenda: description || undefined,
         }).catch((err) => console.error("Failed to send pending meeting email to recipient:", err));
@@ -523,12 +530,18 @@ export const createTeamMeet = async (
       // WhatsApp notification to recipient (non-blocking)
       const recipientMobileWA = await getUserMobileNumber(recipient._id.toString(), recipient.role);
       if (recipientMobileWA) {
-        const meetingTypeLabel = effectiveMeetingType === TEAMMEET_TYPE.ONLINE ? 'Online' : 'In-Person';
         sendWhatsAppGeneralNotification(
           recipientMobileWA,
           recipientFullName,
           `You have a new meeting request from ${senderFullName}.`,
-          `"${subject}" on ${formattedDate} at ${scheduledTime} (${parsedDuration} mins; ${meetingTypeLabel}). Kindly log in to confirm or decline`
+          getTeamMeetWhatsAppDetails({
+            subject,
+            formattedDate,
+            scheduledTime,
+            duration: parsedDuration,
+            meetingType: effectiveMeetingType,
+            suffix: "Kindly log in to confirm or decline",
+          })
         ).catch((err) => console.error('Failed to send team meet request WhatsApp:', err));
       }
     }
@@ -785,7 +798,7 @@ export const acceptTeamMeet = async (
       date: formattedDate,
       time: teamMeet.scheduledTime,
       duration: teamMeet.duration,
-      meetingType: teamMeet.meetingType === TEAMMEET_TYPE.ONLINE ? "Online" : "Face to Face",
+      meetingType: formatTeamMeetTypeLabel(teamMeet.meetingType),
       meetingUrl: teamMeet.zohoMeetingUrl || undefined,
       meetingId: teamMeet.zohoMeetingId || undefined,
       meetingPassword: teamMeet.zohoMeetingPassword || undefined,
@@ -809,9 +822,16 @@ export const acceptTeamMeet = async (
     }
 
     // WhatsApp confirmation to both parties (non-blocking)
-    const meetingDetails = teamMeet.meetingType === TEAMMEET_TYPE.ONLINE
-      ? `"${teamMeet.subject}" on ${formattedDate} at ${teamMeet.scheduledTime} (${teamMeet.duration} mins). Meeting ID: ${teamMeet.zohoMeetingId} | Password: ${teamMeet.zohoMeetingPassword} | Join at: ${teamMeet.zohoMeetingUrl}`
-      : `"${teamMeet.subject}" on ${formattedDate} at ${teamMeet.scheduledTime} (${teamMeet.duration} mins). In-Person meeting. Please be on time.`;
+    const meetingDetails = getTeamMeetWhatsAppDetails({
+      subject: teamMeet.subject,
+      formattedDate,
+      scheduledTime: teamMeet.scheduledTime,
+      duration: teamMeet.duration,
+      meetingType: teamMeet.meetingType,
+      zohoMeetingUrl: teamMeet.zohoMeetingUrl,
+      zohoMeetingId: teamMeet.zohoMeetingId,
+      zohoMeetingPassword: teamMeet.zohoMeetingPassword,
+    });
     const senderMobileWA = await getUserMobileNumber(teamMeet.requestedBy.toString(), (senderUser as any)?.role);
     const recipientMobileWA = await getUserMobileNumber(teamMeet.requestedTo.toString(), (recipientUser as any)?.role);
     if (senderMobileWA) {

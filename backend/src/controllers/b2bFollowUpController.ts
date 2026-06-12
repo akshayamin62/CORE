@@ -9,6 +9,7 @@ import { USER_ROLE } from "../types/roles";
 import mongoose from "mongoose";
 import { createZohoMeeting } from "../utils/zohoMeeting";
 import { sendMeetingScheduledEmail } from "../utils/email";
+import { getFollowUpWhatsAppMeetingInfo } from "../utils/meetingTypeLabels";
 import { sendWhatsAppGeneralNotification } from "../utils/whatsapp";
 
 /**
@@ -235,9 +236,7 @@ export const createB2BFollowUp = async (
 
     // WhatsApp notification to B2B lead (non-blocking)
     if (lead.mobileNumber) {
-      const meetingInfo = effectiveMeetingType === MEETING_TYPE.ONLINE
-        ? `Join at: ${followUp.zohoMeetingUrl || 'Link pending'}`
-        : 'Offline meeting';
+      const meetingInfo = getFollowUpWhatsAppMeetingInfo(effectiveMeetingType, followUp.zohoMeetingUrl);
       sendWhatsAppGeneralNotification(
         lead.mobileNumber,
         leadFullName,
@@ -690,9 +689,7 @@ export const updateB2BFollowUp = async (
 
       // WhatsApp notification to lead for new B2B follow-up (non-blocking)
       if (lead?.mobileNumber) {
-        const nextMeetingInfo = nextEffectiveMeetingType === MEETING_TYPE.ONLINE
-          ? `Join at: ${newFollowUp.zohoMeetingUrl || 'Link pending'}`
-          : 'Offline meeting';
+        const nextMeetingInfo = getFollowUpWhatsAppMeetingInfo(nextEffectiveMeetingType, newFollowUp.zohoMeetingUrl);
         sendWhatsAppGeneralNotification(
           lead.mobileNumber,
           leadFullName,
