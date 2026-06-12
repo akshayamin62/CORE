@@ -13,6 +13,7 @@ export enum TEAMMEET_STATUS {
 export enum TEAMMEET_TYPE {
   ONLINE = "ONLINE",
   FACE_TO_FACE = "FACE_TO_FACE",
+  PHONE_CALL = "PHONE_CALL",
 }
 
 export interface ITeamMeet extends Document {

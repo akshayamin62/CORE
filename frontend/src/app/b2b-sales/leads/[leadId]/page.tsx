@@ -499,7 +499,7 @@ export default function B2BSalesLeadDetailPage() {
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Meeting Type</label>
                       <select value={newFollowUp.meetingType} onChange={(e) => setNewFollowUp({ ...newFollowUp, meetingType: e.target.value as MEETING_TYPE })} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value={MEETING_TYPE.ONLINE}>Online</option><option value={MEETING_TYPE.FACE_TO_FACE}>Face to Face</option>
+                        <option value={MEETING_TYPE.ONLINE}>Online</option><option value={MEETING_TYPE.FACE_TO_FACE}>Face to Face</option><option value={MEETING_TYPE.PHONE_CALL}>Phone Call</option>
                       </select>
                     </div>
                   </div>

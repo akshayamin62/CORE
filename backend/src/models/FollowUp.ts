@@ -31,6 +31,7 @@ export enum FOLLOWUP_STATUS {
 export enum MEETING_TYPE {
   ONLINE = "Online",
   FACE_TO_FACE = "Face to Face",
+  PHONE_CALL = "Phone Call",
 }
 
 export interface IFollowUp extends Document {

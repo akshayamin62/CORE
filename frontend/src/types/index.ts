@@ -520,6 +520,7 @@ export enum FOLLOWUP_STATUS {
 export enum MEETING_TYPE {
   ONLINE = 'Online',
   FACE_TO_FACE = 'Face to Face',
+  PHONE_CALL = 'Phone Call',
 }
 
 export interface FollowUp {
@@ -599,6 +600,7 @@ export enum TEAMMEET_STATUS {
 export enum TEAMMEET_TYPE {
   ONLINE = 'ONLINE',
   FACE_TO_FACE = 'FACE_TO_FACE',
+  PHONE_CALL = 'PHONE_CALL',
 }
 
 export interface TeamMeet {

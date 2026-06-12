@@ -135,17 +135,8 @@ const getAdminIdForUser = async (userId: string, userRole: string): Promise<mong
     const admin = await Admin.findOne({ _id: student.adminId });
     return admin ? admin.userId : null;
   } else if (userRole === USER_ROLE.OPS) {
-    // OPS may serve multiple admins; find from their registrations
-    const ops = await Ops.findOne({ userId });
-    if (!ops) return null;
-    const reg = await StudentServiceRegistration.findOne({
-      $or: [{ primaryOpsId: ops._id }, { secondaryOpsId: ops._id }, { activeOpsId: ops._id }]
-    }).populate({ path: 'studentId', select: 'adminId' });
-    if (!reg) return null;
-    const student = reg.studentId as any;
-    if (!student?.adminId) return null;
-    const admin = await Admin.findOne({ _id: student.adminId });
-    return admin ? admin.userId : null;
+    // OPS is a cross-org support role; return a sentinel so they can always schedule meets
+    return new mongoose.Types.ObjectId(userId);
   } else if (userRole === USER_ROLE.SUPER_ADMIN) {
     // Super admin doesn't belong to an org; return a sentinel
     return new mongoose.Types.ObjectId(userId);
@@ -162,6 +153,9 @@ const getAdminIdForUser = async (userId: string, userRole: string): Promise<mong
     if (!student?.adminId) return new mongoose.Types.ObjectId(userId);
     const admin = await Admin.findOne({ _id: student.adminId });
     return admin ? admin.userId : new mongoose.Types.ObjectId(userId);
+  } else if (userRole === USER_ROLE.ADVISOR) {
+    // Advisor is cross-org like eduplan coach; return a sentinel
+    return new mongoose.Types.ObjectId(userId);
   } else if (userRole === USER_ROLE.B2B_SALES) {
     // B2B Sales is cross-org like super admin; return a sentinel
     return new mongoose.Types.ObjectId(userId);
