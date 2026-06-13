@@ -12,6 +12,7 @@ import {
   switchActiveOps,
   sendMessageToStudent,
   updateRegistrationStatus,
+  updateStudentSecondaryContact,
 } from '../controllers/superAdminStudentController';
 
 const router = express.Router();
@@ -28,6 +29,13 @@ router.get('/with-registrations', getStudentsWithRegistrations);
 
 // Get student details
 router.get('/:studentId', getStudentDetails);
+
+// Update student secondary contact (super admin + assigned OPS)
+router.patch(
+  '/:studentId/secondary-contact',
+  authorize([USER_ROLE.SUPER_ADMIN, USER_ROLE.OPS]),
+  updateStudentSecondaryContact
+);
 
 // Get student form answers for a registration
 router.get('/:studentId/registrations/:registrationId/answers', getStudentFormAnswers);

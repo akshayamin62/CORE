@@ -16,6 +16,43 @@ import { USER_ROLE } from '../types/roles';
 import StudentTransfer from '../models/StudentTransfer';
 import { syncParentsFromFormAnswers } from '../utils/parentSync';
 
+/** Super Admin or assigned OPS (active/primary) may edit student secondary contact. */
+const assertCanEditStudentSecondaryContact = async (
+  userId: string,
+  userRole: string,
+  studentId: string
+): Promise<{ allowed: boolean; status?: number; message?: string }> => {
+  if (userRole === USER_ROLE.SUPER_ADMIN) {
+    return { allowed: true };
+  }
+
+  if (userRole === USER_ROLE.OPS) {
+    const ops = await Ops.findOne({ userId });
+    if (!ops) {
+      return { allowed: false, status: 404, message: 'OPS record not found' };
+    }
+
+    const registrations = await StudentServiceRegistration.find({ studentId });
+    const hasAccess = registrations.some((reg) => {
+      const activeOpsIdValue = reg.activeOpsId || reg.primaryOpsId;
+      const activeOpsIdString =
+        (activeOpsIdValue as any)?._id?.toString?.() || activeOpsIdValue?.toString?.();
+      return activeOpsIdString === ops._id.toString();
+    });
+
+    if (!hasAccess) {
+      return {
+        allowed: false,
+        status: 403,
+        message: 'Access denied. You are not the OPS for this student.',
+      };
+    }
+    return { allowed: true };
+  }
+
+  return { allowed: false, status: 403, message: 'Access denied' };
+};
+
 /**
  * Get all students with their registrations
  * For ops: only show students assigned to them
@@ -1444,6 +1481,89 @@ export const updateRegistrationStatus = async (req: AuthRequest, res: Response):
     return res.status(500).json({
       success: false,
       message: 'Failed to update registration status',
+    });
+  }
+};
+
+/**
+ * Update student secondary email / mobile (Super Admin and assigned OPS only)
+ */
+export const updateStudentSecondaryContact = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { studentId } = req.params;
+    const { secondaryEmail, secondaryMobileNumber } = req.body;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const access = await assertCanEditStudentSecondaryContact(userId, user.role, studentId);
+    if (!access.allowed) {
+      return res.status(access.status || 403).json({
+        success: false,
+        message: access.message || 'Access denied',
+      });
+    }
+
+    const student = await Student.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ success: false, message: 'Student not found' });
+    }
+
+    if (secondaryEmail !== undefined) {
+      const trimmed =
+        typeof secondaryEmail === 'string' ? secondaryEmail.trim().toLowerCase() : '';
+      if (trimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+        return res.status(400).json({ success: false, message: 'Invalid secondary email format' });
+      }
+      student.secondaryEmail = trimmed;
+    }
+
+    if (secondaryMobileNumber !== undefined) {
+      const trimmed =
+        typeof secondaryMobileNumber === 'string' ? secondaryMobileNumber.trim() : '';
+      if (trimmed) {
+        const digits = trimmed.replace(/\D/g, '');
+        if (digits.length < 10) {
+          return res.status(400).json({
+            success: false,
+            message: 'Secondary mobile must have at least 10 digits',
+          });
+        }
+        if (digits.length > 15) {
+          return res.status(400).json({
+            success: false,
+            message: 'Secondary mobile number is too long',
+          });
+        }
+      }
+      student.secondaryMobileNumber = trimmed;
+    }
+
+    await student.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Secondary contact updated successfully',
+      data: {
+        secondaryEmail: student.secondaryEmail || '',
+        secondaryMobileNumber: student.secondaryMobileNumber || '',
+      },
+    });
+  } catch (error) {
+    console.error('Update student secondary contact error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update secondary contact',
     });
   }
 };

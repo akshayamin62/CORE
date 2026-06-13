@@ -39,6 +39,8 @@ export interface Student {
   _id: string;
   userId: string;
   mobileNumber: string;
+  secondaryEmail?: string;
+  secondaryMobileNumber?: string;
   createdAt?: string;
   updatedAt?: string;
 }

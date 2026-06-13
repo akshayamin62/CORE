@@ -7,6 +7,11 @@ import { User, USER_ROLE } from '@/types';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import StudentProfileModal from '@/components/StudentProfileModal';
+import {
+  StudentSecondaryContactProvider,
+  SecondaryEmailField,
+  SecondaryMobileField,
+} from '@/components/StudentSecondaryContactFields';
 import AuthImage from '@/components/AuthImage';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
@@ -28,6 +33,8 @@ interface StudentDetails {
     createdAt: string;
   };
   mobileNumber?: string;
+  secondaryEmail?: string;
+  secondaryMobileNumber?: string;
   adminId?: {
     _id: string;
     companyName?: string;
@@ -410,6 +417,12 @@ export default function StudentDetailPage() {
           </button>
 
           {/* Student Info Card */}
+          <StudentSecondaryContactProvider
+            studentId={studentId}
+            secondaryEmail={student.secondaryEmail}
+            secondaryMobileNumber={student.secondaryMobileNumber}
+            onUpdated={fetchStudentDetails}
+          >
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
             <div className="flex items-start justify-between mb-6">
               <div className="flex items-center">
@@ -428,6 +441,7 @@ export default function StudentDetailPage() {
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">{getFullName(student.userId)}</h1>
                   <p className="text-gray-600">{student.userId.email}</p>
+                  <SecondaryEmailField />
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -464,6 +478,9 @@ export default function StudentDetailPage() {
                 <p className="font-medium text-gray-900">
                   {student.mobileNumber || 'Not provided'}
                 </p>
+                <div className="mt-2">
+                  <SecondaryMobileField />
+                </div>
               </div>
               {student.adminId && (
               <div>
@@ -550,6 +567,7 @@ export default function StudentDetailPage() {
               )}
             </div>
           </div>
+          </StudentSecondaryContactProvider>
 
           {/* Service Registrations */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

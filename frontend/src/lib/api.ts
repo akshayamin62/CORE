@@ -231,6 +231,11 @@ export const superAdminAPI = {
   updateRegistrationStatus: (registrationId: string, status: string) =>
     api.patch(`/super-admin/students/registrations/${registrationId}/status`, { status }),
 
+  updateStudentSecondaryContact: (
+    studentId: string,
+    data: { secondaryEmail?: string; secondaryMobileNumber?: string }
+  ) => api.patch(`/super-admin/students/${studentId}/secondary-contact`, data),
+
   // Referrer management
   getReferrers: () => api.get('/super-admin/referrers'),
   

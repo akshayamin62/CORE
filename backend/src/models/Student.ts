@@ -7,6 +7,8 @@ export interface IStudent extends Document {
   advisorId?: mongoose.Types.ObjectId;
   email?: string;
   mobileNumber?: string;
+  secondaryEmail?: string;
+  secondaryMobileNumber?: string;
   intake?: string;
   year?: string;
   referrerId?: mongoose.Types.ObjectId;
@@ -41,6 +43,19 @@ const studentSchema = new Schema<IStudent>(
       lowercase: true,
     },
     mobileNumber: {
+      type: String,
+      required: false,
+      trim: true,
+      default: "",
+    },
+    secondaryEmail: {
+      type: String,
+      required: false,
+      trim: true,
+      lowercase: true,
+      default: "",
+    },
+    secondaryMobileNumber: {
       type: String,
       required: false,
       trim: true,
