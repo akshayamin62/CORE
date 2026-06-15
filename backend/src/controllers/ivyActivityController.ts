@@ -19,7 +19,36 @@ const upload = multer({
   },
 });
 
-export const activityFileUploadMiddleware = upload.single('document');
+export const activityFileUploadMiddleware = (
+  req: Request,
+  res: Response,
+  next: (err?: unknown) => void
+): void => {
+  upload.single('document')(req, res, (err: unknown) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        res.status(400).json({
+          success: false,
+          message: 'PDF must be 15 MB or smaller',
+        });
+        return;
+      }
+      res.status(400).json({
+        success: false,
+        message: err.message || 'File upload failed',
+      });
+      return;
+    }
+    if (err) {
+      res.status(400).json({
+        success: false,
+        message: err instanceof Error ? err.message : 'File upload failed',
+      });
+      return;
+    }
+    next();
+  });
+};
 
 function parseActivityTasks(raw: unknown): IActivityTask[] {
   let parsed: unknown;

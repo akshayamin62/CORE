@@ -193,14 +193,8 @@ export default function SuperAdminActivitiesPage() {
       );
 
       const response = editingActivity
-        ? await ivyApi.put(`/activities/${editingActivity._id}`, formDataToSend, {
-            headers: { "Content-Type": "multipart/form-data" },
-          })
-        : await ivyApi.post("/activities", formDataToSend, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          });
+        ? await ivyApi.put(`/activities/${editingActivity._id}`, formDataToSend)
+        : await ivyApi.post("/activities", formDataToSend);
 
       if (response.data.success) {
         setSuccess(editingActivity ? "Activity updated successfully!" : "Activity created successfully!");
@@ -212,7 +206,11 @@ export default function SuperAdminActivitiesPage() {
         fetchActivities();
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || `Failed to ${editingActivity ? "update" : "create"} activity`);
+      if (err.code === 'ECONNABORTED') {
+        setError('Upload timed out. Try a smaller PDF or check your connection.');
+      } else {
+        setError(err.response?.data?.message || `Failed to ${editingActivity ? "update" : "create"} activity`);
+      }
     } finally {
       setLoading(false);
     }
@@ -312,7 +310,7 @@ export default function SuperAdminActivitiesPage() {
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               PDF Document {!isEdit && <span className="text-red-500">*</span>}
               <span className="font-normal text-gray-400 ml-1">
-                (PDF files only{isEdit ? ", leave empty to keep current" : ""})
+                (PDF only, max 15 MB{isEdit ? ", leave empty to keep current" : ""})
               </span>
             </label>
             <div
