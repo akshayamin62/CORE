@@ -3,6 +3,7 @@ import {
   createActivity,
   getActivities,
   getActivityById,
+  updateActivity,
   deleteActivity,
   activityFileUploadMiddleware,
 } from '../controllers/ivyActivityController';
@@ -23,6 +24,9 @@ const readRoles = [
 
 // Create activity (superadmin only)
 router.post('/', authorize(USER_ROLE.SUPER_ADMIN), activityFileUploadMiddleware, createActivity);
+
+// Update activity (superadmin only)
+router.put('/:id', authorize(USER_ROLE.SUPER_ADMIN), activityFileUploadMiddleware, updateActivity);
 
 // Get all activities (can filter by pointerNo)
 router.get('/', authorize(readRoles), getActivities);

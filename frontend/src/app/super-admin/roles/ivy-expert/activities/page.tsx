@@ -42,6 +42,7 @@ export default function SuperAdminActivitiesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPointer, setFilterPointer] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -77,7 +78,37 @@ export default function SuperAdminActivitiesPage() {
     setFormData({ name: "", description: "", pointerNo: "2" });
     setSelectedFile(null);
     setTasks([{ title: "", page: "" }]);
+    setEditingActivity(null);
     setShowForm(false);
+  };
+
+  const openCreateForm = () => {
+    setEditingActivity(null);
+    setFormData({ name: "", description: "", pointerNo: "2" });
+    setSelectedFile(null);
+    setTasks([{ title: "", page: "" }]);
+    setShowForm(true);
+  };
+
+  const openEditForm = (activity: Activity) => {
+    setEditingActivity(activity);
+    setFormData({
+      name: activity.title,
+      description: activity.description,
+      pointerNo: String(activity.pointerNo),
+    });
+    setSelectedFile(null);
+    setTasks(
+      activity.tasks && activity.tasks.length > 0
+        ? activity.tasks.map((task) => ({
+            title: task.title,
+            page: task.page ? String(task.page) : "",
+          }))
+        : [{ title: "", page: "" }]
+    );
+    setShowForm(true);
+    setError("");
+    setSuccess("");
   };
 
   const addTask = () => {
@@ -109,12 +140,12 @@ export default function SuperAdminActivitiesPage() {
       return;
     }
 
-    if (!selectedFile) {
+    if (!editingActivity && !selectedFile) {
       setError("Please select a PDF document");
       return;
     }
 
-    if (!selectedFile.name.toLowerCase().endsWith(".pdf")) {
+    if (selectedFile && !selectedFile.name.toLowerCase().endsWith(".pdf")) {
       setError("Only PDF files are allowed");
       return;
     }
@@ -138,7 +169,9 @@ export default function SuperAdminActivitiesPage() {
       formDataToSend.append("name", formData.name);
       formDataToSend.append("description", formData.description);
       formDataToSend.append("pointerNo", formData.pointerNo);
-      formDataToSend.append("document", selectedFile);
+      if (selectedFile) {
+        formDataToSend.append("document", selectedFile);
+      }
       formDataToSend.append(
         "tasks",
         JSON.stringify(
@@ -149,19 +182,23 @@ export default function SuperAdminActivitiesPage() {
         )
       );
 
-      const response = await ivyApi.post("/activities", formDataToSend, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = editingActivity
+        ? await ivyApi.put(`/activities/${editingActivity._id}`, formDataToSend, {
+            headers: { "Content-Type": "multipart/form-data" },
+          })
+        : await ivyApi.post("/activities", formDataToSend, {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          });
 
       if (response.data.success) {
-        setSuccess("Activity created successfully!");
+        setSuccess(editingActivity ? "Activity updated successfully!" : "Activity created successfully!");
         resetForm();
         fetchActivities();
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to create activity");
+      setError(err.response?.data?.message || `Failed to ${editingActivity ? "update" : "create"} activity`);
     } finally {
       setLoading(false);
     }
@@ -236,7 +273,7 @@ export default function SuperAdminActivitiesPage() {
               </div>
             </div>
             <button
-              onClick={() => setShowForm(!showForm)}
+              onClick={() => (showForm ? resetForm() : openCreateForm())}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-md ${
                 showForm
                   ? "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-none"
@@ -350,10 +387,12 @@ export default function SuperAdminActivitiesPage() {
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                Create New Activity
+                {editingActivity ? "Edit Activity" : "Create New Activity"}
               </h2>
               <p className="text-blue-100 text-sm mt-1">
-                Fill in the details below to add a new activity suggestion
+                {editingActivity
+                  ? "Update activity details, tasks, or replace the PDF"
+                  : "Fill in the details below to add a new activity suggestion"}
               </p>
             </div>
 
@@ -459,9 +498,9 @@ export default function SuperAdminActivitiesPage() {
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      PDF Document <span className="text-red-500">*</span>
+                      PDF Document {!editingActivity && <span className="text-red-500">*</span>}
                       <span className="font-normal text-gray-400 ml-1">
-                        (PDF files only)
+                        (PDF files only{editingActivity ? ", leave empty to keep current" : ""})
                       </span>
                     </label>
                     <div
@@ -549,7 +588,9 @@ export default function SuperAdminActivitiesPage() {
                             />
                           </svg>
                           <p className="text-sm text-gray-500">
-                            Click to upload or drag & drop
+                            {editingActivity?.documentName
+                              ? `Current: ${editingActivity.documentName}`
+                              : "Click to upload or drag & drop"}
                           </p>
                           <p className="text-xs text-gray-400 mt-1">
                             PDF files only
@@ -557,6 +598,11 @@ export default function SuperAdminActivitiesPage() {
                         </>
                       )}
                     </div>
+                    {editingActivity?.documentUrl && !selectedFile && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        Current PDF will be kept unless you upload a new one.
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -666,7 +712,7 @@ export default function SuperAdminActivitiesPage() {
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </svg>
-                      Creating...
+                      {editingActivity ? "Saving..." : "Creating..."}
                     </>
                   ) : (
                     <>
@@ -683,7 +729,7 @@ export default function SuperAdminActivitiesPage() {
                           d="M5 13l4 4L19 7"
                         />
                       </svg>
-                      Create Activity
+                      {editingActivity ? "Save Changes" : "Create Activity"}
                     </>
                   )}
                 </button>
@@ -1071,13 +1117,23 @@ export default function SuperAdminActivitiesPage() {
                             </div>
                           </div>
 
-                          {/* Delete Button */}
-                          <button
-                            onClick={() => handleDelete(activity._id)}
-                            disabled={deletingId === activity._id}
-                            className="flex-shrink-0 p-2 rounded-lg text-gray-300 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all duration-200 disabled:opacity-50"
-                            title="Delete activity"
-                          >
+                          {/* Edit & Delete Buttons */}
+                          <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                            <button
+                              onClick={() => openEditForm(activity)}
+                              className="p-2 rounded-lg text-gray-300 hover:text-blue-600 hover:bg-blue-50"
+                              title="Edit activity"
+                            >
+                              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => handleDelete(activity._id)}
+                              disabled={deletingId === activity._id}
+                              className="p-2 rounded-lg text-gray-300 hover:text-red-600 hover:bg-red-50 disabled:opacity-50"
+                              title="Delete activity"
+                            >
                             {deletingId === activity._id ? (
                               <svg
                                 className="animate-spin w-5 h-5 text-red-500"
@@ -1114,7 +1170,8 @@ export default function SuperAdminActivitiesPage() {
                                 />
                               </svg>
                             )}
-                          </button>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>

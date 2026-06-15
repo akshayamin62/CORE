@@ -3,75 +3,16 @@
 import { useState, useEffect, Suspense, useMemo } from 'react';
 import axios from 'axios';
 import { useSearchParams, useRouter } from 'next/navigation';
-import mammoth from 'mammoth';
-import DOMPurify from 'dompurify';
 import { IVY_API_URL } from '@/lib/ivyApi';
-import { useBlobUrl, fileApi } from '@/lib/useBlobUrl';
+import { fetchBlobUrl, fileApi } from '@/lib/useBlobUrl';
+import { ProtectedActivityDocumentViewer } from '@/components/ProtectedActivityDocumentViewer';
 
-// Inline document viewer (same as activities page)
 function InlineDocViewer({ url }: { url: string }) {
-  const { blobUrl, loading: blobLoading, error: blobError } = useBlobUrl(url);
-  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-  const isWord = /\.(doc|docx)$/i.test(url);
-  const [wordContent, setWordContent] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string>('');
-
-  useEffect(() => {
-    if (isWord) {
-      setIsLoading(true);
-      setError('');
-      fileApi.get(url, { responseType: 'arraybuffer' })
-        .then(response => mammoth.convertToHtml({ arrayBuffer: response.data }))
-        .then(result => {
-          setWordContent(result.value);
-          setIsLoading(false);
-        })
-        .catch(() => {
-          setError('Failed to load document');
-          setIsLoading(false);
-        });
-    }
-  }, [url, isWord]);
-
-  if (blobLoading || isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-      </div>
-    );
-  }
-
-  if (blobError || error) {
-    return <div className="text-center py-8 text-red-500 text-sm">{blobError || error}</div>;
-  }
-
-  if (isImage && blobUrl) {
-    return <img src={blobUrl} alt="Document" className="max-w-full h-auto mx-auto" />;
-  }
-
-  if (isWord && wordContent) {
-    return (
-      <div
-        className="prose max-w-none p-4"
-        style={{ userSelect: 'none' }}
-        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(wordContent) }}
-      />
-    );
-  }
-
-  if (blobUrl) {
-    return (
-      <iframe
-        src={blobUrl}
-        className="w-full border-0"
-        style={{ height: '500px', userSelect: 'none' }}
-        title="Document Preview"
-      />
-    );
-  }
-
-  return <div className="text-center py-8 text-gray-500 text-sm">Unable to preview this document</div>;
+  return (
+    <div onContextMenu={(e) => e.preventDefault()} style={{ userSelect: 'none' }}>
+      <ProtectedActivityDocumentViewer url={url} />
+    </div>
+  );
 }
 
 interface AgentSuggestion {

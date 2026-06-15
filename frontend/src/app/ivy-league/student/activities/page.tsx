@@ -9,36 +9,10 @@ import { useStudentService } from '../useStudentService';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { useBlobUrl, fetchBlobUrl, fileApi } from '@/lib/useBlobUrl';
 import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
+import { ProtectedActivityDocumentPanel, ProtectedActivityDocumentViewer } from '@/components/ProtectedActivityDocumentViewer';
 
 function InlineDocViewer({ url, onClose }: { url: string, onClose: () => void }) {
-  const { blobUrl, loading, error } = useBlobUrl(url);
-  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-
-  return (
-    <div className="mt-4 relative bg-gray-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-gray-800 animate-in fade-in zoom-in-95 duration-300">
-      <div className="absolute top-4 right-4 z-10">
-        <button
-          onClick={onClose}
-          className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-all border border-white/20"
-        >
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      <div className="min-h-[500px] flex items-center justify-center bg-gray-800">
-        {error ? (
-          <p className="text-red-400 font-bold">Failed to load document</p>
-        ) : loading || !blobUrl ? (
-          <p className="text-gray-400 font-bold animate-pulse">Loading document...</p>
-        ) : isImage ? (
-          <img src={blobUrl} alt="Document" className="max-w-full max-h-[800px] object-contain" />
-        ) : (
-          <iframe src={blobUrl} className="w-full h-[600px] border-none" title="Document Viewer" />
-        )}
-      </div>
-    </div>
-  );
+  return <ProtectedActivityDocumentPanel url={url} onClose={onClose} />;
 }
 
 // Word Document Viewer Component
@@ -113,10 +87,7 @@ function WordDocViewer({ url }: { url: string }) {
 
 // Blob-based iframe/image viewer for cross-origin safe loading
 function BlobIframe({ url, className, title }: { url: string, className?: string, title?: string }) {
-  const { blobUrl, loading, error } = useBlobUrl(url);
-  if (error) return <div className="w-full h-64 flex items-center justify-center bg-gray-100 rounded"><p className="text-red-400 font-bold">Failed to load document</p></div>;
-  if (loading || !blobUrl) return <div className="w-full h-64 flex items-center justify-center bg-gray-100 rounded"><p className="text-gray-400 animate-pulse">Loading document...</p></div>;
-  return <iframe src={blobUrl} className={className} title={title} />;
+  return <ProtectedActivityDocumentViewer url={url} className={className} minHeight="16rem" />;
 }
 
 // Conversation Window Component
@@ -1241,19 +1212,7 @@ function ActivitiesContent() {
                             {/* Document Viewer */}
                             {isViewing && (
                               <div className="border-t border-brand-100 p-3 bg-gray-50">
-                                {isPdf ? (
-                                  <BlobIframe
-                                    url={doc.url}
-                                    className="w-full h-96 border-none rounded"
-                                    title={`Ivy Expert Document ${docIdx + 1}`}
-                                  />
-                                ) : isWord ? (
-                                  <WordDocViewer url={doc.url} />
-                                ) : (
-                                  <div className="w-full h-64 flex items-center justify-center bg-gray-100 rounded">
-                                    <p className="text-gray-600">Document preview not available</p>
-                                  </div>
-                                )}
+                                <ProtectedActivityDocumentViewer url={doc.url} />
                               </div>
                             )}
                           </div>

@@ -189,6 +189,105 @@ export const getActivityById = async (req: Request, res: Response): Promise<void
   }
 };
 
+function deleteActivityFile(documentUrl?: string) {
+  if (!documentUrl) return;
+  const filePath = path.join(getUploadBaseDir(), documentUrl.replace(/^\/uploads\//, ''));
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+}
+
+// Update activity
+export const updateActivity = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { name, description, pointerNo, tasks: tasksRaw } = req.body;
+
+    const activity = await AgentSuggestion.findById(id);
+    if (!activity || activity.source !== 'SUPERADMIN') {
+      res.status(404).json({
+        success: false,
+        message: 'Activity not found',
+      });
+      return;
+    }
+
+    if (!name || !description || !pointerNo) {
+      res.status(400).json({
+        success: false,
+        message: 'Activity name, description, and pointer number are required',
+      });
+      return;
+    }
+
+    const pointer = parseInt(pointerNo);
+    if (![2, 3, 4].includes(pointer)) {
+      res.status(400).json({
+        success: false,
+        message: 'Pointer number must be 2, 3, or 4',
+      });
+      return;
+    }
+
+    let tasks: IActivityTask[];
+    try {
+      tasks = parseActivityTasks(tasksRaw);
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Invalid tasks',
+      });
+      return;
+    }
+
+    if (req.file) {
+      deleteActivityFile(activity.documentUrl);
+
+      const uploadDir = path.join(getUploadBaseDir(), 'activities', pointer.toString());
+      ensureDir(uploadDir);
+
+      const fileName = `${Date.now()}-${req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const filePath = path.join(uploadDir, fileName);
+      fs.writeFileSync(filePath, req.file.buffer);
+
+      activity.documentUrl = `/uploads/activities/${pointer}/${fileName}`;
+      activity.documentName = req.file.originalname;
+    } else if (pointer !== activity.pointerNo && activity.documentUrl) {
+      const oldRelative = activity.documentUrl.replace(/^\/uploads\//, '');
+      const oldPath = path.join(getUploadBaseDir(), oldRelative);
+      const fileName = path.basename(oldPath);
+      const newDir = path.join(getUploadBaseDir(), 'activities', pointer.toString());
+      ensureDir(newDir);
+      const newPath = path.join(newDir, fileName);
+
+      if (fs.existsSync(oldPath)) {
+        fs.renameSync(oldPath, newPath);
+      }
+
+      activity.documentUrl = `/uploads/activities/${pointer}/${fileName}`;
+    }
+
+    activity.title = name;
+    activity.description = description;
+    activity.pointerNo = pointer;
+    activity.tasks = tasks;
+
+    await activity.save();
+
+    res.json({
+      success: true,
+      message: 'Activity updated successfully',
+      data: activity,
+    });
+  } catch (error: any) {
+    console.error('Error updating activity:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update activity',
+    });
+  }
+};
+
 // Delete activity
 export const deleteActivity = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -205,10 +304,7 @@ export const deleteActivity = async (req: Request, res: Response): Promise<void>
     }
 
     if (activity.documentUrl) {
-      const filePath = path.join(getUploadBaseDir(), activity.documentUrl.replace(/^\/uploads\//, ''));
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
+      deleteActivityFile(activity.documentUrl);
     }
 
     await AgentSuggestion.findByIdAndDelete(id);
