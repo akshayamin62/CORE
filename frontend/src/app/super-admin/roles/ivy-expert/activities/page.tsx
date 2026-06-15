@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import ivyApi from "@/lib/ivyApi";
+import { ProtectedActivityDocumentViewer } from "@/components/ProtectedActivityDocumentViewer";
 
 interface ActivityTask {
   title: string;
@@ -41,8 +42,9 @@ export default function SuperAdminActivitiesPage() {
   const [success, setSuccess] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPointer, setFilterPointer] = useState<number | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+  const [viewingActivity, setViewingActivity] = useState<Activity | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -74,12 +76,18 @@ export default function SuperAdminActivitiesPage() {
     }
   };
 
-  const resetForm = () => {
+  const resetCreateForm = () => {
     setFormData({ name: "", description: "", pointerNo: "2" });
     setSelectedFile(null);
     setTasks([{ title: "", page: "" }]);
+    setShowCreateForm(false);
+  };
+
+  const closeEditModal = () => {
     setEditingActivity(null);
-    setShowForm(false);
+    setFormData({ name: "", description: "", pointerNo: "2" });
+    setSelectedFile(null);
+    setTasks([{ title: "", page: "" }]);
   };
 
   const openCreateForm = () => {
@@ -87,10 +95,13 @@ export default function SuperAdminActivitiesPage() {
     setFormData({ name: "", description: "", pointerNo: "2" });
     setSelectedFile(null);
     setTasks([{ title: "", page: "" }]);
-    setShowForm(true);
+    setShowCreateForm(true);
+    setError("");
+    setSuccess("");
   };
 
   const openEditForm = (activity: Activity) => {
+    setShowCreateForm(false);
     setEditingActivity(activity);
     setFormData({
       name: activity.title,
@@ -106,7 +117,6 @@ export default function SuperAdminActivitiesPage() {
           }))
         : [{ title: "", page: "" }]
     );
-    setShowForm(true);
     setError("");
     setSuccess("");
   };
@@ -194,7 +204,11 @@ export default function SuperAdminActivitiesPage() {
 
       if (response.data.success) {
         setSuccess(editingActivity ? "Activity updated successfully!" : "Activity created successfully!");
-        resetForm();
+        if (editingActivity) {
+          closeEditModal();
+        } else {
+          resetCreateForm();
+        }
         fetchActivities();
       }
     } catch (err: any) {
@@ -241,6 +255,192 @@ export default function SuperAdminActivitiesPage() {
     4: activities.filter((a) => a.pointerNo === 4).length,
   };
 
+  const renderActivityForm = (
+    isEdit: boolean,
+    fileInputId: string,
+    onCancel: () => void
+  ): ReactNode => (
+    <form onSubmit={handleSubmit} className="p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-5">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Activity Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-gray-50 hover:bg-white transition-colors placeholder:text-gray-400"
+              placeholder="e.g. Science Olympiad, Research Internship..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Pointer Category <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { value: "2", label: "Pointer 2", sublabel: "Spike in one area", icon: "🏆" },
+                { value: "3", label: "Pointer 3", sublabel: "Leadership & Initiative", icon: "🔬" },
+                { value: "4", label: "Pointer 4", sublabel: "Global & Social Impact", icon: "🤝" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, pointerNo: option.value })}
+                  className={`relative flex flex-col items-center p-3 rounded-xl border-2 transition-all duration-200 ${
+                    formData.pointerNo === option.value
+                      ? "border-blue-500 bg-blue-50 shadow-md shadow-blue-100"
+                      : "border-gray-200 bg-white hover:border-blue-200 hover:bg-blue-50/50"
+                  }`}
+                >
+                  <span className="text-xl mb-1">{option.icon}</span>
+                  <span className={`text-xs font-bold ${formData.pointerNo === option.value ? "text-blue-700" : "text-gray-700"}`}>
+                    {option.label}
+                  </span>
+                  <span className={`text-[10px] mt-0.5 ${formData.pointerNo === option.value ? "text-blue-500" : "text-gray-400"}`}>
+                    {option.sublabel}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              PDF Document {!isEdit && <span className="text-red-500">*</span>}
+              <span className="font-normal text-gray-400 ml-1">
+                (PDF files only{isEdit ? ", leave empty to keep current" : ""})
+              </span>
+            </label>
+            <div
+              className={`relative border-2 border-dashed rounded-xl p-4 text-center transition-all duration-200 cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 ${
+                selectedFile ? "border-blue-400 bg-blue-50" : "border-gray-200 bg-gray-50"
+              }`}
+              onClick={() => document.getElementById(fileInputId)?.click()}
+            >
+              <input
+                id={fileInputId}
+                type="file"
+                accept=".pdf,application/pdf"
+                onChange={(e) => setSelectedFile(e.target.files ? e.target.files[0] : null)}
+                className="hidden"
+              />
+              {selectedFile ? (
+                <div className="flex items-center justify-center gap-3">
+                  <p className="text-sm font-semibold text-blue-700 truncate max-w-[240px]">{selectedFile.name}</p>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedFile(null);
+                    }}
+                    className="p-1 rounded-full hover:bg-blue-200 text-blue-600"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-500">
+                    {isEdit && editingActivity?.documentName
+                      ? `Current: ${editingActivity.documentName}`
+                      : "Click to upload or drag & drop"}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-1">PDF files only</p>
+                </>
+              )}
+            </div>
+            {isEdit && editingActivity?.documentUrl && !selectedFile && (
+              <div className="mt-2 flex items-center gap-3">
+                <p className="text-xs text-gray-500">Current PDF will be kept unless you upload a new one.</p>
+                <button
+                  type="button"
+                  onClick={() => setViewingActivity(editingActivity)}
+                  className="text-xs font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap"
+                >
+                  View PDF
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Tasks <span className="text-red-500">*</span>
+              </label>
+              <button type="button" onClick={addTask} className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Add Task
+              </button>
+            </div>
+            <div className="space-y-2">
+              {tasks.map((task, index) => (
+                <div key={index} className="flex items-start gap-2">
+                  <input
+                    type="text"
+                    value={task.title}
+                    onChange={(e) => updateTask(index, "title", e.target.value)}
+                    placeholder={`Task ${index + 1} title`}
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  />
+                  <input
+                    type="number"
+                    min={1}
+                    value={task.page}
+                    onChange={(e) => updateTask(index, "page", e.target.value)}
+                    placeholder="Page"
+                    className="w-20 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  />
+                  {tasks.length > 1 && (
+                    <button type="button" onClick={() => removeTask(index)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Remove task">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Description <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="flex-1 min-h-[200px] w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-gray-50 hover:bg-white transition-colors resize-none placeholder:text-gray-400"
+            placeholder="Describe the activity, its objectives, expected outcomes, and any specific requirements..."
+          />
+          <p className="text-xs text-gray-400 mt-2 text-right">{formData.description.length} characters</p>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
+        <button type="button" onClick={onCancel} className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-md shadow-blue-200 disabled:shadow-none"
+        >
+          {loading ? (isEdit ? "Saving..." : "Creating...") : isEdit ? "Save Changes" : "Create Activity"}
+        </button>
+      </div>
+    </form>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Header */}
@@ -273,14 +473,14 @@ export default function SuperAdminActivitiesPage() {
               </div>
             </div>
             <button
-              onClick={() => (showForm ? resetForm() : openCreateForm())}
+              onClick={() => (showCreateForm ? resetCreateForm() : openCreateForm())}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 shadow-md ${
-                showForm
+                showCreateForm
                   ? "bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-none"
                   : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-blue-200"
               }`}
             >
-              {showForm ? (
+              {showCreateForm ? (
                 <>
                   <svg
                     className="w-5 h-5"
@@ -369,8 +569,8 @@ export default function SuperAdminActivitiesPage() {
           </div>
         )}
 
-        {/* Add Activity Form */}
-        {showForm && (
+        {/* Add Activity Form (inline, create only) */}
+        {showCreateForm && !editingActivity && (
           <div className="mb-8 bg-white rounded-2xl shadow-lg border border-blue-100 overflow-hidden">
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -387,354 +587,85 @@ export default function SuperAdminActivitiesPage() {
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                {editingActivity ? "Edit Activity" : "Create New Activity"}
+                Create New Activity
               </h2>
               <p className="text-blue-100 text-sm mt-1">
-                {editingActivity
-                  ? "Update activity details, tasks, or replace the PDF"
-                  : "Fill in the details below to add a new activity suggestion"}
+                Fill in the details below to add a new activity suggestion
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left Column */}
-                <div className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Activity Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-gray-50 hover:bg-white transition-colors placeholder:text-gray-400"
-                      placeholder="e.g. Science Olympiad, Research Internship..."
-                    />
-                  </div>
+            {renderActivityForm(false, "file-upload-create", resetCreateForm)}
+          </div>
+        )}
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Pointer Category <span className="text-red-500">*</span>
-                    </label>
-                    <div className="grid grid-cols-3 gap-3">
-                      {[
-                        {
-                          value: "2",
-                          label: "Pointer 2",
-                          sublabel: "Spike in one area",
-                          icon: "🏆",
-                        },
-                        {
-                          value: "3",
-                          label: "Pointer 3",
-                          sublabel: "Leadership & Initiative",
-                          icon: "🔬",
-                        },
-                        {
-                          value: "4",
-                          label: "Pointer 4",
-                          sublabel: "Global & Social Impact",
-                          icon: "🤝",
-                        },
-                      ].map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() =>
-                            setFormData({
-                              ...formData,
-                              pointerNo: option.value,
-                            })
-                          }
-                          className={`relative flex flex-col items-center p-3 rounded-xl border-2 transition-all duration-200 ${
-                            formData.pointerNo === option.value
-                              ? "border-blue-500 bg-blue-50 shadow-md shadow-blue-100"
-                              : "border-gray-200 bg-white hover:border-blue-200 hover:bg-blue-50/50"
-                          }`}
-                        >
-                          <span className="text-xl mb-1">{option.icon}</span>
-                          <span
-                            className={`text-xs font-bold ${
-                              formData.pointerNo === option.value
-                                ? "text-blue-700"
-                                : "text-gray-700"
-                            }`}
-                          >
-                            {option.label}
-                          </span>
-                          <span
-                            className={`text-[10px] mt-0.5 ${
-                              formData.pointerNo === option.value
-                                ? "text-blue-500"
-                                : "text-gray-400"
-                            }`}
-                          >
-                            {option.sublabel}
-                          </span>
-                          {formData.pointerNo === option.value && (
-                            <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
-                              <svg
-                                className="w-3 h-3 text-white"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={3}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
-                            </div>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      PDF Document {!editingActivity && <span className="text-red-500">*</span>}
-                      <span className="font-normal text-gray-400 ml-1">
-                        (PDF files only{editingActivity ? ", leave empty to keep current" : ""})
-                      </span>
-                    </label>
-                    <div
-                      className={`relative border-2 border-dashed rounded-xl p-4 text-center transition-all duration-200 cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 ${
-                        selectedFile
-                          ? "border-blue-400 bg-blue-50"
-                          : "border-gray-200 bg-gray-50"
-                      }`}
-                      onClick={() =>
-                        document.getElementById("file-upload")?.click()
-                      }
-                    >
-                      <input
-                        id="file-upload"
-                        type="file"
-                        accept=".pdf,application/pdf"
-                        onChange={(e) =>
-                          setSelectedFile(
-                            e.target.files ? e.target.files[0] : null
-                          )
-                        }
-                        className="hidden"
-                      />
-                      {selectedFile ? (
-                        <div className="flex items-center justify-center gap-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <svg
-                              className="w-5 h-5 text-blue-600"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                              />
-                            </svg>
-                          </div>
-                          <div className="text-left">
-                            <p className="text-sm font-semibold text-blue-700 truncate max-w-[200px]">
-                              {selectedFile.name}
-                            </p>
-                            <p className="text-xs text-blue-500">
-                              {(selectedFile.size / 1024).toFixed(1)} KB
-                            </p>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedFile(null);
-                            }}
-                            className="ml-2 p-1 rounded-full hover:bg-blue-200 text-blue-600"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          <svg
-                            className="w-8 h-8 text-gray-400 mx-auto mb-2"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                            />
-                          </svg>
-                          <p className="text-sm text-gray-500">
-                            {editingActivity?.documentName
-                              ? `Current: ${editingActivity.documentName}`
-                              : "Click to upload or drag & drop"}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            PDF files only
-                          </p>
-                        </>
-                      )}
-                    </div>
-                    {editingActivity?.documentUrl && !selectedFile && (
-                      <p className="text-xs text-gray-500 mt-2">
-                        Current PDF will be kept unless you upload a new one.
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="block text-sm font-semibold text-gray-700">
-                        Tasks <span className="text-red-500">*</span>
-                      </label>
-                      <button
-                        type="button"
-                        onClick={addTask}
-                        className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                        Add Task
-                      </button>
-                    </div>
-                    <div className="space-y-2">
-                      {tasks.map((task, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <input
-                            type="text"
-                            value={task.title}
-                            onChange={(e) => updateTask(index, "title", e.target.value)}
-                            placeholder={`Task ${index + 1} title`}
-                            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                          />
-                          <input
-                            type="number"
-                            min={1}
-                            value={task.page}
-                            onChange={(e) => updateTask(index, "page", e.target.value)}
-                            placeholder="Page"
-                            className="w-20 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                          />
-                          {tasks.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removeTask(index)}
-                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                              title="Remove task"
-                            >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column — Description */}
-                <div className="flex flex-col">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Description <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    className="flex-1 min-h-[200px] w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-gray-50 hover:bg-white transition-colors resize-none placeholder:text-gray-400"
-                    placeholder="Describe the activity, its objectives, expected outcomes, and any specific requirements..."
-                  />
-                  <p className="text-xs text-gray-400 mt-2 text-right">
-                    {formData.description.length} characters
+        {/* Edit Activity Modal */}
+        {editingActivity && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={closeEditModal}
+            />
+            <div className="relative bg-white rounded-2xl shadow-2xl border border-blue-100 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-start justify-between gap-4 shrink-0">
+                <div>
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit Activity
+                  </h2>
+                  <p className="text-blue-100 text-sm mt-1">
+                    Update activity details, tasks, or replace the PDF
                   </p>
                 </div>
-              </div>
-
-              {/* Submit Button */}
-              <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
                 <button
                   type="button"
-                  onClick={resetForm}
-                  className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+                  onClick={closeEditModal}
+                  className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                  aria-label="Close"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all shadow-md shadow-blue-200 disabled:shadow-none"
-                >
-                  {loading ? (
-                    <>
-                      <svg
-                        className="animate-spin h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      {editingActivity ? "Saving..." : "Creating..."}
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      {editingActivity ? "Save Changes" : "Create Activity"}
-                    </>
-                  )}
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
-            </form>
+              <div className="overflow-y-auto flex-1">
+                {renderActivityForm(true, "file-upload-edit", closeEditModal)}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* View PDF Modal */}
+        {viewingActivity?.documentUrl && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setViewingActivity(null)}
+            />
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+                <div className="min-w-0">
+                  <h2 className="text-lg font-bold text-gray-900 truncate">{viewingActivity.title}</h2>
+                  <p className="text-sm text-gray-500 truncate">
+                    {viewingActivity.documentName || "Activity PDF"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setViewingActivity(null)}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  aria-label="Close"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="overflow-y-auto flex-1 p-4 bg-gray-50">
+                <ProtectedActivityDocumentViewer url={viewingActivity.documentUrl} />
+              </div>
+            </div>
           </div>
         )}
 
@@ -1117,8 +1048,20 @@ export default function SuperAdminActivitiesPage() {
                             </div>
                           </div>
 
-                          {/* Edit & Delete Buttons */}
+                          {/* View, Edit & Delete Buttons */}
                           <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                            {activity.documentUrl && (
+                              <button
+                                onClick={() => setViewingActivity(activity)}
+                                className="p-2 rounded-lg text-gray-300 hover:text-indigo-600 hover:bg-indigo-50"
+                                title="View PDF"
+                              >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </button>
+                            )}
                             <button
                               onClick={() => openEditForm(activity)}
                               className="p-2 rounded-lg text-gray-300 hover:text-blue-600 hover:bg-blue-50"
