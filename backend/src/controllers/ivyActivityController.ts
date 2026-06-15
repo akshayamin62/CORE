@@ -1,34 +1,70 @@
 import { Request, Response } from 'express';
-import AgentSuggestion from '../models/ivy/AgentSuggestion';
+import AgentSuggestion, { IActivityTask } from '../models/ivy/AgentSuggestion';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { getUploadBaseDir, ensureDir } from '../utils/uploadDir';
 
-// Configure multer for Word document uploads
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 15 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowedMimes = [
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-      'application/msword', // .doc
-    ];
+    const allowedMimes = ['application/pdf'];
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only Word documents (.doc, .docx) are allowed'));
+      cb(new Error('Only PDF documents are allowed'));
     }
   },
 });
 
 export const activityFileUploadMiddleware = upload.single('document');
 
+function parseActivityTasks(raw: unknown): IActivityTask[] {
+  let parsed: unknown;
+  if (typeof raw === 'string') {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      throw new Error('Invalid tasks format');
+    }
+  } else if (Array.isArray(raw)) {
+    parsed = raw;
+  } else {
+    throw new Error('At least one task is required');
+  }
+
+  if (!Array.isArray(parsed)) {
+    throw new Error('Tasks must be an array');
+  }
+
+  const tasks = parsed
+    .map((item: { title?: string; page?: string | number }) => {
+      const title = String(item?.title || '').trim();
+      const pageRaw = item?.page;
+      const page =
+        pageRaw !== undefined && pageRaw !== null && String(pageRaw).trim() !== ''
+          ? Number(pageRaw)
+          : undefined;
+      return {
+        title,
+        ...(page !== undefined && !Number.isNaN(page) ? { page } : {}),
+      };
+    })
+    .filter((task) => task.title.length > 0);
+
+  if (tasks.length === 0) {
+    throw new Error('At least one task with a title is required');
+  }
+
+  return tasks;
+}
+
 // Create a new activity
 export const createActivity = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, description, pointerNo } = req.body;
+    const { name, description, pointerNo, tasks: tasksRaw } = req.body;
 
     if (!name || !description || !pointerNo) {
       res.status(400).json({
@@ -41,12 +77,22 @@ export const createActivity = async (req: Request, res: Response): Promise<void>
     if (!req.file) {
       res.status(400).json({
         success: false,
-        message: 'Document file is required',
+        message: 'PDF document is required',
       });
       return;
     }
 
-    // Validate pointer number
+    let tasks: IActivityTask[];
+    try {
+      tasks = parseActivityTasks(tasksRaw);
+    } catch (error: any) {
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Invalid tasks',
+      });
+      return;
+    }
+
     const pointer = parseInt(pointerNo);
     if (![2, 3, 4].includes(pointer)) {
       res.status(400).json({
@@ -56,7 +102,6 @@ export const createActivity = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Save file to disk with pointer-wise folder structure
     const uploadDir = path.join(getUploadBaseDir(), 'activities', pointer.toString());
     ensureDir(uploadDir);
 
@@ -64,15 +109,15 @@ export const createActivity = async (req: Request, res: Response): Promise<void>
     const filePath = path.join(uploadDir, fileName);
     fs.writeFileSync(filePath, req.file.buffer);
 
-    // Save to AgentSuggestion table with SUPERADMIN source
     const activity = new AgentSuggestion({
       pointerNo: pointer,
       title: name,
-      description: description,
+      description,
       tags: [],
       source: 'SUPERADMIN',
       documentUrl: `/uploads/activities/${pointer}/${fileName}`,
       documentName: req.file.originalname,
+      tasks,
     });
 
     await activity.save();
@@ -159,9 +204,8 @@ export const deleteActivity = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    // Delete file from disk
     if (activity.documentUrl) {
-      const filePath = path.join(process.cwd(), activity.documentUrl);
+      const filePath = path.join(getUploadBaseDir(), activity.documentUrl.replace(/^\/uploads\//, ''));
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }

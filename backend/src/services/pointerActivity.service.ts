@@ -225,30 +225,18 @@ export const selectActivities = async (
       let ivyExpertDocuments: any[] = [];
       
       if (suggestion && suggestion.source === 'SUPERADMIN' && suggestion.documentUrl) {
-        // Extract TOC from the superadmin's document
-        try {
-          const fullPath = path.join(process.cwd(), suggestion.documentUrl);
-          const extractedTasks = await extractTOC(fullPath);
-          
-          ivyExpertDocuments = [{
-            url: suggestion.documentUrl,
-            tasks: extractedTasks.map(task => ({
-              title: task.title,
-              page: task.page,
-              status: 'not-started' as const
-            }))
-          }];
-        } catch (error) {
-          console.error('Error extracting TOC for superadmin activity:', error);
-          // If extraction fails, create a default task
-          ivyExpertDocuments = [{
-            url: suggestion.documentUrl,
-            tasks: [{
-              title: 'Complete Document Review',
-              status: 'not-started' as const
-            }]
-          }];
-        }
+        const templateTasks = (suggestion.tasks || []).map((task) => ({
+          title: task.title,
+          page: task.page,
+          status: 'not-started' as const,
+        }));
+
+        ivyExpertDocuments = [{
+          url: suggestion.documentUrl,
+          tasks: templateTasks.length > 0
+            ? templateTasks
+            : [{ title: 'Complete Document Review', status: 'not-started' as const }],
+        }];
       }
       
       // Parse deadline if provided

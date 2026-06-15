@@ -3,6 +3,11 @@
 import { useState, useEffect } from "react";
 import ivyApi from "@/lib/ivyApi";
 
+interface ActivityTask {
+  title: string;
+  page: string;
+}
+
 interface Activity {
   _id: string;
   title: string;
@@ -10,6 +15,7 @@ interface Activity {
   pointerNo: number;
   documentUrl?: string;
   documentName?: string;
+  tasks?: { title: string; page?: number }[];
   source: string;
   createdAt: string;
 }
@@ -28,6 +34,7 @@ export default function SuperAdminActivitiesPage() {
     pointerNo: "2",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [tasks, setTasks] = useState<ActivityTask[]>([{ title: "", page: "" }]);
   const [loading, setLoading] = useState(false);
   const [fetchingActivities, setFetchingActivities] = useState(true);
   const [error, setError] = useState("");
@@ -66,6 +73,27 @@ export default function SuperAdminActivitiesPage() {
     }
   };
 
+  const resetForm = () => {
+    setFormData({ name: "", description: "", pointerNo: "2" });
+    setSelectedFile(null);
+    setTasks([{ title: "", page: "" }]);
+    setShowForm(false);
+  };
+
+  const addTask = () => {
+    setTasks((prev) => [...prev, { title: "", page: "" }]);
+  };
+
+  const removeTask = (index: number) => {
+    setTasks((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)));
+  };
+
+  const updateTask = (index: number, field: keyof ActivityTask, value: string) => {
+    setTasks((prev) =>
+      prev.map((task, i) => (i === index ? { ...task, [field]: value } : task))
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -82,7 +110,24 @@ export default function SuperAdminActivitiesPage() {
     }
 
     if (!selectedFile) {
-      setError("Please select a Word document");
+      setError("Please select a PDF document");
+      return;
+    }
+
+    if (!selectedFile.name.toLowerCase().endsWith(".pdf")) {
+      setError("Only PDF files are allowed");
+      return;
+    }
+
+    const validTasks = tasks
+      .map((task) => ({
+        title: task.title.trim(),
+        page: task.page.trim(),
+      }))
+      .filter((task) => task.title);
+
+    if (validTasks.length === 0) {
+      setError("Add at least one task with a title");
       return;
     }
 
@@ -94,6 +139,15 @@ export default function SuperAdminActivitiesPage() {
       formDataToSend.append("description", formData.description);
       formDataToSend.append("pointerNo", formData.pointerNo);
       formDataToSend.append("document", selectedFile);
+      formDataToSend.append(
+        "tasks",
+        JSON.stringify(
+          validTasks.map((task) => ({
+            title: task.title,
+            ...(task.page ? { page: Number(task.page) } : {}),
+          }))
+        )
+      );
 
       const response = await ivyApi.post("/activities", formDataToSend, {
         headers: {
@@ -103,9 +157,7 @@ export default function SuperAdminActivitiesPage() {
 
       if (response.data.success) {
         setSuccess("Activity created successfully!");
-        setFormData({ name: "", description: "", pointerNo: "2" });
-        setSelectedFile(null);
-        setShowForm(false);
+        resetForm();
         fetchActivities();
       }
     } catch (err: any) {
@@ -407,9 +459,9 @@ export default function SuperAdminActivitiesPage() {
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Document <span className="text-red-500">*</span>
+                      PDF Document <span className="text-red-500">*</span>
                       <span className="font-normal text-gray-400 ml-1">
-                        (Word files only)
+                        (PDF files only)
                       </span>
                     </label>
                     <div
@@ -425,7 +477,7 @@ export default function SuperAdminActivitiesPage() {
                       <input
                         id="file-upload"
                         type="file"
-                        accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        accept=".pdf,application/pdf"
                         onChange={(e) =>
                           setSelectedFile(
                             e.target.files ? e.target.files[0] : null
@@ -500,10 +552,61 @@ export default function SuperAdminActivitiesPage() {
                             Click to upload or drag & drop
                           </p>
                           <p className="text-xs text-gray-400 mt-1">
-                            .doc, .docx files
+                            PDF files only
                           </p>
                         </>
                       )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-semibold text-gray-700">
+                        Tasks <span className="text-red-500">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addTask}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Task
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      {tasks.map((task, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <input
+                            type="text"
+                            value={task.title}
+                            onChange={(e) => updateTask(index, "title", e.target.value)}
+                            placeholder={`Task ${index + 1} title`}
+                            className="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          />
+                          <input
+                            type="number"
+                            min={1}
+                            value={task.page}
+                            onChange={(e) => updateTask(index, "page", e.target.value)}
+                            placeholder="Page"
+                            className="w-20 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          />
+                          {tasks.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeTask(index)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                              title="Remove task"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
@@ -531,11 +634,7 @@ export default function SuperAdminActivitiesPage() {
               <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t border-gray-100">
                 <button
                   type="button"
-                  onClick={() => {
-                    setFormData({ name: "", description: "", pointerNo: "2" });
-                    setSelectedFile(null);
-                    setShowForm(false);
-                  }}
+                  onClick={resetForm}
                   className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
                 >
                   Cancel
@@ -933,6 +1032,24 @@ export default function SuperAdminActivitiesPage() {
                                     />
                                   </svg>
                                   {activity.documentName}
+                                </span>
+                              )}
+                              {activity.tasks && activity.tasks.length > 0 && (
+                                <span className="flex items-center gap-1">
+                                  <svg
+                                    className="w-3.5 h-3.5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                                    />
+                                  </svg>
+                                  {activity.tasks.length} task{activity.tasks.length !== 1 ? "s" : ""}
                                 </span>
                               )}
                               <span className="flex items-center gap-1">

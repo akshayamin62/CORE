@@ -727,6 +727,7 @@ interface AgentSuggestion {
   source?: string;
   documentUrl?: string | null;
   documentName?: string | null;
+  tasks?: { title: string; page?: number }[];
 }
 
 interface StudentActivity {

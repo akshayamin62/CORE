@@ -83,6 +83,7 @@ interface AgentSuggestion {
   source?: string;
   documentUrl?: string | null;
   documentName?: string | null;
+  tasks?: { title: string; page?: number }[];
 }
 
 interface StudentActivity {
@@ -653,6 +654,26 @@ function SelectActivitiesContent() {
                       <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Description</h3>
                       <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{highlightedActivity.description}</p>
                     </div>
+
+                    {/* Tasks */}
+                    {highlightedActivity.tasks && highlightedActivity.tasks.length > 0 && (
+                      <div className="mb-6">
+                        <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Tasks</h3>
+                        <ul className="space-y-2">
+                          {highlightedActivity.tasks.map((task, index) => (
+                            <li
+                              key={index}
+                              className="flex items-center justify-between gap-3 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                            >
+                              <span className="text-gray-800">{task.title}</span>
+                              {task.page ? (
+                                <span className="text-xs text-gray-500 whitespace-nowrap">Page {task.page}</span>
+                              ) : null}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
                     {/* Document */}
                     {highlightedActivity.documentUrl && (
