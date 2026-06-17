@@ -7,6 +7,8 @@ import axios from 'axios';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { authAPI } from '@/lib/api';
 import { USER_ROLE } from '@/types';
+import MobileBottomNav from '@/components/MobileBottomNav';
+import { buildCallbackMobileNavItems } from '@/utils/mobileNavHelpers';
 
 const REFERRER_ROLE = USER_ROLE.REFERRER;
 const ADVISOR_ROLE = USER_ROLE.ADVISOR;
@@ -23,6 +25,7 @@ const ALLOWED_ROLES: string[] = [
 ];
 
 function StudentSidebar() {
+    const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
     // Check if conversation is open (when a task is selected)
@@ -152,8 +155,23 @@ function StudentSidebar() {
         return pathname === url.pathname;
     };
 
+    const displayedNavItems = readOnly && (userRole === REFERRER_ROLE || (userRole === ADVISOR_ROLE && isServiceUnderAdmin))
+        ? navItems.filter(item => item.name === 'Dashboard')
+        : navItems;
+
+    const mobileNavItems = buildCallbackMobileNavItems(
+        displayedNavItems.map((item) => ({
+            id: item.href,
+            label: item.name,
+            icon: item.icon,
+            isActive: isActive(item.href),
+            onClick: () => router.push(item.href),
+        }))
+    );
+
     return (
-        <aside className={`bg-white border-r border-gray-100 flex flex-col h-screen sticky top-0 shadow-sm z-20 transition-all duration-300 ${isConversationOpen ? 'w-20' : 'w-72'}`}>
+        <>
+        <aside className={`hidden md:flex bg-white border-r border-gray-100 flex-col h-screen sticky top-0 shadow-sm z-20 transition-all duration-300 ${isConversationOpen ? 'w-20' : 'w-72'}`}>
             <div className={`p-8 border-b border-gray-50 ${isConversationOpen ? 'px-4' : ''}`}>
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center shadow-lg shadow-brand-100 flex-shrink-0">
@@ -169,7 +187,7 @@ function StudentSidebar() {
             </div>
 
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-                {(readOnly && (userRole === REFERRER_ROLE || (userRole === ADVISOR_ROLE && isServiceUnderAdmin)) ? navItems.filter(item => item.name === 'Dashboard') : navItems).map((item) => {
+                {displayedNavItems.map((item) => {
                     const active = isActive(item.href);
                     
                     return (
@@ -219,6 +237,8 @@ function StudentSidebar() {
             </div>
             )}
         </aside>
+        <MobileBottomNav items={mobileNavItems} />
+        </>
     );
 }
 
@@ -252,7 +272,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             <Suspense fallback={<div className="w-72 bg-white border-r animate-pulse"></div>}>
                 <StudentSidebar />
             </Suspense>
-            <main className="flex-1 min-h-screen overflow-x-hidden">
+            <main className="flex-1 min-h-screen overflow-x-hidden pb-24 md:pb-0">
                 {children}
             </main>
         </div>

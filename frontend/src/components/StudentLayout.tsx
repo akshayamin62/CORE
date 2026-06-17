@@ -4,6 +4,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import MobileBottomNav from '@/components/MobileBottomNav';
+import { buildCallbackMobileNavItems } from '@/utils/mobileNavHelpers';
 import { serviceAPI } from '@/lib/api';
 
 interface StudentLayoutProps {
@@ -255,11 +257,84 @@ export default function StudentLayout({
     );
   };
 
+  const visibleCommonItems = isCoachingClasses
+    ? commonItems.filter((i) => i.key === 'service-plans')
+    : commonItems;
+
+  const mobileNavItems = buildCallbackMobileNavItems([
+    ...(isCoachingClasses
+      ? []
+      : isOuterNav && outerReg
+        ? (outerService?.slug === 'education-planning' ? eduPlanItems : studyAbroadItems).map((item) => ({
+            id: item.key,
+            label: item.label,
+            icon: item.icon,
+            isActive: false,
+            onClick: () => router.push(outerRegPath),
+          }))
+        : isEducationPlanning
+          ? [
+              ...eduPlanItems.map((item) => ({
+                id: item.key,
+                label: item.label,
+                icon: item.icon,
+                isActive: activeEduPlanView === item.key,
+                onClick: () => {
+                  if (item.key === 'my-activity') {
+                    onMyActivityClick?.();
+                  } else {
+                    onEduPlanViewChange?.(item.key);
+                  }
+                },
+              })),
+              ...formStructure.map((part, i) => ({
+                id: part.part.key,
+                label: part.part.title,
+                icon: getPartIcon(part.part.title),
+                isActive: currentPartIndex === i && activeEduPlanView === 'form',
+                onClick: () => {
+                  onPartChange(i);
+                  onSectionChange(0);
+                },
+              })),
+            ]
+          : [
+              ...(showDashboard
+                ? [
+                    {
+                      id: 'dashboard',
+                      label: 'Dashboard',
+                      icon: Icon.dashboard,
+                      isActive: isDashboardActive,
+                      onClick: () => onDashboardClick?.(),
+                    },
+                  ]
+                : []),
+              ...formStructure.map((part, i) => ({
+                id: part.part.key,
+                label: part.part.title,
+                icon: getPartIcon(part.part.title),
+                isActive: currentPartIndex === i && !isDashboardActive,
+                onClick: () => {
+                  onPartChange(i);
+                  onSectionChange(0);
+                },
+              })),
+            ]),
+    ...visibleCommonItems.map((item) => ({
+      id: item.key,
+      label: item.label,
+      icon: item.icon,
+      isActive: pathname === item.path,
+      onClick: () => router.push(item.path),
+    })),
+  ]);
+
   return (
     <div className="flex min-h-[calc(100vh-6.25rem)] bg-gray-50">
       {/* Sidebar */}
       <aside
-        className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 transition-all duration-300 flex flex-col sticky top-25 h-[calc(100vh-6.25rem)]`}
+        className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 transition-all duration-300 hidden md:flex flex-col sticky top-25 h-[calc(100vh-6.25rem)]`}
       >
         {/* Sidebar Header */}
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4">
@@ -339,7 +414,9 @@ export default function StudentLayout({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pb-24 md:pb-0">{children}</main>
+
+      <MobileBottomNav items={mobileNavItems} />
     </div>
   );
 }

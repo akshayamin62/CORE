@@ -1,10 +1,39 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+const MOBILE_DASHBOARD_PREFIXES = [
+  '/super-admin',
+  '/admin',
+  '/ops',
+  '/counselor',
+  '/advisor',
+  '/parent',
+  '/student',
+  '/referrer',
+  '/service-provider',
+  '/eduplan-coach',
+  '/ivy-expert',
+  '/b2b-sales',
+  '/b2b-ops',
+  '/education-planning',
+  '/study-abroad',
+  '/coaching-classes',
+  '/ivy-league',
+];
 
 export default function Footer() {
+  const pathname = usePathname();
   const currentYear = new Date().getFullYear();
+  const hideOnMobile = MOBILE_DASHBOARD_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
   return (
-    <footer className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-300">
+    <footer
+      className={`relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-300 ${
+        hideOnMobile ? 'hidden md:block' : ''
+      }`}
+    >
       {/* Decorative Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>

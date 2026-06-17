@@ -10,6 +10,7 @@ import { getFullName } from '@/utils/nameHelpers';
 import TeamMeetCalendar from '@/components/TeamMeetCalendar';
 import TeamMeetSidebar from '@/components/TeamMeetSidebar';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
+import { VerticalWordsLabel } from '@/utils/verticalLabel';
 
 interface RoleStats {
   ADMIN?: number;
@@ -183,13 +184,13 @@ export default function SuperAdminDashboardPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-8 flex items-start justify-between">
+          <div className="mb-6 md:mb-8 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{getFullName(user)}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{getFullName(user)}</h1>
             </div>
-            {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="text-right"><p className="text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></div>); })()}
+            {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="sm:text-right"><p className="text-2xl sm:text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></div>); })()}
           </div>
 
           {/* Role Stats Cards (site visits + roles + leads together) */}
@@ -344,7 +345,12 @@ function RoleStatCard({ title, value, color, onClick, icon }: RoleStatCardProps)
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
+          <p className="text-sm text-gray-600 mb-1">
+            <VerticalWordsLabel
+              text={title}
+              multiWordClassName="sm:inline-flex sm:flex-row sm:gap-1"
+            />
+          </p>
           <p className="text-3xl font-bold text-gray-900">{value}</p>
         </div>
         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorStyle.bg} ${colorStyle.text}`}>

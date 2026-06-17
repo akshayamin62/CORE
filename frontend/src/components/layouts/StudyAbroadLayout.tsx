@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import MobileBottomNav from '@/components/MobileBottomNav';
+import { buildCallbackMobileNavItems } from '@/utils/mobileNavHelpers';
 
 interface UserInfo {
   firstName?: string;
@@ -118,6 +120,37 @@ export default function StudyAbroadLayout({
     router.push('/login');
   };
 
+  const mobileNavItems = buildCallbackMobileNavItems([
+    ...(showDashboard
+      ? [
+          {
+            id: 'dashboard',
+            label: 'Dashboard',
+            icon: Icon.dashboard,
+            isActive: isDashboardActive,
+            onClick: () => onDashboardClick?.(),
+          },
+        ]
+      : []),
+    ...formStructure.map((part, i) => ({
+      id: part.part.key,
+      label: part.part.title,
+      icon: getPartIcon(part.part.title),
+      isActive: currentPartIndex === i && !isDashboardActive,
+      onClick: () => {
+        onPartChange?.(i);
+        onSectionChange?.(0);
+      },
+    })),
+    ...commonItems.map((item) => ({
+      id: item.key,
+      label: item.label,
+      icon: item.icon,
+      isActive: pathname === item.path,
+      onClick: () => router.push(item.path),
+    })),
+  ]);
+
   const navBtn = (key: string, label: string, icon: React.ReactNode, active: boolean, onClick: () => void) => (
     <div key={key} className="mb-1">
       <button
@@ -135,7 +168,7 @@ export default function StudyAbroadLayout({
 
   return (
     <div className="flex min-h-[calc(100vh-5rem)] bg-gray-50">
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 transition-all duration-300 flex flex-col sticky top-20 h-[calc(100vh-5rem)]`}>
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 transition-all duration-300 hidden md:flex flex-col sticky top-20 h-[calc(100vh-5rem)]`}>
         {/* Header */}
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4">
           {sidebarOpen && <span className="font-semibold text-gray-900 truncate">{serviceName}</span>}
@@ -215,7 +248,9 @@ export default function StudyAbroadLayout({
         )}
       </aside>
 
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 pb-24 md:pb-0">{children}</main>
+
+      <MobileBottomNav items={mobileNavItems} />
     </div>
   );
 }

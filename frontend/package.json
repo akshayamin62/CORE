@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:mobile": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start"
   },
@@ -35,5 +36,12 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
     "typescript": "^5"
-  }
+  },
+  "description": "Next.js frontend application for the Community Platform with full authentication flow.",
+  "main": "index.js",
+  "keywords": [
+    "1234"
+  ],
+  "author": "dipti",
+  "license": "ISC"
 }

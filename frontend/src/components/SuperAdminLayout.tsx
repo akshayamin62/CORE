@@ -5,6 +5,8 @@ import { User, USER_ROLE } from '@/types';
 import { useState } from 'react';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import MobileBottomNav from '@/components/MobileBottomNav';
+import { buildPathMobileNavItems } from '@/utils/mobileNavHelpers';
 
 interface SuperAdminLayoutProps {
   children: React.ReactNode;
@@ -331,13 +333,17 @@ export default function SuperAdminLayout({ children, user }: SuperAdminLayoutPro
     );
   };
 
+  const mobileNavItems = buildPathMobileNavItems(navigationItems, pathname, router, {
+    preserveParents: true,
+  });
+
   return (
     <div className="flex min-h-[calc(100vh-6.25rem)] bg-gray-50">
       {/* Sidebar */}
       <aside
-        className={`${
+        className={`hidden md:flex ${
           sidebarOpen ? 'w-64' : 'w-20'
-        } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col sticky top-25 h-[calc(100vh-6.25rem)]`}
+        } bg-white border-r border-gray-200 transition-all duration-300 flex-col sticky top-25 h-[calc(100vh-6.25rem)]`}
       >
         {/* Sidebar Header */}
         <div className="h-14 border-b border-gray-200 flex items-center justify-between px-4">
@@ -427,7 +433,9 @@ export default function SuperAdminLayout({ children, user }: SuperAdminLayoutPro
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      <main className="flex-1 overflow-y-auto pb-28 md:pb-0">{children}</main>
+
+      <MobileBottomNav items={mobileNavItems} />
     </div>
   );
 }

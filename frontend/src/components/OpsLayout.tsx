@@ -5,6 +5,8 @@ import { User } from '@/types';
 import { useState } from 'react';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import MobileBottomNav from '@/components/MobileBottomNav';
+import { buildPathMobileNavItems } from '@/utils/mobileNavHelpers';
 
 interface OpsLayoutProps {
   children: React.ReactNode;
@@ -87,13 +89,17 @@ export default function OpsLayout({ children, user }: OpsLayoutProps) {
     router.push('/login');
   };
 
+  const mobileNavItems = buildPathMobileNavItems(navigationItems, pathname, router, {
+    isActive: (path) => pathname === path,
+  });
+
   return (
     <div className="flex min-h-[calc(100vh-6.25rem)] bg-gray-50">
       {/* Sidebar */}
       <aside
         className={`${
           sidebarOpen ? 'w-64' : 'w-20'
-        } bg-white border-r border-gray-200 transition-all duration-300 flex flex-col sticky top-25 h-[calc(100vh-6.25rem)]`}
+        } bg-white border-r border-gray-200 transition-all duration-300 hidden md:flex flex-col sticky top-25 h-[calc(100vh-6.25rem)]`}
       >
         {/* Sidebar Header */}
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4">
@@ -213,7 +219,9 @@ export default function OpsLayout({ children, user }: OpsLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-auto pb-24 md:pb-0">{children}</main>
+
+      <MobileBottomNav items={mobileNavItems} />
     </div>
   );
 }

@@ -179,8 +179,17 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, server-to-server)
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    const isNgrok =
+      /^https:\/\/[a-z0-9-]+\.ngrok-free\.app$/i.test(origin) ||
+      /^https:\/\/[a-z0-9-]+\.ngrok-free\.dev$/i.test(origin) ||
+      /^https:\/\/[a-z0-9-]+\.ngrok\.io$/i.test(origin);
+
+    if (allowedOrigins.includes(origin) || isNgrok) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

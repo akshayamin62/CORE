@@ -1,13 +1,10 @@
 import axios from 'axios';
+import { getApiUrl, getBackendUrl } from '@/lib/apiConfig';
 
-// Base URL for the Ivy League API endpoints
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = getApiUrl();
 export const IVY_API_URL = `${API_URL}/ivy`;
 
-// Backend base URL for static file serving (uploads, documents)
-export const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL
-  ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api$/, '')
-  : 'http://localhost:5000';
+export const BACKEND_URL = getBackendUrl();
 
 const ivyApi = axios.create({
   baseURL: IVY_API_URL,
