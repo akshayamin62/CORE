@@ -222,7 +222,7 @@ export default function MobileBottomNav({ items, visibleCount = VISIBLE_COUNT }:
                         <span className="absolute bottom-0.5 h-[3px] w-8 rounded-full bg-gradient-to-r from-[#2563EB] to-[#60A5FA]" />
                       )}
                       {hasChildren && (
-                        <span className="absolute right-1 top-2 h-1.5 w-1.5 rounded-full bg-blue-400" aria-hidden />
+                        <span className="absolute right-1 top-2 h-1.5 w-1.5 border-r border-b border-black rotate-45" aria-hidden />
                       )}
                     </button>
                   );
