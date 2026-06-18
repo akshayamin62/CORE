@@ -9,6 +9,9 @@ import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
 import { StudentMobileList } from '@/components/StudentMobileRecordCard';
+import ListPageFilters from '@/components/ListPageFilters';
+import PageStatCard from '@/components/PageStatCard';
+import { ListPageStatGrid } from '@/components/SuperAdminRoleDetailFrame';
 
 interface AdvisorInfo {
   _id: string;
@@ -106,33 +109,6 @@ interface UserStats {
   active: number;
   pendingTransfers: number;
   transferred: number;
-}
-
-function StatCard({ title, value, color, active, onClick }: { title: string; value: string; color: string; active?: boolean; onClick?: () => void }) {
-  const colorClasses: Record<string, string> = {
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-green-100 text-green-600',
-    yellow: 'bg-yellow-100 text-yellow-600',
-    purple: 'bg-purple-100 text-purple-600',
-  };
-  return (
-    <div
-      className={`bg-white rounded-xl shadow-sm border p-6 transition-all ${onClick ? 'cursor-pointer hover:shadow-md' : ''} ${active ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-200'}`}
-      onClick={onClick}
-    >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
-        </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 type TransferFilter = 'all' | 'transferred' | 'pending';
@@ -296,24 +272,42 @@ export default function AdminStudentsPage() {
     <>
       <Toaster position="top-right" />
       <AdminLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Students</h1>
-            <p className="text-gray-600 mt-1">Manage students and incoming transfer requests</p>
+          <div className="mb-5 md:mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Students</h1>
+            <p className="mt-1 text-sm text-gray-600 sm:text-base">Manage students and incoming transfer requests</p>
           </div>
 
           {/* Stats Cards */}
-          <div className={`grid grid-cols-2 ${isMainAdmin ? 'md:grid-cols-4' : 'md:grid-cols-2'} gap-4 mb-6`}>
-            <StatCard title="Total Students" value={stats.total.toString()} color="blue" active={transferFilter === 'all'} onClick={() => setTransferFilter('all')} />
+          <ListPageStatGrid>
+            <PageStatCard
+              title="Total Students"
+              value={stats.total}
+              color="blue"
+              active={transferFilter === 'all'}
+              onClick={() => setTransferFilter('all')}
+            />
             {isMainAdmin && (
-              <StatCard title="Via Advisor" value={stats.transferred.toString()} color="purple" active={transferFilter === 'transferred'} onClick={() => setTransferFilter('transferred')} />
+              <PageStatCard
+                title="Via Advisor"
+                value={stats.transferred}
+                color="purple"
+                active={transferFilter === 'transferred'}
+                onClick={() => setTransferFilter('transferred')}
+              />
             )}
             {isMainAdmin && (
-              <StatCard title="Pending Transfers" value={stats.pendingTransfers.toString()} color="yellow" active={transferFilter === 'pending'} onClick={() => setTransferFilter('pending')} />
+              <PageStatCard
+                title="Pending Transfers"
+                value={stats.pendingTransfers}
+                color="yellow"
+                active={transferFilter === 'pending'}
+                onClick={() => setTransferFilter('pending')}
+              />
             )}
-            <StatCard title="Active" value={stats.active.toString()} color="green" />
-          </div>
+            <PageStatCard title="Active" value={stats.active} color="green" />
+          </ListPageStatGrid>
 
           {/* Pending Transfers Section */}
           {transferFilter === 'pending' && (
@@ -370,8 +364,59 @@ export default function AdminStudentsPage() {
 
           {/* Students Table */}
           {transferFilter !== 'pending' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-              <div className="p-6 border-b border-gray-200 bg-gray-50">
+            <div className="mb-6 rounded-xl border border-gray-200 bg-white shadow-sm">
+              <div className="rounded-t-xl border-b border-gray-100 bg-gray-50 p-3 sm:p-4">
+                <div className="md:hidden">
+                  <ListPageFilters
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    searchPlaceholder="Search by name, email, mobile..."
+                    pillFilters={[
+                      {
+                        value: serviceFilter,
+                        onChange: setServiceFilter,
+                        emptyValue: '',
+                        options: [
+                          { value: '', label: 'All Services', mobileLabel: 'All' },
+                          ...availableServices.map((s) => ({ value: s, label: s, mobileLabel: s.split(' ')[0] })),
+                        ],
+                      },
+                      {
+                        value: counselorFilter,
+                        onChange: setCounselorFilter,
+                        emptyValue: '',
+                        options: [
+                          { value: '', label: 'All Counselors', mobileLabel: 'All' },
+                          ...availableCounselors.map((c) => ({
+                            value: c._id,
+                            label: c.name,
+                            mobileLabel: c.name.split(' ')[0],
+                          })),
+                        ],
+                      },
+                      ...(isMainAdmin
+                        ? [
+                            {
+                              value: transferFilter === 'all' ? '' : transferFilter,
+                              onChange: (v: string) => setTransferFilter((v || 'all') as TransferFilter),
+                              emptyValue: '',
+                              options: [
+                                { value: '', label: 'All Students', mobileLabel: 'All' },
+                                { value: 'transferred', label: 'Via Advisor', mobileLabel: 'Advisor' },
+                              ],
+                            },
+                          ]
+                        : []),
+                    ]}
+                    onClear={() => {
+                      setSearchQuery('');
+                      setTransferFilter('all');
+                      setServiceFilter('');
+                      setCounselorFilter('');
+                    }}
+                  />
+                </div>
+                <div className="hidden md:block">
                 <div className="flex flex-wrap gap-3">
                   <input
                     type="text"
@@ -428,6 +473,7 @@ export default function AdminStudentsPage() {
                   >
                     Clear Filters
                   </button>
+                </div>
                 </div>
               </div>
 

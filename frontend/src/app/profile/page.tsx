@@ -275,32 +275,32 @@ export default function ProfilePage() {
           <div className="absolute bottom-20 left-20 w-96 h-96 bg-cyan-400/10 rounded-full blur-3xl animate-float" style={{animationDelay: '1.5s'}}></div>
         </div>
 
-        <div className="relative max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="relative mx-auto max-w-5xl px-4 py-4 pb-24 sm:px-6 sm:py-8 lg:px-8">
           {/* Header */}
-          <div className="mb-8 animate-fade-in">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">My Profile</h1>
-            <p className="text-gray-600 text-lg">View and manage your profile information</p>
+          <div className="mb-5 animate-fade-in sm:mb-8">
+            <h1 className="mb-1 text-2xl font-bold text-gray-900 sm:text-4xl md:text-5xl">My Profile</h1>
+            <p className="text-sm text-gray-600 sm:text-lg">View and manage your profile information</p>
           </div>
 
           {/* Profile Card Header */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 mb-6 animate-fade-in">
-            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-t-2xl p-6">
-              <div className="flex items-center">
-                <div className="relative">
+          <div className="mb-6 animate-fade-in rounded-2xl border border-gray-100 bg-white shadow-xl">
+            <div className="rounded-t-2xl bg-gradient-to-r from-blue-600 to-cyan-600 p-4 sm:p-6">
+              <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
+                <div className="relative shrink-0">
                   {user?.profilePicture ? (
-                    <AuthImage path={user.profilePicture} alt="Profile" className="w-16 h-16 rounded-2xl object-cover shadow-xl" />
+                    <AuthImage path={user.profilePicture} alt="Profile" className="h-16 w-16 rounded-2xl object-cover shadow-xl sm:h-20 sm:w-20" />
                   ) : (
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-2xl font-bold shadow-xl text-white">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-2xl font-bold text-white shadow-xl sm:h-20 sm:w-20">
                       {getInitials(user)}
                     </div>
                   )}
                   <input type="file" ref={fileInputRef} accept="image/*" onChange={handleProfilePicUpload} className="hidden" />
-                  {uploadingPic && <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center"><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /></div>}
+                  {uploadingPic && <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/60"><div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" /></div>}
                 </div>
-                <div className="ml-5">
-                  <h2 className="text-2xl font-bold text-white mb-1">{getFullName(user)}</h2>
-                  <p className="text-blue-100">{user?.email}</p>
-                  <div className="flex gap-2 mt-2">
+                <div className="min-w-0 text-center sm:ml-2 sm:text-left">
+                  <h2 className="mb-1 truncate text-xl font-bold text-white sm:text-2xl">{getFullName(user)}</h2>
+                  <p className="truncate text-sm text-blue-100 sm:text-base">{user?.email}</p>
+                  <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
                     <button onClick={() => fileInputRef.current?.click()} disabled={uploadingPic} className="px-3 py-1 text-xs font-medium bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors">
                       {user?.profilePicture ? 'Change Photo' : 'Upload Photo'}
                     </button>
@@ -316,12 +316,12 @@ export default function ProfilePage() {
           </div>
 
           {/* Section Tabs */}
-          <div className="flex flex-wrap gap-2 mb-6">
+          <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto pb-1 sm:mb-6 sm:flex-wrap">
             {formSections.map((section, idx) => (
               <button
                 key={section.key}
                 onClick={() => setSelectedSectionIndex(idx)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`shrink-0 rounded-lg px-3 py-2 text-xs font-medium transition-all sm:px-4 sm:text-sm ${
                   idx === selectedSectionIndex
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
@@ -386,38 +386,38 @@ export default function ProfilePage() {
       </div>
 
       {/* Main Content */}
-      <div className="relative max-w-4xl mx-auto py-8 sm:px-6 lg:px-8">
-        <div className="px-4 sm:px-0">
+      <div className="relative mx-auto max-w-4xl px-4 py-4 pb-24 sm:px-6 sm:py-8 lg:px-8">
+        <div>
           {/* Header */}
-          <div className="mb-8 animate-fade-in">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
+          <div className="mb-5 animate-fade-in sm:mb-8">
+            <h1 className="mb-1 text-2xl font-bold text-gray-900 sm:text-4xl md:text-5xl">
               My Profile
             </h1>
-            <p className="text-gray-600 text-lg">
+            <p className="text-sm text-gray-600 sm:text-lg">
               View and manage your account information
             </p>
           </div>
 
           {/* Profile Card */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 animate-fade-in">
+          <div className="animate-fade-in rounded-2xl border border-gray-100 bg-white shadow-xl">
             {/* Profile Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-t-2xl p-8">
-              <div className="flex items-center">
-                <div className="relative">
+            <div className="rounded-t-2xl bg-gradient-to-r from-blue-600 to-cyan-600 p-4 sm:p-8">
+              <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
+                <div className="relative shrink-0">
                   {user?.profilePicture ? (
-                    <AuthImage path={user.profilePicture} alt="Profile" className="w-20 h-20 rounded-2xl object-cover shadow-xl" />
+                    <AuthImage path={user.profilePicture} alt="Profile" className="h-16 w-16 rounded-2xl object-cover shadow-xl sm:h-20 sm:w-20" />
                   ) : (
-                    <div className={`w-20 h-20 rounded-2xl bg-white flex items-center justify-center text-3xl font-bold shadow-xl ${user?.role ? `bg-gradient-to-br ${getRoleBadgeColor(user.role)}` : 'bg-gradient-to-br from-blue-500 to-cyan-500'} text-white`}>
+                    <div className={`flex h-16 w-16 items-center justify-center rounded-2xl text-2xl font-bold text-white shadow-xl sm:h-20 sm:w-20 ${user?.role ? `bg-gradient-to-br ${getRoleBadgeColor(user.role)}` : 'bg-gradient-to-br from-blue-500 to-cyan-500'}`}>
                       {getInitials(user)}
                     </div>
                   )}
                   <input type="file" ref={fileInputRef} accept="image/*" onChange={handleProfilePicUpload} className="hidden" />
-                  {uploadingPic && <div className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center"><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /></div>}
+                  {uploadingPic && <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/60"><div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" /></div>}
                 </div>
-                <div className="ml-6">
-                  <h2 className="text-3xl font-bold text-white mb-1">{getFullName(user)}</h2>
-                  <p className="text-blue-100 text-lg">{user?.email}</p>
-                  <div className="flex gap-2 mt-2">
+                <div className="min-w-0 text-center sm:ml-6 sm:text-left">
+                  <h2 className="mb-1 truncate text-xl font-bold text-white sm:text-3xl">{getFullName(user)}</h2>
+                  <p className="truncate text-sm text-blue-100 sm:text-lg">{user?.email}</p>
+                  <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
                     <button onClick={() => fileInputRef.current?.click()} disabled={uploadingPic} className="px-3 py-1.5 text-xs font-medium bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors">
                       {user?.profilePicture ? 'Change Photo' : 'Upload Photo'}
                     </button>
@@ -432,12 +432,12 @@ export default function ProfilePage() {
             </div>
 
             {/* Profile Information */}
-            <div className="p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-4 sm:p-8">
+              <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
                 {/* Full Name */}
                 <div className="group">
                   <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Full Name</label>
-                  <div className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl group-hover:shadow-md transition-shadow">
+                  <div className="flex items-center rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 p-3 transition-shadow group-hover:shadow-md sm:p-4">
                     <svg className="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
@@ -448,7 +448,7 @@ export default function ProfilePage() {
                 {/* Email Address */}
                 <div className="group">
                   <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Email Address</label>
-                  <div className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl group-hover:shadow-md transition-shadow">
+                  <div className="flex items-center rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 p-3 transition-shadow group-hover:shadow-md sm:p-4">
                     <svg className="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
@@ -459,7 +459,7 @@ export default function ProfilePage() {
                 {/* Account Role */}
                 <div className="group">
                   <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Account Role</label>
-                  <div className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl group-hover:shadow-md transition-shadow">
+                  <div className="flex items-center rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 p-3 transition-shadow group-hover:shadow-md sm:p-4">
                     <svg className="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
@@ -470,7 +470,7 @@ export default function ProfilePage() {
                 {/* Account Status */}
                 <div className="group">
                   <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Account Status</label>
-                  <div className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl group-hover:shadow-md transition-shadow">
+                  <div className="flex items-center rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 p-3 transition-shadow group-hover:shadow-md sm:p-4">
                     <div className={`w-3 h-3 rounded-full ${user?.isActive ? 'bg-green-500' : 'bg-red-500'} mr-3 animate-pulse`}></div>
                     <span className={`font-semibold ${user?.isActive ? 'text-green-600' : 'text-red-600'}`}>
                       {user?.isActive ? 'Active' : 'Inactive'}
@@ -481,7 +481,7 @@ export default function ProfilePage() {
                 {/* Verification Status */}
                 <div className="group">
                   <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Verification Status</label>
-                  <div className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl group-hover:shadow-md transition-shadow">
+                  <div className="flex items-center rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 p-3 transition-shadow group-hover:shadow-md sm:p-4">
                     <div className={`w-3 h-3 rounded-full ${user?.isVerified ? 'bg-green-500' : 'bg-yellow-500'} mr-3 animate-pulse`}></div>
                     <span className={`font-semibold ${user?.isVerified ? 'text-green-600' : 'text-yellow-600'}`}>
                       {user?.isVerified ? 'Verified' : 'Pending Verification'}
@@ -492,7 +492,7 @@ export default function ProfilePage() {
                 {/* Member Since */}
                 <div className="group">
                   <label className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Member Since</label>
-                  <div className="flex items-center p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl group-hover:shadow-md transition-shadow">
+                  <div className="flex items-center rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 p-3 transition-shadow group-hover:shadow-md sm:p-4">
                     <svg className="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
@@ -506,18 +506,18 @@ export default function ProfilePage() {
 
             {/* Verification Notice */}
             {!user?.isVerified && (
-              <div className="mx-8 mb-8 bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-400 rounded-xl p-6">
-                <div className="flex items-start">
+              <div className="mx-4 mb-4 rounded-xl border-l-4 border-yellow-400 bg-gradient-to-r from-yellow-50 to-orange-50 p-4 sm:mx-8 sm:mb-8 sm:p-6">
+                <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-start">
                   <div className="shrink-0">
-                    <div className="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-100 sm:h-12 sm:w-12">
                       <svg className="h-6 w-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
                     </div>
                   </div>
-                  <div className="ml-4 flex-1">
-                    <h3 className="text-lg font-bold text-yellow-900 mb-2">Account Verification Required</h3>
-                    <p className="text-yellow-800 leading-relaxed">
+                  <div className="flex-1 sm:ml-4">
+                    <h3 className="mb-1 text-base font-bold text-yellow-900 sm:mb-2 sm:text-lg">Account Verification Required</h3>
+                    <p className="text-sm leading-relaxed text-yellow-800 sm:text-base">
                       Your account is pending additional verification. You will be notified via email once approved. 
                       This helps us maintain a secure and trusted community.
                     </p>

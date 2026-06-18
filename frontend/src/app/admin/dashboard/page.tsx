@@ -168,7 +168,7 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Stats Cards */}
-          <div className="mb-6 grid grid-cols-1 gap-4 md:mb-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:mb-8 md:grid-cols-2 lg:grid-cols-3">
             <StatCard
               title="Total Counselors"
               value={stats?.totalCounselors.toString() || '0'}
@@ -191,7 +191,7 @@ export default function AdminDashboardPage() {
             />
 
             {/* Copy Enquiry URL */}
-            <div className="w-full rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:max-w-lg">
+            <div className="col-span-2 w-full rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:col-span-1 md:max-w-lg">
               <div className="mb-2 flex items-center gap-2">
                 <svg className="h-5 w-5 shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -218,45 +218,40 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <ActionCard
-                title="Manage Counselors"
-                description="View and manage all your counselors"
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">Quick Actions</h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <ActionButton
+                onClick={() => router.push('/admin/counselors')}
                 icon={
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 }
-                buttonText="View Counselors"
-                onClick={() => router.push('/admin/counselors')}
-                color="blue"
+                title="Manage Counselors"
+                description="View and manage all your counselors"
               />
-              <ActionCard
+              <ActionButton
+                onClick={() => router.push('/admin/leads')}
+                icon={
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                }
                 title="View Leads"
                 description="Check all leads from your enquiry form"
+              />
+              <ActionButton
+                onClick={() => router.push('/admin/students')}
                 icon={
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
                   </svg>
                 }
-                buttonText="View Leads"
-                onClick={() => router.push('/admin/leads')}
-                color="blue"
-              />
-              <ActionCard
                 title="View Students"
                 description="Check all students from your enquiry form"
-                icon={
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                }
-                buttonText="View Students"
-                onClick={() => router.push('/admin/students')}
-                color="blue"
-              />              
+              />
             </div>
           </div>
 
@@ -311,20 +306,20 @@ interface StatCardProps {
 
 function StatCard({ title, value, icon, color }: StatCardProps) {
   const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600',
-    green: 'bg-green-50 text-green-600',
-    purple: 'bg-purple-50 text-purple-600',
-    yellow: 'bg-yellow-50 text-yellow-600',
+    blue: 'bg-blue-100 text-blue-600',
+    green: 'bg-green-100 text-green-600',
+    purple: 'bg-purple-100 text-purple-600',
+    yellow: 'bg-yellow-100 text-yellow-600',
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+    <div className="rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm transition-all hover:border-gray-300 hover:shadow-md sm:p-4 md:p-6">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="mb-0.5 truncate text-[11px] leading-tight text-gray-600 sm:mb-1 sm:text-sm">{title}</p>
+          <p className="text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">{value}</p>
         </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 md:h-12 md:w-12 ${colorClasses[color]} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-5 sm:[&>svg]:w-5 md:[&>svg]:h-6 md:[&>svg]:w-6`}>
           {icon}
         </div>
       </div>
@@ -332,44 +327,27 @@ function StatCard({ title, value, icon, color }: StatCardProps) {
   );
 }
 
-// Action Card Component
-interface ActionCardProps {
+interface ActionButtonProps {
+  onClick: () => void;
+  icon: React.ReactNode;
   title: string;
   description: string;
-  icon: React.ReactNode;
-  buttonText: string;
-  onClick: () => void;
-  color: 'blue' | 'green' | 'purple' | 'yellow';
 }
 
-function ActionCard({ title, description, icon, buttonText, onClick, color }: ActionCardProps) {
-  const colorClasses = {
-    blue: 'bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white',
-    green: 'bg-green-100 text-green-600 group-hover:bg-green-600 group-hover:text-white',
-    purple: 'bg-purple-100 text-purple-600 group-hover:bg-purple-600 group-hover:text-white',
-    yellow: 'bg-yellow-100 text-yellow-600 group-hover:bg-yellow-600 group-hover:text-white',
-  };
-
-  const buttonColorClasses = {
-    blue: 'bg-blue-600 hover:bg-blue-700',
-    green: 'bg-green-600 hover:bg-green-700',
-    purple: 'bg-purple-600 hover:bg-purple-700',
-    yellow: 'bg-yellow-600 hover:bg-yellow-700',
-  };
-
+function ActionButton({ onClick, icon, title, description }: ActionButtonProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 group hover:shadow-md transition-shadow">
-      <div className={`w-14 h-14 rounded-lg flex items-center justify-center mb-4 transition-colors ${colorClasses[color]}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex items-start gap-3 rounded-lg border border-gray-200 p-4 text-left transition-all hover:border-blue-300 hover:bg-gray-50"
+    >
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
         {icon}
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-sm text-gray-600 mb-4">{description}</p>
-      <button
-        onClick={onClick}
-        className={`w-full px-4 py-2 text-white rounded-lg font-medium transition-colors ${buttonColorClasses[color]}`}
-      >
-        {buttonText}
-      </button>
-    </div>
+      <div className="min-w-0 flex-1">
+        <h3 className="mb-1 font-semibold text-gray-900">{title}</h3>
+        <p className="text-sm text-gray-600">{description}</p>
+      </div>
+    </button>
   );
 }

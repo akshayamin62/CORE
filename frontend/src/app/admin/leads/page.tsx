@@ -274,18 +274,18 @@ export default function AdminLeadsPage() {
       <AdminLayout user={user}>
         <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="mb-5 flex flex-col gap-3 sm:mb-6 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Lead Management</h1>
-              <p className="text-gray-600 mt-1">Manage and track your enquiry leads</p>
+              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Lead Management</h1>
+              <p className="mt-1 text-sm text-gray-600 sm:text-base">Manage and track your enquiry leads</p>
             </div>
 
             {/* Enquiry Form URL */}
             {enquiryFormUrl && (
-              <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500 mb-1">Your Enquiry Form URL</p>
-                  <p className="text-sm text-gray-700 truncate max-w-xs">{enquiryFormUrl}</p>
+              <div className="flex w-full flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center lg:w-auto">
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 text-xs text-gray-500">Your Enquiry Form URL</p>
+                  <p className="break-all text-sm text-gray-700 lg:max-w-xs lg:truncate">{enquiryFormUrl}</p>
                 </div>
                 <button
                   onClick={copyToClipboard}
@@ -311,7 +311,7 @@ export default function AdminLeadsPage() {
           </div>
 
           {/* Stats Cards - Clickable */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
             <StatCard
               title="Total Leads"
               value={totalLeads}
@@ -425,6 +425,20 @@ export default function AdminLeadsPage() {
                     value: serviceFilter,
                     onChange: setServiceFilter,
                     options: LEAD_SERVICE_FILTER_OPTIONS,
+                  },
+                  {
+                    value: counselorFilter,
+                    onChange: setCounselorFilter,
+                    emptyValue: '',
+                    options: [
+                      { value: '', label: 'All Counselors', mobileLabel: 'All' },
+                      { value: 'unassigned', label: 'Unassigned', mobileLabel: 'None' },
+                      ...counselors.map((counselor) => ({
+                        value: counselor._id,
+                        label: getFullName(counselor) || counselor.email,
+                        mobileLabel: (getFullName(counselor) || counselor.email).split(' ')[0],
+                      })),
+                    ],
                   },
                 ]}
                 onClear={clearAllFilters}
@@ -760,24 +774,24 @@ function StatCard({ title, value, icon, color, onClick, isActive, percentage, sh
   };
 
   return (
-    <div 
-      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md' : ''
+    <div
+      className={`rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all sm:p-5 ${
+        onClick ? 'cursor-pointer hover:shadow-md active:scale-[0.98]' : ''
       } ${
         isActive ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'
       }`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${colorClasses[color]} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6`}>
           {icon}
         </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+        <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{value}</h3>
       </div>
-      <div className="flex items-center justify-between mt-3">
-        <p className="text-sm font-semibold text-gray-700">{title}</p>
+      <div className="mt-2 flex items-center justify-between gap-2 sm:mt-3">
+        <p className="truncate text-xs font-semibold text-gray-700 sm:text-sm">{title}</p>
         {showPercentage && percentage !== undefined && (
-          <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
+          <p className="shrink-0 text-xs font-semibold text-gray-900 sm:text-sm">{percentage.toFixed(1)}%</p>
         )}
       </div>
     </div>

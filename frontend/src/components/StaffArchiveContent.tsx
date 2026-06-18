@@ -8,6 +8,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
 import MobileUserRecordCard from '@/components/MobileUserRecordCard';
+import ListPageFilters from '@/components/ListPageFilters';
 
 interface StaffArchiveContentProps {
   allowedRoles: string[];
@@ -28,16 +29,16 @@ function StatCard({ title, value, color, onClick, active }: { title: string; val
   };
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border ${active ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-200'} p-6 ${onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+      className={`rounded-xl border bg-white p-3.5 shadow-sm sm:p-6 ${active ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-200'} ${onClick ? 'cursor-pointer transition-shadow hover:shadow-md' : ''}`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-xs text-gray-600 sm:text-sm">{title}</p>
+          <p className="text-xl font-bold text-gray-900 sm:text-3xl">{value}</p>
         </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 ${colorClasses[color]}`}>
+          <svg className="h-4 w-4 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
           </svg>
         </div>
@@ -272,9 +273,38 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
           </div>
 
           {/* Search & Filters */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-            <div className="border-b border-gray-200 bg-gray-50 p-4 sm:p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="mb-6 rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-4">
+              <div className="md:hidden">
+                <ListPageFilters
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  searchPlaceholder="Search by name, email..."
+                  pillFilters={[
+                    {
+                      value: typeFilter,
+                      onChange: setTypeFilter,
+                      emptyValue: '',
+                      options: [
+                        { value: '', label: 'All Types', mobileLabel: 'All' },
+                        { value: 'student', label: `Students (${totalStudents})`, mobileLabel: 'Students' },
+                        { value: 'parent', label: `Parents (${totalParents})`, mobileLabel: 'Parents' },
+                        ...(isAdmin
+                          ? [
+                              { value: 'counselor', label: `Counselors (${totalCounselors})`, mobileLabel: 'Counselors' },
+                              { value: 'referrer', label: `Referrers (${totalReferrers})`, mobileLabel: 'Referrers' },
+                            ]
+                          : []),
+                      ],
+                    },
+                  ]}
+                  onClear={() => {
+                    setSearchQuery('');
+                    setTypeFilter('');
+                  }}
+                />
+              </div>
+              <div className="hidden md:grid md:grid-cols-3 md:gap-4">
                 <input
                   type="text"
                   placeholder="Search by name, email..."
