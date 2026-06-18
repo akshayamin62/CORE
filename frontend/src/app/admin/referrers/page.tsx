@@ -8,6 +8,9 @@ import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import AddReferrerModal from '@/components/AddReferrerModal';
+import ListPageFilters from '@/components/ListPageFilters';
+import MobileRecordCard from '@/components/MobileRecordCard';
 
 interface ReferrerData {
   _id: string;
@@ -47,6 +50,7 @@ export default function ReferrersListPage() {
     lastName: '',
     email: '',
     mobileNumber: '',
+    adminId: '',
     country: '',
     state: '',
     city: '',
@@ -120,7 +124,7 @@ export default function ReferrersListPage() {
       await adminAPI.createReferrer(formData);
       toast.success('Referrer created successfully!');
       setShowModal(false);
-      setFormData({ firstName: '', middleName: '', lastName: '', email: '', mobileNumber: '', country: '', state: '', city: '', qualification: '', currentRole: '' });
+      setFormData({ firstName: '', middleName: '', lastName: '', email: '', mobileNumber: '', adminId: '', country: '', state: '', city: '', qualification: '', currentRole: '' });
       fetchReferrers();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to create referrer');
@@ -205,11 +209,11 @@ export default function ReferrersListPage() {
     <>
       <Toaster position="top-right" />
       <AdminLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Back Button */}
           <button
             onClick={() => router.push('/admin/dashboard')}
-            className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            className="mb-4 flex items-center text-gray-600 hover:text-gray-900 transition-colors md:mb-6"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -218,21 +222,31 @@ export default function ReferrersListPage() {
           </button>
 
           {/* Header */}
-          <div className="mb-6 flex justify-between items-center">
+          <div className="mb-6 flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">My Referrers</h2>
-              <p className="text-gray-600 mt-2">
+              <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">My Referrers</h2>
+              <p className="mt-1 text-gray-600 sm:mt-2">
                 Manage referrers and their referral links
               </p>
             </div>
             <button
               onClick={() => setShowModal(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="hidden shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 md:flex"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Add Referrer
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowModal(true)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg md:hidden"
+              aria-label="Add referrer"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
             </button>
           </div>
 
@@ -405,39 +419,36 @@ export default function ReferrersListPage() {
           </div>
 
           {/* Search and Filter */}
-          <div className="mb-6 flex gap-4">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="Search by name, email, phone, or slug..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          <div className="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-4">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search name, email, phone, or slug..."
+                pillFilters={[
+                  {
+                    value: statusFilter,
+                    onChange: (v) => setStatusFilter(v as 'all' | 'active' | 'pending' | 'archived'),
+                    emptyValue: 'all',
+                    options: [
+                      { value: 'all', label: 'All Status', mobileLabel: 'All' },
+                      { value: 'active', label: 'Active' },
+                      { value: 'pending', label: 'Pending' },
+                      { value: 'archived', label: 'Archived' },
+                    ],
+                  },
+                ]}
+                onClear={() => {
+                  setSearchQuery('');
+                  setStatusFilter('all');
+                  setStageFilter('');
+                }}
               />
-              <svg
-                className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'pending' | 'archived')}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="pending">Pending</option>
-              <option value="archived">Archived</option>
-            </select>
           </div>
 
-          {/* Referrer Registration Link */}
           {referrerRegUrl && (
-            <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center justify-between">
+            <div className="mb-6 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-700">Referrer Registration Link</p>
                 <p className="text-xs text-gray-500 mt-0.5 font-mono break-all">{referrerRegUrl}</p>
@@ -457,190 +468,14 @@ export default function ReferrersListPage() {
             </div>
           )}
 
-          {/* Add Referrer Modal */}
-          {showModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 m-4">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900">Add New Referrer</h3>
-                  <button
-                    onClick={() => setShowModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        First Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.firstName}
-                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter first name"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Middle Name
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.middleName}
-                        onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter middle name (optional)"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Last Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.lastName}
-                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter last name"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter referrer email"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Mobile Number <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      value={formData.mobileNumber}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === '' || /^[+()\-\s.0-9]*$/.test(value)) {
-                          setFormData({ ...formData, mobileNumber: value });
-                        }
-                      }}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="+1234567890 or (123) 456-7890"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Country <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.country}
-                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Country"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        State <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.state}
-                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="State"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        City <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="City"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Qualification <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.qualification}
-                        onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="e.g. B.Com, MBA"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Current Role <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.currentRole}
-                        onChange={(e) => setFormData({ ...formData, currentRole: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="e.g. Teacher, Counselor"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                    >
-                      {submitting ? 'Creating...' : 'Create Referrer'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
+          <AddReferrerModal
+            open={showModal}
+            onClose={() => setShowModal(false)}
+            onSubmit={handleSubmit}
+            submitting={submitting}
+            formData={formData}
+            setFormData={setFormData}
+          />
 
           {/* Referrers Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -666,6 +501,61 @@ export default function ReferrersListPage() {
                 <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filter</p>
               </div>
             ) : (
+              <>
+              <div className="divide-y divide-gray-200 md:hidden">
+                {filteredReferrers.map((referrer) => (
+                  <MobileRecordCard
+                    key={referrer._id}
+                    avatar={
+                      <AuthImage
+                        path={referrer.userId.profilePicture}
+                        alt=""
+                        className="h-10 w-10 shrink-0 rounded-full object-cover"
+                        fallback={
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                            <span className="font-semibold text-purple-600">{getInitials(referrer.userId)}</span>
+                          </div>
+                        }
+                      />
+                    }
+                    title={getFullName(referrer.userId)}
+                    subtitle={referrer.email}
+                    menuItems={[
+                      {
+                        label: 'View',
+                        onClick: () => router.push(`/admin/referrers/${referrer._id}`),
+                      },
+                      {
+                        label: !referrer.userId?.isVerified ? 'Activate' : referrer.userId?.isActive ? 'Deactivate' : 'Activate',
+                        variant: !referrer.userId?.isVerified ? 'success' : referrer.userId?.isActive ? 'warning' : 'success',
+                        onClick: () => handleToggleStatus(referrer._id, referrer.userId?.isVerified, referrer.userId?.isActive),
+                      },
+                    ]}
+                    badges={
+                      <>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          referrer.stage === 'Hot' ? 'bg-red-100 text-red-800' :
+                          referrer.stage === 'Warm' ? 'bg-orange-100 text-orange-800' :
+                          referrer.stage === 'Cold' ? 'bg-cyan-100 text-cyan-800' :
+                          referrer.stage === 'Converted' ? 'bg-green-100 text-green-800' :
+                          referrer.stage === 'Closed' ? 'bg-gray-100 text-gray-800' :
+                          'bg-blue-100 text-blue-800'
+                        }`}>{referrer.stage || 'New'}</span>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          !referrer.userId?.isVerified ? 'bg-amber-100 text-amber-700' :
+                          referrer.userId?.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>{!referrer.userId?.isVerified ? 'Pending' : referrer.userId?.isActive ? 'Active' : 'Inactive'}</span>
+                      </>
+                    }
+                    fields={[
+                      { label: 'Leads', value: referrer.leadCount },
+                      { label: 'Phone', value: referrer.mobileNumber || 'N/A', colSpan: 2 },
+                      { label: 'Created', value: new Date(referrer.createdAt).toLocaleDateString('en-GB') },
+                    ]}
+                  />
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -780,6 +670,8 @@ export default function ReferrersListPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
+              </>
             )}
           </div>
 

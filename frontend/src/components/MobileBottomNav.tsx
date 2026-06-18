@@ -60,14 +60,25 @@ function NavLabel({ label, isActive }: { label: string; isActive: boolean }) {
 
 export default function MobileBottomNav({ items, visibleCount = VISIBLE_COUNT }: MobileBottomNavProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const navShellRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [openDropdownIndex, setOpenDropdownIndex] = useState<number | null>(null);
+  const [indicatorLeft, setIndicatorLeft] = useState(0);
 
   const canScroll = items.length > visibleCount;
   const trackWidthPercent = canScroll ? (items.length / visibleCount) * 100 : 100;
   const itemWidthPercent = 100 / items.length;
 
   const activeIndex = items.findIndex((item) => item.isActive);
+
+  const updateIndicator = useCallback(() => {
+    const shell = navShellRef.current;
+    const btn = activeIndex >= 0 ? itemRefs.current[activeIndex] : null;
+    if (!shell || !btn || activeIndex < 0) return;
+    const shellRect = shell.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    setIndicatorLeft(btnRect.left - shellRect.left + btnRect.width / 2);
+  }, [activeIndex]);
 
   const scrollToIndex = useCallback(
     (index: number) => {
@@ -111,8 +122,23 @@ export default function MobileBottomNav({ items, visibleCount = VISIBLE_COUNT }:
   useEffect(() => {
     if (activeIndex < 0) return;
     setOpenDropdownIndex(null);
-    requestAnimationFrame(() => scrollToIndex(activeIndex));
-  }, [activeIndex, items.length, scrollToIndex]);
+    requestAnimationFrame(() => {
+      scrollToIndex(activeIndex);
+      updateIndicator();
+    });
+  }, [activeIndex, items.length, scrollToIndex, updateIndicator]);
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const onScroll = () => updateIndicator();
+    container.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      container.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [updateIndicator, items.length]);
 
   useEffect(() => {
     itemRefs.current = itemRefs.current.slice(0, items.length);
@@ -170,7 +196,8 @@ export default function MobileBottomNav({ items, visibleCount = VISIBLE_COUNT }:
       >
         <div className="mx-auto w-full max-w-2xl px-2">
           <div
-            className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_-2px_20px_rgba(15,23,42,0.08)]"
+            ref={navShellRef}
+            className="relative overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_-2px_20px_rgba(15,23,42,0.08)]"
             style={{ height: NAV_HEIGHT }}
           >
             <div
@@ -204,31 +231,35 @@ export default function MobileBottomNav({ items, visibleCount = VISIBLE_COUNT }:
                         scrollSnapAlign: 'center',
                         minHeight: 44,
                       }}
-                      className="relative flex shrink-0 flex-col items-center justify-between px-0.5 pt-2.5 pb-1.5 touch-manipulation transition-transform duration-200 active:scale-95"
+                      className="relative flex h-full max-h-full shrink-0 flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 py-2 touch-manipulation transition-transform duration-200 active:scale-95"
                       aria-current={item.isActive ? 'page' : undefined}
                       aria-label={item.label}
                       aria-haspopup={hasChildren ? 'menu' : undefined}
                       aria-expanded={hasChildren && openDropdownIndex === index}
                     >
-                      <span className={`text-slate-500 transition-colors duration-200 ${isActiveSlot ? 'text-blue-600' : ''}`}>
+                      <span className={`shrink-0 text-slate-500 transition-colors duration-200 ${isActiveSlot ? 'text-blue-600' : ''}`}>
                         <span style={{ width: ICON_SIZE, height: ICON_SIZE }} className="block [&>svg]:h-[21px] [&>svg]:w-[21px]">
                           {item.icon}
                         </span>
                       </span>
-                      <span className="flex min-h-[2em] items-center justify-center px-0.5">
+                      <span className="flex min-h-0 max-h-[2.25rem] items-center justify-center px-0.5">
                         <NavLabel label={item.label} isActive={isActiveSlot} />
                       </span>
-                      {isActiveSlot && (
-                        <span className="absolute bottom-0.5 h-[3px] w-8 rounded-full bg-gradient-to-r from-[#2563EB] to-[#60A5FA]" />
-                      )}
                       {hasChildren && (
-                        <span className="absolute right-1 top-2 h-1.5 w-1.5 border-r border-b border-black rotate-45" aria-hidden />
+                        <span className="absolute right-1 top-2 h-1.5 w-1.5 rotate-45 border-r border-b border-black" aria-hidden />
                       )}
                     </button>
                   );
                 })}
               </div>
             </div>
+            {activeIndex >= 0 && (
+              <span
+                className="pointer-events-none absolute bottom-1.5 h-[3px] w-8 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#2563EB] to-[#60A5FA] transition-[left] duration-200 ease-out"
+                style={{ left: indicatorLeft }}
+                aria-hidden
+              />
+            )}
           </div>
         </div>
       </nav>

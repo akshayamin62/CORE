@@ -160,17 +160,15 @@ export default function AdminDashboardPage() {
     <>
       <Toaster position="top-right" />
       <AdminLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-8 flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{getFullName(user)}</h1>
-            </div>
-            {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="text-right"><p className="text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></div>); })()}
+          <div className="mb-5 flex items-center justify-between gap-3 md:mb-8">
+            <h1 className="min-w-0 flex-1 truncate text-lg font-bold text-gray-900 sm:text-2xl md:text-3xl">{getFullName(user)}</h1>
+            {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="shrink-0 text-right"><p className="text-lg font-extrabold leading-none text-gray-900 sm:text-2xl md:text-3xl">Day {d}</p><p className="mt-0.5 text-[10px] text-gray-500 sm:text-sm">of {t.getFullYear()}</p></div>); })()}
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="mb-6 grid grid-cols-1 gap-4 md:mb-8 md:grid-cols-2 lg:grid-cols-3">
             <StatCard
               title="Total Counselors"
               value={stats?.totalCounselors.toString() || '0'}
@@ -193,22 +191,22 @@ export default function AdminDashboardPage() {
             />
 
             {/* Copy Enquiry URL */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 max-w-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-full rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:max-w-lg">
+              <div className="mb-2 flex items-center gap-2">
+                <svg className="h-5 w-5 shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                 </svg>
-                <h3 className="font-semibold text-gray-900 text-sm">Enquiry Form</h3>
+                <h3 className="text-sm font-semibold text-gray-900">Enquiry Form</h3>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-blue-50 rounded-lg px-3 py-2">
-                  <code className="text-xs text-blue-700 font-mono break-all">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="flex-1 rounded-lg bg-blue-50 px-3 py-2">
+                  <code className="break-all font-mono text-xs text-blue-700">
                     {stats?.enquiryFormUrl || 'Loading...'}
                   </code>
                 </div>
                 <button
                   onClick={() => stats?.enquiryFormUrl && copyToClipboard(stats.enquiryFormUrl)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+                  className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />

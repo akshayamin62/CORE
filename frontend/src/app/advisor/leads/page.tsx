@@ -6,6 +6,13 @@ import { authAPI, advisorAPI } from '@/lib/api';
 import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE } from '@/types';
 import AdvisorLayout from '@/components/AdvisorLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import ListPageFilters from '@/components/ListPageFilters';
+import LeadMobileList, {
+  getLeadServiceColor,
+  getLeadStageColor,
+  LEAD_SERVICE_FILTER_OPTIONS,
+  LEAD_STAGE_FILTER_OPTIONS,
+} from '@/components/LeadMobileList';
 
 export default function AdvisorLeadsPage() {
   const router = useRouter();
@@ -104,26 +111,14 @@ export default function AdvisorLeadsPage() {
     }
   };
 
-  const getStageColor = (stage: string) => {
-    switch (stage) {
-      case LEAD_STAGE.NEW: return 'bg-blue-100 text-blue-800';
-      case LEAD_STAGE.HOT: return 'bg-red-100 text-red-800';
-      case LEAD_STAGE.WARM: return 'bg-orange-100 text-orange-800';
-      case LEAD_STAGE.COLD: return 'bg-cyan-100 text-cyan-800';
-      case LEAD_STAGE.CONVERTED: return 'bg-green-100 text-green-800';
-      case LEAD_STAGE.CLOSED: return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const getStageColor = getLeadStageColor;
+  const getServiceColor = getLeadServiceColor;
 
-  const getServiceColor = (service: string) => {
-    switch (service) {
-      case SERVICE_TYPE.CAREER_FOCUS_STUDY_ABROAD: return 'bg-indigo-100 text-indigo-800';
-      case SERVICE_TYPE.IVY_LEAGUE_ADMISSION: return 'bg-amber-100 text-amber-800';
-      case SERVICE_TYPE.EDUCATION_PLANNING: return 'bg-teal-100 text-teal-800';
-      case SERVICE_TYPE.COACHING_CLASSES: return 'bg-rose-100 text-rose-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
+  const clearAllFilters = () => {
+    setStageFilter('');
+    setServiceFilter('');
+    setSearchQuery('');
+    setSelectedStageCard(null);
   };
 
   // Stats from allLeads
@@ -158,7 +153,7 @@ export default function AdvisorLeadsPage() {
     <>
       <Toaster position="top-right" />
       <AdvisorLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
@@ -205,7 +200,31 @@ export default function AdvisorLeadsPage() {
           </div>
 
           {/* Search and Filters */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4 mb-6">
+            <div className="md:hidden">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search by name or email..."
+                pillFilters={[
+                  {
+                    value: stageFilter,
+                    onChange: (value) => {
+                      setStageFilter(value);
+                      setSelectedStageCard(value || null);
+                    },
+                    options: LEAD_STAGE_FILTER_OPTIONS,
+                  },
+                  {
+                    value: serviceFilter,
+                    onChange: setServiceFilter,
+                    options: LEAD_SERVICE_FILTER_OPTIONS,
+                  },
+                ]}
+                onClear={clearAllFilters}
+              />
+            </div>
+            <div className="hidden md:block">
             <div className="flex flex-wrap gap-4">
               <div className="flex-1 min-w-[200px]">
                 <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
@@ -253,12 +272,13 @@ export default function AdvisorLeadsPage() {
 
               <div className="flex items-end">
                 <button
-                  onClick={() => { setStageFilter(''); setServiceFilter(''); setSearchQuery(''); setSelectedStageCard(null); }}
+                  onClick={clearAllFilters}
                   className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   Clear All
                 </button>
               </div>
+            </div>
             </div>
           </div>
 
@@ -275,7 +295,19 @@ export default function AdvisorLeadsPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                <LeadMobileList
+                  leads={filteredLeads}
+                  getStageColor={getStageColor}
+                  getServiceColor={getServiceColor}
+                  getMenuItems={(lead) => [
+                    {
+                      label: 'View',
+                      onClick: () => router.push(`/advisor/leads/${lead._id}`),
+                    },
+                  ]}
+                />
+                <div className="hidden overflow-x-auto md:block">
                 <table className="w-full table-fixed">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
@@ -327,7 +359,8 @@ export default function AdvisorLeadsPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             )}
           </div>
         </div>

@@ -8,6 +8,10 @@ import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import ListPageFilters from '@/components/ListPageFilters';
+import MobileRecordCard from '@/components/MobileRecordCard';
+import PageStatCard from '@/components/PageStatCard';
+import AddReferrerModal from '@/components/AddReferrerModal';
 
 interface AdminData {
   _id: string;
@@ -56,7 +60,6 @@ export default function SuperAdminReferrersPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending' | 'archived'>('all');
   const [stageFilter, setStageFilter] = useState<string>('');
   const [adminFilter, setAdminFilter] = useState<string>('all');
-  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     firstName: '',
     middleName: '',
@@ -181,15 +184,6 @@ export default function SuperAdminReferrersPage() {
     }
   };
 
-  const copyReferralLink = (slug: string) => {
-    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    const link = `${baseUrl}/referral/${slug}`;
-    navigator.clipboard.writeText(link);
-    setCopiedSlug(slug);
-    toast.success('Referral link copied!');
-    setTimeout(() => setCopiedSlug(null), 2000);
-  };
-
   const filteredReferrers = referrers.filter((referrer) => {
     const referrerName = getFullName(referrer.userId).toLowerCase();
     const matchesSearch =
@@ -235,31 +229,37 @@ export default function SuperAdminReferrersPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Back Button */}
           <button
             onClick={() => router.push('/super-admin/dashboard')}
-            className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            className="mb-4 flex items-center text-gray-600 transition-colors hover:text-gray-900 sm:mb-6"
           >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Back to Dashboard
           </button>
 
           {/* Header */}
-          <div className="mb-6 flex justify-between items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900">All Referrers</h2>
-              <p className="text-gray-600 mt-2">
-                Manage referrers across all admins
-              </p>
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">All Referrers</h2>
+              <p className="mt-1 text-gray-600 sm:mt-2">Manage referrers across all admins</p>
             </div>
             <button
+              type="button"
               onClick={() => setShowModal(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-xl font-light leading-none text-white shadow-sm transition-all duration-150 hover:bg-blue-700 hover:shadow-md active:scale-90 md:hidden"
+              aria-label="Add Referrer"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              +
+            </button>
+            <button
+              onClick={() => setShowModal(true)}
+              className="hidden shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 md:flex"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Add Referrer
@@ -267,84 +267,64 @@ export default function SuperAdminReferrersPage() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-6">
+            <PageStatCard
+              title="Total"
+              value={referrers.length}
+              color="blue"
               onClick={() => { setStatusFilter('all'); setStageFilter(''); }}
-              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'all' && !stageFilter ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-900">{referrers.length}</h3>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Total</p>
-            </div>
-            <div
+              active={statusFilter === 'all' && !stageFilter}
+            />
+            <PageStatCard
+              title="Active"
+              value={referrers.filter(r => r.userId?.isVerified && r.userId?.isActive).length}
+              color="green"
               onClick={() => { setStatusFilter('active'); setStageFilter(''); }}
-              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'active' && !stageFilter ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'}`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.userId?.isVerified && r.userId?.isActive).length}</h3>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Active</p>
-            </div>
-            <div
+              active={statusFilter === 'active' && !stageFilter}
+            />
+            <PageStatCard
+              title="Pending"
+              value={referrers.filter(r => !r.userId?.isVerified).length}
+              color="amber"
               onClick={() => { setStatusFilter('pending'); setStageFilter(''); }}
-              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'pending' && !stageFilter ? 'border-amber-500 ring-2 ring-amber-200' : 'border-gray-200'}`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => !r.userId?.isVerified).length}</h3>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Pending</p>
-            </div>
-            <div
+              active={statusFilter === 'pending' && !stageFilter}
+            />
+            <PageStatCard
+              title="Archived"
+              value={referrers.filter(r => r.userId?.isVerified && !r.userId?.isActive).length}
+              color="gray"
               onClick={() => { setStatusFilter('archived'); setStageFilter(''); }}
-              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'archived' && !stageFilter ? 'border-gray-500 ring-2 ring-gray-200' : 'border-gray-200'}`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.userId?.isVerified && !r.userId?.isActive).length}</h3>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Archived</p>
-            </div>
+              active={statusFilter === 'archived' && !stageFilter}
+            />
           </div>
 
           {/* Referrer Pipeline Overview */}
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-gray-600 uppercase mb-3">Referrer Pipeline Overview</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-7">
               {/* Total */}
               <div
                 onClick={() => setStageFilter('')}
-                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${!stageFilter ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-5 ${!stageFilter ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   </div>
-                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.length}</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{referrers.length}</h3>
                 </div>
-                <p className="text-sm font-semibold text-gray-700 mt-3">Total Referrers</p>
+                <p className="mt-2 truncate text-xs font-semibold text-gray-700 sm:mt-3 sm:text-sm">Total Referrers</p>
               </div>
               {/* New */}
               <div
                 onClick={() => setStageFilter(stageFilter === 'New' ? '' : 'New')}
-                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'New' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-5 ${stageFilter === 'New' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                   </div>
-                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => (r.stage || 'New') === 'New').length}</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{referrers.filter(r => (r.stage || 'New') === 'New').length}</h3>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-sm font-semibold text-gray-700">New</p>
@@ -354,13 +334,13 @@ export default function SuperAdminReferrersPage() {
               {/* Hot */}
               <div
                 onClick={() => setStageFilter(stageFilter === 'Hot' ? '' : 'Hot')}
-                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Hot' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-5 ${stageFilter === 'Hot' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-red-100 text-red-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /></svg>
                   </div>
-                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Hot').length}</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{referrers.filter(r => r.stage === 'Hot').length}</h3>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-sm font-semibold text-gray-700">Hot</p>
@@ -370,13 +350,13 @@ export default function SuperAdminReferrersPage() {
               {/* Warm */}
               <div
                 onClick={() => setStageFilter(stageFilter === 'Warm' ? '' : 'Warm')}
-                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Warm' ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-5 ${stageFilter === 'Warm' ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707" /></svg>
                   </div>
-                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Warm').length}</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{referrers.filter(r => r.stage === 'Warm').length}</h3>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-sm font-semibold text-gray-700">Warm</p>
@@ -386,13 +366,13 @@ export default function SuperAdminReferrersPage() {
               {/* Cold */}
               <div
                 onClick={() => setStageFilter(stageFilter === 'Cold' ? '' : 'Cold')}
-                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Cold' ? 'border-cyan-500 ring-2 ring-cyan-200' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-5 ${stageFilter === 'Cold' ? 'border-cyan-500 ring-2 ring-cyan-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-cyan-100 text-cyan-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                   </div>
-                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Cold').length}</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{referrers.filter(r => r.stage === 'Cold').length}</h3>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-sm font-semibold text-gray-700">Cold</p>
@@ -402,13 +382,13 @@ export default function SuperAdminReferrersPage() {
               {/* Converted */}
               <div
                 onClick={() => setStageFilter(stageFilter === 'Converted' ? '' : 'Converted')}
-                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Converted' ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-5 ${stageFilter === 'Converted' ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   </div>
-                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Converted').length}</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{referrers.filter(r => r.stage === 'Converted').length}</h3>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-sm font-semibold text-gray-700">Converted</p>
@@ -418,13 +398,13 @@ export default function SuperAdminReferrersPage() {
               {/* Closed */}
               <div
                 onClick={() => setStageFilter(stageFilter === 'Closed' ? '' : 'Closed')}
-                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Closed' ? 'border-gray-500 ring-2 ring-gray-200' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-5 ${stageFilter === 'Closed' ? 'border-gray-500 ring-2 ring-gray-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </div>
-                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Closed').length}</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{referrers.filter(r => r.stage === 'Closed').length}</h3>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-sm font-semibold text-gray-700">Closed</p>
@@ -434,258 +414,68 @@ export default function SuperAdminReferrersPage() {
             </div>
           </div>
 
-          {/* Search and Filter */}
-          <div className="mb-6 flex gap-4">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="Search by name, email, phone, or slug..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <svg
-                className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <select
-              value={adminFilter}
-              onChange={(e) => setAdminFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Admins</option>
-              {admins.map((admin) => (
-                <option key={admin._id} value={admin._id}>
-                  {admin.companyName || [admin.firstName, admin.middleName, admin.lastName].filter(Boolean).join(' ')}
-                </option>
-              ))}
-            </select>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'pending' | 'archived')}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="pending">Pending</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-
-          {/* Add Referrer Modal */}
-          {showModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 m-4">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900">Add New Referrer</h3>
-                  <button
-                    onClick={() => setShowModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Admin Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Admin <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      required
-                      value={formData.adminId}
-                      onChange={(e) => setFormData({ ...formData, adminId: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">-- Select Admin --</option>
-                      {admins.map((admin) => (
-                        <option key={admin._id} value={admin._id}>
-                          {admin.companyName || [admin.firstName, admin.middleName, admin.lastName].filter(Boolean).join(' ')} ({[admin.firstName, admin.middleName, admin.lastName].filter(Boolean).join(' ')})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        First Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.firstName}
-                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter first name"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Middle Name
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.middleName}
-                        onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter middle name (optional)"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Last Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.lastName}
-                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter last name"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter referrer email"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Mobile Number <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      required
-                      value={formData.mobileNumber}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === '' || /^[+()\-\s.0-9]*$/.test(value)) {
-                          setFormData({ ...formData, mobileNumber: value });
-                        }
-                      }}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="+1234567890 or (123) 456-7890"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Country <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.country}
-                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Country"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        State <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.state}
-                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="State"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        City <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.city}
-                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="City"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Qualification <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.qualification}
-                        onChange={(e) => setFormData({ ...formData, qualification: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="e.g. B.Com, MBA"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Current Role <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.currentRole}
-                        onChange={(e) => setFormData({ ...formData, currentRole: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="e.g. Teacher, Counselor"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                    >
-                      {submitting ? 'Creating...' : 'Create Referrer'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
+          <AddReferrerModal
+            open={showModal}
+            onClose={() => setShowModal(false)}
+            onSubmit={handleSubmit}
+            submitting={submitting}
+            formData={formData}
+            setFormData={setFormData}
+            admins={admins}
+          />
 
           {/* Referrers Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-6">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search name, email, phone, or slug..."
+                desktopColumns={4}
+                pillFilters={[
+                  {
+                    value: statusFilter,
+                    onChange: (v) => setStatusFilter(v as 'all' | 'active' | 'pending' | 'archived'),
+                    emptyValue: 'all',
+                    options: [
+                      { value: 'all', label: 'All Status', mobileLabel: 'All' },
+                      { value: 'active', label: 'Active' },
+                      { value: 'pending', label: 'Pending' },
+                      { value: 'archived', label: 'Archived' },
+                    ],
+                  },
+                  {
+                    value: adminFilter,
+                    onChange: setAdminFilter,
+                    emptyValue: 'all',
+                    options: [
+                      { value: 'all', label: 'All Admins', mobileLabel: 'All Admins' },
+                      ...admins.map((admin) => {
+                        const label =
+                          admin.companyName ||
+                          [admin.firstName, admin.middleName, admin.lastName].filter(Boolean).join(' ');
+                        return {
+                          value: admin._id,
+                          label,
+                          mobileLabel:
+                            admin.companyName?.split(' ')[0] ||
+                            admin.firstName ||
+                            label.slice(0, 10),
+                        };
+                      }),
+                    ],
+                  },
+                ]}
+                onClear={() => {
+                  setSearchQuery('');
+                  setAdminFilter('all');
+                  setStatusFilter('all');
+                }}
+              />
+            </div>
+
             {referrers.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="py-12 text-center">
                 <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
@@ -706,7 +496,66 @@ export default function SuperAdminReferrersPage() {
                 <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filter</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              <div className="divide-y divide-gray-200 md:hidden">
+                {filteredReferrers.map((referrer) => (
+                  <MobileRecordCard
+                    key={referrer._id}
+                    avatar={
+                      <AuthImage
+                        path={referrer.userId.profilePicture}
+                        alt=""
+                        className="h-10 w-10 shrink-0 rounded-full object-cover"
+                        fallback={
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                            <span className="font-semibold text-blue-600">{getInitials(referrer.userId)}</span>
+                          </div>
+                        }
+                      />
+                    }
+                    title={getFullName(referrer.userId)}
+                    subtitle={referrer.email}
+                    menuItems={[
+                      {
+                        label: 'View',
+                        onClick: () => router.push(`/super-admin/referrers/${referrer._id}`),
+                      },
+                      {
+                        label: !referrer.userId?.isVerified ? 'Activate' : referrer.userId?.isActive ? 'Deactivate' : 'Activate',
+                        variant: !referrer.userId?.isVerified ? 'success' : referrer.userId?.isActive ? 'warning' : 'success',
+                        onClick: () => handleToggleStatus(referrer._id, referrer.userId?.isVerified, referrer.userId?.isActive),
+                      },
+                    ]}
+                    badges={
+                      <>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          referrer.stage === 'Hot' ? 'bg-red-100 text-red-800' :
+                          referrer.stage === 'Warm' ? 'bg-orange-100 text-orange-800' :
+                          referrer.stage === 'Cold' ? 'bg-cyan-100 text-cyan-800' :
+                          referrer.stage === 'Converted' ? 'bg-green-100 text-green-800' :
+                          referrer.stage === 'Closed' ? 'bg-gray-100 text-gray-800' :
+                          'bg-blue-100 text-blue-800'
+                        }`}>{referrer.stage || 'New'}</span>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                          !referrer.userId?.isVerified ? 'bg-amber-100 text-amber-700' :
+                          referrer.userId?.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>{!referrer.userId?.isVerified ? 'Pending' : referrer.userId?.isActive ? 'Active' : 'Inactive'}</span>
+                      </>
+                    }
+                    fields={[
+                      {
+                        label: 'Admin',
+                        value: referrer.adminCompanyName || (referrer.adminId ? [referrer.adminId.firstName, referrer.adminId.middleName, referrer.adminId.lastName].filter(Boolean).join(' ') : 'N/A'),
+                        colSpan: 2,
+                      },
+                      { label: 'Leads', value: referrer.leadCount },
+                      { label: 'Phone', value: referrer.mobileNumber || 'N/A', colSpan: 2 },
+                      { label: 'Created', value: new Date(referrer.createdAt).toLocaleDateString('en-GB') },
+                    ]}
+                  />
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-237.5">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -824,6 +673,7 @@ export default function SuperAdminReferrersPage() {
                 </tbody>
               </table>
               </div>
+              </>
             )}
           </div>
         </div>

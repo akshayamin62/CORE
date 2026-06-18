@@ -220,8 +220,8 @@ export default function StudentEducationPlanningPlansPage() {
     <>
       <Toaster position="top-right" />
       {verifyingPayment && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl p-8 text-center shadow-2xl">
+        <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+          <div className="app-modal-panel bg-white rounded-2xl p-8 text-center shadow-2xl">
             <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
             <p className="text-lg font-semibold text-gray-900">Verifying Payment...</p>
             <p className="text-sm text-gray-500 mt-1">Please wait while we confirm your payment.</p>

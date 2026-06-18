@@ -9,6 +9,7 @@ import { getFullName, getInitials } from '@/utils/nameHelpers';
 import ParentLayout from '@/components/ParentLayout';
 import StudentProfileModal from '@/components/StudentProfileModal';
 import AuthImage from '@/components/AuthImage';
+import { studentHeaderRowClass, studentPagePadding } from '@/components/studentDetailResponsive';
 
 interface StudentDetails {
   _id: string;
@@ -181,7 +182,7 @@ export default function ParentStudentDetailPage() {
     <>
       <Toaster position="top-right" />
       <ParentLayout user={user}>
-        <div className="p-8">
+        <div className={studentPagePadding}>
           {/* Back Button */}
           <button
             onClick={() => router.push('/parent/dashboard')}
@@ -222,7 +223,7 @@ export default function ParentStudentDetailPage() {
 
               {/* Student Info Card */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                <div className="flex items-start justify-between mb-6">
+                <div className={studentHeaderRowClass}>
                   <div className="flex items-center">
                     <AuthImage
                   path={student.userId.profilePicture}

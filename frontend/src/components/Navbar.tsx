@@ -15,6 +15,11 @@ export default function Navbar() {
   const [userProfilePic, setUserProfilePic] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     // Check if user is logged in
@@ -55,10 +60,12 @@ export default function Navbar() {
     return pathname === path;
   };
 
+  const showLoggedIn = mounted && isLoggedIn;
+
   return (
-    <nav className="bg-white sticky top-0 z-50 shadow-lg border-b border-gray-200">
+    <nav className="bg-white sticky top-0 z-50 shadow-md border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-1 lg:px-1">
-        <div className="flex justify-between h-25 animate-fade-in">
+        <div className="flex justify-between h-20 animate-fade-in">
           {/* Logo and Brand */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center group">
@@ -67,7 +74,7 @@ export default function Navbar() {
                 <img 
                   src="/logo1.png" 
                   alt="CORE Logo" 
-                  className="relative h-20 w-auto object-contain"
+                  className="relative h-16 w-auto object-contain"
                 />
               </div>
             </Link>
@@ -86,7 +93,7 @@ export default function Navbar() {
               Home
             </Link>
 
-            {isLoggedIn ? (
+            {showLoggedIn ? (
               <>
                 {/* Dashboard link - routes based on user role */}
                 {(userRole?.toLowerCase() === 'super_admin' || userRole === 'SUPER_ADMIN') ? (
@@ -260,7 +267,8 @@ export default function Navbar() {
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-blue-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-              aria-expanded="false"
+              aria-expanded={mobileMenuOpen}
+              suppressHydrationWarning
             >
               <span className="sr-only">Open main menu</span>
               {!mobileMenuOpen ? (
@@ -315,7 +323,7 @@ export default function Navbar() {
               Home
             </Link>
 
-            {isLoggedIn ? (
+            {showLoggedIn ? (
               <>
                 {/* Dashboard link - routes based on user role */}
                 {(userRole?.toLowerCase() === 'super_admin' || userRole === 'SUPER_ADMIN') ? (

@@ -9,6 +9,9 @@ import toast, { Toaster } from "react-hot-toast";
 import { getFullName, getInitials } from "@/utils/nameHelpers";
 import { BACKEND_URL } from "@/lib/ivyApi";
 import AuthImage from "@/components/AuthImage";
+import ListPageFilters from "@/components/ListPageFilters";
+import MobileUserRecordCard from "@/components/MobileUserRecordCard";
+import ResponsiveFormModal from "@/components/ResponsiveFormModal";
 
 interface RoleUserListPageProps {
   role: string;
@@ -555,53 +558,97 @@ export default function RoleUserListPage({
     );
   }
 
+  const getViewDetailPath = (userId: string): string | null => {
+    if (isAdminRole) return `/super-admin/roles/admin/${userId}`;
+    switch (roleEnum) {
+      case USER_ROLE.COUNSELOR:
+        return `/super-admin/roles/counselor/${userId}`;
+      case USER_ROLE.STUDENT:
+        return `/super-admin/roles/student/${userId}`;
+      case USER_ROLE.IVY_EXPERT:
+        return `/super-admin/roles/ivy-expert/${userId}`;
+      case USER_ROLE.OPS:
+        return `/super-admin/roles/ops/${userId}`;
+      case USER_ROLE.EDUPLAN_COACH:
+        return `/super-admin/roles/eduplan-coach/${userId}`;
+      case USER_ROLE.SERVICE_PROVIDER:
+        return `/super-admin/roles/service-provider/${userId}`;
+      case USER_ROLE.PARENT:
+        return `/super-admin/roles/parent/${parentIdMap[userId] || userId}`;
+      case USER_ROLE.ADVISOR:
+        return `/super-admin/roles/advisor/${userId}`;
+      case USER_ROLE.B2B_SALES:
+        return `/super-admin/b2b/sales/${userId}`;
+      case USER_ROLE.B2B_OPS:
+        return `/super-admin/b2b/ops/${userId}`;
+      default:
+        return null;
+    }
+  };
+
   if (!currentUser) return null;
 
   return (
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={currentUser}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header with Add Button */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
                 {roleDisplayName}
                 {pluralSuffix}
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="mt-1 text-gray-600">
                 Manage all {roleDisplayName.toLowerCase()} accounts
               </p>
             </div>
             {canAddUser && (
-              <div className="flex items-center gap-3">
-                {headerExtra}
+              <>
                 <button
+                  type="button"
                   onClick={() => setShowAddModal(true)}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-blue-600 text-xl font-light leading-none text-white shadow-sm transition-all duration-150 hover:bg-blue-700 hover:shadow-md active:scale-90 md:hidden"
+                  aria-label={`Add ${roleDisplayName}`}
+                  title={`Add ${roleDisplayName}`}
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  Add {roleDisplayName}
+                  +
                 </button>
-              </div>
+                <div className="hidden shrink-0 items-center gap-3 md:flex">
+                  {headerExtra}
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white transition-colors hover:bg-blue-700"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    Add {roleDisplayName}
+                  </button>
+                </div>
+              </>
             )}
           </div>
+          {canAddUser && headerExtra && (
+            <div className="mb-6 w-full md:hidden">
+              <div className="flex w-full flex-row flex-wrap gap-2">{headerExtra}</div>
+            </div>
+          )}
 
           {/* Stats Cards */}
           <div
-            className={`grid grid-cols-1 ${extraStats ? "md:grid-cols-3" : showVerifiedStats ? "md:grid-cols-3" : "md:grid-cols-2"} gap-6 mb-6`}
+            className={`mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:gap-6 ${extraStats ? "md:grid-cols-3" : showVerifiedStats ? "md:grid-cols-3" : "md:grid-cols-2"}`}
           >
             <StatCard
               title={`Total ${roleDisplayName}${pluralSuffix}`}
@@ -627,41 +674,34 @@ export default function RoleUserListPage({
 
           {/* Search & Filters */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input
-                  type="text"
-                  placeholder={
-                    roleEnum === USER_ROLE.COUNSELOR
-                      ? "Search by name, email, or company..."
-                      : "Search by name or email..."
-                  }
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                >
-                  <option value="">All Status</option>
-                  <option value="active">Active</option>
-                </select>
-                <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setStatusFilter("");
-                  }}
-                  className="px-4 py-2.5 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  Clear Filters
-                </button>
-              </div>
+            <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-6">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder={
+                  roleEnum === USER_ROLE.COUNSELOR
+                    ? "Search by name, email, or company..."
+                    : "Search by name or email..."
+                }
+                pillFilters={[
+                  {
+                    value: statusFilter,
+                    onChange: setStatusFilter,
+                    options: [
+                      { value: "", label: "All Status", mobileLabel: "All" },
+                      { value: "active", label: "Active" },
+                    ],
+                  },
+                ]}
+                onClear={() => {
+                  setSearchQuery("");
+                  setStatusFilter("");
+                }}
+              />
             </div>
 
             {/* User Table */}
-            <div className="overflow-x-auto">
+            <div>
               {loading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="spinner"></div>
@@ -695,6 +735,100 @@ export default function RoleUserListPage({
                   )}
                 </div>
               ) : (
+                <>
+                {/* Mobile card list */}
+                <div className="divide-y divide-gray-200 md:hidden">
+                  {users.map((user) => {
+                    const userId = user._id || user.id!;
+                    const viewPath = getViewDetailPath(userId);
+                    const userDetails =
+                      roleEnum === USER_ROLE.COUNSELOR && user.companyName
+                        ? { label: "Admin", value: user.companyName }
+                        : roleEnum === USER_ROLE.PARENT && user.students && user.students.length > 0
+                        ? {
+                            label: "Students",
+                            value: user.students
+                              .map((s: { firstName: string; lastName: string }) => `${s.firstName} ${s.lastName}`.trim() || "N/A")
+                              .join(", "),
+                          }
+                        : null;
+
+                    return (
+                      <MobileUserRecordCard
+                        key={userId}
+                        avatar={
+                          (isCompanyRole || roleEnum === USER_ROLE.SERVICE_PROVIDER) && user.companyLogo ? (
+                            <AuthImage
+                              path={user.companyLogo}
+                              alt={user.companyName || "Company Logo"}
+                              className="h-10 w-10 shrink-0 rounded-full object-cover"
+                              fallback={
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                                  <span className="font-semibold text-blue-600">
+                                    {user.companyName?.charAt(0).toUpperCase() || getInitials(user)}
+                                  </span>
+                                </div>
+                              }
+                            />
+                          ) : (
+                            <AuthImage
+                              path={user.profilePicture}
+                              alt=""
+                              className="h-10 w-10 shrink-0 rounded-full object-cover"
+                              fallback={
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                                  <span className="font-semibold text-blue-600">
+                                    {(isCompanyRole || roleEnum === USER_ROLE.SERVICE_PROVIDER) && user.companyName
+                                      ? user.companyName.charAt(0).toUpperCase()
+                                      : getInitials(user)}
+                                  </span>
+                                </div>
+                              }
+                            />
+                          )
+                        }
+                        title={isCompanyRole && user.companyName ? user.companyName : getFullName(user) || "N/A"}
+                        subtitle={user.email}
+                        badges={
+                          <>
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getRoleBadgeColor(user.role as string)}`}>
+                              {(user.role as string).replace(/_/g, " ")}
+                            </span>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${user.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
+                              {user.isActive ? "Active" : "Inactive"}
+                            </span>
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${user.isVerified ? "bg-blue-100 text-blue-800" : "bg-yellow-100 text-yellow-800"}`}>
+                              {user.isVerified ? "Verified" : "Unverified"}
+                            </span>
+                          </>
+                        }
+                        detailsLabel={userDetails?.label}
+                        details={userDetails?.value}
+                        joined={user.createdAt ? new Date(user.createdAt).toLocaleDateString("en-GB") : "N/A"}
+                        menuItems={[
+                          {
+                            label: "View Detail",
+                            hidden: !viewPath,
+                            onClick: () => router.push(viewPath!),
+                          },
+                          {
+                            label: "Edit",
+                            onClick: () => handleOpenEdit(userId),
+                          },
+                          {
+                            label: user.isActive ? "Deactivate" : "Activate",
+                            variant: user.isActive ? "warning" : "success",
+                            disabled: actionLoading === userId,
+                            onClick: () => handleToggleStatus(userId),
+                          },
+                        ]}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden overflow-x-auto md:block">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -1019,12 +1153,14 @@ export default function RoleUserListPage({
                     ))}
                   </tbody>
                 </table>
+                </div>
+                </>
               )}
             </div>
 
             {/* Pagination info */}
             {users.length > 0 && (
-              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <div className="border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
                 <p className="text-sm text-gray-600">
                   Showing {users.length} {roleDisplayName.toLowerCase()}
                   {users.length !== 1 ? pluralSuffix : ""}
@@ -1036,33 +1172,32 @@ export default function RoleUserListPage({
 
         {/* Add User Modal */}
         {showAddModal && canAddUser && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className={`bg-white rounded-xl shadow-xl w-full mx-4 p-6 ${isAdvisorRole ? 'max-w-4xl' : 'max-w-2xl'}`}>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Add New {roleDisplayName}
-                </h2>
+          <ResponsiveFormModal
+            open={showAddModal}
+            onClose={() => setShowAddModal(false)}
+            title={`Add New ${roleDisplayName}`}
+            maxWidth={isAdvisorRole ? "4xl" : "2xl"}
+            footer={
+              <div className="flex gap-3">
                 <button
+                  type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="flex-1 rounded-lg border border-gray-300 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 md:py-2.5"
                 >
-                  <svg
-                    className="w-5 h-5 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  form="add-role-user-form"
+                  disabled={submitting}
+                  className="flex-1 rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400 md:py-2.5"
+                >
+                  {submitting ? "Creating..." : `Create ${roleDisplayName}`}
                 </button>
               </div>
-
-              <form onSubmit={handleAddUser} className="space-y-4">
+            }
+          >
+              <form id="add-role-user-form" onSubmit={handleAddUser} className="space-y-4">
                 <div className={`grid gap-4 ${isAdvisorRole ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1299,7 +1434,7 @@ export default function RoleUserListPage({
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Allowed Services <span className="text-red-500">*</span>
                     </label>
-                    <div className="grid grid-cols-4 gap-3">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
                       {ALL_SERVICES.map((service) => (
                         <label
                           key={service.slug}
@@ -1329,64 +1464,47 @@ export default function RoleUserListPage({
                   </div>
                 )}
 
-                <div className="flex gap-3 pt-4">
+              </form>
+          </ResponsiveFormModal>
+        )}
+
+        {/* Edit User Modal */}
+        {showEditModal && (
+          <ResponsiveFormModal
+            open={showEditModal}
+            onClose={() => {
+              setShowEditModal(false);
+              setEditUserId(null);
+            }}
+            title={`Edit ${roleDisplayName}`}
+            maxWidth="2xl"
+            loading={editFetching}
+            footer={
+              !editFetching ? (
+                <div className="flex gap-3">
                   <button
                     type="button"
-                    onClick={() => setShowAddModal(false)}
-                    className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditUserId(null);
+                    }}
+                    className="flex-1 rounded-lg border border-gray-300 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 md:py-2.5"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={submitting}
-                    className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-medium"
+                    form="edit-role-user-form"
+                    disabled={editLoading}
+                    className="flex-1 rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 disabled:bg-gray-400 md:py-2.5"
                   >
-                    {submitting ? "Creating..." : `Create ${roleDisplayName}`}
+                    {editLoading ? "Saving..." : "Save Changes"}
                   </button>
                 </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Edit User Modal */}
-        {showEditModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Edit {roleDisplayName}
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setEditUserId(null);
-                  }}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <svg
-                    className="w-5 h-5 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              {editFetching ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-                </div>
-              ) : (
-                <form onSubmit={handleEditSubmit} className="space-y-4">
+              ) : undefined
+            }
+          >
+                <form id="edit-role-user-form" onSubmit={handleEditSubmit} className="space-y-4">
                   {/* User Information */}
                   <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
                     User Information
@@ -1893,29 +2011,8 @@ export default function RoleUserListPage({
                     </>
                   )}
 
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowEditModal(false);
-                        setEditUserId(null);
-                      }}
-                      className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={editLoading}
-                      className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors font-medium"
-                    >
-                      {editLoading ? "Saving..." : "Save Changes"}
-                    </button>
-                  </div>
                 </form>
-              )}
-            </div>
-          </div>
+          </ResponsiveFormModal>
         )}
       </SuperAdminLayout>
     </>
@@ -1938,17 +2035,17 @@ function StatCard({ title, value, color }: StatCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+    <div className="rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm sm:p-6">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-xs text-gray-600 sm:text-sm">{title}</p>
+          <p className="text-xl font-bold text-gray-900 sm:text-3xl">{value}</p>
         </div>
         <div
-          className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 ${colorClasses[color]}`}
         >
           <svg
-            className="w-6 h-6"
+            className="h-4 w-4 sm:h-6 sm:w-6"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

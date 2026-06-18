@@ -189,9 +189,9 @@ export default function IvyExpertDashboardReadOnlyPage() {
   return (
     <SuperAdminLayout user={user}>
       <Toaster position="top-right" />
-      <div className="py-8 px-4 sm:px-6 lg:px-8">
+      <div className="p-4 sm:p-6 md:p-8">
         {/* Read-Only Banner */}
-        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-2">
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
           <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -210,7 +210,7 @@ export default function IvyExpertDashboardReadOnlyPage() {
             </svg>
             Back to Ivy Experts
           </button>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
             {expertName}&apos;s Dashboard
           </h1>
           {ivyExpertUser?.email && (
@@ -219,47 +219,47 @@ export default function IvyExpertDashboardReadOnlyPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-6">
           <div
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
+            className="cursor-pointer rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm transition-shadow hover:shadow-md sm:p-6"
             onClick={() => router.push('/super-admin/roles/ivy-expert/candidates')}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Ivy Candidates</p>
-                <p className="text-3xl font-bold text-gray-900">{candidateCount}</p>
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-xs text-gray-600 sm:text-sm">Ivy Candidates</p>
+                <p className="text-xl font-bold text-gray-900 sm:text-3xl">{candidateCount}</p>
               </div>
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-amber-100 text-amber-600">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600 sm:h-12 sm:w-12">
+                <svg className="h-4 w-4 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
             </div>
           </div>
           <div
-            className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
+            className="cursor-pointer rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm transition-shadow hover:shadow-md sm:p-6"
             onClick={() => router.push('/super-admin/roles/ivy-expert/students')}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Ivy Students</p>
-                <p className="text-3xl font-bold text-gray-900">{students.length}</p>
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-xs text-gray-600 sm:text-sm">Ivy Students</p>
+                <p className="text-xl font-bold text-gray-900 sm:text-3xl">{students.length}</p>
               </div>
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-green-100 text-green-600">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-600 sm:h-12 sm:w-12">
+                <svg className="h-4 w-4 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Upcoming Meetings</p>
-                <p className="text-3xl font-bold text-gray-900">{upcomingMeetings}</p>
+          <div className="col-span-2 rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm sm:col-span-1 sm:p-6">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="truncate text-xs text-gray-600 sm:text-sm">Upcoming Meetings</p>
+                <p className="text-xl font-bold text-gray-900 sm:text-3xl">{upcomingMeetings}</p>
               </div>
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-indigo-100 text-indigo-600">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 sm:h-12 sm:w-12">
+                <svg className="h-4 w-4 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>

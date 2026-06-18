@@ -493,8 +493,8 @@ export default function StudentServiceProvidersPage() {
 
       {/* Enquiry Modal */}
       {enquiryModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-md p-6">
+        <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+          <div className="app-modal-panel bg-white rounded-xl w-full max-w-md p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-900">Send Enquiry</h3>
               <button

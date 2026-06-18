@@ -65,7 +65,7 @@ export default function CoachingClassCards({ plans, pricing, renderAction, curre
 
   return (
     <>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
       {plans.map((plan) => {
         const parts = plan.subtitle?.split('\u2022').map(s => s.trim()) || [];
         const sessionInfo = parts[0] || '';
@@ -86,7 +86,7 @@ export default function CoachingClassCards({ plans, pricing, renderAction, curre
 
         return (
           <div key={plan.key} className="flex flex-col gap-4">
-            <div className={`bg-white p-7 rounded-2xl shadow-sm flex flex-col hover:shadow-md transition-shadow relative ${
+            <div className={`relative flex flex-col rounded-xl border bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:rounded-2xl sm:p-6 lg:p-7 ${
               isRegistered ? 'ring-2 ring-green-500 border-2 border-green-200' :
               isCurrent ? 'ring-2 ring-green-500 border-2 border-green-200' :
               isPopular ? 'border-2 border-blue-200' : 'border border-slate-100'
@@ -100,7 +100,7 @@ export default function CoachingClassCards({ plans, pricing, renderAction, curre
               {isPopular && !isCurrent && !isRegistered && (
                 <span className="absolute top-4 right-4 bg-blue-600 text-white text-[10px] uppercase font-extrabold px-2.5 py-1 rounded-md">Popular</span>
               )}
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+              <h3 className="mb-2 text-lg font-bold text-gray-900 sm:text-xl">{plan.name}</h3>
               {editingPrice === plan.key && onPriceEdit ? (
                 <div className="mb-5">
                   <div className="flex items-center gap-2">

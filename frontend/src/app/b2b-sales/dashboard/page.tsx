@@ -11,6 +11,7 @@ import B2BFollowUpFormPanel from '@/components/B2BFollowUpFormPanel';
 import ScheduleCalendar from '@/components/ScheduleCalendar';
 import ScheduleOverview from '@/components/ScheduleOverview';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
+import MobileRecordCard from '@/components/MobileRecordCard';
 
 // Adapter: map B2B follow-up data to FollowUp shape for calendar/sidebar
 function adaptB2BFollowUps(b2bFollowUps: any[]): FollowUp[] {
@@ -254,25 +255,28 @@ export default function B2BSalesDashboardPage() {
     <>
       <Toaster position="top-right" />
       <B2BSalesLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-8 flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{getFullName(user)}</h1>
+          <div className="mb-5 flex flex-col gap-4 md:mb-8 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex min-w-0 items-center justify-between gap-3 lg:block lg:flex-1">
+              <h1 className="min-w-0 flex-1 truncate text-lg font-bold text-gray-900 sm:text-2xl md:text-3xl">{getFullName(user)}</h1>
+              {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="shrink-0 text-right lg:hidden"><p className="text-lg font-extrabold leading-none text-gray-900 sm:text-2xl">Day {d}</p><p className="mt-0.5 text-[10px] text-gray-500 sm:text-sm">of {t.getFullYear()}</p></div>); })()}
             </div>
-            <div className="flex flex-col items-end gap-4">
-              {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="text-right"><p className="text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></div>); })()}
+            <div className="flex w-full flex-col items-stretch gap-4 lg:w-auto lg:items-end">
+              <div className="hidden text-right lg:block">
+                {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<><p className="text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></>); })()}
+              </div>
               {/* Copy Enquiry URL */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 max-w-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-full max-w-lg rounded-xl border border-gray-200 bg-white p-4 shadow-sm lg:w-auto">
+                <div className="mb-2 flex items-center gap-2">
+                  <svg className="h-5 w-5 shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                   </svg>
-                  <h3 className="font-semibold text-gray-900 text-sm">B2B Enquiry Form</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">B2B Enquiry Form</h3>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-blue-50 rounded-lg px-3 py-2">
-                    <code className="text-xs text-blue-700 font-mono break-all">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="flex-1 rounded-lg bg-blue-50 px-3 py-2">
+                    <code className="break-all font-mono text-xs text-blue-700">
                       {`${typeof window !== 'undefined' ? window.location.origin : ''}/b2b-enquiry`}
                     </code>
                   </div>
@@ -282,9 +286,9 @@ export default function B2BSalesDashboardPage() {
                       navigator.clipboard.writeText(url);
                       toast.success('Enquiry form URL copied!');
                     }}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+                    className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                     Copy URL
@@ -295,7 +299,7 @@ export default function B2BSalesDashboardPage() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4 mb-8">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:mb-8 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
             <StatCard
               title="Total Leads"
               value={stats?.total?.toString() || '0'}
@@ -403,7 +407,7 @@ export default function B2BSalesDashboardPage() {
           </div>
 
           {/* Follow-up Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="mb-6 grid grid-cols-3 gap-3 sm:gap-4 md:mb-8">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
               <div className="flex items-center justify-between">
                 <div>
@@ -503,8 +507,8 @@ export default function B2BSalesDashboardPage() {
           {/* Filtered Leads Table */}
           {selectedStage && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-4">
+              <div className="border-b border-gray-200 p-4 sm:p-6">
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900">
                       {selectedStage === 'all' ? 'All Leads' : `${selectedStage} Leads`}
@@ -554,6 +558,45 @@ export default function B2BSalesDashboardPage() {
                 </div>
               </div>
               <div className="overflow-x-auto">
+                {/* Mobile card list */}
+                <div className="divide-y divide-gray-200 md:hidden">
+                  {getFilteredLeads().length === 0 ? (
+                    <div className="px-4 py-12 text-center text-gray-500">
+                      <p className="text-lg font-medium">No leads found</p>
+                    </div>
+                  ) : (
+                    getFilteredLeads().map((lead: any) => (
+                      <MobileRecordCard
+                        key={lead._id}
+                        title={getFullName(lead)}
+                        subtitle={lead.email}
+                        badges={
+                          <>
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getStageColor(lead.stage)}`}>
+                              {lead.stage}
+                            </span>
+                            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                              {lead.type}
+                            </span>
+                          </>
+                        }
+                        fields={[
+                          { label: 'Phone', value: lead.mobileNumber, colSpan: 2 },
+                          { label: 'Created', value: new Date(lead.createdAt).toLocaleDateString('en-GB') },
+                        ]}
+                        menuItems={[
+                          {
+                            label: 'View',
+                            onClick: () => router.push(`/b2b-sales/leads/${lead._id}`),
+                          },
+                        ]}
+                      />
+                    ))
+                  )}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden md:block">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
@@ -621,6 +664,7 @@ export default function B2BSalesDashboardPage() {
                     )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           )}
@@ -667,24 +711,24 @@ function StatCard({ title, value, icon, color, onClick, isActive, percentage, sh
   };
 
   return (
-    <div 
-      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md' : ''
+    <div
+      className={`rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all sm:p-5 ${
+        onClick ? 'cursor-pointer hover:shadow-md active:scale-[0.98]' : ''
       } ${
         isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
       }`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${colorClasses[color]} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6`}>
           {icon}
         </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+        <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{value}</h3>
       </div>
-      <div className="flex items-center justify-between mt-3">
-        <p className="text-sm font-semibold text-gray-700">{title}</p>
+      <div className="mt-2 flex items-center justify-between gap-2 sm:mt-3">
+        <p className="truncate text-xs font-semibold text-gray-700 sm:text-sm">{title}</p>
         {showPercentage && percentage !== undefined && (
-          <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
+          <p className="shrink-0 text-xs font-semibold text-gray-900 sm:text-sm">{percentage.toFixed(1)}%</p>
         )}
       </div>
     </div>

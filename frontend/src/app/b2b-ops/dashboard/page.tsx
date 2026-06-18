@@ -181,21 +181,19 @@ export default function B2BOpsDashboardPage() {
     <>
       <Toaster position="top-right" />
       <B2BOpsLayout user={user}>
-        <div className="p-8">
-          <div className="mb-8 flex items-start justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">{getFullName(user)}</h1>
-            {/* <p className="text-gray-600 mt-1">B2B OPS Dashboard</p> */}
-            {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="text-right"><p className="text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></div>); })()}
-
+        <div className="p-4 sm:p-6 md:p-8">
+          <div className="mb-5 flex items-center justify-between gap-3 md:mb-8">
+            <h1 className="min-w-0 flex-1 truncate text-lg font-bold text-gray-900 sm:text-2xl md:text-3xl">{getFullName(user)}</h1>
+            {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="shrink-0 text-right"><p className="text-lg font-extrabold leading-none text-gray-900 sm:text-2xl md:text-3xl">Day {d}</p><p className="mt-0.5 text-[10px] text-gray-500 sm:text-sm">of {t.getFullYear()}</p></div>); })()}
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Assigned</p>
-                  <h3 className="text-2xl font-extrabold text-gray-900 mt-1">{stats.total}</h3>
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:mb-8 md:grid-cols-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm sm:p-5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium text-gray-600 sm:text-sm">Total Assigned</p>
+                  <h3 className="mt-1 text-xl font-extrabold text-gray-900 sm:text-2xl">{stats.total}</h3>
                 </div>
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                   <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,10 +202,10 @@ export default function B2BOpsDashboardPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Proceed for Documentation</p>
+            <div className="rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm sm:p-5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium text-gray-600 sm:text-sm">Proceed for Documentation</p>
                   <h3 className="text-2xl font-extrabold text-purple-600 mt-1">{stats.inProcess}</h3>
                 </div>
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -217,10 +215,10 @@ export default function B2BOpsDashboardPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Pending Verification</p>
+            <div className="rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm sm:p-5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium text-gray-600 sm:text-sm">Pending Verification</p>
                   <h3 className="text-2xl font-extrabold text-orange-600 mt-1">{stats.pendingVerification}</h3>
                 </div>
                 <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -230,10 +228,10 @@ export default function B2BOpsDashboardPage() {
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Converted</p>
+            <div className="rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm sm:p-5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-medium text-gray-600 sm:text-sm">Converted</p>
                   <h3 className="text-2xl font-extrabold text-green-600 mt-1">{stats.converted}</h3>
                 </div>
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">

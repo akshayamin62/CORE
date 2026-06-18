@@ -6,6 +6,8 @@ import { authAPI, b2bAPI } from '@/lib/api';
 import { User, USER_ROLE, B2B_LEAD_STAGE, B2B_LEAD_TYPE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import ListPageFilters from '@/components/ListPageFilters';
+import MobileRecordCard from '@/components/MobileRecordCard';
 
 interface B2BLeadData {
   _id: string;
@@ -392,22 +394,22 @@ export default function SuperAdminB2BLeadsPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={currentUser}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-6 flex flex-col gap-4 md:mb-8 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">B2B Leads</h2>
-              <p className="text-gray-600 mt-1">Manage franchise, institution, and advisor leads</p>
+              <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">B2B Leads</h2>
+              <p className="mt-1 text-sm text-gray-600 sm:text-base">Manage franchise, institution, and advisor leads</p>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5 flex items-center gap-3">
-                <div>
-                  <p className="text-xs text-blue-600 font-medium">B2B Enquiry Form</p>
-                  <p className="text-sm font-mono text-blue-800 select-all">{getEnquiryFormUrl()}</p>
+            <div className="w-full lg:w-auto">
+              <div className="flex flex-col gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-blue-600">B2B Enquiry Form</p>
+                  <p className="mt-0.5 break-all text-xs font-mono text-blue-800 select-all sm:text-sm">{getEnquiryFormUrl()}</p>
                 </div>
                 <button
                   onClick={handleCopyUrl}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 ${
+                  className={`shrink-0 rounded-lg px-3 py-2 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${
                     copied
                       ? 'bg-green-600 text-white'
                       : 'bg-blue-600 text-white hover:bg-blue-700'
@@ -434,10 +436,10 @@ export default function SuperAdminB2BLeadsPage() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
+          <div className="mb-6 flex w-full gap-1 rounded-lg bg-gray-100 p-1 sm:w-fit">
             <button
               onClick={() => setActiveTab('leads')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors sm:flex-none ${
                 activeTab === 'leads'
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-800'
@@ -447,7 +449,7 @@ export default function SuperAdminB2BLeadsPage() {
             </button>
             <button
               onClick={() => setActiveTab('approvals')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors relative ${
+              className={`relative flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors sm:flex-none ${
                 activeTab === 'approvals'
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-800'
@@ -466,7 +468,7 @@ export default function SuperAdminB2BLeadsPage() {
             <>
               {/* Stage Cards - Matching SA Leads Style */}
               {stats && (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
+                <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:mb-8 md:grid-cols-4 lg:grid-cols-8">
                   {stageCards.map((card) => {
                     const value = stats[card.key as keyof B2BLeadStats] || 0;
                     const percentage = stats.total > 0 ? (value / stats.total) * 100 : 0;
@@ -489,38 +491,26 @@ export default function SuperAdminB2BLeadsPage() {
               )}
 
               {/* Search & Filters */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-                <div className="p-4 border-b border-gray-100 bg-gray-50 rounded-t-xl">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Search by name, email, phone..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full px-4 py-2.5 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                      />
-                      <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                    </div>
-                    <select
-                      value={typeFilter}
-                      onChange={(e) => setTypeFilter(e.target.value)}
-                      className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    >
-                      <option value="">All Types</option>
-                      <option value={B2B_LEAD_TYPE.FRANCHISE}>Franchise</option>
-                      <option value={B2B_LEAD_TYPE.INSTITUTION}>Institution</option>
-                      <option value={B2B_LEAD_TYPE.ADVISOR}>Advisor</option>
-                    </select>
-                    <button
-                      onClick={() => { setSearchQuery(''); setTypeFilter(''); setSelectedStageCard(null); setStageFilter(''); }}
-                      className="px-4 py-2.5 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                    >
-                      Clear Filters
-                    </button>
-                  </div>
+              <div className="mb-6 rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div className="rounded-t-xl border-b border-gray-100 bg-gray-50 p-3 sm:p-4">
+                  <ListPageFilters
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    searchPlaceholder="Search by name, email, phone..."
+                    pillFilters={[
+                      {
+                        value: typeFilter,
+                        onChange: setTypeFilter,
+                        options: [
+                          { value: '', label: 'All Types', mobileLabel: 'All Types' },
+                          { value: B2B_LEAD_TYPE.FRANCHISE, label: 'Franchise' },
+                          { value: B2B_LEAD_TYPE.INSTITUTION, label: 'Institution' },
+                          { value: B2B_LEAD_TYPE.ADVISOR, label: 'Advisor' },
+                        ],
+                      },
+                    ]}
+                    onClear={() => { setSearchQuery(''); setTypeFilter(''); setSelectedStageCard(null); setStageFilter(''); }}
+                  />
                 </div>
 
                 {/* Leads Table */}
@@ -537,7 +527,45 @@ export default function SuperAdminB2BLeadsPage() {
                     <p className="text-gray-400 text-sm mt-1">Try adjusting your search or filters</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <>
+                    {/* Mobile card list */}
+                    <div className="divide-y divide-gray-200 md:hidden">
+                      {filteredLeads.map((lead) => (
+                        <MobileRecordCard
+                          key={lead._id}
+                          title={getFullName(lead)}
+                          subtitle={lead.email}
+                          badges={
+                            <>
+                              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getTypeColor(lead.type)}`}>{lead.type}</span>
+                              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getStageColor(lead.stage)}`}>{lead.stage}</span>
+                            </>
+                          }
+                          fields={[
+                            { label: 'Phone', value: lead.mobileNumber, colSpan: 2 },
+                            { label: 'Created', value: new Date(lead.createdAt).toLocaleDateString('en-GB') },
+                            {
+                              label: 'B2B Sales',
+                              value: lead.assignedB2BSalesId?.userId ? getFullName(lead.assignedB2BSalesId.userId) : 'Unassigned',
+                              colSpan: 2,
+                            },
+                            {
+                              label: 'B2B OPS',
+                              value: lead.assignedB2BOpsId?.userId ? getFullName(lead.assignedB2BOpsId.userId) : '—',
+                            },
+                          ]}
+                          menuItems={[
+                            {
+                              label: 'View',
+                              onClick: () => router.push(`/super-admin/b2b/leads/${lead._id}`),
+                            },
+                          ]}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Desktop table */}
+                    <div className="hidden overflow-x-auto md:block">
                     <table className="w-full">
                       <thead className="bg-gray-50 border-b border-gray-200">
                         <tr>
@@ -594,7 +622,8 @@ export default function SuperAdminB2BLeadsPage() {
                         ))}
                       </tbody>
                     </table>
-                  </div>
+                    </div>
+                  </>
                 )}
               </div>
 
@@ -606,10 +635,10 @@ export default function SuperAdminB2BLeadsPage() {
             </>
           ) : (
             /* Pending Approvals Tab */
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+              <div className="border-b border-gray-200 p-4 sm:p-6">
                 <h3 className="text-lg font-semibold text-gray-900">Pending B2B Conversion Approvals</h3>
-                <p className="text-sm text-gray-500 mt-1">Review and approve/reject conversion requests</p>
+                <p className="mt-1 text-sm text-gray-500">Review and approve/reject conversion requests</p>
               </div>
               {loadingConversions ? (
                 <div className="flex items-center justify-center py-12">
@@ -626,8 +655,8 @@ export default function SuperAdminB2BLeadsPage() {
               ) : (
                 <div className="divide-y divide-gray-200">
                   {pendingConversions.map((conversion) => (
-                    <div key={conversion._id} className="p-6 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-start justify-between gap-4">
+                    <div key={conversion._id} className="p-4 transition-colors hover:bg-gray-50 sm:p-6">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex-1 min-w-0">
                           {/* Header: Name + Badges */}
                           <div className="flex items-center gap-2 flex-wrap mb-3">
@@ -647,30 +676,30 @@ export default function SuperAdminB2BLeadsPage() {
                           </div>
 
                           {/* Details Grid */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
+                          <div className="grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
                             {conversion.loginEmail && (
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-gray-500 font-medium">Login Email:</span>
-                                <span className="text-gray-800">{conversion.loginEmail}</span>
+                              <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-1.5">
+                                <span className="shrink-0 font-medium text-gray-500">Login Email:</span>
+                                <span className="break-all text-gray-800">{conversion.loginEmail}</span>
                               </div>
                             )}
                             {conversion.mobileNumber && (
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-gray-500 font-medium">Mobile:</span>
+                              <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-1.5">
+                                <span className="shrink-0 font-medium text-gray-500">Mobile:</span>
                                 <span className="text-gray-800">{conversion.mobileNumber}</span>
                               </div>
                             )}
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-gray-500 font-medium">Lead Email:</span>
-                              <span className="text-gray-800">{conversion.b2bLeadId?.email}</span>
+                            <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-1.5">
+                              <span className="shrink-0 font-medium text-gray-500">Lead Email:</span>
+                              <span className="break-all text-gray-800">{conversion.b2bLeadId?.email}</span>
                             </div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-gray-500 font-medium">Requested by:</span>
+                            <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-1.5">
+                              <span className="shrink-0 font-medium text-gray-500">Requested by:</span>
                               <span className="text-gray-800">{conversion.requestedBy?.firstName} {conversion.requestedBy?.lastName}</span>
                             </div>
                             {conversion.companyName && (
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-gray-500 font-medium">Company:</span>
+                              <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-1.5 sm:col-span-2">
+                                <span className="shrink-0 font-medium text-gray-500">Company:</span>
                                 <span className="text-gray-800">{conversion.companyName}</span>
                               </div>
                             )}
@@ -695,7 +724,7 @@ export default function SuperAdminB2BLeadsPage() {
                             {new Date(conversion.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
-                        <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                        <div className="grid w-full grid-cols-1 gap-2 sm:w-auto sm:shrink-0 sm:grid-cols-3">
                           <button
                             onClick={() => router.push(`/super-admin/b2b/leads/${conversion.b2bLeadId?._id}`)}
                             className="px-3 py-1.5 text-blue-600 border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors text-xs font-medium"
@@ -726,8 +755,8 @@ export default function SuperAdminB2BLeadsPage() {
 
         {/* Assign Sales Modal */}
         {showAssignModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowAssignModal(false)}>
-            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div onClick={() => setShowAssignModal(false)} className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+            <div className="app-modal-panel max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-white p-5 shadow-xl sm:p-6" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Assign B2B Sales</h3>
               <select
                 value={selectedSalesId}
@@ -762,8 +791,8 @@ export default function SuperAdminB2BLeadsPage() {
 
         {/* Reject Conversion Modal */}
         {showRejectModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowRejectModal(false)}>
-            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div onClick={() => setShowRejectModal(false)} className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+            <div className="app-modal-panel max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-white p-5 shadow-xl sm:p-6" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Reject Conversion</h3>
               <textarea
                 value={rejectionReason}
@@ -793,8 +822,8 @@ export default function SuperAdminB2BLeadsPage() {
 
         {/* Step 2 Approval Modal */}
         {showApproveStep2Modal && approvingConversion && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => { setShowApproveStep2Modal(false); setApprovingConversion(null); }}>
-            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+          <div onClick={() => { setShowApproveStep2Modal(false); setApprovingConversion(null); }} className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+            <div className="app-modal-panel max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-5 shadow-xl sm:p-6" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-lg font-semibold text-gray-900 mb-1">
                 Approve {approvingConversion.targetRole} Conversion
               </h3>
@@ -930,23 +959,23 @@ function StatCard({ title, value, icon, color, onClick, isActive, percentage, sh
 
   return (
     <div 
-      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md' : ''
+      className={`rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all sm:p-5 ${
+        onClick ? 'cursor-pointer hover:shadow-md active:scale-[0.98]' : ''
       } ${
         isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
       }`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${colorClasses[color]} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6`}>
           {icon}
         </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+        <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{value}</h3>
       </div>
-      <div className="flex items-center justify-between mt-3">
-        <p className="text-sm font-semibold text-gray-700">{title}</p>
+      <div className="mt-2 flex items-center justify-between gap-2 sm:mt-3">
+        <p className="truncate text-xs font-semibold text-gray-700 sm:text-sm">{title}</p>
         {showPercentage && percentage !== undefined && (
-          <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
+          <p className="shrink-0 text-xs font-semibold text-gray-900 sm:text-sm">{percentage.toFixed(1)}%</p>
         )}
       </div>
     </div>

@@ -9,6 +9,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import { StudentMobileList } from '@/components/StudentMobileRecordCard';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -191,7 +192,19 @@ export default function OpsStudentsPage() {
 
           {/* Students Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
+            {filteredStudents.length > 0 ? (
+              <>
+              <StudentMobileList
+                students={filteredStudents}
+                getServiceColor={getServiceColor}
+                getMenuItems={(student) => [
+                  {
+                    label: 'View Details',
+                    onClick: () => handleViewStudent(student._id),
+                  },
+                ]}
+              />
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -216,8 +229,7 @@ export default function OpsStudentsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredStudents.length > 0 ? (
-                    filteredStudents.map((student) => (
+                  {filteredStudents.map((student) => (
                       <tr key={student._id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -294,39 +306,38 @@ export default function OpsStudentsPage() {
                           </button>
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center">
-                        <div className="text-gray-400">
-                          <svg
-                            className="w-12 h-12 mx-auto mb-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                            />
-                          </svg>
-                          <p className="text-lg font-medium text-gray-900 mb-1">
-                            No students found
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {searchQuery
-                              ? 'Try adjusting your search'
-                              : 'Students will appear here once they register'}
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
+                    ))}
                 </tbody>
               </table>
             </div>
+              </>
+            ) : (
+              <div className="px-6 py-12 text-center">
+                <div className="text-gray-400">
+                  <svg
+                    className="w-12 h-12 mx-auto mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                    />
+                  </svg>
+                  <p className="text-lg font-medium text-gray-900 mb-1">
+                    No students found
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {searchQuery
+                      ? 'Try adjusting your search'
+                      : 'Students will appear here once they register'}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Stats */}

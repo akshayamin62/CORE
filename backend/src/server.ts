@@ -175,6 +175,7 @@ const allowedOrigins = [
   'https://temp-core.admitra.io',
   'https://www.core.admitra.io',
   'https://www.temp-core.admitra.io',
+  'http://192.168.29.125:3000',
 ];
 
 app.use(cors({

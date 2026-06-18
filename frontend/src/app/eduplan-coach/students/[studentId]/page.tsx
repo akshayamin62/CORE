@@ -7,6 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import EduplanCoachLayout from '@/components/EduplanCoachLayout';
 import StudentProfileModal from '@/components/StudentProfileModal';
 import AuthImage from '@/components/AuthImage';
+import { studentHeaderRowClass, studentPagePadding } from '@/components/studentDetailResponsive';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
@@ -181,7 +182,7 @@ export default function EduplanCoachStudentDetailPage() {
     <>
       <Toaster position="top-right" />
       <EduplanCoachLayout user={user}>
-        <div className="p-8">
+        <div className={studentPagePadding}>
           {/* Back Button */}
           <button
             onClick={() => router.back()}
@@ -195,7 +196,7 @@ export default function EduplanCoachStudentDetailPage() {
 
           {/* Student Info Card */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex items-start justify-between mb-6">
+            <div className={studentHeaderRowClass}>
               <div className="flex items-center">
                 <AuthImage
                   path={student.userId.profilePicture}

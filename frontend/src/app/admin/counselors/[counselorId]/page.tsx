@@ -12,6 +12,13 @@ import LeadDetailPanel from '@/components/LeadDetailPanel';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import ScheduleCalendar from '@/components/ScheduleCalendar';
 import ScheduleOverview from '@/components/ScheduleOverview';
+import ListPageFilters from '@/components/ListPageFilters';
+import LeadMobileList, {
+  getLeadServiceColor,
+  getLeadStageColor,
+  LEAD_SERVICE_FILTER_OPTIONS,
+  LEAD_STAGE_FILTER_OPTIONS,
+} from '@/components/LeadMobileList';
 
 interface CounselorDetail {
   _id: string;
@@ -554,7 +561,35 @@ export default function AdminCounselorDetailPage() {
                 </div>
                 
                 {/* Filters - Show for all views */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:hidden">
+                  <ListPageFilters
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    searchPlaceholder="Search by name, email, or mobile..."
+                    pillFilters={[
+                      ...(selectedStage === 'all'
+                        ? [
+                            {
+                              value: stageFilter === 'all' ? '' : stageFilter,
+                              onChange: (value: string) => setStageFilter(value || 'all'),
+                              options: LEAD_STAGE_FILTER_OPTIONS,
+                            },
+                          ]
+                        : []),
+                      {
+                        value: serviceFilter === 'all' ? '' : serviceFilter,
+                        onChange: (value: string) => setServiceFilter(value || 'all'),
+                        options: LEAD_SERVICE_FILTER_OPTIONS,
+                      },
+                    ]}
+                    onClear={() => {
+                      setSearchQuery('');
+                      setStageFilter('all');
+                      setServiceFilter('all');
+                    }}
+                  />
+                </div>
+                <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Search */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
@@ -604,7 +639,18 @@ export default function AdminCounselorDetailPage() {
                   </div>
                 </div>
               </div>
-              <div className="overflow-x-auto">
+              <LeadMobileList
+                leads={getFilteredLeads()}
+                getStageColor={getLeadStageColor}
+                getServiceColor={getLeadServiceColor}
+                getMenuItems={(lead) => [
+                  {
+                    label: 'View',
+                    onClick: () => router.push(`/admin/leads/${lead._id}`),
+                  },
+                ]}
+              />
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>

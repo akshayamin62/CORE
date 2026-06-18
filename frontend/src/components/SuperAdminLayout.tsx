@@ -433,7 +433,7 @@ export default function SuperAdminLayout({ children, user }: SuperAdminLayoutPro
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-28 md:pb-0">{children}</main>
+      <main className="flex-1 overflow-x-hidden overflow-y-auto pb-28 md:pb-0">{children}</main>
 
       <MobileBottomNav items={mobileNavItems} />
     </div>

@@ -8,6 +8,11 @@ import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import { StudentMobileList } from '@/components/StudentMobileRecordCard';
+import ListPageFilters from '@/components/ListPageFilters';
+import { ACTIVE_STATUS_FILTER_OPTIONS } from '@/components/listFilterOptions';
+import PageStatCard from '@/components/PageStatCard';
+import { ListPageStatGrid } from '@/components/SuperAdminRoleDetailFrame';
 
 interface StudentData {
   _id: string;
@@ -134,7 +139,7 @@ export default function SuperAdminEduplanCoachStudentsPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={currentUser}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Back Button */}
           <button
             onClick={() => router.push(`/super-admin/roles/eduplan-coach/${coachUserId}`)}
@@ -147,72 +152,39 @@ export default function SuperAdminEduplanCoachStudentsPage() {
           </button>
 
           {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Eduplan Coach&apos;s Students</h2>
-            <p className="text-gray-600 mt-1">View students assigned to this coach (read-only)</p>
+          <div className="mb-6 md:mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">Eduplan Coach&apos;s Students</h2>
+            <p className="mt-1 text-sm text-gray-600 sm:text-base">View students assigned to this coach (read-only)</p>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
-                  </svg>
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-900">{students.length}</h3>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Total Students</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="text-3xl font-extrabold text-green-600">
-                  {students.filter(s => s.userId?.isActive).length}
-                </h3>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Active Students</p>
-            </div>
-          </div>
+          <ListPageStatGrid>
+            <PageStatCard title="Total Students" value={students.length} color="blue" />
+            <PageStatCard
+              title="Active Students"
+              value={students.filter((s) => s.userId?.isActive).length}
+              color="green"
+            />
+          </ListPageStatGrid>
 
           {/* Search and Filter */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-            <div className="p-4 border-b border-gray-100 bg-gray-50 rounded-t-xl">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search by name, email, phone..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-4 py-2.5 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  />
-                  <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                >
-                  <option value="">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-                <button
-                  onClick={() => { setSearchQuery(''); setStatusFilter(''); }}
-                  className="px-4 py-2.5 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  Clear Filters
-                </button>
-              </div>
+          <div className="mb-6 rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="rounded-t-xl border-b border-gray-100 bg-gray-50 p-3 sm:p-4">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search by name, email, phone..."
+                pillFilters={[
+                  {
+                    value: statusFilter,
+                    onChange: setStatusFilter,
+                    options: ACTIVE_STATUS_FILTER_OPTIONS,
+                  },
+                ]}
+                onClear={() => {
+                  setSearchQuery('');
+                  setStatusFilter('');
+                }}
+              />
             </div>
 
             {/* Students Table */}
@@ -230,7 +202,18 @@ export default function SuperAdminEduplanCoachStudentsPage() {
                 <p className="text-gray-400 text-sm mt-1">Try adjusting your search or filters</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              <StudentMobileList
+                students={filteredStudents}
+                getServiceColor={getServiceColor}
+                getMenuItems={(student) => [
+                  {
+                    label: 'View Details',
+                    onClick: () => router.push(`/super-admin/roles/student/${student._id}`),
+                  },
+                ]}
+              />
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
@@ -306,6 +289,7 @@ export default function SuperAdminEduplanCoachStudentsPage() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </div>
 

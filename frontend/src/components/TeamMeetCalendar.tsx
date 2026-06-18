@@ -1,12 +1,19 @@
 'use client';
 
 import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay, setMonth, setYear, getMonth, getYear, addMonths, addWeeks, addDays } from 'date-fns';
+import { format, parse, startOfWeek, getDay, setMonth, setYear, addMonths, addWeeks, addDays } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { TeamMeet, TEAMMEET_STATUS } from '@/types';
 import { useState, useCallback, useMemo } from 'react';
 import { getFullName } from '@/utils/nameHelpers';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import CalendarNavigationBar from '@/components/calendar/CalendarNavigationBar';
+import BigCalendarViewport from '@/components/calendar/BigCalendarViewport';
+import {
+  getDesktopCalendarFormats,
+  getMobileCalendarFormats,
+} from '@/components/calendar/getMobileCalendarFormats';
 
 const locales = {
   'en-US': enUS,
@@ -57,6 +64,31 @@ const getStatusColor = (status: TEAMMEET_STATUS) => {
   }
 };
 
+const STATUS_LEGEND = [
+  { color: 'bg-amber-400', label: 'Pending Confirmation' },
+  { color: 'bg-pink-500', label: 'Confirmed' },
+  { color: 'bg-red-800', label: 'Reschedule Requested' },
+  { color: 'bg-slate-400', label: 'Cancelled' },
+  { color: 'bg-teal-500', label: 'Completed' },
+  { color: '', label: 'Invited', style: { backgroundColor: '#D97706' } as const },
+];
+
+function StatusLegendContent() {
+  return (
+    <div className="space-y-1.5">
+      {STATUS_LEGEND.map((item) => (
+        <div key={item.label} className="flex items-center gap-2">
+          <span
+            className={`h-3 w-3 rounded ${item.color}`}
+            style={item.style}
+          />
+          <span className="text-xs text-gray-600">{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function TeamMeetCalendar({
   teamMeets,
   onTeamMeetSelect,
@@ -69,6 +101,8 @@ export default function TeamMeetCalendar({
 }: TeamMeetCalendarProps) {
   const [view, setView] = useState<View>('month');
   const [date, setDate] = useState(new Date());
+  const [showLegendModal, setShowLegendModal] = useState(false);
+  const isMobile = useIsMobile();
 
   // Convert team meets to calendar events
   const events: CalendarEvent[] = useMemo(() => {
@@ -168,6 +202,15 @@ export default function TeamMeetCalendar({
     }
   }, [onDateSelect]);
 
+  const handleDrillDown = useCallback(
+    (drillDate: Date) => {
+      if (onDateSelect) {
+        onDateSelect(drillDate);
+      }
+    },
+    [onDateSelect]
+  );
+
   // Navigate Previous based on current view
   const handlePrevious = useCallback(() => {
     if (view === 'month') {
@@ -190,16 +233,10 @@ export default function TeamMeetCalendar({
     }
   }, [date, view]);
 
-  const currentMonth = getMonth(date);
-  const currentYear = getYear(date);
-
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-
-  // Generate years from 2020 to 2030 for scrollable dropdown
-  const years = Array.from({ length: 11 }, (_, i) => 2020 + i);
+  const calendarFormats = useMemo(
+    () => (isMobile ? getMobileCalendarFormats() : getDesktopCalendarFormats()),
+    [isMobile]
+  );
 
   if (minimized) {
     return (
@@ -231,61 +268,43 @@ export default function TeamMeetCalendar({
     <div className={`bg-white ${hideHeader ? '' : 'rounded-xl shadow-sm border border-gray-200'} overflow-hidden`}>
       {/* Calendar Header - conditionally shown */}
       {!hideHeader && (
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="flex flex-col gap-3 border-b border-gray-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between md:px-6 md:py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 md:h-10 md:w-10">
+              <svg className="h-5 w-5 text-blue-600 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Team Meet Calendar</h3>
-              <p className="text-sm text-gray-500">{events.length} meetings scheduled</p>
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-gray-900 md:text-base">Team Meet Calendar</h3>
+              <p className="text-xs text-gray-500 md:text-sm">{events.length} meetings scheduled</p>
             </div>
           </div>
           
-          {/* Legend - TeamMeet Status Colors with Hover Tooltip */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <div className="relative group">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg cursor-help hover:bg-pink-50 transition-colors">
+              <button
+                type="button"
+                onClick={() => {
+                  if (isMobile) setShowLegendModal(true);
+                }}
+                className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-1.5 transition-colors hover:bg-pink-50 md:cursor-help"
+                aria-label="Team Meet status colors"
+              >
                 <span className="text-xs text-gray-500">👥</span>
-                <span className="w-2 h-2 rounded bg-amber-400"></span>
-                <span className="w-2 h-2 rounded bg-pink-500"></span>
-                <span className="w-2 h-2 rounded bg-red-800"></span>
-                <span className="w-2 h-2 rounded bg-slate-400"></span>
-                <span className="w-2 h-2 rounded bg-teal-500"></span>
-                <span className="w-2 h-2 rounded" style={{ backgroundColor: '#D97706' }}></span>
+                {STATUS_LEGEND.map((item) => (
+                  <span
+                    key={item.label}
+                    className={`h-2 w-2 rounded ${item.color}`}
+                    style={item.style}
+                  />
+                ))}
                 <span className="text-xs text-gray-500">Team Meet</span>
-              </div>
-              {/* Hover Tooltip */}
-              <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <p className="text-xs font-semibold text-gray-700 mb-2">Team Meet Status Colors</p>
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-amber-400"></span>
-                    <span className="text-xs text-gray-600">Pending Confirmation</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-pink-500"></span>
-                    <span className="text-xs text-gray-600">Confirmed</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-red-800"></span>
-                    <span className="text-xs text-gray-600">Reschedule Requested</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-slate-400"></span>
-                    <span className="text-xs text-gray-600">Cancelled</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-teal-500"></span>
-                    <span className="text-xs text-gray-600">Completed</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded" style={{ backgroundColor: '#D97706' }}></span>
-                    <span className="text-xs text-gray-600">Invited</span>
-                  </div>
-                </div>
+              </button>
+              {/* Desktop hover tooltip */}
+              <div className="absolute right-0 top-full z-50 mt-2 hidden w-48 rounded-lg border border-gray-200 bg-white p-3 opacity-0 shadow-lg transition-all duration-200 invisible group-hover:visible group-hover:opacity-100 md:block">
+                <p className="mb-2 text-xs font-semibold text-gray-700">Team Meet Status Colors</p>
+                <StatusLegendContent />
               </div>
             </div>
             
@@ -304,98 +323,19 @@ export default function TeamMeetCalendar({
         </div>
       )}
 
-      {/* Custom Navigation Bar */}
-      <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={handlePrevious}
-            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            ← Previous
-          </button>
-          
-          <div className="flex items-center gap-3">
-            {/* View Switcher Buttons */}
-            <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-lg p-1">
-              <button
-                onClick={() => handleViewChange('month')}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  view === 'month'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                Month
-              </button>
-              <button
-                onClick={() => handleViewChange('week')}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  view === 'week'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                Week
-              </button>
-              <button
-                onClick={() => handleViewChange('day')}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  view === 'day'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                Day
-              </button>
-            </div>
-            
-            {/* Month/Year Dropdowns */}
-            <select
-              value={currentMonth}
-              onChange={handleMonthChange}
-              className="px-3 py-1.5 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              {months.map((month, index) => (
-                <option key={month} value={index}>{month}</option>
-              ))}
-            </select>
-            
-            <select
-              value={currentYear}
-              onChange={handleYearChange}
-              className="px-3 py-1.5 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              {years.map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-            
-            <button
-              onClick={() => handleNavigate(new Date())}
-              className="px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-            >
-              Today
-            </button>
-            
-            {/* Show current date when in day view */}
-            {view === 'day' && (
-              <div className="px-3 py-1.5 text-sm font-semibold text-gray-900 bg-white border border-gray-300 rounded-lg">
-                {format(date, 'EEEE, d')}
-              </div>
-            )}
-          </div>
-          
-          <button
-            onClick={handleNext}
-            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Next →
-          </button>
-        </div>
-      </div>
+      <CalendarNavigationBar
+        view={view}
+        date={date}
+        accent="blue"
+        onPrevious={handlePrevious}
+        onNext={handleNext}
+        onViewChange={handleViewChange}
+        onMonthChange={handleMonthChange}
+        onYearChange={handleYearChange}
+        onToday={() => handleNavigate(new Date())}
+      />
 
-      {/* Calendar */}
-      <div className={compact ? 'p-2' : 'p-4'} style={{ height: compact ? '350px' : '600px' }}>
+      <BigCalendarViewport compact={compact}>
         <Calendar
           localizer={localizer}
           events={events}
@@ -407,20 +347,40 @@ export default function TeamMeetCalendar({
           onView={handleViewChange}
           onSelectEvent={handleEventSelect}
           onSelectSlot={handleSelectSlot}
+          onDrillDown={isMobile && onDateSelect ? handleDrillDown : undefined}
           selectable={!!onDateSelect}
+          longPressThreshold={isMobile ? 1 : 250}
           eventPropGetter={eventStyleGetter}
           views={['month', 'week', 'day']}
           defaultView="month"
           popup
           style={{ height: '100%' }}
           toolbar={false}
-          formats={{
-            timeGutterFormat: 'HH:mm',
-            eventTimeRangeFormat: ({ start, end }) =>
-              `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`,
-          }}
+          formats={calendarFormats}
         />
-      </div>
+      </BigCalendarViewport>
+
+      {showLegendModal && (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-[60] bg-black/30 md:hidden"
+            aria-label="Close legend"
+            onClick={() => setShowLegendModal(false)}
+          />
+          <div className="fixed left-1/2 top-1/2 z-[61] w-[calc(100%-2rem)] max-w-xs -translate-x-1/2 -translate-y-1/2 rounded-lg border border-gray-200 bg-white p-4 shadow-xl md:hidden">
+            <p className="mb-3 text-sm font-semibold text-gray-800">Team Meet Status Colors</p>
+            <StatusLegendContent />
+            <button
+              type="button"
+              onClick={() => setShowLegendModal(false)}
+              className="mt-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Close
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

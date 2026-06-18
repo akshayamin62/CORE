@@ -976,8 +976,8 @@ export default function ProgramSection({
 
     {/* Application not Open - Date & Time Modal */}
     {showAppNotOpenModal && (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
+      <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+        <div className="app-modal-panel bg-white rounded-xl shadow-2xl p-6 w-full max-w-md mx-4">
           <h3 className="text-lg font-bold text-gray-900 mb-1">Application Opening Date</h3>
           <p className="text-sm text-gray-500 mb-5">Select the date the application opens and a time for the OPS schedule reminder.</p>
           <div className="space-y-4">

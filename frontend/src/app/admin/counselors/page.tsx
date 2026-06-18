@@ -8,6 +8,9 @@ import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import ResponsiveFormModal from '@/components/ResponsiveFormModal';
+import ListPageFilters from '@/components/ListPageFilters';
+import StaffMobileList from '@/components/StaffMobileList';
 
 interface CounselorData {
   _id: string;
@@ -147,11 +150,11 @@ export default function CounselorsListPage() {
     <>
       <Toaster position="top-right" />
       <AdminLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Back Button */}
           <button
             onClick={() => router.push('/admin/dashboard')}
-            className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            className="mb-4 flex items-center text-gray-600 hover:text-gray-900 transition-colors md:mb-6"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -160,70 +163,84 @@ export default function CounselorsListPage() {
           </button>
 
           {/* Header */}
-          <div className="mb-6 flex justify-between items-center">
+          <div className="mb-6 flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">My Counselors</h2>
-              <p className="text-gray-600 mt-2">
+              <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">My Counselors</h2>
+              <p className="mt-1 text-gray-600 sm:mt-2">
                 View and manage counselors in your team
               </p>
             </div>
             <button
               onClick={() => setShowModal(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="hidden shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 md:flex"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Add Counselor
             </button>
+            <button
+              type="button"
+              onClick={() => setShowModal(true)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg md:hidden"
+              aria-label="Add counselor"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
           </div>
 
           {/* Search and Filter */}
-          <div className="mb-6 flex gap-4">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="Search by name, email, or phone..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <svg 
-                className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active')}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-            </select>
+          <div className="mb-6 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-4">
+            <ListPageFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Search by name, email, or phone..."
+              pillFilters={[
+                {
+                  value: statusFilter,
+                  onChange: (v) => setStatusFilter(v as 'all' | 'active'),
+                  emptyValue: 'all',
+                  options: [
+                    { value: 'all', label: 'All Status', mobileLabel: 'All' },
+                    { value: 'active', label: 'Active' },
+                  ],
+                },
+              ]}
+              onClear={() => {
+                setSearchQuery('');
+                setStatusFilter('active');
+              }}
+            />
           </div>
 
-          {/* Add Counselor Modal */}
-          {showModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 m-4">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900">Add New Counselor</h3>
-                  <button
-                    onClick={() => setShowModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
+          <ResponsiveFormModal
+            open={showModal}
+            onClose={() => setShowModal(false)}
+            title="Add New Counselor"
+            maxWidth="lg"
+            footer={
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-700 transition-colors hover:bg-gray-50 md:py-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  form="add-counselor-form"
+                  disabled={submitting}
+                  className="flex-1 rounded-lg bg-blue-600 px-4 py-3 text-white transition-colors hover:bg-blue-700 disabled:opacity-50 md:py-2"
+                >
+                  {submitting ? 'Creating...' : 'Create Counselor'}
+                </button>
+              </div>
+            }
+          >
+                <form id="add-counselor-form" onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -302,26 +319,8 @@ export default function CounselorsListPage() {
                     />
                   </div>
 
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                    >
-                      {submitting ? 'Creating...' : 'Create Counselor'}
-                    </button>
-                  </div>
                 </form>
-              </div>
-            </div>
-          )}
+          </ResponsiveFormModal>
 
           {/* Counselors Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -347,6 +346,22 @@ export default function CounselorsListPage() {
                 <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filter</p>
               </div>
             ) : (
+              <>
+              <StaffMobileList
+                staff={filteredCounselors}
+                getMenuItems={(counselor) => [
+                  {
+                    label: 'View Detail',
+                    onClick: () => router.push(`/admin/counselors/${counselor._id}`),
+                  },
+                  {
+                    label: counselor.userId?.isActive ? 'Deactivate' : 'Activate',
+                    variant: counselor.userId?.isActive ? 'warning' : 'success',
+                    onClick: () => handleToggleStatus(counselor._id, counselor.userId?.isActive ?? false),
+                  },
+                ]}
+              />
+              <div className="hidden overflow-x-auto md:block">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -434,6 +449,8 @@ export default function CounselorsListPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
+              </>
             )}
           </div>
 

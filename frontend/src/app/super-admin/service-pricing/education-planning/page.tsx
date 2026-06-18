@@ -6,6 +6,7 @@ import { authAPI, servicePlanAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
+import { ServicePricingPageFrame } from '@/components/ServicePricingPageFrame';
 import toast, { Toaster } from 'react-hot-toast';
 
 function BlueCheck() {
@@ -103,20 +104,12 @@ export default function SuperAdminEducationPlanningPricingPage() {
   return (
     <SuperAdminLayout user={user}>
       <Toaster position="top-right" />
-      <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-[calc(100vh-5rem)]">
-        {/* Header */}
-        <div className="px-6 lg:px-8 py-8">
-          <button onClick={() => router.push('/super-admin/service-pricing')} className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            Back to Service Pricing
-          </button>
-          <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Education Planning — Base Pricing</h1>
-          <p className="text-gray-500 mt-1 max-w-2xl">Set the base (cost) price for each plan tier. Admins will see this when setting their own selling price.</p>
-        </div>
-
-        <div className="p-6 lg:p-8">
-          {/* Plan Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <ServicePricingPageFrame
+        title="Education Planning — Base Pricing"
+        description="Set the base (cost) price for each plan tier. Admins will see this when setting their own selling price."
+        backHref="/super-admin/service-pricing"
+      >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {plans.map((plan) => {
               const price = pricing?.[plan.key];
               const planFeatures = features
@@ -124,8 +117,8 @@ export default function SuperAdminEducationPlanningPricingPage() {
                 .filter((label): label is string => label !== null);
 
               return (
-                <div key={plan.key} className="bg-white p-7 rounded-2xl shadow-sm flex flex-col hover:shadow-md transition-shadow border border-slate-100">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                <div key={plan.key} className="flex flex-col rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:rounded-2xl sm:p-6 lg:p-7">
+                  <h3 className="mb-1 text-lg font-bold text-gray-900 sm:mb-2 sm:text-xl">{plan.name}</h3>
                   {plan.subtitle && <p className="text-xs text-gray-400 uppercase font-semibold tracking-wide mb-4">{plan.subtitle}</p>}
 
                   {editingPrice === plan.key ? (
@@ -207,8 +200,7 @@ export default function SuperAdminEducationPlanningPricingPage() {
             })}
           </div>
 
-          {/* Info Note */}
-          <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-5 shadow-sm">
+          <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 shadow-sm sm:rounded-2xl sm:p-5">
             <div className="flex gap-3">
               <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -219,8 +211,7 @@ export default function SuperAdminEducationPlanningPricingPage() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
+      </ServicePricingPageFrame>
     </SuperAdminLayout>
   );
 }

@@ -8,6 +8,7 @@ import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import { StudentMobileList } from '@/components/StudentMobileRecordCard';
 
 interface AdvisorInfo {
   _id: string;
@@ -430,7 +431,17 @@ export default function AdminStudentsPage() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              <StudentMobileList
+                students={filteredStudents}
+                getMenuItems={(student) => [
+                  {
+                    label: 'View Details',
+                    onClick: () => router.push(`/admin/students/${student._id}`),
+                  },
+                ]}
+              />
+
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
@@ -524,8 +535,8 @@ export default function AdminStudentsPage() {
 
       {/* Reject Modal */}
       {rejectModal.open && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+        <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+          <div className="app-modal-panel bg-white rounded-xl p-6 w-full max-w-md">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Reject Transfer</h3>
             <textarea
               value={rejectReason}

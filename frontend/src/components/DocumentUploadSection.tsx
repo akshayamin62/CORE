@@ -706,8 +706,8 @@ export default function DocumentUploadSection({
 
         {/* Multiple Upload Name Prompt Modal */}
         {uploadingMultiple && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+          <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+            <div className="app-modal-panel bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
               <h3 className="text-lg font-bold text-gray-900 mb-2">Name Your Document</h3>
               <p className="text-sm text-gray-600 mb-4">
                 Please provide a name for this document to help identify it later.
@@ -748,8 +748,8 @@ export default function DocumentUploadSection({
 
         {/* Add Extra Field Modal */}
         {showAddExtraFieldModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+            <div className="app-modal-panel bg-white rounded-lg p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Extra Document Field</h3>
               <div className="space-y-4">
                 <div>
@@ -866,8 +866,8 @@ export default function DocumentUploadSection({
 
         {/* Add Field Modal */}
         {showAddFieldModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+            <div className="app-modal-panel bg-white rounded-lg p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Add CORE Document Field</h3>
               <div className="space-y-4">
                 <div>
@@ -933,8 +933,8 @@ export default function DocumentUploadSection({
 
         {/* Multiple Upload Name Prompt Modal */}
         {uploadingMultiple && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+          <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+            <div className="app-modal-panel bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
               <h3 className="text-lg font-bold text-gray-900 mb-2">Name Your Document</h3>
               <p className="text-sm text-gray-600 mb-4">
                 Please provide a name for this document to help identify it later.

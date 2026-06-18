@@ -233,7 +233,7 @@ export default function AdvisorLayout({ children, user: userProp }: AdvisorLayou
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-24 md:pb-0">
+      <main className="flex-1 overflow-x-hidden overflow-y-auto pb-24 md:pb-0">
         {children}
       </main>
 

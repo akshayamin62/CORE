@@ -6,6 +6,8 @@ import { authAPI, b2bAPI } from '@/lib/api';
 import { User, USER_ROLE, B2B_LEAD_STAGE, B2B_LEAD_TYPE } from '@/types';
 import B2BSalesLayout from '@/components/B2BSalesLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import ListPageFilters from '@/components/ListPageFilters';
+import MobileRecordCard from '@/components/MobileRecordCard';
 
 interface B2BLeadData {
   _id: string;
@@ -189,15 +191,15 @@ export default function B2BSalesLeadsPage() {
     <>
       <Toaster position="top-right" />
       <B2BSalesLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">My B2B Leads</h1>
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">My B2B Leads</h1>
             <p className="text-gray-600 mt-1">Manage your assigned B2B leads</p>
           </div>
 
           {/* Stats Cards - Clickable */}
-          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4 mb-6">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 xl:grid-cols-8">
             <StatCard
               title="Total Leads"
               value={totalLeads}
@@ -305,66 +307,37 @@ export default function B2BSalesLeadsPage() {
           </div>
 
           {/* Search and Filters */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[200px]">
-                <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
-                <div className="relative">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Search by name, email, phone..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-
-              <div className="flex-1 min-w-[150px]">
-                <label className="block text-xs font-medium text-gray-500 mb-1">Stage</label>
-                <select
-                  value={stageFilter}
-                  onChange={(e) => { setStageFilter(e.target.value); setSelectedStageCard(e.target.value || null); }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">All Stages</option>
-                  {Object.values(B2B_LEAD_STAGE).map((stage) => (
-                    <option key={stage} value={stage}>{stage}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex-1 min-w-[150px]">
-                <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">All Types</option>
-                  {Object.values(B2B_LEAD_TYPE).map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-end">
-                <button
-                  onClick={() => {
-                    setStageFilter('');
-                    setTypeFilter('');
-                    setSearchQuery('');
-                    setSelectedStageCard(null);
-                  }}
-                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  Clear All
-                </button>
-              </div>
-            </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 mb-6">
+            <ListPageFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Search by name, email, phone..."
+              desktopColumns={4}
+              pillFilters={[
+                {
+                  value: stageFilter,
+                  onChange: (v) => { setStageFilter(v); setSelectedStageCard(v || null); },
+                  options: [
+                    { value: '', label: 'All Stages', mobileLabel: 'All' },
+                    ...Object.values(B2B_LEAD_STAGE).map((stage) => ({ value: stage, label: stage })),
+                  ],
+                },
+                {
+                  value: typeFilter,
+                  onChange: setTypeFilter,
+                  options: [
+                    { value: '', label: 'All Types', mobileLabel: 'All Types' },
+                    ...Object.values(B2B_LEAD_TYPE).map((type) => ({ value: type, label: type })),
+                  ],
+                },
+              ]}
+              onClear={() => {
+                setStageFilter('');
+                setTypeFilter('');
+                setSearchQuery('');
+                setSelectedStageCard(null);
+              }}
+            />
           </div>
 
           {/* Leads Table */}
@@ -384,7 +357,53 @@ export default function B2BSalesLeadsPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                {/* Mobile card list */}
+                <div className="divide-y divide-gray-200 md:hidden">
+                  {filteredLeads.map((lead) => (
+                    <MobileRecordCard
+                      key={lead._id}
+                      title={getFullName(lead)}
+                      subtitle={lead.email}
+                      badges={
+                        <>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getTypeColor(lead.type)}`}>{lead.type}</span>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getStageColor(lead.stage)}`}>{lead.stage}</span>
+                          {lead.conversionStatus === 'Pending' && (
+                            <span className="rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-800">Conversion Pending</span>
+                          )}
+                        </>
+                      }
+                      fields={[
+                        { label: 'Phone', value: lead.mobileNumber, colSpan: 2 },
+                        { label: 'Created', value: new Date(lead.createdAt).toLocaleDateString('en-GB') },
+                      ]}
+                      menuItems={[
+                        {
+                          label: 'View',
+                          onClick: () => router.push(`/b2b-sales/leads/${lead._id}`),
+                        },
+                        {
+                          label: 'Proceed for Documentation',
+                          variant: 'success',
+                          hidden: !([B2B_LEAD_STAGE.NEW, B2B_LEAD_STAGE.HOT, B2B_LEAD_STAGE.WARM].includes(lead.stage as B2B_LEAD_STAGE) && !lead.conversionStatus),
+                          onClick: () => {
+                            setConvertingLeadId(lead._id);
+                            setConvertingLeadType(lead.type);
+                            setConvTargetRole(lead.type === B2B_LEAD_TYPE.ADVISOR ? 'Advisor' : 'Admin');
+                            setConvLoginEmail(lead.email || '');
+                            setConvMobileNumber(lead.mobileNumber || '');
+                            setConvAllowedServices([]);
+                            setShowConvertModal(true);
+                          },
+                        },
+                      ]}
+                    />
+                  ))}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden overflow-x-auto md:block">
                 <table className="w-full table-fixed">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
@@ -455,15 +474,16 @@ export default function B2BSalesLeadsPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             )}
           </div>
         </div>
 
         {/* Convert to In Process Modal */}
         {showConvertModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowConvertModal(false)}>
-            <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+          <div onClick={() => setShowConvertModal(false)} className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+            <div className="app-modal-panel max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-4 shadow-xl sm:p-6" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Proceed for Documentation</h3>
               <p className="text-sm text-gray-600 mb-4">
                 Set up the Admin/Advisor account details. Once approved by Super Admin, the account will be created and the lead can begin onboarding.
@@ -594,23 +614,23 @@ function StatCard({ title, value, icon, color, onClick, isActive, percentage, sh
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md' : ''
+      className={`rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all sm:p-5 ${
+        onClick ? 'cursor-pointer hover:shadow-md active:scale-[0.98]' : ''
       } ${
         isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
       }`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${colorClasses[color]} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6`}>
           {icon}
         </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+        <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{value}</h3>
       </div>
-      <div className="flex items-center justify-between mt-3">
-        <p className="text-sm font-semibold text-gray-700">{title}</p>
+      <div className="mt-2 flex items-center justify-between gap-2 sm:mt-3">
+        <p className="truncate text-xs font-semibold text-gray-700 sm:text-sm">{title}</p>
         {showPercentage && percentage !== undefined && (
-          <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
+          <p className="shrink-0 text-xs font-semibold text-gray-900 sm:text-sm">{percentage.toFixed(1)}%</p>
         )}
       </div>
     </div>

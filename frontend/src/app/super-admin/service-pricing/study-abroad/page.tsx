@@ -7,6 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
+import { ServicePricingPageFrame } from '@/components/ServicePricingPageFrame';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function SuperAdminStudyAbroadPricingPage() {
@@ -93,83 +94,72 @@ export default function SuperAdminStudyAbroadPricingPage() {
   return (
     <SuperAdminLayout user={user}>
       <Toaster position="top-right" />
-      <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-[calc(100vh-5rem)]">
-        {/* Header */}
-          <div className="px-6 lg:px-8 py-8 relative">
-            <button onClick={() => router.push('/super-admin/service-pricing')} className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              Back to Service Pricing
-            </button>
-            <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Study Abroad — Base Pricing</h1>
-            <p className="text-gray-500 mt-1 max-w-2xl">Set the base (cost) price for each plan tier. Admins will see this when setting their own selling price.</p>
-          </div>
-        <div className="p-6 lg:p-8">
-          {/* Current Pricing */}
+      <ServicePricingPageFrame
+        title="Study Abroad — Base Pricing"
+        description="Set the base (cost) price for each plan tier. Admins will see this when setting their own selling price."
+        backHref="/super-admin/service-pricing"
+      >
           {pricing && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
               {plans.map((plan) => (
-                <div key={plan.key} className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-slate-200 p-6 relative overflow-hidden">
+                <div key={plan.key} className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-md sm:rounded-2xl sm:p-6">
                   <div className={`absolute top-0 left-0 right-0 h-1.5 ${plan.badgeBg}`} />
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`w-11 h-11 ${plan.iconBg} ${plan.iconText} rounded-xl flex items-center justify-center shadow-sm`}>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
+                  <div className="mb-3 flex items-center justify-between sm:mb-4">
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-lg shadow-sm sm:h-11 sm:w-11 sm:rounded-xl ${plan.iconBg} ${plan.iconText}`}>
+                      <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
                     </div>
-                    <span className={`text-xs font-bold ${plan.textColor} uppercase tracking-wider bg-white px-3 py-1 rounded-full border ${plan.borderColor}`}>{plan.name}</span>
+                    <span className={`rounded-full border bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider sm:px-3 sm:py-1 sm:text-xs ${plan.textColor} ${plan.borderColor}`}>{plan.name}</span>
                   </div>
-                  <p className="text-4xl font-extrabold text-gray-900">₹{pricing[plan.key]?.toLocaleString('en-IN') ?? '—'}</p>
-                  <p className="text-sm text-gray-500 mt-1 font-medium">Base price</p>
+                  <p className="text-2xl font-extrabold text-gray-900 sm:text-4xl">₹{pricing[plan.key]?.toLocaleString('en-IN') ?? '—'}</p>
+                  <p className="mt-1 text-xs font-medium text-gray-500 sm:text-sm">Base price</p>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Pricing Form */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 lg:p-8">
-            <h2 className="text-lg font-bold text-gray-900 mb-6">{pricing ? 'Update Base Pricing' : 'Set Base Pricing'}</h2>
-            <div className="space-y-5">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-lg sm:rounded-2xl sm:p-6 lg:p-8">
+            <h2 className="mb-4 text-base font-bold text-gray-900 sm:mb-6 sm:text-lg">{pricing ? 'Update Base Pricing' : 'Set Base Pricing'}</h2>
+            <div className="space-y-4 sm:space-y-5">
               {plans.map((plan) => (
                 <div key={plan.key}>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">{plan.name} Plan Base Price (₹)</label>
+                  <label className="mb-1.5 block text-xs font-semibold text-gray-700 sm:text-sm">{plan.name} Plan Base Price (₹)</label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-medium">₹</span>
-                    <input type="number" min="0" step="1" value={formData[plan.key] || ''} onChange={(e) => setFormData({ ...formData, [plan.key]: e.target.value })} placeholder="Enter base price" className="w-full pl-8 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900" />
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-medium text-gray-400">₹</span>
+                    <input type="number" min="0" step="1" value={formData[plan.key] || ''} onChange={(e) => setFormData({ ...formData, [plan.key]: e.target.value })} placeholder="Enter base price" className="w-full rounded-lg border border-gray-300 py-2.5 pl-8 pr-4 text-sm text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:text-base" />
                   </div>
                 </div>
               ))}
             </div>
-            <div className="mt-6 flex items-center gap-3">
-              <button onClick={handleSave} disabled={saving || plans.some(p => !formData[p.key])} className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            <div className="mt-5 flex flex-col gap-3 sm:mt-6 sm:flex-row sm:items-center">
+              <button onClick={handleSave} disabled={saving || plans.some(p => !formData[p.key])} className="w-full rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
                 {saving ? 'Saving...' : pricing ? 'Update Base Pricing' : 'Save Base Pricing'}
               </button>
-              {!pricing && <p className="text-sm text-amber-600">Admins will not see any base pricing until you set it here.</p>}
+              {!pricing && <p className="text-xs text-amber-600 sm:text-sm">Admins will not see any base pricing until you set it here.</p>}
             </div>
           </div>
 
-          {/* Info Notes */}
-          <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-5 shadow-sm">
+          <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 shadow-sm sm:rounded-2xl sm:p-5">
             <div className="flex gap-3">
-              <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-100 sm:h-9 sm:w-9">
+                <svg className="h-4 w-4 text-blue-600 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
               <div>
-                <p className="text-sm font-semibold text-blue-800">How base pricing works</p>
-                <p className="text-sm text-blue-700 mt-1">The base price you set here is shown to admins as their cost price. Admins set their own selling price (which must be at or above the base price). The difference is the admin&apos;s profit margin.</p>
+                <p className="text-xs font-semibold text-blue-800 sm:text-sm">How base pricing works</p>
+                <p className="mt-1 text-xs text-blue-700 sm:text-sm">The base price you set here is shown to admins as their cost price. Admins set their own selling price (which must be at or above the base price). The difference is the admin&apos;s profit margin.</p>
               </div>
             </div>
           </div>
 
-          {/* Plan Features */}
           {features.length > 0 && (
-            <div className="mt-10">
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Study Abroad Plan Details</h2>
-                <p className="text-sm text-gray-500 mt-1">Complete feature comparison across all plan tiers.</p>
+            <div>
+              <div className="mb-4 sm:mb-6">
+                <h2 className="text-lg font-bold text-gray-900 sm:text-xl">Study Abroad Plan Details</h2>
+                <p className="mt-1 text-xs text-gray-500 sm:text-sm">Complete feature comparison across all plan tiers.</p>
               </div>
               <ServicePlanDetailsView features={features} pricing={pricing} plans={plans} serviceName="Study Abroad" showPricing={false} />
             </div>
           )}
-        </div>
-      </div>
+      </ServicePricingPageFrame>
     </SuperAdminLayout>
   );
 }

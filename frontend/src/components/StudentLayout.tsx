@@ -414,7 +414,7 @@ export default function StudentLayout({
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 pb-24 md:pb-0">{children}</main>
+      <main className="flex-1 overflow-x-hidden pb-24 md:pb-0">{children}</main>
 
       <MobileBottomNav items={mobileNavItems} />
     </div>

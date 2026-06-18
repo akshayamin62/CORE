@@ -127,7 +127,7 @@ export default function SuperAdminOpsDashboardPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={user}>
-        <div className="p-8">
+        <div className="px-4 py-4 sm:px-6 sm:py-6 lg:p-8">
           {/* Back Button + Header */}
           <div className="mb-8">
             <button

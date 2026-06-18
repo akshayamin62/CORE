@@ -103,16 +103,25 @@ export default function OpsScheduleFormPanel({
 
   return (
     <>
+      {isOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-[45] bg-black/30 md:hidden"
+          aria-label="Close schedule panel"
+          onClick={onClose}
+        />
+      )}
+
       {/* Slide-in Panel from Left */}
       <div 
-        className={`fixed top-[140px] left-4 z-40 w-[380px] bg-white shadow-2xl rounded-xl border border-gray-200 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
-        }`}
-        style={{ maxHeight: 'calc(100vh - 220px)' }}
+        className={`fixed z-[55] flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl transition-all duration-300 ease-in-out
+          left-4 right-4 top-28 bottom-[calc(7.25rem+env(safe-area-inset-bottom,0px))]
+          md:left-4 md:right-auto md:top-[140px] md:bottom-auto md:w-[380px] md:max-h-[calc(100vh-220px)]
+          ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-[120%] opacity-0 pointer-events-none md:-translate-x-full'}`}
       >
         {/* Compact Header */}
-        <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-4 py-3 rounded-t-xl flex items-center justify-between">
-          <span className="text-white font-medium text-sm">
+        <div className="flex shrink-0 items-center justify-between rounded-t-xl bg-gradient-to-r from-indigo-600 to-indigo-700 px-3 py-3 sm:px-4">
+          <span className="truncate text-sm font-medium text-white">
             {readOnly ? '📋 View Schedule' : isEditing ? '✏️ Edit Schedule' : '➕ New Schedule'}
           </span>
           <div className="flex items-center gap-1">
@@ -139,8 +148,8 @@ export default function OpsScheduleFormPanel({
         </div>
 
         {/* Content - Scrollable */}
-        <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 320px)' }}>
-          <form onSubmit={handleSubmit} className="px-4 py-3 space-y-4">
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+          <form onSubmit={handleSubmit} className="space-y-4 px-3 py-3 sm:px-4">
             {/* Assign To Field */}
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1.5">
@@ -251,7 +260,7 @@ export default function OpsScheduleFormPanel({
 
         {/* Footer - Action Buttons */}
         {readOnly ? (
-          <div className="px-4 py-3 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+          <div className="shrink-0 rounded-b-xl border-t border-gray-200 bg-gray-50 px-3 py-3 sm:px-4">
             <button
               onClick={onClose}
               className="w-full px-3 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
@@ -260,7 +269,7 @@ export default function OpsScheduleFormPanel({
             </button>
           </div>
         ) : (
-        <div className="px-4 py-3 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+        <div className="shrink-0 rounded-b-xl border-t border-gray-200 bg-gray-50 px-3 py-3 sm:px-4">
           <div className="flex gap-2">
             <button
               onClick={handleSubmit}
@@ -299,8 +308,8 @@ export default function OpsScheduleFormPanel({
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+        <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+          <div className="app-modal-panel bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
                 <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

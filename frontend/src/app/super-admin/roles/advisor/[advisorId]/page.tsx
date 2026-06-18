@@ -11,6 +11,12 @@ import TeamMeetSidebar from '@/components/TeamMeetSidebar';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import SuperAdminRoleDetailFrame, {
+  DetailActionGrid,
+  DetailInfoCard,
+  DetailPageHeader,
+  DetailStatGrid,
+} from '@/components/SuperAdminRoleDetailFrame';
 
 interface DashboardStats {
   totalLeads: number;
@@ -135,80 +141,69 @@ export default function SuperAdminAdvisorDashboardPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={currentUser}>
-        <div className="p-8">
-          {/* Back Button & Header */}
-          <div className="flex items-center gap-4 mb-6">
-            <button
-              onClick={() => router.push('/super-admin/roles/advisor')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div className="flex items-center gap-3">
+        <SuperAdminRoleDetailFrame
+          backLabel="Back to Advisors"
+          onBack={() => router.push('/super-admin/roles/advisor')}
+        >
+          <DetailPageHeader
+            avatar={
               <AuthImage
                 path={stats?.advisor?.companyLogo}
                 alt={stats?.advisor?.companyName || 'Company Logo'}
-                className="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                className="h-12 w-12 shrink-0 rounded-lg border border-gray-200 object-cover sm:h-14 sm:w-14"
                 fallback={
-                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-blue-100 sm:h-14 sm:w-14">
                     <span className="text-lg font-bold text-blue-600">
                       {stats?.advisor?.companyName?.charAt(0) || getInitials(stats?.advisor) || 'A'}
                     </span>
                   </div>
                 }
               />
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  {stats?.advisor?.companyName || getFullName(stats?.advisor) || 'Advisor Dashboard'}
-                </h1>
-                <p className="text-sm text-gray-500">
-                  {getFullName(stats?.advisor)} &middot; {stats?.advisor?.email}
-                </p>
-              </div>
-            </div>
-          </div>
+            }
+            title={stats?.advisor?.companyName || getFullName(stats?.advisor) || 'Advisor Dashboard'}
+            subtitle={
+              <>
+                {getFullName(stats?.advisor)} &middot; {stats?.advisor?.email}
+              </>
+            }
+          />
 
-          {/* Advisor Profile Info */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-            <div className="flex flex-wrap gap-6 text-sm">
-              <div>
-                <span className="text-gray-500">Status: </span>
-                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-                  stats?.advisor?.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
-                  {stats?.advisor?.isActive ? 'Active' : 'Inactive'}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-500">Verified: </span>
-                <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${
-                  stats?.advisor?.isVerified ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {stats?.advisor?.isVerified ? 'Yes' : 'No'}
-                </span>
-              </div>
-              {stats?.advisor?.mobileNumber && (
-                <div>
-                  <span className="text-gray-500">Phone: </span>
-                  <span className="text-gray-900">{stats.advisor.mobileNumber}</span>
-                </div>
-              )}
-              {stats?.advisor?.address && (
-                <div>
-                  <span className="text-gray-500">Address: </span>
-                  <span className="text-gray-900">{stats.advisor.address}</span>
-                </div>
-              )}
-              {stats?.allowedServices && stats.allowedServices.length > 0 && (
-                <div>
-                  <span className="text-gray-500">Allowed Services: </span>
-                  <span className="text-gray-900">{stats.allowedServices.join(', ')}</span>
-                </div>
-              )}
+          <DetailInfoCard>
+            <div>
+              <span className="text-gray-500">Status: </span>
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                stats?.advisor?.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
+                {stats?.advisor?.isActive ? 'Active' : 'Inactive'}
+              </span>
             </div>
-          </div>
+            <div>
+              <span className="text-gray-500">Verified: </span>
+              <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                stats?.advisor?.isVerified ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {stats?.advisor?.isVerified ? 'Yes' : 'No'}
+              </span>
+            </div>
+            {stats?.advisor?.mobileNumber && (
+              <div>
+                <span className="text-gray-500">Phone: </span>
+                <span className="text-gray-900">{stats.advisor.mobileNumber}</span>
+              </div>
+            )}
+            {stats?.advisor?.address && (
+              <div>
+                <span className="text-gray-500">Address: </span>
+                <span className="text-gray-900">{stats.advisor.address}</span>
+              </div>
+            )}
+            {stats?.allowedServices && stats.allowedServices.length > 0 && (
+              <div>
+                <span className="text-gray-500">Allowed Services: </span>
+                <span className="text-gray-900">{stats.allowedServices.join(', ')}</span>
+              </div>
+            )}
+          </DetailInfoCard>
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -217,7 +212,7 @@ export default function SuperAdminAdvisorDashboardPage() {
           ) : (
             <>
               {/* Stats Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <DetailStatGrid>
                 <StatCard
                   title="Total Leads"
                   value={stats?.totalLeads?.toString() || '0'}
@@ -249,29 +244,27 @@ export default function SuperAdminAdvisorDashboardPage() {
                   }
                   color="green"
                 />
-              </div>
+              </DetailStatGrid>
 
               {/* Enquiry Form URL */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-8 max-w-2xl">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="mb-6 flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-8 sm:p-5 lg:max-w-2xl">
+                <div className="flex items-center gap-2">
+                  <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                   </svg>
-                  <h3 className="font-semibold text-gray-900 text-sm">Enquiry Form URL</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">Enquiry Form URL</h3>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-blue-50 rounded-lg px-3 py-2">
-                    <code className="text-xs text-blue-700 font-mono break-all">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="min-w-0 flex-1 rounded-lg bg-blue-50 px-3 py-2">
+                    <code className="break-all font-mono text-xs text-blue-700">
                       {stats?.enquiryFormUrl || 'Loading...'}
                     </code>
                   </div>
                   <button
+                    type="button"
                     onClick={() => stats?.enquiryFormUrl && copyToClipboard(stats.enquiryFormUrl)}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+                    className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
                     Copy URL
                   </button>
                 </div>
@@ -279,8 +272,8 @@ export default function SuperAdminAdvisorDashboardPage() {
 
               {/* Quick Actions */}
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">Quick Actions</h2>
+                <DetailActionGrid>
                   <ActionCard
                     title="View Leads"
                     description="Check all leads from this advisor"
@@ -332,11 +325,11 @@ export default function SuperAdminAdvisorDashboardPage() {
                       color="green"
                     />
                   )}
-                </div>
+                </DetailActionGrid>
               </div>
 
               {/* Team Meet Section */}
-              <div className="mt-8">
+              <div className="mt-6 sm:mt-8">
                   <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     {/* Calendar Section */}
                     <div className="lg:col-span-3">
@@ -359,7 +352,7 @@ export default function SuperAdminAdvisorDashboardPage() {
               </div>
             </>
           )}
-        </div>
+        </SuperAdminRoleDetailFrame>
       </SuperAdminLayout>
 
       {/* TeamMeet Slide-in Panel (read-only) */}
@@ -393,13 +386,13 @@ function StatCard({ title, value, icon, color }: StatCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="mb-0.5 text-xs font-medium text-gray-600 sm:text-sm">{title}</p>
+          <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{value}</p>
         </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 ${colorClasses[color]}`}>
           {icon}
         </div>
       </div>
@@ -433,15 +426,16 @@ function ActionCard({ title, description, icon, buttonText, onClick, color }: Ac
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 group hover:shadow-md transition-shadow">
-      <div className={`w-14 h-14 rounded-lg flex items-center justify-center mb-4 transition-colors ${colorClasses[color]}`}>
+    <div className="group rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5">
+      <div className={`mb-3 flex h-12 w-12 items-center justify-center rounded-lg transition-colors sm:mb-4 sm:h-14 sm:w-14 ${colorClasses[color]}`}>
         {icon}
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-sm text-gray-600 mb-4">{description}</p>
+      <h3 className="mb-1 text-base font-semibold text-gray-900 sm:text-lg">{title}</h3>
+      <p className="mb-3 text-xs text-gray-600 sm:mb-4 sm:text-sm">{description}</p>
       <button
+        type="button"
         onClick={onClick}
-        className={`w-full px-4 py-2 text-white rounded-lg font-medium transition-colors ${buttonColorClasses[color]}`}
+        className={`w-full rounded-lg px-3 py-2 text-sm font-medium text-white transition-colors sm:px-4 ${buttonColorClasses[color]}`}
       >
         {buttonText}
       </button>

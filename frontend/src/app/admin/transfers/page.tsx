@@ -220,8 +220,8 @@ export default function AdminTransfersPage() {
 
           {/* Reject Modal */}
           {rejectModal.open && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+              <div className="app-modal-panel bg-white rounded-xl p-6 w-full max-w-md">
                 <h2 className="text-lg font-semibold mb-4">Reject Transfer</h2>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Reason for rejection</label>

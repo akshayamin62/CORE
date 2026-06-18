@@ -6,6 +6,8 @@ import { authAPI, b2bAPI } from '@/lib/api';
 import { User, USER_ROLE, B2B_LEAD_STAGE, B2B_LEAD_TYPE } from '@/types';
 import B2BOpsLayout from '@/components/B2BOpsLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import ListPageFilters from '@/components/ListPageFilters';
+import MobileRecordCard from '@/components/MobileRecordCard';
 
 interface B2BLeadData {
   _id: string;
@@ -138,15 +140,15 @@ export default function B2BOpsLeadsPage() {
     <>
       <Toaster position="top-right" />
       <B2BOpsLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Leads for Documentation</h1>
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Leads for Documentation</h1>
             <p className="text-gray-600 mt-1">Verify and convert B2B leads to Admin or Advisor</p>
           </div>
 
           {/* Stats Cards - Clickable */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
             <StatCard
               title="Total Leads"
               value={totalLeads}
@@ -202,66 +204,39 @@ export default function B2BOpsLeadsPage() {
           </div>
 
           {/* Search and Filters */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-[200px]">
-                <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
-                <div className="relative">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Search by name, email, phone..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  />
-                </div>
-              </div>
-
-              <div className="flex-1 min-w-[150px]">
-                <label className="block text-xs font-medium text-gray-500 mb-1">Stage</label>
-                <select
-                  value={stageFilter}
-                  onChange={(e) => { setStageFilter(e.target.value); setSelectedStageCard(e.target.value || null); }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                >
-                  <option value="">All Stages</option>
-                  <option value={B2B_LEAD_STAGE.IN_PROCESS}>Proceed for Documentation</option>
-                  <option value={B2B_LEAD_STAGE.CONVERTED}>Converted</option>
-                  <option value={B2B_LEAD_STAGE.CLOSED}>Closed</option>
-                </select>
-              </div>
-
-              <div className="flex-1 min-w-[150px]">
-                <label className="block text-xs font-medium text-gray-500 mb-1">Type</label>
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                >
-                  <option value="">All Types</option>
-                  {Object.values(B2B_LEAD_TYPE).map((type) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-end">
-                <button
-                  onClick={() => {
-                    setStageFilter('');
-                    setTypeFilter('');
-                    setSearchQuery('');
-                    setSelectedStageCard(null);
-                  }}
-                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  Clear All
-                </button>
-              </div>
-            </div>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 mb-6">
+            <ListPageFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Search by name, email, phone..."
+              desktopColumns={4}
+              pillFilters={[
+                {
+                  value: stageFilter,
+                  onChange: (v) => { setStageFilter(v); setSelectedStageCard(v || null); },
+                  options: [
+                    { value: '', label: 'All Stages', mobileLabel: 'All' },
+                    { value: B2B_LEAD_STAGE.IN_PROCESS, label: 'Proceed for Documentation', mobileLabel: 'Documentation' },
+                    { value: B2B_LEAD_STAGE.CONVERTED, label: 'Converted' },
+                    { value: B2B_LEAD_STAGE.CLOSED, label: 'Closed' },
+                  ],
+                },
+                {
+                  value: typeFilter,
+                  onChange: setTypeFilter,
+                  options: [
+                    { value: '', label: 'All Types', mobileLabel: 'All Types' },
+                    ...Object.values(B2B_LEAD_TYPE).map((type) => ({ value: type, label: type })),
+                  ],
+                },
+              ]}
+              onClear={() => {
+                setStageFilter('');
+                setTypeFilter('');
+                setSearchQuery('');
+                setSelectedStageCard(null);
+              }}
+            />
           </div>
 
           {/* Leads Table */}
@@ -281,7 +256,46 @@ export default function B2BOpsLeadsPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                {/* Mobile card list */}
+                <div className="divide-y divide-gray-200 md:hidden">
+                  {filteredLeads.map((lead: any) => (
+                    <MobileRecordCard
+                      key={lead._id}
+                      title={getFullName(lead)}
+                      subtitle={lead.email}
+                      badges={
+                        <>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getTypeColor(lead.type)}`}>{lead.type}</span>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getStageColor(lead.stage)}`}>{lead.stage}</span>
+                          {lead.conversionStatus && (
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                              lead.conversionStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                              lead.conversionStatus === 'Approved' ? 'bg-green-100 text-green-800' :
+                              lead.conversionStatus === 'DOCUMENT_VERIFICATION' ? 'bg-blue-100 text-blue-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {lead.conversionStatus === 'DOCUMENT_VERIFICATION' ? 'Document Verification' : lead.conversionStatus}
+                            </span>
+                          )}
+                        </>
+                      }
+                      fields={[
+                        { label: 'Phone', value: lead.mobileNumber, colSpan: 2 },
+                        { label: 'Created', value: new Date(lead.createdAt).toLocaleDateString('en-GB') },
+                      ]}
+                      menuItems={[
+                        {
+                          label: 'View',
+                          onClick: () => router.push(`/b2b-ops/leads/${lead._id}`),
+                        },
+                      ]}
+                    />
+                  ))}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden overflow-x-auto md:block">
                 <table className="w-full table-fixed">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
@@ -347,7 +361,8 @@ export default function B2BOpsLeadsPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -378,23 +393,23 @@ function StatCard({ title, value, icon, color, onClick, isActive, percentage, sh
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md' : ''
+      className={`rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all sm:p-5 ${
+        onClick ? 'cursor-pointer hover:shadow-md active:scale-[0.98]' : ''
       } ${
         isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
       }`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${colorClasses[color]} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6`}>
           {icon}
         </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+        <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{value}</h3>
       </div>
-      <div className="flex items-center justify-between mt-3">
-        <p className="text-sm font-semibold text-gray-700">{title}</p>
+      <div className="mt-2 flex items-center justify-between gap-2 sm:mt-3">
+        <p className="truncate text-xs font-semibold text-gray-700 sm:text-sm">{title}</p>
         {showPercentage && percentage !== undefined && (
-          <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
+          <p className="shrink-0 text-xs font-semibold text-gray-900 sm:text-sm">{percentage.toFixed(1)}%</p>
         )}
       </div>
     </div>

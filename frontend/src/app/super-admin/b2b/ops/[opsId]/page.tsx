@@ -11,6 +11,7 @@ import { getFullName } from '@/utils/nameHelpers';
 import FollowUpCalendar from '@/components/FollowUpCalendar';
 import FollowUpSidebar from '@/components/FollowUpSidebar';
 import B2BFollowUpFormPanel from '@/components/B2BFollowUpFormPanel';
+import MobileRecordCard from '@/components/MobileRecordCard';
 
 // Adapter: map B2B follow-up data to FollowUp shape for calendar/sidebar
 function adaptB2BFollowUps(b2bFollowUps: any[]): FollowUp[] {
@@ -222,9 +223,9 @@ export default function B2BOpsDetailPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-8">
+          <div className="mb-6 md:mb-8">
             <button
               onClick={() => router.push('/super-admin/b2b/ops')}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
@@ -235,8 +236,8 @@ export default function B2BOpsDetailPage() {
               Back to B2B OPS Staff
             </button>
 
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-gray-900">{getFullName(staff.userId)}</h1>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">{getFullName(staff.userId)}</h1>
               <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
                 staff.userId.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
               }`}>
@@ -252,7 +253,7 @@ export default function B2BOpsDetailPage() {
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4 mb-8">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:mb-8 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
             <StatCard
               title="Total Leads"
               value={stats?.totalLeads.toString() || '0'}
@@ -328,7 +329,7 @@ export default function B2BOpsDetailPage() {
           </div>
 
           {/* Follow-up Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="mb-6 grid grid-cols-3 gap-3 sm:gap-4 md:mb-8">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
               <div className="flex items-center justify-between">
                 <div>
@@ -428,8 +429,8 @@ export default function B2BOpsDetailPage() {
           {/* Leads Table */}
           {selectedStage && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-4">
+              <div className="border-b border-gray-200 p-4 sm:p-6">
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900">
                       {selectedStage === 'all' ? 'All Leads' : `${selectedStage} Leads`}
@@ -478,6 +479,45 @@ export default function B2BOpsDetailPage() {
                 </div>
               </div>
               <div className="overflow-x-auto">
+                {/* Mobile card list */}
+                <div className="divide-y divide-gray-200 md:hidden">
+                  {getFilteredLeads().length === 0 ? (
+                    <div className="px-4 py-12 text-center text-gray-500">
+                      <p className="text-lg font-medium">No leads found</p>
+                    </div>
+                  ) : (
+                    getFilteredLeads().map((lead: any) => (
+                      <MobileRecordCard
+                        key={lead._id}
+                        title={getFullName(lead)}
+                        subtitle={lead.email}
+                        badges={
+                          <>
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getStageColor(lead.stage)}`}>
+                              {lead.stage}
+                            </span>
+                            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                              {lead.type}
+                            </span>
+                          </>
+                        }
+                        fields={[
+                          { label: 'Phone', value: lead.mobileNumber, colSpan: 2 },
+                          { label: 'Created', value: new Date(lead.createdAt).toLocaleDateString('en-GB') },
+                        ]}
+                        menuItems={[
+                          {
+                            label: 'View',
+                            onClick: () => router.push(`/super-admin/b2b/leads/${lead._id}`),
+                          },
+                        ]}
+                      />
+                    ))
+                  )}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden md:block">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
@@ -545,6 +585,7 @@ export default function B2BOpsDetailPage() {
                     )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           )}
@@ -588,23 +629,23 @@ function StatCard({ title, value, icon, color, onClick, isActive, percentage, sh
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md' : ''
+      className={`rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all sm:p-5 ${
+        onClick ? 'cursor-pointer hover:shadow-md active:scale-[0.98]' : ''
       } ${
         isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
       }`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${colorClasses[color]} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6`}>
           {icon}
         </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+        <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{value}</h3>
       </div>
-      <div className="flex items-center justify-between mt-3">
-        <p className="text-sm font-semibold text-gray-700">{title}</p>
+      <div className="mt-2 flex items-center justify-between gap-2 sm:mt-3">
+        <p className="truncate text-xs font-semibold text-gray-700 sm:text-sm">{title}</p>
         {showPercentage && percentage !== undefined && (
-          <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
+          <p className="shrink-0 text-xs font-semibold text-gray-900 sm:text-sm">{percentage.toFixed(1)}%</p>
         )}
       </div>
     </div>

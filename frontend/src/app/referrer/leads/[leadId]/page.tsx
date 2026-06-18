@@ -6,6 +6,11 @@ import { authAPI, referrerAPI } from '@/lib/api';
 import { User, USER_ROLE, LEAD_STAGE, SERVICE_TYPE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import ReferrerLayout from '@/components/ReferrerLayout';
+import {
+  leadContactGridClass,
+  leadPagePadding,
+  leadTitleClass,
+} from '@/components/studentDetailResponsive';
 
 interface LeadDetail {
   _id: string;
@@ -148,7 +153,7 @@ export default function ReferrerLeadDetailPage() {
     <>
       <Toaster position="top-right" />
       <ReferrerLayout user={user}>
-        <div className="p-8">
+        <div className={leadPagePadding}>
           {/* Back Button & Header */}
           <div className="mb-6">
             <button
@@ -163,7 +168,7 @@ export default function ReferrerLeadDetailPage() {
 
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900">{lead.name}</h2>
+                <h2 className={leadTitleClass}>{lead.name}</h2>
                 <p className="text-gray-600 mt-1">Lead Details</p>
               </div>
               <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg">
@@ -180,7 +185,7 @@ export default function ReferrerLeadDetailPage() {
             {/* Contact Information Card */}
             <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Contact Information</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className={leadContactGridClass}>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1">Mobile Number</label>
                   <p className="text-gray-900 font-medium">{lead.mobileNumber}</p>
@@ -221,7 +226,7 @@ export default function ReferrerLeadDetailPage() {
                 <>
                   <hr className="my-4 border-gray-200" />
                   <h4 className="text-md font-bold text-gray-900 mb-3">Parent Detail</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className={leadContactGridClass}>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1">Name</label>
                       <p className="text-gray-900 font-medium">

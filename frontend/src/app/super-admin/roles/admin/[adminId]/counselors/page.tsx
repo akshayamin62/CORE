@@ -8,6 +8,11 @@ import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import StaffMobileList from '@/components/StaffMobileList';
+import ListPageFilters from '@/components/ListPageFilters';
+import { ALL_ACTIVE_INACTIVE_FILTER_OPTIONS } from '@/components/listFilterOptions';
+import PageStatCard from '@/components/PageStatCard';
+import { ListPageStatGrid } from '@/components/SuperAdminRoleDetailFrame';
 
 interface CounselorData {
   _id: string;
@@ -105,7 +110,7 @@ export default function SuperAdminAdminCounselorsPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={currentUser}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Back Button */}
           <button
             onClick={() => router.push(`/super-admin/roles/admin/${adminId}`)}
@@ -119,66 +124,81 @@ export default function SuperAdminAdminCounselorsPage() {
 
           {/* Header */}
           <div className="mb-6">
-            <h2 className="text-3xl font-bold text-gray-900">Admin&apos;s Counselors</h2>
-            <p className="text-gray-600 mt-2">View counselors under this admin (read-only)</p>
-          </div>
-
-          {/* Search and Filter */}
-          <div className="mb-6 flex gap-4">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="Search by name, email, or phone..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+            <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">Admin&apos;s Counselors</h2>
+            <p className="mt-1 text-sm text-gray-600 sm:text-base">View counselors under this admin (read-only)</p>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <p className="text-sm text-gray-600">Total Counselors</p>
-              <p className="text-2xl font-bold text-gray-900">{counselors.length}</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <p className="text-sm text-gray-600">Active</p>
-              <p className="text-2xl font-bold text-green-600">{counselors.filter(c => c.userId?.isActive).length}</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <p className="text-sm text-gray-600">Inactive</p>
-              <p className="text-2xl font-bold text-red-600">{counselors.filter(c => !c.userId?.isActive).length}</p>
-            </div>
-          </div>
+          <ListPageStatGrid columns={3}>
+            <PageStatCard title="Total Counselors" value={counselors.length} color="blue" />
+            <PageStatCard title="Active" value={counselors.filter((c) => c.userId?.isActive).length} color="green" />
+            <PageStatCard title="Inactive" value={counselors.filter((c) => !c.userId?.isActive).length} color="gray" />
+          </ListPageStatGrid>
 
-          {/* Counselors Table */}
+          {/* Counselors list */}
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="spinner"></div>
             </div>
           ) : filteredCounselors.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+              <div className="rounded-t-xl border-b border-gray-100 bg-gray-50 p-3 sm:p-4">
+                <ListPageFilters
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  searchPlaceholder="Search by name, email, or phone..."
+                  pillFilters={[
+                    {
+                      value: statusFilter,
+                      onChange: (value) => setStatusFilter(value as 'all' | 'active' | 'inactive'),
+                      options: ALL_ACTIVE_INACTIVE_FILTER_OPTIONS,
+                      emptyValue: 'all',
+                    },
+                  ]}
+                  onClear={() => {
+                    setSearchQuery('');
+                    setStatusFilter('all');
+                  }}
+                />
+              </div>
+              <div className="p-8 text-center sm:p-12">
               <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
               <p className="text-gray-500 text-lg">No counselors found</p>
+              </div>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+              <div className="rounded-t-xl border-b border-gray-100 bg-gray-50 p-3 sm:p-4">
+                <ListPageFilters
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  searchPlaceholder="Search by name, email, or phone..."
+                  pillFilters={[
+                    {
+                      value: statusFilter,
+                      onChange: (value) => setStatusFilter(value as 'all' | 'active' | 'inactive'),
+                      options: ALL_ACTIVE_INACTIVE_FILTER_OPTIONS,
+                      emptyValue: 'all',
+                    },
+                  ]}
+                  onClear={() => {
+                    setSearchQuery('');
+                    setStatusFilter('all');
+                  }}
+                />
+              </div>
+              <StaffMobileList
+                staff={filteredCounselors}
+                getMenuItems={(counselor) => [
+                  {
+                    label: 'View',
+                    onClick: () => router.push(`/super-admin/roles/counselor/${counselor._id}`),
+                  },
+                ]}
+              />
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>

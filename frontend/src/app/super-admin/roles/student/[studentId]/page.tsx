@@ -15,6 +15,23 @@ import {
 import AuthImage from '@/components/AuthImage';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
+import {
+  assignRowClass,
+  registrationActionBtnClass,
+  registrationCardClass,
+  registrationCardRowClass,
+  registrationMetaRowClass,
+  studentAvatarClass,
+  studentAvatarFallbackClass,
+  studentBadgeRowClass,
+  studentCardClass,
+  studentHeaderRowClass,
+  studentIdentityRowClass,
+  studentMetaGridClass,
+  studentMetaStripClass,
+  studentPagePadding,
+  studentTitleClass,
+} from '@/components/studentDetailResponsive';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -387,7 +404,7 @@ export default function StudentDetailPage() {
   if (!student) {
     return (
       <SuperAdminLayout user={user}>
-        <div className="p-8 text-center">
+        <div className="px-4 py-4 text-center sm:px-6 sm:py-6 lg:p-8">
           <p className="text-red-600">Student not found</p>
           <button
             onClick={() => router.back()}
@@ -404,11 +421,12 @@ export default function StudentDetailPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={user}>
-        <div className="p-8">
+        <div className={studentPagePadding}>
           {/* Back Button */}
           <button
+            type="button"
             onClick={() => router.back()}
-            className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            className="mb-4 flex items-center text-sm text-gray-600 transition-colors hover:text-gray-900 sm:mb-6"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -423,28 +441,28 @@ export default function StudentDetailPage() {
             secondaryMobileNumber={student.secondaryMobileNumber}
             onUpdated={fetchStudentDetails}
           >
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center">
+          <div className={studentCardClass}>
+            <div className={studentHeaderRowClass}>
+              <div className={studentIdentityRowClass}>
                 <AuthImage
                   path={student.userId.profilePicture}
                   alt={getFullName(student.userId)}
-                  className="w-16 h-16 rounded-full object-cover mr-4"
+                  className={studentAvatarClass}
                   fallback={
-                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                      <span className="text-blue-600 font-bold text-xl">
+                    <div className={studentAvatarFallbackClass}>
+                      <span className="text-lg font-bold text-blue-600 sm:text-xl">
                         {getInitials(student.userId)}
                       </span>
                     </div>
                   }
                 />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{getFullName(student.userId)}</h1>
-                  <p className="text-gray-600">{student.userId.email}</p>
+                <div className="min-w-0">
+                  <h1 className={studentTitleClass}>{getFullName(student.userId)}</h1>
+                  <p className="break-all text-gray-600">{student.userId.email}</p>
                   <SecondaryEmailField />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className={studentBadgeRowClass}>
                 <span
                   className={`px-3 py-1 text-xs font-medium rounded-full ${
                     student.userId.isVerified
@@ -472,7 +490,7 @@ export default function StudentDetailPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-4 border-t border-gray-200">
+            <div className={studentMetaGridClass}>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Mobile Number</p>
                 <p className="font-medium text-gray-900">
@@ -530,7 +548,7 @@ export default function StudentDetailPage() {
             </div>
 
             {/* Source / Intake / Year / Transfer For */}
-            <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-gray-200 mt-4">
+            <div className={studentMetaStripClass}>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Source</p>
                 <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${(student as any).referrerId ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>
@@ -570,8 +588,8 @@ export default function StudentDetailPage() {
           </StudentSecondaryContactProvider>
 
           {/* Service Registrations */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <div className={`${studentCardClass} mb-0`}>
+            <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">
               Service Registrations ({registrations.length})
             </h2>
 
@@ -580,9 +598,9 @@ export default function StudentDetailPage() {
                 {registrations.map((registration) => (
                   <div
                     key={registration._id}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                    className={registrationCardClass}
                   >
-                    <div className="flex items-start justify-between">
+                    <div className={registrationCardRowClass}>
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900 mb-1">
                           {registration.serviceId.name}
@@ -605,7 +623,7 @@ export default function StudentDetailPage() {
                         <p className="text-sm text-gray-600 mb-2">
                           {registration.serviceId.shortDescription}
                         </p>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <div className={registrationMetaRowClass}>
                           <span>Registered: {new Date(registration.createdAt).toLocaleDateString('en-GB')}</span>
                           <select
                             value={registration.status}
@@ -705,7 +723,7 @@ export default function StudentDetailPage() {
                                     <label className="block text-sm font-semibold text-blue-900 mb-2">
                                       Active OPS (Has Access)
                                     </label>
-                                    <div className="flex items-center gap-3">
+                                    <div className={assignRowClass}>
                                       <select
                                         value={registration.activeOpsId?._id || ''}
                                         onChange={(e) => handleSwitchActiveOps(registration._id, e.target.value, registration.serviceId.name)}
@@ -811,7 +829,7 @@ export default function StudentDetailPage() {
                                     <label className="block text-sm font-semibold text-purple-900 mb-2">
                                       Active Ivy Expert (Has Access)
                                     </label>
-                                    <div className="flex items-center gap-3">
+                                    <div className={assignRowClass}>
                                       <select
                                         value={registration.activeIvyExpertId?._id || ''}
                                         onChange={(e) => handleSwitchActiveOps(registration._id, e.target.value, registration.serviceId.name)}
@@ -917,7 +935,7 @@ export default function StudentDetailPage() {
                                     <label className="block text-sm font-semibold text-teal-900 mb-2">
                                       Active Eduplan Coach (Has Access)
                                     </label>
-                                    <div className="flex items-center gap-3">
+                                    <div className={assignRowClass}>
                                       <select
                                         value={registration.activeEduplanCoachId?._id || ''}
                                         onChange={(e) => handleSwitchActiveOps(registration._id, e.target.value, registration.serviceId.name)}
@@ -1030,7 +1048,7 @@ export default function StudentDetailPage() {
                       </div>
                       <button
                         onClick={() => handleViewFormData(registration._id, registration.serviceId.name)}
-                        className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        className={registrationActionBtnClass}
                       >
                         View/Edit Form
                       </button>
@@ -1060,10 +1078,11 @@ export default function StudentDetailPage() {
 
           {/* Ivy League Candidate Profile */}
           {student && student.userId?._id && (
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-4 flex flex-col gap-2 sm:mt-6 sm:flex-row sm:flex-wrap sm:gap-3">
               <button
+                type="button"
                 onClick={() => router.push(`/super-admin/roles/ivy-expert/students/${student.userId._id}`)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 sm:w-auto sm:px-5"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
@@ -1072,8 +1091,9 @@ export default function StudentDetailPage() {
                 View Ivy League Candidate Profile
               </button>
               <button
+                type="button"
                 onClick={() => router.push(`/super-admin/roles/student/${studentId}/enquiries`)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-purple-700 sm:w-auto sm:px-5"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -1082,8 +1102,9 @@ export default function StudentDetailPage() {
               </button>
               {(student.adminId?._id || student.advisorId?._id) && (
                 <button
+                  type="button"
                   onClick={() => router.push('/service-plans/view?studentId=' + studentId)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:w-auto sm:px-5"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

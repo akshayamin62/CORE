@@ -11,6 +11,12 @@ import FollowUpCalendar from '@/components/FollowUpCalendar';
 import FollowUpSidebar from '@/components/FollowUpSidebar';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
 import { getFullName } from '@/utils/nameHelpers';
+import {
+  leadContactGridClass,
+  leadPagePadding,
+  leadQuickActionsClass,
+  leadTitleClass,
+} from '@/components/studentDetailResponsive';
 
 export default function SuperAdminLeadDetailPage() {
   const router = useRouter();
@@ -248,12 +254,13 @@ export default function SuperAdminLeadDetailPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={user}>
-        <div className="p-8">
+        <div className={leadPagePadding}>
           {/* Back Button & Header */}
-          <div className="mb-6">
+          <div className="mb-4 sm:mb-6">
             <button
+              type="button"
               onClick={() => router.back()}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4 transition-colors"
+              className="mb-3 flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-800 sm:mb-4"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -261,13 +268,12 @@ export default function SuperAdminLeadDetailPage() {
               Back
             </button>
             
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900">{lead.name}</h2>
-                <p className="text-gray-600 mt-1">Lead Details (Read Only)</p>
+                <h2 className={leadTitleClass}>{lead.name}</h2>
+                <p className="mt-1 text-sm text-gray-600 sm:text-base">Lead Details (Read Only)</p>
               </div>
-              {/* Quick Actions - Right side */}
-              <div className="flex gap-2">
+              <div className={leadQuickActionsClass}>
                 <a
                   href={`mailto:${lead.email}`}
                   className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
@@ -293,11 +299,11 @@ export default function SuperAdminLeadDetailPage() {
           </div>
 
           {/* Main Info Cards - 2 columns: Contact Info (2/3) | Stage+Services+Assignment (1/3) */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="mb-4 grid grid-cols-1 gap-4 sm:mb-6 sm:gap-6 lg:grid-cols-3">
             {/* Contact Information Card - Takes 2 columns */}
-            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Contact Information</h3>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6 lg:col-span-2">
+              <h3 className="mb-3 text-base font-bold text-gray-900 sm:mb-4 sm:text-lg">Contact Information</h3>
+              <div className={leadContactGridClass}>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1">Mobile Number</label>
                   <a href={`tel:${lead.mobileNumber}`} className="text-teal-600 hover:underline font-medium">

@@ -8,6 +8,10 @@ import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import MobileUserRecordCard from '@/components/MobileUserRecordCard';
+import { MobileRecordMenuItem } from '@/components/MobileRecordCard';
+import ListPageFilters from '@/components/ListPageFilters';
+import PageStatCard from '@/components/PageStatCard';
 
 interface UserStats {
   total: number;
@@ -145,6 +149,62 @@ export default function UserManagementPage() {
     }
   };
 
+  const getUserMenuItems = (user: User): MobileRecordMenuItem[] => {
+    const userId = user._id || user.id!;
+    const isLoading = actionLoading === userId;
+
+    if (user.role === USER_ROLE.SUPER_ADMIN) return [];
+
+    if (user.role === USER_ROLE.SERVICE_PROVIDER) {
+      return [
+        {
+          label: 'View Details',
+          onClick: () => router.push(`/super-admin/roles/service-provider/${userId}`),
+        },
+        !user.isVerified
+          ? {
+              label: 'Verify',
+              variant: 'success',
+              disabled: isLoading,
+              onClick: () => handleApprove(userId),
+            }
+          : {
+              label: user.isActive ? 'Deactivate' : 'Activate',
+              variant: user.isActive ? 'warning' : 'success',
+              disabled: isLoading,
+              onClick: () => handleToggleStatus(userId),
+            },
+      ];
+    }
+
+    const items: MobileRecordMenuItem[] = [];
+    if (!user.isVerified && user.role !== USER_ROLE.STUDENT) {
+      items.push(
+        {
+          label: 'Approve',
+          variant: 'success',
+          disabled: isLoading,
+          onClick: () => handleApprove(userId),
+        },
+        {
+          label: 'Reject',
+          variant: 'danger',
+          disabled: isLoading,
+          onClick: () => handleReject(userId),
+        },
+      );
+    }
+    if (user.isVerified || user.role === USER_ROLE.STUDENT) {
+      items.push({
+        label: user.isActive ? 'Deactivate' : 'Activate',
+        variant: user.isActive ? 'warning' : 'success',
+        disabled: isLoading,
+        onClick: () => handleToggleStatus(userId),
+      });
+    }
+    return items;
+  };
+
   const handleDelete = async (userId: string) => {
     if (!confirm('Are you sure you want to DELETE this user? This action cannot be undone.')) return;
     
@@ -189,27 +249,27 @@ export default function UserManagementPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={currentUser}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-            <p className="text-gray-600 mt-2">Manage users and approvals</p>
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">User Management</h1>
+            <p className="mt-1 text-gray-600 sm:mt-2">Manage users and approvals</p>
           </div>
 
           {/* Stats Cards */}
           {stats && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-              <StatCard title="Total Users" value={stats.total.toString()} color="blue" />
-              <StatCard title="Active Users" value={stats.active.toString()} color="green" />
-              <StatCard title="Verified" value={stats.verified.toString()} color="purple" />
-              <StatCard title="Pending Approval" value={stats.pendingApproval.toString()} color="yellow" />
+            <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-6">
+              <PageStatCard title="Total Users" value={stats.total} color="blue" />
+              <PageStatCard title="Active Users" value={stats.active} color="green" />
+              <PageStatCard title="Verified" value={stats.verified} color="purple" />
+              <PageStatCard title="Pending Approval" value={stats.pendingApproval} color="yellow" />
             </div>
           )}
 
           {/* Tabs */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
             <div className="border-b border-gray-200">
-              <div className="flex space-x-8 px-6">
+              <div className="flex space-x-4 overflow-x-auto px-4 sm:space-x-8 sm:px-6">
                 <button
                   onClick={() => setActiveTab('all')}
                   className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
@@ -240,54 +300,59 @@ export default function UserManagementPage() {
 
             {/* Filters */}
             {activeTab === 'all' && (
-              <div className="p-6 border-b border-gray-200 bg-gray-50 text-gray-900">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <input
-                    type="text"
-                    placeholder="Search by name or email..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  
-                  <select
-                    value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">All Roles</option>
-                    <option value="STUDENT">Student</option>
-                    <option value="OPS">OPS</option>
-                    <option value="ALUMNI">Alumni</option>
-                    <option value="SERVICE_PROVIDER">Service Provider</option>
-                    <option value="SUPER_ADMIN">Super Admin</option>
-                  </select>
-
-                  <select
-                    value={verifiedFilter}
-                    onChange={(e) => setVerifiedFilter(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">All Verified</option>
-                    <option value="true">Verified</option>
-                    <option value="false">Unverified</option>
-                  </select>
-
-                  <select
-                    value={activeFilter}
-                    onChange={(e) => setActiveFilter(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">All Status</option>
-                    <option value="true">Active</option>
-                    <option value="false">Inactive</option>
-                  </select>
-                </div>
+              <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-6">
+                <ListPageFilters
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  searchPlaceholder="Search by name or email..."
+                  desktopColumns={4}
+                  pillFilters={[
+                    {
+                      value: roleFilter,
+                      onChange: setRoleFilter,
+                      emptyValue: '',
+                      options: [
+                        { value: '', label: 'All Roles', mobileLabel: 'All Roles' },
+                        { value: 'STUDENT', label: 'Student', mobileLabel: 'Student' },
+                        { value: 'OPS', label: 'OPS', mobileLabel: 'OPS' },
+                        { value: 'ALUMNI', label: 'Alumni', mobileLabel: 'Alumni' },
+                        { value: 'SERVICE_PROVIDER', label: 'Service Provider', mobileLabel: 'Provider' },
+                        { value: 'SUPER_ADMIN', label: 'Super Admin', mobileLabel: 'Admin' },
+                      ],
+                    },
+                    {
+                      value: verifiedFilter,
+                      onChange: setVerifiedFilter,
+                      emptyValue: '',
+                      options: [
+                        { value: '', label: 'All Verified', mobileLabel: 'All Verified' },
+                        { value: 'true', label: 'Verified', mobileLabel: 'Verified' },
+                        { value: 'false', label: 'Unverified', mobileLabel: 'Unverified' },
+                      ],
+                    },
+                    {
+                      value: activeFilter,
+                      onChange: setActiveFilter,
+                      emptyValue: '',
+                      options: [
+                        { value: '', label: 'All Status', mobileLabel: 'All Status' },
+                        { value: 'true', label: 'Active', mobileLabel: 'Active' },
+                        { value: 'false', label: 'Inactive', mobileLabel: 'Inactive' },
+                      ],
+                    },
+                  ]}
+                  onClear={() => {
+                    setSearchQuery('');
+                    setRoleFilter('');
+                    setVerifiedFilter('');
+                    setActiveFilter('');
+                  }}
+                />
               </div>
             )}
 
             {/* User Table */}
-            <div className="overflow-x-auto">
+            <div>
               {loading ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="spinner"></div>
@@ -297,9 +362,41 @@ export default function UserManagementPage() {
                   <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                   </svg>
-                  <p className="mt-2 text-gray-900 font-medium">No users found</p>
+                  <p className="mt-2 font-medium text-gray-900">No users found</p>
                 </div>
               ) : (
+                <>
+                <div className="divide-y divide-gray-200 md:hidden">
+                  {users.map((user) => (
+                    <MobileUserRecordCard
+                      key={user._id || user.id}
+                      avatar={
+                        <AuthImage
+                          path={user.profilePicture}
+                          alt=""
+                          className="h-10 w-10 shrink-0 rounded-full object-cover"
+                          fallback={
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                              <span className="font-semibold text-blue-600">{getInitials(user)}</span>
+                            </div>
+                          }
+                        />
+                      }
+                      title={getFullName(user)}
+                      subtitle={user.email}
+                      badges={
+                        <>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getRoleBadgeColor(user.role)}`}>{user.role}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{user.isActive ? 'Active' : 'Inactive'}</span>
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${user.isVerified ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}>{user.isVerified ? 'Verified' : 'Unverified'}</span>
+                        </>
+                      }
+                      joined={user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-GB') : 'N/A'}
+                      menuItems={getUserMenuItems(user)}
+                    />
+                  ))}
+                </div>
+                <div className="hidden overflow-x-auto md:block">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -431,43 +528,14 @@ export default function UserManagementPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
+                </>
               )}
             </div>
           </div>
         </div>
       </SuperAdminLayout>
     </>
-  );
-}
-
-interface StatCardProps {
-  title: string;
-  value: string;
-  color: 'blue' | 'green' | 'purple' | 'yellow';
-}
-
-function StatCard({ title, value, color }: StatCardProps) {
-  const colorClasses = {
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-green-100 text-green-600',
-    purple: 'bg-purple-100 text-purple-600',
-    yellow: 'bg-yellow-100 text-yellow-600',
-  };
-
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
-        </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-        </div>
-      </div>
-    </div>
   );
 }
 

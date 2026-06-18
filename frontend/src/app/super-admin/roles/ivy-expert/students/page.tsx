@@ -8,6 +8,8 @@ import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import AuthImage from '@/components/AuthImage';
+import ListPageFilters from '@/components/ListPageFilters';
+import MobileRecordCard from '@/components/MobileRecordCard';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -127,61 +129,59 @@ export default function IvyStudentsPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => router.push('/super-admin/roles/ivy-expert')}
-                  className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <h1 className="text-3xl font-bold text-gray-900">Ivy Students</h1>
-              </div>
-              <p className="text-gray-600 mt-1">Students assigned to an Ivy League expert</p>
+          <div className="mb-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={() => router.push('/super-admin/roles/ivy-expert')}
+                className="rounded-lg p-1.5 transition-colors hover:bg-gray-100"
+              >
+                <svg className="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Ivy Students</h1>
             </div>
+            <p className="mt-1 pl-9 text-gray-600 sm:pl-0">Students assigned to an Ivy League expert</p>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Students</p>
-                  <p className="text-3xl font-bold text-gray-900">{students.length}</p>
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-6">
+            <div className="rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-xs text-gray-600 sm:text-sm">Total Students</p>
+                  <p className="text-xl font-bold text-gray-900 sm:text-3xl">{students.length}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-blue-100 text-blue-600">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 sm:h-12 sm:w-12">
+                  <svg className="h-4 w-4 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Test Completed</p>
-                  <p className="text-3xl font-bold text-gray-900">{students.filter(s => s.testStatus === 'completed').length}</p>
+            <div className="rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-xs text-gray-600 sm:text-sm">Test Completed</p>
+                  <p className="text-xl font-bold text-gray-900 sm:text-3xl">{students.filter(s => s.testStatus === 'completed').length}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-green-100 text-green-600">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-600 sm:h-12 sm:w-12">
+                  <svg className="h-4 w-4 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
               </div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Test Pending</p>
-                  <p className="text-3xl font-bold text-gray-900">{students.filter(s => s.testStatus !== 'completed').length}</p>
+            <div className="col-span-2 rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm sm:col-span-1 sm:p-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-xs text-gray-600 sm:text-sm">Test Pending</p>
+                  <p className="text-xl font-bold text-gray-900 sm:text-3xl">{students.filter(s => s.testStatus !== 'completed').length}</p>
                 </div>
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-yellow-100 text-yellow-600">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-yellow-100 text-yellow-600 sm:h-12 sm:w-12">
+                  <svg className="h-4 w-4 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
@@ -191,48 +191,78 @@ export default function IvyStudentsPage() {
 
           {/* Search & Filters */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input
-                  type="text"
-                  placeholder="Search by name, email, or school..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                >
-                  <option value="">All Test Status</option>
-                  <option value="not-started">Not Started</option>
-                  <option value="in-progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                </select>
-                <button
-                  onClick={() => { setSearchQuery(''); setStatusFilter(''); }}
-                  className="px-4 py-2.5 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  Clear Filters
-                </button>
-              </div>
+            <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-6">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search by name, email, or school..."
+                pillFilters={[
+                  {
+                    value: statusFilter,
+                    onChange: setStatusFilter,
+                    options: [
+                      { value: '', label: 'All Test Status', mobileLabel: 'All' },
+                      { value: 'not-started', label: 'Not Started', mobileLabel: 'Not Started' },
+                      { value: 'in-progress', label: 'In Progress', mobileLabel: 'In Progress' },
+                      { value: 'completed', label: 'Completed', mobileLabel: 'Done' },
+                    ],
+                  },
+                ]}
+                onClear={() => {
+                  setSearchQuery('');
+                  setStatusFilter('');
+                }}
+              />
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
+            <div>
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
                 </div>
               ) : filteredStudents.length === 0 ? (
-                <div className="text-center py-12">
+                <div className="py-12 text-center">
                   <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                   </svg>
-                  <p className="mt-2 text-gray-900 font-medium">No students found</p>
+                  <p className="mt-2 font-medium text-gray-900">No students found</p>
                 </div>
               ) : (
+                <>
+                <div className="divide-y divide-gray-200 md:hidden">
+                  {filteredStudents.map((s) => (
+                    <MobileRecordCard
+                      key={s._id}
+                      avatar={
+                        <AuthImage path={s.profilePicture} alt={`${s.firstName} ${s.lastName}`} className="h-10 w-10 shrink-0 rounded-full object-cover" fallback={<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100"><span className="text-sm font-semibold text-green-600">{s.firstName?.charAt(0)?.toUpperCase() || ''}{s.lastName?.charAt(0)?.toUpperCase() || ''}</span></div>} />
+                      }
+                      title={getFullName(s)}
+                      subtitle={s.email}
+                      badges={getTestStatusBadge(s.testStatus)}
+                      fields={[
+                        { label: 'School', value: s.curriculum ? `${s.schoolName} · ${s.curriculum}` : s.schoolName, colSpan: 2, multiline: true },
+                        { label: 'Grade', value: s.currentGrade },
+                        {
+                          label: 'Score',
+                          value: s.testStatus === 'completed' && s.totalScore !== null ? `${s.totalScore} / ${s.maxScore}` : '—',
+                          colSpan: 2,
+                        },
+                        {
+                          label: 'Joined',
+                          value: s.createdAt ? new Date(s.createdAt).toLocaleDateString('en-GB') : '—',
+                        },
+                      ]}
+                      menuItems={[
+                        {
+                          label: 'View Details',
+                          onClick: () => router.push(`/super-admin/roles/student/${s.studentDocId || s.userId}`),
+                        },
+                      ]}
+                    />
+                  ))}
+                </div>
+                <div className="hidden overflow-x-auto md:block">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -294,12 +324,14 @@ export default function IvyStudentsPage() {
                     ))}
                   </tbody>
                 </table>
+                </div>
+                </>
               )}
             </div>
 
             {/* Pagination footer */}
             {filteredStudents.length > 0 && (
-              <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <div className="border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
                 <p className="text-sm text-gray-600">
                   Showing {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''}
                 </p>

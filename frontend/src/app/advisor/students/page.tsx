@@ -8,6 +8,8 @@ import AdvisorLayout from '@/components/AdvisorLayout';
 import AuthImage from '@/components/AuthImage';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import toast, { Toaster } from 'react-hot-toast';
+import { StudentMobileList } from '@/components/StudentMobileRecordCard';
+import ListPageFilters from '@/components/ListPageFilters';
 
 interface Student {
   _id: string;
@@ -108,32 +110,54 @@ export default function AdvisorStudentsPage() {
     <>
       <Toaster position="top-right" />
       <AdvisorLayout user={user}>
-        <div className="p-8">
-          {/* Header */}
+        <div className="p-4 sm:p-6 md:p-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Students</h1>
-            <p className="text-gray-600 mt-1">Manage your converted students</p>
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Students</h1>
+            <p className="mt-1 text-gray-600">Manage your converted students</p>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 md:gap-6">
             <StatCard title="Total Students" value={students.length.toString()} color="blue" />
             <StatCard title="Active Students" value={activeCount.toString()} color="green" />
           </div>
 
-          {/* Search & Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-              <input
-                type="text"
-                placeholder="Search by name or email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 w-full md:w-1/3"
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-4">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search by name or email..."
+                onClear={() => setSearchQuery('')}
               />
             </div>
 
-            <div className="overflow-x-auto">
+            {filteredStudents.length > 0 ? (
+              <>
+              <StudentMobileList
+                students={filteredStudents}
+                getMenuItems={(student) => [
+                  {
+                    label: 'View Details',
+                    onClick: () => router.push(`/advisor/students/${student._id}`),
+                  },
+                ]}
+                renderBadges={(student) =>
+                  student.adminId ? (
+                    <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800">
+                      Transferred
+                    </span>
+                  ) : student.userId?.isActive !== false ? (
+                    <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800">
+                      Active
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-800">
+                      Inactive
+                    </span>
+                  )
+                }
+              />
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -144,8 +168,7 @@ export default function AdvisorStudentsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredStudents.length > 0 ? (
-                    filteredStudents.map((student) => (
+                  {filteredStudents.map((student) => (
                       <tr key={student._id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => router.push(`/advisor/students/${student._id}`)}>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -190,21 +213,20 @@ export default function AdvisorStudentsPage() {
                           </button>
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center">
-                        <svg className="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
-                        <p className="text-lg font-medium text-gray-900 mb-1">No students found</p>
-                        <p className="text-sm text-gray-500">{searchQuery ? 'Try adjusting your search' : 'Students will appear here after lead conversion.'}</p>
-                      </td>
-                    </tr>
-                  )}
+                    ))}
                 </tbody>
               </table>
             </div>
+              </>
+            ) : (
+              <div className="px-6 py-12 text-center">
+                <svg className="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <p className="text-lg font-medium text-gray-900 mb-1">No students found</p>
+                <p className="text-sm text-gray-500">{searchQuery ? 'Try adjusting your search' : 'Students will appear here after lead conversion.'}</p>
+              </div>
+            )}
           </div>
         </div>
       </AdvisorLayout>

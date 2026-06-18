@@ -9,6 +9,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import { StudentMobileList } from '@/components/StudentMobileRecordCard';
+import ListPageFilters from '@/components/ListPageFilters';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -123,7 +125,7 @@ export default function SuperAdminStudentsPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900">All Students</h1>
@@ -132,35 +134,29 @@ export default function SuperAdminStudentsPage() {
             </p>
           </div>
 
-          {/* Search Bar */}
-          <div className="mb-6">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search by name, email, or mobile..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-4 py-3 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+          {/* Search & list */}
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-100 bg-gray-50 p-3 sm:p-4">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search by name, email, or mobile..."
+                onClear={() => setSearchQuery('')}
               />
-              <svg
-                className="w-5 h-5 text-gray-400 absolute left-4 top-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
             </div>
-          </div>
 
-          {/* Students Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="overflow-x-auto">
+            {filteredStudents.length > 0 ? (
+              <>
+              <StudentMobileList
+                students={filteredStudents}
+                getMenuItems={(student) => [
+                  {
+                    label: 'View Details',
+                    onClick: () => handleViewStudent(student._id),
+                  },
+                ]}
+              />
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -185,8 +181,7 @@ export default function SuperAdminStudentsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredStudents.length > 0 ? (
-                    filteredStudents.map((student) => (
+                  {filteredStudents.map((student) => (
                       <tr key={student._id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -243,39 +238,38 @@ export default function SuperAdminStudentsPage() {
                           </button>
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center">
-                        <div className="text-gray-400">
-                          <svg
-                            className="w-12 h-12 mx-auto mb-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                            />
-                          </svg>
-                          <p className="text-lg font-medium text-gray-900 mb-1">
-                            No students found
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {searchQuery
-                              ? 'Try adjusting your search'
-                              : 'Students will appear here once they register'}
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
+                    ))}
                 </tbody>
               </table>
             </div>
+              </>
+            ) : (
+              <div className="px-6 py-12 text-center">
+                <div className="text-gray-400">
+                  <svg
+                    className="w-12 h-12 mx-auto mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                    />
+                  </svg>
+                  <p className="text-lg font-medium text-gray-900 mb-1">
+                    No students found
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {searchQuery
+                      ? 'Try adjusting your search'
+                      : 'Students will appear here once they register'}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Stats */}

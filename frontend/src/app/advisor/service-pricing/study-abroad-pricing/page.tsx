@@ -92,7 +92,7 @@ export default function AdvisorStudyAbroadPricingPage() {
           {basePricing && (
             <div className="mb-6 bg-gradient-to-r from-slate-50 to-slate-100 rounded-2xl border border-slate-200 p-6 shadow-sm">
               <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">CORE Platform Base Price</h3>
-              <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${plans.length}, minmax(0, 1fr))` }}>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
                 {plans.map((plan) => (
                   <div key={plan.key} className="text-center">
                     <p className={`text-xs font-bold ${plan.textColor} uppercase mb-1`}>{plan.name}</p>

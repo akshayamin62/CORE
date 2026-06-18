@@ -10,7 +10,13 @@ import { format } from 'date-fns';
 import FollowUpCalendar from '@/components/FollowUpCalendar';
 import FollowUpSidebar from '@/components/FollowUpSidebar';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
-import { getFullName } from '@/utils/nameHelpers';
+import { getFullName, getInitials } from '@/utils/nameHelpers';
+import {
+  leadContactGridClass,
+  leadPagePadding,
+  leadQuickActionsClass,
+  leadTitleClass,
+} from '@/components/studentDetailResponsive';
 
 export default function AdminLeadDetailPage() {
   const router = useRouter();
@@ -288,7 +294,7 @@ export default function AdminLeadDetailPage() {
     <>
       <Toaster position="top-right" />
       <AdminLayout user={user}>
-        <div className="p-8">
+        <div className={leadPagePadding}>
           {/* Back Button & Header */}
           <div className="mb-6">
             <button
@@ -303,7 +309,7 @@ export default function AdminLeadDetailPage() {
             
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div>
-                <h2 className="text-3xl font-bold text-gray-900">{lead.name}</h2>
+                <h2 className={leadTitleClass}>{lead.name}</h2>
                 <p className="text-gray-600 mt-1">Lead Details</p>
               </div>
               {/* Quick Actions - Right side */}
@@ -337,7 +343,7 @@ export default function AdminLeadDetailPage() {
             {/* Contact Information Card - Takes 2 columns */}
             <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Contact Information</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className={leadContactGridClass}>
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1">Mobile Number</label>
                   <a href={`tel:${lead.mobileNumber}`} className="text-teal-600 hover:underline font-medium">
@@ -385,7 +391,7 @@ export default function AdminLeadDetailPage() {
                 <>
                   <hr className="my-4 border-gray-200" />
                   <h4 className="text-md font-bold text-gray-900 mb-3">Parent Detail</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className={leadContactGridClass}>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1">Name</label>
                       <p className="text-gray-900 font-medium">
@@ -603,8 +609,8 @@ export default function AdminLeadDetailPage() {
 
       {/* Assignment Modal */}
       {assignModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+        <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+          <div className="app-modal-panel bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Assign Lead to Counselor
             </h3>

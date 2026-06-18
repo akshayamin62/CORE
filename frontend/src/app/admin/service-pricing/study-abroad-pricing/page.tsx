@@ -8,6 +8,7 @@ import AdminLayout from '@/components/AdminLayout';
 import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
 import TaxSettingsCard from '@/components/TaxSettingsCard';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
+import { ServicePricingPageFrame } from '@/components/ServicePricingPageFrame';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function ServicePricingPage() {
@@ -78,23 +79,16 @@ export default function ServicePricingPage() {
   return (
     <AdminLayout user={user}>
       <Toaster position="top-right" />
-      <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-[calc(100vh-5rem)]">
-        {/* Header */}
-          <div className="px-6 lg:px-8 py-8 relative">
-            <button onClick={() => router.push('/admin/service-pricing')} className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-              Back to Service Pricing
-            </button>
-            <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Study Abroad Pricing</h1>
-            <p className="text-gray-500 mt-1 max-w-2xl">Set the selling prices for your students&apos; Study Abroad plans.</p>
-          </div>
-
-        <div className="p-6 lg:p-8">
+      <ServicePricingPageFrame
+        title="Study Abroad Pricing"
+        description="Set the selling prices for your students' Study Abroad plans."
+        backHref="/admin/service-pricing"
+      >
           {/* Base Pricing from Super Admin */}
           {basePricing && (
-            <div className="mb-6 bg-gradient-to-r from-slate-50 to-slate-100 rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">CORE Platform Base Price</h3>
-              <div className={`grid gap-4`} style={{ gridTemplateColumns: `repeat(${plans.length}, minmax(0, 1fr))` }}>
+            <div className="mb-6 rounded-xl border border-slate-200 bg-gradient-to-r from-slate-50 to-slate-100 p-4 shadow-sm sm:rounded-2xl sm:p-6">
+              <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-700 sm:mb-4 sm:text-sm">CORE Platform Base Price</h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
                 {plans.map((plan) => (
                   <div key={plan.key} className="text-center">
                     <p className={`text-xs font-bold ${plan.textColor} uppercase mb-1`}>{plan.name}</p>
@@ -107,13 +101,13 @@ export default function ServicePricingPage() {
 
           {/* Current Pricing with Profit */}
           {pricing && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
               {plans.map((plan) => {
                 const sellingPrice = pricing[plan.key] ?? 0;
                 const basePrice = basePricing ? (basePricing[plan.key] ?? 0) : 0;
                 const profit = basePricing ? sellingPrice - basePrice : null;
                 return (
-                  <div key={plan.key} className="bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 border border-slate-200 p-6 relative overflow-hidden">
+                  <div key={plan.key} className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-300 hover:shadow-md sm:rounded-2xl sm:p-6">
                     <div className={`absolute top-0 left-0 right-0 h-1.5 ${plan.badgeBg}`} />
                     <div className="flex items-center justify-between mb-4">
                       <div className={`w-11 h-11 ${plan.iconBg} ${plan.iconText} rounded-xl flex items-center justify-center shadow-sm`}>
@@ -137,7 +131,7 @@ export default function ServicePricingPage() {
           )}
 
           {/* Pricing Form */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 lg:p-8">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-lg sm:rounded-2xl sm:p-6 lg:p-8">
             <h2 className="text-lg font-bold text-gray-900 mb-6">{pricing ? 'Update Selling Price' : 'Set Selling Price'}</h2>
             <div className="space-y-5">
               {plans.map((plan) => {
@@ -165,7 +159,7 @@ export default function ServicePricingPage() {
                 );
               })}
             </div>
-            <div className="mt-6 flex items-center gap-3">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
               <button onClick={handleSave} disabled={saving || plans.some(p => !formData[p.key])} className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                 {saving ? 'Saving...' : pricing ? 'Update Pricing' : 'Save Pricing'}
               </button>
@@ -201,8 +195,7 @@ export default function ServicePricingPage() {
               <ServicePlanDetailsView features={features} pricing={pricing} plans={plans} serviceName="Study Abroad" showPricing={false} gstRate={gstPercentage} />
             </div>
           )}
-        </div>
-      </div>
+      </ServicePricingPageFrame>
     </AdminLayout>
   );
 }

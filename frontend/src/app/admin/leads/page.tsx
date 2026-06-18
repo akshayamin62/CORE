@@ -7,6 +7,14 @@ import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
+import ListPageFilters from '@/components/ListPageFilters';
+import LeadMobileList, {
+  getLeadServiceColor,
+  getLeadStageColor,
+  LEAD_SERVICE_FILTER_OPTIONS,
+  LEAD_STAGE_FILTER_OPTIONS,
+} from '@/components/LeadMobileList';
+import { MobileRecordMenuItem } from '@/components/MobileRecordCard';
 
 export default function AdminLeadsPage() {
   const router = useRouter();
@@ -220,38 +228,15 @@ export default function AdminLeadsPage() {
     setStageFilter('');
   };
 
-  const getStageColor = (stage: string) => {
-    switch (stage) {
-      case LEAD_STAGE.NEW:
-        return 'bg-blue-100 text-blue-800';
-      case LEAD_STAGE.HOT:
-        return 'bg-red-100 text-red-800';
-      case LEAD_STAGE.WARM:
-        return 'bg-orange-100 text-orange-800';
-      case LEAD_STAGE.COLD:
-        return 'bg-cyan-100 text-cyan-800';
-      case LEAD_STAGE.CONVERTED:
-        return 'bg-green-100 text-green-800';
-      case LEAD_STAGE.CLOSED:
-        return 'bg-gray-100 text-gray-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const getStageColor = getLeadStageColor;
+  const getServiceColor = getLeadServiceColor;
 
-  const getServiceColor = (service: string) => {
-    switch (service) {
-      case SERVICE_TYPE.CAREER_FOCUS_STUDY_ABROAD:
-        return 'bg-indigo-100 text-indigo-800';
-      case SERVICE_TYPE.IVY_LEAGUE_ADMISSION:
-        return 'bg-amber-100 text-amber-800';
-      case SERVICE_TYPE.EDUCATION_PLANNING:
-        return 'bg-teal-100 text-teal-800';
-      case SERVICE_TYPE.COACHING_CLASSES:
-        return 'bg-rose-100 text-rose-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const clearAllFilters = () => {
+    setStageFilter('');
+    setServiceFilter('');
+    setCounselorFilter('');
+    setSearchQuery('');
+    setSelectedStageCard(null);
   };
 
   // Stats calculations (always from allLeads so they don't change on filter)
@@ -287,7 +272,7 @@ export default function AdminLeadsPage() {
     <>
       <Toaster position="top-right" />
       <AdminLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
@@ -421,7 +406,31 @@ export default function AdminLeadsPage() {
           </div>
 
           {/* Search and Filters */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4 mb-6">
+            <div className="md:hidden">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search by name or email..."
+                pillFilters={[
+                  {
+                    value: stageFilter,
+                    onChange: (value) => {
+                      setStageFilter(value);
+                      setSelectedStageCard(value || null);
+                    },
+                    options: LEAD_STAGE_FILTER_OPTIONS,
+                  },
+                  {
+                    value: serviceFilter,
+                    onChange: setServiceFilter,
+                    options: LEAD_SERVICE_FILTER_OPTIONS,
+                  },
+                ]}
+                onClear={clearAllFilters}
+              />
+            </div>
+            <div className="hidden md:block">
             <div className="flex flex-wrap gap-4">
               {/* Search */}
               <div className="flex-1 min-w-[200px]">
@@ -487,18 +496,13 @@ export default function AdminLeadsPage() {
 
               <div className="flex items-end">
                 <button
-                  onClick={() => {
-                    setStageFilter('');
-                    setServiceFilter('');
-                    setCounselorFilter('');
-                    setSearchQuery('');
-                    setSelectedStageCard(null);
-                  }}
+                  onClick={clearAllFilters}
                   className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   Clear All
                 </button>
               </div>
+            </div>
             </div>
           </div>
 
@@ -517,7 +521,38 @@ export default function AdminLeadsPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                <LeadMobileList
+                  leads={filteredLeads}
+                  getStageColor={getStageColor}
+                  getServiceColor={getServiceColor}
+                  extraFields={(lead) => [
+                    {
+                      label: 'Assigned',
+                      value: lead.assignedCounselorId?.userId
+                        ? getFullName(lead.assignedCounselorId.userId)
+                        : 'Unassigned',
+                      colSpan: 3,
+                    },
+                  ]}
+                  getMenuItems={(lead) => {
+                    const items: MobileRecordMenuItem[] = [
+                      {
+                        label: 'View',
+                        onClick: () => router.push(`/admin/leads/${lead._id}`),
+                      },
+                    ];
+                    if (lead.conversionStatus === 'PENDING') {
+                      items.push({
+                        label: approving === lead._id ? 'Approving...' : 'Approve',
+                        onClick: () => handleApproveConversion(lead),
+                        disabled: approving === lead._id,
+                      });
+                    }
+                    return items;
+                  }}
+                />
+                <div className="hidden overflow-x-auto md:block">
                 <table className="w-full table-fixed">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
@@ -598,7 +633,8 @@ export default function AdminLeadsPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -606,8 +642,8 @@ export default function AdminLeadsPage() {
 
       {/* Assignment Modal */}
       {assignModalOpen && selectedLead && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+        <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+          <div className="app-modal-panel bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Assign Lead to Counselor
             </h3>
@@ -654,8 +690,8 @@ export default function AdminLeadsPage() {
 
       {/* Rejection Modal */}
       {rejectModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+        <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+          <div className="app-modal-panel bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               Reject Conversion Request
             </h3>

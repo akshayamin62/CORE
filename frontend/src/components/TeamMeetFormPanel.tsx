@@ -369,20 +369,29 @@ export default function TeamMeetFormPanel({
 
   return (
     <>
+      {isOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-[45] bg-black/30 md:hidden"
+          aria-label="Close meeting panel"
+          onClick={onClose}
+        />
+      )}
+
       {/* Slide-in Panel from Left */}
       <div 
-        className={`fixed top-[140px] left-4 z-40 w-[400px] bg-white shadow-2xl rounded-xl border border-gray-200 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'
-        }`}
-        style={{ maxHeight: 'calc(100vh - 180px)' }}
+        className={`fixed z-[55] flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl transition-all duration-300 ease-in-out
+          left-4 right-4 top-28 bottom-[calc(7.25rem+env(safe-area-inset-bottom,0px))]
+          md:left-4 md:right-auto md:top-[140px] md:bottom-auto md:w-[400px] md:max-h-[calc(100vh-180px)]
+          ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-[120%] opacity-0 pointer-events-none md:-translate-x-full'}`}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-violet-600 to-purple-700 px-4 py-3 rounded-t-xl flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="flex shrink-0 items-center justify-between rounded-t-xl bg-gradient-to-r from-violet-600 to-purple-700 px-3 py-3 sm:px-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <svg className="h-5 w-5 shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            <span className="text-white font-semibold">
+            <span className="truncate text-sm font-semibold text-white sm:text-base">
               {mode === 'create' ? 'Schedule Team Meet' : mode === 'respond' ? 'Meeting Invitation' : 'Meeting Details'}
             </span>
           </div>
@@ -410,7 +419,7 @@ export default function TeamMeetFormPanel({
         </div>
 
         {/* Content */}
-        <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4">
           {/* Status Badge (for view/respond modes) */}
           {teamMeet && statusColors && (
             <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium mb-4 ${statusColors.bg} ${statusColors.text}`}>
@@ -420,14 +429,14 @@ export default function TeamMeetFormPanel({
 
           {/* Meeting Info (for view/respond modes) */}
           {teamMeet && mode !== 'create' && (
-            <div className="bg-gray-50 rounded-lg p-3 mb-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                <span className="font-medium">From:</span>
-                <span>{getFullName(teamMeet.requestedBy)} ({formatRole(teamMeet.requestedBy.role)})</span>
+            <div className="mb-4 rounded-lg bg-gray-50 p-3">
+              <div className="mb-1 flex flex-wrap items-start gap-x-2 gap-y-1 text-sm text-gray-600">
+                <span className="shrink-0 font-medium">From:</span>
+                <span className="min-w-0 break-words">{getFullName(teamMeet.requestedBy)} ({formatRole(teamMeet.requestedBy.role)})</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="font-medium">To:</span>
-                <span>{getFullName(teamMeet.requestedTo)} ({formatRole(teamMeet.requestedTo.role)})</span>
+              <div className="flex flex-wrap items-start gap-x-2 gap-y-1 text-sm text-gray-600">
+                <span className="shrink-0 font-medium">To:</span>
+                <span className="min-w-0 break-words">{getFullName(teamMeet.requestedTo)} ({formatRole(teamMeet.requestedTo.role)})</span>
               </div>
             </div>
           )}
@@ -500,7 +509,7 @@ export default function TeamMeetFormPanel({
 
               {/* Invite dropdown */}
               {showInviteDropdown && (
-                <div className="mb-3 flex gap-2">
+                <div className="mb-3 flex flex-col gap-2 sm:flex-row">
                   <select
                     value={selectedInviteId}
                     onChange={(e) => setSelectedInviteId(e.target.value)}
@@ -623,7 +632,7 @@ export default function TeamMeetFormPanel({
           )}
 
           {/* Date & Time */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
               <input
@@ -667,12 +676,12 @@ export default function TeamMeetFormPanel({
           {/* Meeting Type */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Type</label>
-            <div className="flex gap-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
               <button
                 type="button"
                 onClick={() => mode === 'create' && setMeetingType(TEAMMEET_TYPE.ONLINE)}
                 disabled={mode !== 'create'}
-                className={`flex-1 px-4 py-2 rounded-lg border-2 transition-all ${
+                className={`w-full px-3 py-2 rounded-lg border-2 transition-all sm:px-4 ${
                   meetingType === TEAMMEET_TYPE.ONLINE
                     ? 'border-violet-500 bg-violet-50 text-violet-700'
                     : 'border-gray-200 text-gray-600 hover:border-gray-300'
@@ -689,7 +698,7 @@ export default function TeamMeetFormPanel({
                 type="button"
                 onClick={() => mode === 'create' && setMeetingType(TEAMMEET_TYPE.FACE_TO_FACE)}
                 disabled={mode !== 'create'}
-                className={`flex-1 px-4 py-2 rounded-lg border-2 transition-all ${
+                className={`w-full px-3 py-2 rounded-lg border-2 transition-all sm:px-4 ${
                   meetingType === TEAMMEET_TYPE.FACE_TO_FACE
                     ? 'border-violet-500 bg-violet-50 text-violet-700'
                     : 'border-gray-200 text-gray-600 hover:border-gray-300'
@@ -706,7 +715,7 @@ export default function TeamMeetFormPanel({
                 type="button"
                 onClick={() => mode === 'create' && setMeetingType(TEAMMEET_TYPE.PHONE_CALL)}
                 disabled={mode !== 'create'}
-                className={`flex-1 px-4 py-2 rounded-lg border-2 transition-all ${
+                className={`w-full px-3 py-2 rounded-lg border-2 transition-all sm:px-4 ${
                   meetingType === TEAMMEET_TYPE.PHONE_CALL
                     ? 'border-violet-500 bg-violet-50 text-violet-700'
                     : 'border-gray-200 text-gray-600 hover:border-gray-300'
@@ -864,7 +873,7 @@ export default function TeamMeetFormPanel({
         </div>
 
         {/* Footer Actions */}
-        <div className="px-4 py-3 bg-gray-50 rounded-b-xl border-t border-gray-200">
+        <div className="shrink-0 rounded-b-xl border-t border-gray-200 bg-gray-50 px-3 py-3 sm:px-4">
           {/* Create Mode Actions */}
           {!readOnly && mode === 'create' && (
             <div className="flex gap-2">

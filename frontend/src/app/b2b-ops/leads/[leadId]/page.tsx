@@ -275,19 +275,19 @@ export default function B2BOpsLeadDetailPage() {
     <>
       <Toaster position="top-right" />
       <B2BOpsLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Back Button & Header */}
           <div className="mb-6">
-            <button onClick={() => router.push('/b2b-ops/leads')} className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4 transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            <button onClick={() => router.push('/b2b-ops/leads')} className="mb-4 flex items-center gap-2 text-gray-600 transition-colors hover:text-gray-800">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
               Back to Leads
             </button>
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900">{leadName}</h2>
-                <p className="text-gray-600 mt-1">B2B Lead Details (OPS)</p>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <h2 className="truncate text-2xl font-bold text-gray-900 sm:text-3xl">{leadName}</h2>
+                <p className="mt-1 text-gray-600">B2B Lead Details (OPS)</p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                   Send Email
@@ -310,7 +310,7 @@ export default function B2BOpsLeadDetailPage() {
             {/* Contact Information */}
             <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Contact Information</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1">Mobile Number</label>
                   <a href={`tel:${lead.mobileNumber}`} className="text-blue-600 hover:underline font-medium">{lead.mobileNumber}</a>

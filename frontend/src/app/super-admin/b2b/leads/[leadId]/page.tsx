@@ -569,8 +569,8 @@ export default function SuperAdminB2BLeadDetailPage() {
 
       {/* Assign Sales Modal */}
       {showAssignSalesModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowAssignSalesModal(false)}>
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div onClick={() => setShowAssignSalesModal(false)} className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+          <div className="app-modal-panel bg-white rounded-xl shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Assign B2B Sales</h3>
             <select value={selectedSalesId} onChange={(e) => setSelectedSalesId(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 mb-4">
               <option value="">Unassign</option>
@@ -592,8 +592,8 @@ export default function SuperAdminB2BLeadDetailPage() {
 
       {/* Assign OPS Modal */}
       {showAssignOpsModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowAssignOpsModal(false)}>
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div onClick={() => setShowAssignOpsModal(false)} className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+          <div className="app-modal-panel bg-white rounded-xl shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Assign B2B OPS</h3>
             <select value={selectedOpsId} onChange={(e) => setSelectedOpsId(e.target.value)} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 mb-4">
               <option value="">Unassign</option>

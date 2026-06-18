@@ -7,6 +7,12 @@ import { User, USER_ROLE } from '@/types';
 import AdvisorLayout from '@/components/AdvisorLayout';
 import StudentProfileModal from '@/components/StudentProfileModal';
 import AuthImage from '@/components/AuthImage';
+import {
+  registrationActionBtnClass,
+  registrationCardRowClass,
+  studentHeaderRowClass,
+  studentPagePadding,
+} from '@/components/studentDetailResponsive';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -260,7 +266,7 @@ export default function AdvisorStudentDetailPage() {
     <>
       <Toaster position="top-right" />
       <AdvisorLayout user={user}>
-        <div className="p-8">
+        <div className={studentPagePadding}>
           {/* Back Button */}
           <button
             onClick={() => router.back()}
@@ -308,7 +314,7 @@ export default function AdvisorStudentDetailPage() {
 
               {/* Student Info Card */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                <div className="flex items-start justify-between mb-6">
+                <div className={studentHeaderRowClass}>
                   <div className="flex items-center">
                     <AuthImage
                       path={student.userId.profilePicture}
@@ -464,7 +470,7 @@ export default function AdvisorStudentDetailPage() {
                   <div className="space-y-4">
                     {registrations.map((registration) => (
                       <div key={registration._id} className={`border rounded-lg p-4 ${registration.isOwnRegistration === false ? 'border-amber-200 bg-amber-50/50' : 'border-gray-200 bg-gray-50'}`}>
-                        <div className="flex items-start justify-between">
+                        <div className={registrationCardRowClass}>
                           <div className="flex-1">
                             <h3 className="font-semibold text-gray-900 mb-1">
                               {registration.serviceId.name}
@@ -504,7 +510,7 @@ export default function AdvisorStudentDetailPage() {
                           </div>
                           <button
                             onClick={() => handleViewFormData(registration._id, registration.serviceId.name)}
-                            className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium inline-flex items-center gap-2"
+                            className={`${registrationActionBtnClass} inline-flex items-center justify-center gap-2`}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -573,8 +579,8 @@ export default function AdvisorStudentDetailPage() {
 
       {/* Transfer Modal */}
       {showTransferModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+        <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+          <div className="app-modal-panel bg-white rounded-xl p-6 w-full max-w-md">
             <h2 className="text-lg font-semibold mb-2">Transfer Student</h2>
             <p className="text-sm text-gray-500 mb-4">
               Select the services the student is interested in. The transfer will be sent to the main admin for approval.

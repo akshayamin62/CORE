@@ -779,8 +779,8 @@ export default function B2BProfileForm({
 
       {/* Add Document modal */}
       {showAddDocModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-md shadow-xl">
+        <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+          <div className="app-modal-panel bg-white rounded-xl w-full max-w-md shadow-xl">
             <div className="flex items-center justify-between p-5 border-b">
               <h3 className="text-base font-semibold text-gray-900">Add Document Field</h3>
               <button onClick={() => setShowAddDocModal(false)} className="p-1.5 hover:bg-gray-100 rounded-full">
@@ -855,8 +855,8 @@ export default function B2BProfileForm({
 
       {/* Document viewer modal */}
       {viewingDoc && viewBlobUrl && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+          <div className="app-modal-panel bg-white rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="font-semibold text-gray-900">{viewingDoc.documentName}</h3>
               <div className="flex items-center gap-2">

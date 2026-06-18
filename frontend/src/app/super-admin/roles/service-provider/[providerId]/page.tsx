@@ -10,6 +10,12 @@ import SuperAdminLayout from '@/components/SuperAdminLayout';
 import AuthImage from '@/components/AuthImage';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
+import SuperAdminRoleDetailFrame, {
+  DetailInfoCard,
+  DetailPageHeader,
+  ListPageStatGrid,
+} from '@/components/SuperAdminRoleDetailFrame';
+import PageStatCard from '@/components/PageStatCard';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 const BASE_URL = API_URL.replace('/api', '');
@@ -214,75 +220,77 @@ export default function ServiceProviderDetailPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={currentUser}>
-        <div className="p-8">
-          {/* Header */}
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <button
-                onClick={() => router.push('/super-admin/roles/service-provider')}
-                className="text-blue-600 hover:text-blue-800 mb-2 flex items-center"
-              >
-                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                Back to Service Providers
-              </button>
-              <div className="flex items-center space-x-4">
-                {serviceProvider.companyLogo ? (
-                  <AuthImage path={serviceProvider.companyLogo} alt="Company Logo" className="w-14 h-14 rounded-full object-cover border-2 border-blue-200" />
-                ) : null}
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">{fullName}</h1>
-                  <p className="text-gray-600 mt-1">{serviceProvider.companyName || 'Service Provider Details'}</p>
+        <SuperAdminRoleDetailFrame
+          backLabel="Back to Service Providers"
+          onBack={() => router.push('/super-admin/roles/service-provider')}
+        >
+          <DetailPageHeader
+            avatar={
+              serviceProvider.companyLogo ? (
+                <AuthImage
+                  path={serviceProvider.companyLogo}
+                  alt="Company Logo"
+                  className="h-12 w-12 shrink-0 rounded-full border-2 border-blue-200 object-cover sm:h-14 sm:w-14"
+                />
+              ) : (
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 sm:h-14 sm:w-14">
+                  <span className="text-lg font-bold text-blue-600">{fullName.charAt(0) || 'S'}</span>
                 </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <span className={`px-4 py-2 rounded-full text-sm font-semibold ${user.isVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                }`}>
+              )
+            }
+            title={fullName}
+            subtitle={serviceProvider.companyName || 'Service Provider Details'}
+          />
+
+          <DetailInfoCard>
+            <div className="flex w-full flex-wrap items-center gap-2">
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  user.isVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                }`}
+              >
                 {user.isVerified ? 'Verified' : 'Unverified'}
               </span>
-              <span className={`px-4 py-2 rounded-full text-sm font-semibold ${user.isActive ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
-                }`}>
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  user.isActive ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
+                }`}
+              >
                 {user.isActive ? 'Active' : 'Inactive'}
               </span>
               {!user.isVerified && (
                 <button
+                  type="button"
                   onClick={handleVerifyUser}
                   disabled={verifyLoading}
-                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-semibold transition-colors"
+                  className="ml-auto rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:opacity-50"
                 >
                   {verifyLoading ? 'Verifying...' : 'Verify User'}
                 </button>
               )}
             </div>
-          </div>
+          </DetailInfoCard>
 
-          {/* Services & Enquiries Buttons */}
-          <div className="flex flex-wrap gap-3 mb-6">
+          <div className="mb-4 flex flex-wrap gap-2 sm:mb-6">
             <button
+              type="button"
               onClick={() => router.push(`/super-admin/roles/service-provider/${providerId}/services`)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 sm:flex-none sm:px-5"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
               Services
             </button>
             <button
+              type="button"
               onClick={() => router.push(`/super-admin/roles/service-provider/${providerId}/enquiries`)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-purple-700 sm:flex-none sm:px-5"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-              </svg>
               Enquiries
             </button>
           </div>
 
           {/* Account Information */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Account Information</h2>
+          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6 sm:p-6">
+            <h2 className="mb-4 text-lg font-bold text-gray-900 sm:text-xl">Account Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <InfoField label="Full Name" value={fullName} />
               <InfoField label="Email" value={user.email} />
@@ -306,9 +314,9 @@ export default function ServiceProviderDetailPage() {
           </div>
 
           {/* Company Information (includes address) */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Company Information</h2>
+          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6 sm:p-6">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <h2 className="text-lg font-bold text-gray-900 sm:text-xl">Company Information</h2>
               {serviceProvider.companyLogo && (
                 <AuthImage path={serviceProvider.companyLogo} alt="Logo" className="w-16 h-16 rounded-lg object-cover border border-gray-200" />
               )}
@@ -327,8 +335,8 @@ export default function ServiceProviderDetailPage() {
           </div>
 
           {/* Bank & Tax Details */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Bank & Tax Details</h2>
+          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6 sm:p-6">
+            <h2 className="mb-4 text-lg font-bold text-gray-900 sm:text-xl">Bank & Tax Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <InfoField label="GST Number" value={serviceProvider.gstNumber || 'N/A'} />
               <InfoField label="Business PAN" value={serviceProvider.businessPan || 'N/A'} />
@@ -342,37 +350,53 @@ export default function ServiceProviderDetailPage() {
           </div>
 
           {/* Documents Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Documents</h2>
-            <p className="text-sm text-gray-500 mb-6">Review and approve/reject uploaded documents.</p>
+          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6 sm:p-6">
+            <h2 className="mb-1 text-lg font-bold text-gray-900 sm:text-xl">Documents</h2>
+            <p className="mb-4 text-sm text-gray-500">Review and approve/reject uploaded documents.</p>
 
-            {/* Document Stats */}
-            <div className="flex items-center space-x-6 text-sm mb-6 pb-4 border-b border-gray-200">
-              <span className="text-gray-600">Total Required: <strong>{SP_DOCUMENTS_CONFIG.length}</strong></span>
-              <span className="text-green-600">Approved: <strong>{documents.filter(d => d.status === 'APPROVED').length}</strong></span>
-              <span className="text-yellow-600">Pending: <strong>{documents.filter(d => d.status === 'PENDING').length}</strong></span>
-              <span className="text-blue-600">Uploaded: <strong>{documents.length}</strong></span>
-            </div>
+            <ListPageStatGrid columns={3}>
+              <PageStatCard
+                compact
+                title="Required"
+                mobileTitle="Required"
+                value={SP_DOCUMENTS_CONFIG.length}
+                color="gray"
+              />
+              <PageStatCard
+                compact
+                title="Approved"
+                mobileTitle="Approved"
+                value={documents.filter((d) => d.status === 'APPROVED').length}
+                color="green"
+              />
+              <PageStatCard
+                compact
+                title="Pending"
+                mobileTitle="Pending"
+                value={documents.filter((d) => d.status === 'PENDING').length}
+                color="amber"
+              />
+            </ListPageStatGrid>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {SP_DOCUMENTS_CONFIG.map((field) => {
                 const doc = getDocumentForKey(field.documentKey);
 
                 return (
                   <div
                     key={field.documentKey}
-                    className={`border-2 rounded-xl p-5 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-gray-50 ${doc
+                    className={`rounded-xl border-2 bg-gradient-to-br from-white to-gray-50 p-4 transition-all duration-200 hover:shadow-md sm:p-5 ${
+                      doc
                         ? doc.status === 'APPROVED'
                           ? 'border-green-300'
                           : doc.status === 'PENDING'
                             ? 'border-yellow-300'
                             : 'border-red-300'
                         : 'border-gray-200'
-                      }`}
+                    }`}
                   >
-                    <div className="flex items-center justify-between gap-4">
-                      {/* Left: doc icon + name + required + helptext */}
-                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex min-w-0 flex-1 items-start gap-3">
                         <svg className="w-5 h-5 text-gray-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
@@ -390,76 +414,82 @@ export default function ServiceProviderDetailPage() {
                         </div>
                       </div>
 
-                      {/* Right: status + view + approve/reject */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
                         {doc && (
-                          <div className="flex-shrink-0">
+                          <div className="flex-shrink-0 self-start sm:self-auto">
                             {getStatusBadge(doc.status)}
                           </div>
                         )}
                         {doc && (
                           <button
+                            type="button"
                             onClick={() => handleViewDocument(doc)}
-                            className="px-4 py-2 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 rounded-lg hover:from-blue-100 hover:to-blue-200 transition-all text-xs font-semibold flex items-center gap-1.5 border border-blue-200 shadow-sm"
+                            className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 px-4 py-2.5 text-xs font-semibold text-blue-700 shadow-sm transition-all hover:from-blue-100 hover:to-blue-200 sm:w-auto"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             View
                           </button>
                         )}
                         {doc && doc.status === 'PENDING' && (
-                          <>
+                          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
                             <button
+                              type="button"
                               onClick={() => handleApproveDocument(doc._id)}
                               disabled={actionLoading === doc._id}
-                              className="px-3 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs rounded-lg hover:from-green-600 hover:to-green-700 disabled:opacity-50 transition-all font-semibold shadow-sm"
+                              className="rounded-lg bg-gradient-to-r from-green-500 to-green-600 px-3 py-2.5 text-xs font-semibold text-white shadow-sm transition-all hover:from-green-600 hover:to-green-700 disabled:opacity-50"
                             >
                               Approve
                             </button>
                             <button
+                              type="button"
                               onClick={() => {
                                 setRejectingDocId(doc._id);
                                 setRejectionMessage('');
                               }}
                               disabled={actionLoading === doc._id}
-                              className="px-3 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs rounded-lg hover:from-red-600 hover:to-red-700 disabled:opacity-50 transition-all font-semibold shadow-sm"
+                              className="rounded-lg bg-gradient-to-r from-red-500 to-red-600 px-3 py-2.5 text-xs font-semibold text-white shadow-sm transition-all hover:from-red-600 hover:to-red-700 disabled:opacity-50"
                             >
                               Reject
                             </button>
-                          </>
+                          </div>
                         )}
                       </div>
                     </div>
 
                     {/* Rejection message input */}
                     {rejectingDocId === doc?._id && (
-                      <div className="mt-3 flex items-end space-x-2">
+                      <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
                         <div className="flex-1">
                           <textarea
                             value={rejectionMessage}
                             onChange={(e) => setRejectionMessage(e.target.value)}
                             placeholder="Enter reason for rejection..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-transparent focus:ring-2 focus:ring-red-500"
                             rows={2}
                           />
                         </div>
-                        <button
-                          onClick={() => handleRejectDocument(doc!._id)}
-                          disabled={actionLoading === doc!._id}
-                          className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 disabled:opacity-50"
-                        >
-                          Confirm Reject
-                        </button>
-                        <button
-                          onClick={() => {
-                            setRejectingDocId(null);
-                            setRejectionMessage('');
-                          }}
-                          className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-300"
-                        >
-                          Cancel
-                        </button>
+                        <div className="flex gap-2 sm:shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleRejectDocument(doc!._id)}
+                            disabled={actionLoading === doc!._id}
+                            className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50 sm:flex-none"
+                          >
+                            Confirm Reject
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setRejectingDocId(null);
+                              setRejectionMessage('');
+                            }}
+                            className="flex-1 rounded-lg bg-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-300 sm:flex-none"
+                          >
+                            Cancel
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -470,27 +500,28 @@ export default function ServiceProviderDetailPage() {
 
           {/* Verify User Button (bottom) */}
           {!user.isVerified && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">Verification</h2>
-              <p className="text-gray-500 mb-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm sm:p-6">
+              <h2 className="mb-2 text-lg font-bold text-gray-900 sm:text-xl">Verification</h2>
+              <p className="mb-4 text-sm text-gray-500">
                 After reviewing all documents & information, click below to verify this service provider.
               </p>
               <button
+                type="button"
                 onClick={handleVerifyUser}
                 disabled={verifyLoading}
-                className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-bold text-lg transition-colors"
+                className="w-full rounded-lg bg-green-600 px-6 py-3 text-base font-bold text-white transition-colors hover:bg-green-700 disabled:opacity-50 sm:w-auto"
               >
                 {verifyLoading ? 'Verifying...' : 'Verify Service Provider'}
               </button>
             </div>
           )}
-        </div>
+        </SuperAdminRoleDetailFrame>
       </SuperAdminLayout>
 
       {/* Document Viewer Modal */}
       {viewingDoc && viewBlobUrl && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4">
+          <div className="app-modal-panel flex max-h-[92dvh] w-full max-w-4xl flex-col rounded-t-2xl bg-white sm:max-h-[90vh] sm:rounded-xl">
             <div className="flex items-center justify-between p-4 border-b">
               <div>
                 <h3 className="font-semibold text-gray-900">{viewingDoc.documentName}</h3>

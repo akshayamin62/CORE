@@ -27,7 +27,7 @@ export default function OpsUsersPage() {
   };
 
   const qsUploadButton = (
-    <>
+    <div className="flex w-full flex-col gap-2 sm:w-auto">
       <input
         ref={fileInputRef}
         type="file"
@@ -38,14 +38,14 @@ export default function OpsUsersPage() {
       <button
         onClick={() => fileInputRef.current?.click()}
         disabled={uploading}
-        className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 text-sm font-medium text-white transition-all duration-150 hover:bg-blue-700 active:scale-[0.98] disabled:opacity-50 sm:w-auto sm:px-4"
       >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
         </svg>
         {uploading ? 'Uploading...' : 'Upload QS Ranking'}
       </button>
-    </>
+    </div>
   );
 
   return (

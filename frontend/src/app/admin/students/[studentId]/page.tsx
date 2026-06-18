@@ -7,6 +7,20 @@ import { User, USER_ROLE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import StudentProfileModal from '@/components/StudentProfileModal';
 import AuthImage from '@/components/AuthImage';
+import {
+  registrationActionBtnClass,
+  registrationCardClass,
+  registrationCardRowClass,
+  studentAvatarClass,
+  studentAvatarFallbackClass,
+  studentBadgeRowClass,
+  studentCardClass,
+  studentHeaderRowClass,
+  studentIdentityRowClass,
+  studentMetaGridClass,
+  studentPagePadding,
+  studentTitleClass,
+} from '@/components/studentDetailResponsive';
 
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
@@ -238,7 +252,7 @@ export default function AdminStudentDetailPage() {
     <>
       <Toaster position="top-right" />
       <AdminLayout user={user}>
-        <div className="p-8">
+        <div className={studentPagePadding}>
           {/* Read-only Badge */}
           <div className="mb-4 flex items-center gap-2 text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2 w-fit">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,27 +274,27 @@ export default function AdminStudentDetailPage() {
           </button>
 
           {/* Student Info Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex items-start justify-between mb-6">
-              <div className="flex items-center">
+          <div className={studentCardClass}>
+            <div className={studentHeaderRowClass}>
+              <div className={studentIdentityRowClass}>
                 <AuthImage
                   path={student.userId.profilePicture}
                   alt={getFullName(student.userId)}
-                  className="w-16 h-16 rounded-full object-cover mr-4"
+                  className={studentAvatarClass}
                   fallback={
-                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                      <span className="text-blue-600 font-bold text-xl">
+                    <div className={studentAvatarFallbackClass}>
+                      <span className="text-lg font-bold text-blue-600 sm:text-xl">
                         {getInitials(student.userId)}
                       </span>
                     </div>
                   }
                 />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{getFullName(student.userId)}</h1>
-                  <p className="text-gray-600">{student.userId.email}</p>
+                <div className="min-w-0">
+                  <h1 className={studentTitleClass}>{getFullName(student.userId)}</h1>
+                  <p className="break-all text-gray-600">{student.userId.email}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className={studentBadgeRowClass}>
                 <span
                   className={`px-3 py-1 text-xs font-medium rounded-full ${
                     student.userId.isVerified
@@ -308,7 +322,7 @@ export default function AdminStudentDetailPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-4 border-t border-gray-200">
+            <div className={studentMetaGridClass}>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Mobile Number</p>
                 <p className="font-medium text-gray-900">
@@ -404,8 +418,8 @@ export default function AdminStudentDetailPage() {
           </div>
 
           {/* Service Registrations */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <div className={`${studentCardClass} mb-0`}>
+            <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">
               Service Registrations ({registrations.length})
             </h2>
 
@@ -414,9 +428,9 @@ export default function AdminStudentDetailPage() {
                 {registrations.map((registration) => (
                   <div
                     key={registration._id}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                    className={registrationCardClass}
                   >
-                    <div className="flex items-start justify-between">
+                    <div className={registrationCardRowClass}>
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900 mb-1">
                           {registration.serviceId.name}
@@ -483,7 +497,7 @@ export default function AdminStudentDetailPage() {
                       </div>
                       <button
                         onClick={() => handleViewFormData(registration._id, registration.serviceId.name)}
-                        className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium inline-flex items-center gap-2"
+                        className={`${registrationActionBtnClass} inline-flex items-center justify-center gap-2`}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

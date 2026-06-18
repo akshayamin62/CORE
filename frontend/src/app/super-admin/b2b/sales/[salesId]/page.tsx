@@ -11,6 +11,14 @@ import { getFullName } from '@/utils/nameHelpers';
 import FollowUpCalendar from '@/components/FollowUpCalendar';
 import FollowUpSidebar from '@/components/FollowUpSidebar';
 import B2BFollowUpFormPanel from '@/components/B2BFollowUpFormPanel';
+import MobileRecordCard from '@/components/MobileRecordCard';
+import SuperAdminRoleDetailFrame, {
+  DetailInfoCard,
+  DetailPageHeader,
+  ListPageStatGrid,
+} from '@/components/SuperAdminRoleDetailFrame';
+import PageStatCard from '@/components/PageStatCard';
+import ListPageFilters from '@/components/ListPageFilters';
 
 // Adapter: map B2B follow-up data to FollowUp shape for calendar/sidebar
 function adaptB2BFollowUps(b2bFollowUps: any[]): FollowUp[] {
@@ -222,39 +230,39 @@ export default function B2BSalesDetailPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={user}>
-        <div className="p-8">
-          {/* Header */}
-          <div className="mb-8">
-            <button
-              onClick={() => router.push('/super-admin/b2b/sales')}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back to B2B Sales Staff
-            </button>
+        <SuperAdminRoleDetailFrame
+          backLabel="Back to B2B Sales Staff"
+          onBack={() => router.push('/super-admin/b2b/sales')}
+        >
+          <DetailPageHeader
+            title={getFullName(staff.userId)}
+            subtitle={
+              <>
+                <span>{staff.userId.email}</span>
+                <span className="mx-1">•</span>
+                <span>{staff.mobileNumber || 'No phone'}</span>
+                <span className="mt-1 block text-xs text-gray-400 sm:mt-0 sm:inline">
+                  Joined: {new Date(staff.createdAt).toLocaleDateString('en-GB')}
+                </span>
+              </>
+            }
+          />
 
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-gray-900">{getFullName(staff.userId)}</h1>
-              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+          <DetailInfoCard>
+            <span
+              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                 staff.userId.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                {staff.userId.isActive ? 'Active' : 'Inactive'}
-              </span>
-            </div>
-            <p className="text-gray-600 mt-2">
-              {staff.userId.email} • {staff.mobileNumber || 'No phone'}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">
-              Joined: {new Date(staff.createdAt).toLocaleDateString('en-GB')}
-            </p>
-          </div>
+              }`}
+            >
+              {staff.userId.isActive ? 'Active' : 'Inactive'}
+            </span>
+          </DetailInfoCard>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4 mb-8">
+          <div className="mb-4 grid grid-cols-2 gap-2 sm:gap-3 md:mb-6 md:gap-4 lg:grid-cols-4 xl:grid-cols-8">
             <StatCard
               title="Total Leads"
+              mobileTitle="Total"
               value={stats?.totalLeads.toString() || '0'}
               icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
               color="blue"
@@ -300,6 +308,7 @@ export default function B2BSalesDetailPage() {
             />
             <StatCard
               title="In Process"
+              mobileTitle="In Proc."
               value={stats?.inProcessLeads.toString() || '0'}
               icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>}
               color="purple"
@@ -327,55 +336,38 @@ export default function B2BSalesDetailPage() {
             />
           </div>
 
-          {/* Follow-up Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Today&apos;s Follow-ups</p>
-                  <h3 className="text-2xl font-extrabold text-blue-600 mt-1">{followUpSummary?.counts?.today || 0}</h3>
-                </div>
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Missed Follow-ups</p>
-                  <h3 className="text-2xl font-extrabold text-red-600 mt-1">{followUpSummary?.counts?.missed || 0}</h3>
-                </div>
-                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Upcoming Follow-ups</p>
-                  <h3 className="text-2xl font-extrabold text-green-600 mt-1">{followUpSummary?.counts?.upcoming || 0}</h3>
-                </div>
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Follow-up Summary */}
+          <ListPageStatGrid columns={3}>
+            <PageStatCard
+              compact
+              title="Today's Follow-ups"
+              mobileTitle="Today"
+              value={followUpSummary?.counts?.today || 0}
+              color="blue"
+            />
+            <PageStatCard
+              compact
+              title="Missed Follow-ups"
+              mobileTitle="Missed"
+              value={followUpSummary?.counts?.missed || 0}
+              color="purple"
+            />
+            <PageStatCard
+              compact
+              title="Upcoming Follow-ups"
+              mobileTitle="Upcoming"
+              value={followUpSummary?.counts?.upcoming || 0}
+              color="green"
+            />
+          </ListPageStatGrid>
 
           {/* Collapsed Calendar Icon */}
           {calendarCollapsed && (
-            <div className="flex justify-end mb-4">
+            <div className="mb-4 flex justify-stretch sm:justify-end">
               <button
+                type="button"
                 onClick={handleExpandCalendar}
-                className="flex items-center gap-2 px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-300 transition-all"
+                className="flex w-full items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition-all hover:border-blue-300 hover:shadow-md sm:w-auto"
               >
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                   <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -397,7 +389,7 @@ export default function B2BSalesDetailPage() {
 
           {/* Calendar and Sidebar Section (Read-only for SA) */}
           {!calendarCollapsed && (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+            <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-4 lg:gap-6 lg:mb-8">
               <div className="lg:col-span-3">
                 <FollowUpCalendar
                   followUps={adaptB2BFollowUps(allFollowUps)}
@@ -428,8 +420,8 @@ export default function B2BSalesDetailPage() {
           {/* Leads Table */}
           {selectedStage && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-4">
+              <div className="border-b border-gray-200 p-4 sm:p-6">
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 className="text-xl font-semibold text-gray-900">
                       {selectedStage === 'all' ? 'All Leads' : `${selectedStage} Leads`}
@@ -449,24 +441,53 @@ export default function B2BSalesDetailPage() {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="md:hidden">
+                    <ListPageFilters
+                      searchQuery={searchQuery}
+                      onSearchChange={setSearchQuery}
+                      searchPlaceholder="Search by name, email, or mobile..."
+                      pillFilters={
+                        selectedStage === 'all'
+                          ? [
+                              {
+                                value: stageFilter === 'all' ? '' : stageFilter,
+                                onChange: (v) => setStageFilter(v || 'all'),
+                                options: [
+                                  { value: '', label: 'All Stages', mobileLabel: 'All' },
+                                  ...Object.values(B2B_LEAD_STAGE).map((stage) => ({
+                                    value: stage,
+                                    label: stage,
+                                    mobileLabel: stage,
+                                  })),
+                                ],
+                              },
+                            ]
+                          : []
+                      }
+                      onClear={() => {
+                        setSearchQuery('');
+                        setStageFilter('all');
+                      }}
+                    />
+                  </div>
+                  <div className="hidden md:block">
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Search</label>
                     <input
                       type="text"
                       placeholder="Search by name, email, or mobile..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   {selectedStage === 'all' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Stage</label>
+                    <div className="hidden md:block">
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Stage</label>
                       <select
                         value={stageFilter}
                         onChange={(e) => setStageFilter(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="all">All Stages</option>
                         {Object.values(B2B_LEAD_STAGE).map((stage) => (
@@ -478,6 +499,45 @@ export default function B2BSalesDetailPage() {
                 </div>
               </div>
               <div className="overflow-x-auto">
+                {/* Mobile card list */}
+                <div className="divide-y divide-gray-200 md:hidden">
+                  {getFilteredLeads().length === 0 ? (
+                    <div className="px-4 py-12 text-center text-gray-500">
+                      <p className="text-lg font-medium">No leads found</p>
+                    </div>
+                  ) : (
+                    getFilteredLeads().map((lead: any) => (
+                      <MobileRecordCard
+                        key={lead._id}
+                        title={getFullName(lead)}
+                        subtitle={lead.email}
+                        badges={
+                          <>
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getStageColor(lead.stage)}`}>
+                              {lead.stage}
+                            </span>
+                            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                              {lead.type}
+                            </span>
+                          </>
+                        }
+                        fields={[
+                          { label: 'Phone', value: lead.mobileNumber, colSpan: 2 },
+                          { label: 'Created', value: new Date(lead.createdAt).toLocaleDateString('en-GB') },
+                        ]}
+                        menuItems={[
+                          {
+                            label: 'View',
+                            onClick: () => router.push(`/super-admin/b2b/leads/${lead._id}`),
+                          },
+                        ]}
+                      />
+                    ))
+                  )}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden md:block">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
@@ -545,10 +605,11 @@ export default function B2BSalesDetailPage() {
                     )}
                   </tbody>
                 </table>
+                </div>
               </div>
             </div>
           )}
-        </div>
+        </SuperAdminRoleDetailFrame>
       </SuperAdminLayout>
 
       {/* Follow-up Panel (read-only for SA) */}
@@ -566,6 +627,7 @@ export default function B2BSalesDetailPage() {
 // Stat Card Component
 interface StatCardProps {
   title: string;
+  mobileTitle?: string;
   value: string;
   icon: React.ReactNode;
   color: 'blue' | 'green' | 'red' | 'orange' | 'cyan' | 'gray' | 'purple';
@@ -575,7 +637,7 @@ interface StatCardProps {
   showPercentage?: boolean;
 }
 
-function StatCard({ title, value, icon, color, onClick, isActive, percentage, showPercentage = true }: StatCardProps) {
+function StatCard({ title, mobileTitle, value, icon, color, onClick, isActive, percentage, showPercentage = true }: StatCardProps) {
   const colorClasses: Record<string, string> = {
     blue: 'bg-blue-100 text-blue-600',
     green: 'bg-green-100 text-green-600',
@@ -588,23 +650,26 @@ function StatCard({ title, value, icon, color, onClick, isActive, percentage, sh
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md' : ''
+      className={`rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all sm:p-5 ${
+        onClick ? 'cursor-pointer hover:shadow-md active:scale-[0.98]' : ''
       } ${
         isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
       }`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${colorClasses[color]} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6`}>
           {icon}
         </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+        <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{value}</h3>
       </div>
-      <div className="flex items-center justify-between mt-3">
-        <p className="text-sm font-semibold text-gray-700">{title}</p>
+      <div className="mt-2 flex items-center justify-between gap-1 sm:mt-3 sm:gap-2">
+        <p className="truncate text-[10px] font-semibold text-gray-700 sm:text-sm">
+          <span className="sm:hidden">{mobileTitle || title}</span>
+          <span className="hidden sm:inline">{title}</span>
+        </p>
         {showPercentage && percentage !== undefined && (
-          <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
+          <p className="shrink-0 text-xs font-semibold text-gray-900 sm:text-sm">{percentage.toFixed(1)}%</p>
         )}
       </div>
     </div>

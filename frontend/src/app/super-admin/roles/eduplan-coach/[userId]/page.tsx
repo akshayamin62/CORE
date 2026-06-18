@@ -150,7 +150,7 @@ export default function SuperAdminEduplanCoachDashboardPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={currentUser}>
-        <div className="p-8">
+        <div className="px-4 py-4 sm:px-6 sm:py-6 lg:p-8">
           {/* Back Button & Header */}
           <div className="flex items-center gap-4 mb-6">
             <button

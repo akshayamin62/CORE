@@ -13,6 +13,17 @@ import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import ScheduleCalendar from '@/components/ScheduleCalendar';
 import ScheduleOverview from '@/components/ScheduleOverview';
 import { getFullName } from '@/utils/nameHelpers';
+import ListPageFilters from '@/components/ListPageFilters';
+import LeadMobileList, {
+  getLeadServiceColor,
+  getLeadStageColor,
+  LEAD_SERVICE_FILTER_OPTIONS,
+  LEAD_STAGE_FILTER_OPTIONS,
+} from '@/components/LeadMobileList';
+import SuperAdminRoleDetailFrame, {
+  DetailInfoCard,
+  DetailPageHeader,
+} from '@/components/SuperAdminRoleDetailFrame';
 
 interface CounselorDetail {
   _id: string;
@@ -308,67 +319,68 @@ export default function SuperAdminCounselorDashboardPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={user}>
-        <div className="p-8">
-          {/* Header */}
-          <div className="mb-8">
-            {/* Back button */}
-            <button
-              onClick={() => router.push('/super-admin/roles/counselor')}
-              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        <SuperAdminRoleDetailFrame
+          backLabel="Back to Counselors"
+          onBack={() => router.push('/super-admin/roles/counselor')}
+        >
+          <DetailPageHeader
+            title={getFullName(counselor.userId)}
+            subtitle={
+              <>
+                {counselor.userId.email}
+                {counselor.mobileNumber ? ` • ${counselor.mobileNumber}` : ''}
+                <span className="mt-1 block text-xs text-gray-400">
+                  Joined {new Date(counselor.createdAt).toLocaleDateString('en-GB')}
+                </span>
+              </>
+            }
+            avatar={
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 sm:h-14 sm:w-14">
+                <span className="text-lg font-bold text-blue-600">
+                  {getFullName(counselor.userId)?.charAt(0) || 'C'}
+                </span>
+              </div>
+            }
+          />
+
+          <DetailInfoCard>
+            <div>
+              <span className="text-gray-500">Status: </span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  counselor.userId.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}
+              >
+                {counselor.userId.isActive ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+          </DetailInfoCard>
+
+          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6">
+            <div className="mb-2 flex items-center gap-2">
+              <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
               </svg>
-              Back to Counselors
-            </button>
-            
-            <div className="flex flex-col gap-6">
-              <div>
-                <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-bold text-gray-900">{getFullName(counselor.userId)}</h1>
-                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                    counselor.userId.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {counselor.userId.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </div>
-                <p className="text-gray-600 mt-2">
-                  {counselor.userId.email} • {counselor.mobileNumber || 'No phone'}
-                </p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Joined: {new Date(counselor.createdAt).toLocaleDateString('en-GB')}
-                </p>
+              <h3 className="text-sm font-semibold text-gray-900">Enquiry Form</h3>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="min-w-0 flex-1 rounded-lg bg-green-50 px-3 py-2">
+                <code className="break-all font-mono text-xs text-green-700">
+                  {stats?.adminEnquiryUrl || 'Loading...'}
+                </code>
               </div>
-              {/* Copy Enquiry URL */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 w-full">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  <h3 className="font-semibold text-gray-900 text-sm">Enquiry Form</h3>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-green-50 rounded-lg px-3 py-2">
-                    <code className="text-xs text-green-700 font-mono break-all">
-                      {stats?.adminEnquiryUrl || 'Loading...'}
-                    </code>
-                  </div>
-                  <button
-                    onClick={() => stats?.adminEnquiryUrl && copyToClipboard(stats.adminEnquiryUrl)}
-                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    Copy URL
-                  </button>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => stats?.adminEnquiryUrl && copyToClipboard(stats.adminEnquiryUrl)}
+                className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
+              >
+                Copy URL
+              </button>
             </div>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 mb-8">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:mb-8 lg:grid-cols-3 xl:grid-cols-7">
             <StatCard
               title="Total Leads"
               value={stats?.totalLeads.toString() || '0'}
@@ -555,7 +567,35 @@ export default function SuperAdminCounselorDashboardPage() {
                 </div>
                 
                 {/* Filters */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:hidden">
+                  <ListPageFilters
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    searchPlaceholder="Search by name, email, or mobile..."
+                    pillFilters={[
+                      ...(selectedStage === 'all'
+                        ? [
+                            {
+                              value: stageFilter === 'all' ? '' : stageFilter,
+                              onChange: (value: string) => setStageFilter(value || 'all'),
+                              options: LEAD_STAGE_FILTER_OPTIONS,
+                            },
+                          ]
+                        : []),
+                      {
+                        value: serviceFilter === 'all' ? '' : serviceFilter,
+                        onChange: (value: string) => setServiceFilter(value || 'all'),
+                        options: LEAD_SERVICE_FILTER_OPTIONS,
+                      },
+                    ]}
+                    onClear={() => {
+                      setSearchQuery('');
+                      setStageFilter('all');
+                      setServiceFilter('all');
+                    }}
+                  />
+                </div>
+                <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Search */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
@@ -605,7 +645,18 @@ export default function SuperAdminCounselorDashboardPage() {
                   </div>
                 </div>
               </div>
-              <div className="overflow-x-auto">
+              <LeadMobileList
+                leads={getFilteredLeads()}
+                getStageColor={getLeadStageColor}
+                getServiceColor={getLeadServiceColor}
+                getMenuItems={(lead) => [
+                  {
+                    label: 'View',
+                    onClick: () => router.push(`/super-admin/leads/${lead._id}`),
+                  },
+                ]}
+              />
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
@@ -687,7 +738,7 @@ export default function SuperAdminCounselorDashboardPage() {
               </div>
             </div>
           )}
-        </div>
+        </SuperAdminRoleDetailFrame>
       </SuperAdminLayout>
 
       {/* Follow-up Slide-in Panel */}
@@ -736,24 +787,22 @@ function StatCard({ title, value, icon, color, onClick, isActive, percentage, sh
   };
 
   return (
-    <div 
-      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md' : ''
-      } ${
-        isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
-      }`}
+    <div
+      className={`rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all sm:p-5 ${
+        onClick ? 'cursor-pointer hover:shadow-md active:scale-[0.98]' : ''
+      } ${isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${colorClasses[color]} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6`}>
           {icon}
         </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+        <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{value}</h3>
       </div>
-      <div className="flex items-center justify-between mt-3">
-        <p className="text-sm font-semibold text-gray-700">{title}</p>
+      <div className="mt-2 flex items-center justify-between gap-2 sm:mt-3">
+        <p className="truncate text-xs font-semibold text-gray-700 sm:text-sm">{title}</p>
         {showPercentage && percentage !== undefined && (
-          <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
+          <p className="shrink-0 text-xs font-semibold text-gray-900 sm:text-sm">{percentage.toFixed(1)}%</p>
         )}
       </div>
     </div>

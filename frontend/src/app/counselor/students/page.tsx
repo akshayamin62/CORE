@@ -8,6 +8,8 @@ import CounselorLayout from '@/components/CounselorLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import { StudentMobileList } from '@/components/StudentMobileRecordCard';
+import ListPageFilters from '@/components/ListPageFilters';
 
 interface StudentData {
   _id: string;
@@ -171,7 +173,7 @@ export default function CounselorStudentsPage() {
     <>
       <Toaster position="top-right" />
       <CounselorLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900">Students</h1>
@@ -185,29 +187,41 @@ export default function CounselorStudentsPage() {
           </div>
 
           {/* Search & Filters */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input
-                  type="text"
-                  placeholder="Search by name, email, mobile, or counselor..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                >
-                  <option value="">All Status</option>
-                  <option value="active">Active</option>
-                </select>
-              </div>
+          <div className="mb-6 rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="rounded-t-xl border-b border-gray-100 bg-gray-50 p-3 sm:p-4">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search by name, email, mobile, or counselor..."
+                pillFilters={[
+                  {
+                    value: statusFilter,
+                    onChange: setStatusFilter,
+                    options: [
+                      { value: '', label: 'All Status', mobileLabel: 'All' },
+                      { value: 'active', label: 'Active', mobileLabel: 'Active' },
+                    ],
+                  },
+                ]}
+                onClear={() => {
+                  setSearchQuery('');
+                  setStatusFilter('');
+                }}
+              />
             </div>
             
-            {/* Students Table */}
-            <div className="overflow-x-auto">
+            {filteredStudents.length > 0 ? (
+              <>
+              <StudentMobileList
+                students={filteredStudents}
+                getMenuItems={(student) => [
+                  {
+                    label: 'View Details',
+                    onClick: () => handleViewStudent(student._id),
+                  },
+                ]}
+              />
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -232,8 +246,7 @@ export default function CounselorStudentsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredStudents.length > 0 ? (
-                    filteredStudents.map((student) => (
+                  {filteredStudents.map((student) => (
                       <tr key={student._id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -302,39 +315,38 @@ export default function CounselorStudentsPage() {
                           </button>
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center">
-                        <div className="text-gray-400">
-                          <svg
-                            className="w-12 h-12 mx-auto mb-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                            />
-                          </svg>
-                          <p className="text-lg font-medium text-gray-900 mb-1">
-                            No students found
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {searchQuery
-                              ? 'Try adjusting your search'
-                              : 'Students will appear here once leads are converted'}
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
+                    ))}
                 </tbody>
               </table>
             </div>
+              </>
+            ) : (
+              <div className="px-6 py-12 text-center">
+                <div className="text-gray-400">
+                  <svg
+                    className="w-12 h-12 mx-auto mb-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                    />
+                  </svg>
+                  <p className="text-lg font-medium text-gray-900 mb-1">
+                    No students found
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {searchQuery
+                      ? 'Try adjusting your search'
+                      : 'Students will appear here once leads are converted'}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </CounselorLayout>

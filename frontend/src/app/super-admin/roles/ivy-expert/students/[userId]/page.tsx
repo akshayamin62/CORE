@@ -315,16 +315,16 @@ export default function StudentDetailPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={user}>
-        <div className="p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => router.push('/super-admin/roles/ivy-expert/students')} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="p-4 sm:p-6 md:p-8">
+          <div className="mb-6 flex items-start gap-3">
+            <button onClick={() => router.push('/super-admin/roles/ivy-expert/students')} className="shrink-0 rounded-lg p-2 transition-colors hover:bg-gray-100">
+              <svg className="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{student ? getFullName(student) : 'Student Details'}</h1>
-              <p className="text-gray-600 mt-1">{student ? `${student.schoolName} • Grade ${student.currentGrade} • ${student.curriculum}` : ''}</p>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">{student ? getFullName(student) : 'Student Details'}</h1>
+              <p className="mt-1 text-sm text-gray-600 sm:text-base">{student ? `${student.schoolName} • Grade ${student.currentGrade} • ${student.curriculum}` : ''}</p>
             </div>
           </div>
 
@@ -358,7 +358,7 @@ export default function StudentDetailPage() {
                 </div>
               )}
 
-              <div className="flex gap-2 mb-6">
+              <div className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
                 {[
                   { key: 'test', label: '📝 Test Score', color: 'blue' },
                   { key: 'student-interview', label: '🎓 Student Interview', color: 'green' },
@@ -367,7 +367,7 @@ export default function StudentDetailPage() {
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key as any)}
-                    className={`px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                    className={`shrink-0 whitespace-nowrap px-4 py-2.5 rounded-lg font-semibold text-sm transition-colors sm:px-5 ${
                       activeTab === tab.key
                         ? tab.color === 'blue' ? 'bg-blue-600 text-white' : tab.color === 'green' ? 'bg-green-600 text-white' : 'bg-purple-600 text-white'
                         : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'

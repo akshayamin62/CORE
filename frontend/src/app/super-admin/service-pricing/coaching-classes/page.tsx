@@ -7,6 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import CoachingClassCards, { BatchData } from '@/components/CoachingClassCards';
 import { getServicePlans } from '@/config/servicePlans';
+import { ServicePricingPageFrame } from '@/components/ServicePricingPageFrame';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function SuperAdminCoachingClassesPricingPage() {
@@ -106,20 +107,11 @@ export default function SuperAdminCoachingClassesPricingPage() {
   return (
     <SuperAdminLayout user={user}>
       <Toaster position="top-right" />
-      <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-[calc(100vh-5rem)]">
-        {/* Header */}
-        <div className="px-6 lg:px-8 py-8">
-          <button onClick={() => router.push('/super-admin/service-pricing')} className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            Back to Service Pricing
-          </button>
-          <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Coaching Fees — Base Pricing</h1>
-          <p className="text-gray-500 mt-1 max-w-2xl">Set the base (cost) price for each coaching class. Admins will see this when setting their selling prices.</p>
-        </div>
-
-        <div className="p-6 lg:p-8">
-          {/* Plan Cards with Batch Management */}
-          <div>
+      <ServicePricingPageFrame
+        title="Coaching Fees — Base Pricing"
+        description="Set the base (cost) price for each coaching class. Admins will see this when setting their selling prices."
+        backHref="/super-admin/service-pricing"
+      >
             <CoachingClassCards
               plans={plans}
               pricing={pricing}
@@ -129,9 +121,7 @@ export default function SuperAdminCoachingClassesPricingPage() {
               onDeleteBatch={handleDeleteBatch}
               onPriceEdit={handlePriceEdit}
             />
-          </div>
-        </div>
-      </div>
+      </ServicePricingPageFrame>
     </SuperAdminLayout>
   );
 }

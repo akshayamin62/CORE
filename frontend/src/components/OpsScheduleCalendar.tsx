@@ -1,12 +1,19 @@
 'use client';
 
 import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay, setMonth, setYear, getMonth, getYear, addMonths, addWeeks, addDays, isPast, isToday } from 'date-fns';
+import { format, parse, startOfWeek, getDay, setMonth, setYear, addMonths, addWeeks, addDays, isPast, isToday } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { OpsSchedule, OPS_SCHEDULE_STATUS, OpsScheduleStudent, TeamMeet, TEAMMEET_STATUS } from '@/types';
 import { useState, useCallback, useMemo } from 'react';
 import { getFullName } from '@/utils/nameHelpers';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import CalendarNavigationBar from '@/components/calendar/CalendarNavigationBar';
+import BigCalendarViewport from '@/components/calendar/BigCalendarViewport';
+import {
+  getDesktopCalendarFormats,
+  getMobileCalendarFormats,
+} from '@/components/calendar/getMobileCalendarFormats';
 
 const locales = {
   'en-US': enUS,
@@ -94,6 +101,7 @@ export default function OpsScheduleCalendar({
 }: OpsScheduleCalendarProps) {
   const [view, setView] = useState<View>('month');
   const [date, setDate] = useState(new Date());
+  const isMobile = useIsMobile();
 
   // Convert schedules to calendar events
   const events: CalendarEvent[] = useMemo(() => {
@@ -255,15 +263,10 @@ export default function OpsScheduleCalendar({
     }
   }, [date, view]);
 
-  const currentMonth = getMonth(date);
-  const currentYear = getYear(date);
-
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-
-  const years = Array.from({ length: 11 }, (_, i) => 2020 + i);
+  const calendarFormats = useMemo(
+    () => (isMobile ? getMobileCalendarFormats() : getDesktopCalendarFormats()),
+    [isMobile]
+  );
 
   if (minimized) {
     return (
@@ -295,21 +298,21 @@ export default function OpsScheduleCalendar({
     <div className={`bg-white ${hideHeader ? '' : 'rounded-xl shadow-sm border border-gray-200'} overflow-hidden`}>
       {/* Calendar Header */}
       {!hideHeader && (
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="flex flex-col gap-3 border-b border-gray-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between md:px-6 md:py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 md:h-10 md:w-10">
+              <svg className="h-5 w-5 text-indigo-600 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">Schedule Calendar</h3>
-              <p className="text-sm text-gray-500">{events.length} events</p>
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold text-gray-900 md:text-base">Schedule Calendar</h3>
+              <p className="text-xs text-gray-500 md:text-sm">{events.length} events</p>
             </div>
           </div>
           
-          {/* Legend with Hover Tooltip */}
-          <div className="flex items-center gap-4">
+          {/* Legend — desktop only */}
+          <div className="hidden items-center gap-4 md:flex">
             <div className="relative group">
               <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg cursor-help hover:bg-indigo-50 transition-colors">
                 <span className="text-xs text-gray-500">📋👥</span>
@@ -377,98 +380,19 @@ export default function OpsScheduleCalendar({
         </div>
       )}
 
-      {/* Custom Navigation Bar */}
-      <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={handlePrevious}
-            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            ← Previous
-          </button>
-          
-          <div className="flex items-center gap-3">
-            {/* View Switcher Buttons */}
-            <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-lg p-1">
-              <button
-                onClick={() => handleViewChange('month')}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  view === 'month'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                Month
-              </button>
-              <button
-                onClick={() => handleViewChange('week')}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  view === 'week'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                Week
-              </button>
-              <button
-                onClick={() => handleViewChange('day')}
-                className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
-                  view === 'day'
-                    ? 'bg-indigo-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                Day
-              </button>
-            </div>
-            
-            {/* Month/Year Dropdowns */}
-            <select
-              value={currentMonth}
-              onChange={handleMonthChange}
-              className="px-3 py-1.5 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              {months.map((month, index) => (
-                <option key={month} value={index}>{month}</option>
-              ))}
-            </select>
-            
-            <select
-              value={currentYear}
-              onChange={handleYearChange}
-              className="px-3 py-1.5 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              {years.map((year) => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-            
-            <button
-              onClick={() => handleNavigate(new Date())}
-              className="px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
-            >
-              Today
-            </button>
-            
-            {/* Show current date when in day view */}
-            {view === 'day' && (
-              <div className="px-3 py-1.5 text-sm font-semibold text-gray-900 bg-white border border-gray-300 rounded-lg">
-                {format(date, 'EEEE, d')}
-              </div>
-            )}
-          </div>
-          
-          <button
-            onClick={handleNext}
-            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Next →
-          </button>
-        </div>
-      </div>
+      <CalendarNavigationBar
+        view={view}
+        date={date}
+        accent="indigo"
+        onPrevious={handlePrevious}
+        onNext={handleNext}
+        onViewChange={handleViewChange}
+        onMonthChange={handleMonthChange}
+        onYearChange={handleYearChange}
+        onToday={() => handleNavigate(new Date())}
+      />
 
-      {/* Calendar */}
-      <div className={compact ? 'p-2' : 'p-4'} style={{ height: compact ? '350px' : '600px' }}>
+      <BigCalendarViewport compact={compact}>
         <Calendar
           localizer={localizer}
           events={events}
@@ -487,13 +411,9 @@ export default function OpsScheduleCalendar({
           popup
           style={{ height: '100%' }}
           toolbar={false}
-          formats={{
-            timeGutterFormat: 'HH:mm',
-            eventTimeRangeFormat: ({ start, end }) =>
-              `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`,
-          }}
+          formats={calendarFormats}
         />
-      </div>
+      </BigCalendarViewport>
     </div>
   );
 }

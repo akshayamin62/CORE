@@ -7,6 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import MobileUserRecordCard from '@/components/MobileUserRecordCard';
 
 interface StaffArchiveContentProps {
   allowedRoles: string[];
@@ -220,15 +221,15 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
     <>
       <Toaster position="top-right" />
       <Layout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Archive</h1>
-            <p className="text-gray-600 mt-1">Deactivated students{isAdmin ? ', parents, counselors and referrers' : ' and parents'}</p>
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Archive</h1>
+            <p className="mt-1 text-gray-600">Deactivated students{isAdmin ? ', parents, counselors and referrers' : ' and parents'}</p>
           </div>
 
           {/* Stats Cards */}
-          <div className={`grid grid-cols-2 ${isAdmin ? 'md:grid-cols-5' : 'md:grid-cols-3'} gap-6 mb-6`}>
+          <div className={`mb-6 grid grid-cols-2 gap-3 sm:gap-4 ${isAdmin ? 'md:grid-cols-5' : 'md:grid-cols-3'}`}>
             <StatCard
               title="Total Archived"
               value={totalArchived.toString()}
@@ -272,7 +273,7 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
 
           {/* Search & Filters */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
+            <div className="border-b border-gray-200 bg-gray-50 p-4 sm:p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <input
                   type="text"
@@ -305,7 +306,56 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
+            <div>
+              {filteredItems.length > 0 ? (
+                <>
+                <div className="divide-y divide-gray-200 md:hidden">
+                  {filteredItems.map((item) => (
+                    <MobileUserRecordCard
+                      key={`${item.type}-${item._id}`}
+                      avatar={
+                        <AuthImage
+                          path={item.profilePicture}
+                          alt=""
+                          className="h-10 w-10 shrink-0 rounded-full object-cover"
+                          fallback={
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
+                              <span className="text-sm font-semibold text-red-600">{getInitials(item.userId)}</span>
+                            </div>
+                          }
+                        />
+                      }
+                      title={item.name || 'N/A'}
+                      subtitle={item.email}
+                      badges={
+                        <>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                            item.type === 'Student' ? 'bg-blue-100 text-blue-800' : item.type === 'Counselor' ? 'bg-teal-100 text-teal-800' : item.type === 'Referrer' ? 'bg-orange-100 text-orange-800' : 'bg-purple-100 text-purple-800'
+                          }`}>
+                            {item.type}
+                          </span>
+                          <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-800">Deactivated</span>
+                        </>
+                      }
+                      details={item.details || undefined}
+                      joined={new Date(item.createdAt).toLocaleDateString('en-GB')}
+                      menuItems={[
+                        {
+                          label: 'View Detail',
+                          hidden: !item.detailPath,
+                          onClick: () => router.push(item.detailPath!),
+                        },
+                        {
+                          label: 'Activate',
+                          variant: 'success',
+                          hidden: !(isAdmin && (item.type === 'Counselor' || item.type === 'Referrer')),
+                          onClick: () => item.type === 'Counselor' ? handleActivateCounselor(item._id) : handleActivateReferrer(item._id),
+                        },
+                      ]}
+                    />
+                  ))}
+                </div>
+                <div className="hidden overflow-x-auto md:block">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -318,8 +368,7 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredItems.length > 0 ? (
-                    filteredItems.map((item) => (
+                    {filteredItems.map((item) => (
                       <tr key={`${item.type}-${item._id}`} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -384,26 +433,26 @@ export default function StaffArchiveContent({ allowedRoles, Layout, studentDetai
                           </div>
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center">
-                        <div className="text-gray-400">
-                          <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                          </svg>
-                          <p className="text-lg font-medium text-gray-900 mb-1">No archived users found</p>
-                          <p className="text-sm text-gray-500">
-                            {searchQuery || typeFilter
-                              ? 'Try adjusting your filters'
-                              : 'Deactivated users will appear here'}
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
+                    ))}
                 </tbody>
               </table>
+                </div>
+                </>
+              ) : (
+                <div className="p-12 text-center">
+                  <div className="text-gray-400">
+                    <svg className="mx-auto mb-4 h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                    <p className="mb-1 text-lg font-medium text-gray-900">No archived users found</p>
+                    <p className="text-sm text-gray-500">
+                      {searchQuery || typeFilter
+                        ? 'Try adjusting your filters'
+                        : 'Deactivated users will appear here'}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

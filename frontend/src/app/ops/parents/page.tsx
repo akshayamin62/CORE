@@ -8,6 +8,9 @@ import OpsLayout from '@/components/OpsLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import ListPageFilters from '@/components/ListPageFilters';
+import ParentMobileList from '@/components/ParentMobileList';
+import PageStatCard from '@/components/PageStatCard';
 
 interface ParentData {
   _id: string;
@@ -60,28 +63,32 @@ export default function OpsParentsPage() {
     <>
       <Toaster position="top-right" />
       <OpsLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Parents</h1>
-            <p className="text-gray-600 mt-1">View parents of your students</p>
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Parents</h1>
+            <p className="mt-1 text-gray-600">View parents of your students</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div><p className="text-sm text-gray-600 mb-1">Total Parents</p><p className="text-3xl font-bold text-gray-900">{parents.length}</p></div>
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-purple-100 text-purple-600">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                </div>
-              </div>
-            </div>
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 md:gap-6">
+            <PageStatCard title="Total Parents" value={parents.length} color="purple" />
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-              <input type="text" placeholder="Search by name, email, or mobile..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 w-full md:w-1/3" />
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-4">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search by name, email, or mobile..."
+                onClear={() => setSearchQuery('')}
+              />
             </div>
-            <div className="overflow-x-auto">
+            <ParentMobileList
+              parents={filteredParents}
+              getMenuItems={(p) => [
+                { label: 'View Detail', onClick: () => router.push(`/ops/parents/${p._id}`) },
+              ]}
+            />
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>

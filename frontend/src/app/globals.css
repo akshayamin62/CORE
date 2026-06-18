@@ -18,7 +18,7 @@
   --font-mono: var(--font-geist-mono);
 
   /* Brand color palette based on #2959ba */
-  --color-brand-50: #eef2f9;
+  --color-brand-50: #eef2f9;  
   --color-brand-100: #d5dfef;
   --color-brand-200: #adc0e2;
   --color-brand-300: #7d9bd0;
@@ -540,4 +540,138 @@ html {
   padding: 8px !important;
   border-bottom: 1px solid #e5e7eb !important;
   margin-bottom: 4px !important;
+}
+
+/* React Big Calendar — compact mobile layout (desktop unchanged) */
+@media (max-width: 767px) {
+  .big-calendar-shell .rbc-month-view .rbc-header {
+    padding: 4px 0;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .big-calendar-shell .rbc-month-view .rbc-header + .rbc-header {
+    border-left: none;
+  }
+
+  .big-calendar-shell .rbc-month-row {
+    min-height: 0;
+  }
+
+  .big-calendar-shell .rbc-row-bg {
+    min-height: 44px;
+  }
+
+  .big-calendar-shell .rbc-date-cell {
+    padding: 2px 3px;
+    font-size: 10px;
+    text-align: center;
+  }
+
+  .big-calendar-shell .rbc-off-range-bg {
+    background: #f9fafb;
+  }
+
+  .big-calendar-shell .rbc-month-view .rbc-event {
+    font-size: 9px !important;
+    padding: 1px 3px !important;
+    line-height: 1.2 !important;
+    margin-bottom: 1px !important;
+  }
+
+  .big-calendar-shell .rbc-month-view .rbc-row-segment {
+    padding: 0 1px 1px;
+  }
+
+  .big-calendar-shell .rbc-show-more {
+    font-size: 9px;
+    font-weight: 600;
+    margin: 0 2px 2px;
+    background: transparent;
+    color: #0d9488;
+  }
+
+  .big-calendar-shell .rbc-time-view .rbc-time-gutter,
+  .big-calendar-shell .rbc-time-view .rbc-time-header-gutter {
+    font-size: 10px;
+  }
+
+  .big-calendar-shell .rbc-time-view .rbc-event {
+    min-height: 20px !important;
+    padding: 2px 4px !important;
+    font-size: 10px !important;
+  }
+
+  .big-calendar-shell .rbc-time-header-content {
+    font-size: 10px;
+  }
+
+  .big-calendar-shell .rbc-time-content {
+    font-size: 10px;
+  }
+
+  .big-calendar-shell .rbc-overlay {
+    max-width: calc(100vw - 2rem) !important;
+  }
+}
+
+/* Form modals — above mobile bottom nav (z-50), bottom-sheet on small screens */
+@media (max-width: 767px) {
+  .app-modal-overlay,
+  .fixed.inset-0.z-50,
+  .fixed.inset-0[class*='z-50'] {
+    z-index: 70 !important;
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  .app-modal-overlay > .app-modal-panel,
+  .app-modal-overlay > div[class*='bg-white']:not(.fixed),
+  .app-modal-overlay > div[class*='rounded-xl']:not(.fixed),
+  .app-modal-overlay > div[class*='rounded-2xl']:not(.fixed),
+  .app-modal-overlay > div[class*='rounded-lg']:not(.fixed),
+  .fixed.inset-0.z-50 > div[class*='bg-white']:not(.fixed),
+  .fixed.inset-0.z-50 > div[class*='rounded-xl']:not(.fixed),
+  .fixed.inset-0.z-50 > div[class*='rounded-2xl']:not(.fixed),
+  .fixed.inset-0.z-50 > div[class*='rounded-lg']:not(.fixed),
+  .fixed.inset-0[class*='z-50'] > div[class*='bg-white']:not(.fixed),
+  .fixed.inset-0[class*='z-50'] > div[class*='rounded-xl']:not(.fixed) {
+    max-height: min(92dvh, 100%) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-top-left-radius: 1rem !important;
+    border-top-right-radius: 1rem !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+  }
+
+  .app-modal-body {
+    padding-bottom: 0.5rem !important;
+  }
+
+  .app-modal-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+  }
+}
+
+/* Navbar reduced to h-20 (5rem): keep role layouts aligned with it */
+@media (min-width: 768px) {
+  .top-25 {
+    top: 5rem !important;
+  }
+
+  .min-h-\[calc\(100vh-6\.25rem\)\] {
+    min-height: calc(100vh - 5rem) !important;
+  }
+
+  .h-\[calc\(100vh-6\.25rem\)\] {
+    height: calc(100vh - 5rem) !important;
+  }
 }

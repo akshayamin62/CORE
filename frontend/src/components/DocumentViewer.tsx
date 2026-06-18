@@ -46,8 +46,8 @@ export default function DocumentViewer({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
-      <div className="relative w-full h-full max-w-6xl max-h-screen bg-white m-4 rounded-lg overflow-hidden flex flex-col">
+    <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
+      <div className="app-modal-panel relative w-full h-full max-w-6xl max-h-screen bg-white m-4 rounded-lg overflow-hidden flex flex-col">
         <div className="flex justify-between items-center p-4 border-b bg-gray-50">
           <h3 className="text-lg font-semibold text-gray-800 truncate">
             {documentName}

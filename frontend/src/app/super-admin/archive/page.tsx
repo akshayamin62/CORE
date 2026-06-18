@@ -9,6 +9,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import ListPageFilters from '@/components/ListPageFilters';
+import MobileUserRecordCard from '@/components/MobileUserRecordCard';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -47,16 +49,16 @@ function StatCard({ title, value, color, onClick, active }: { title: string; val
   };
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border ${active ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-200'} p-6 ${onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}`}
+      className={`rounded-xl border bg-white p-3.5 shadow-sm sm:p-6 ${active ? 'border-blue-400 ring-2 ring-blue-200' : 'border-gray-200'} ${onClick ? 'cursor-pointer transition-shadow hover:shadow-md' : ''}`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="truncate text-xs text-gray-600 sm:text-sm">{title}</p>
+          <p className="text-xl font-bold text-gray-900 sm:text-3xl">{value}</p>
         </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-12 sm:w-12 ${colorClasses[color]}`}>
+          <svg className="h-4 w-4 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
           </svg>
         </div>
@@ -213,15 +215,15 @@ export default function SuperAdminArchivePage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Archive</h1>
-            <p className="text-gray-600 mt-1">Deactivated users across all roles</p>
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Archive</h1>
+            <p className="mt-1 text-gray-600">Deactivated users across all roles</p>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-6">
             <StatCard
               title="Total Archived"
               value={totalArchived.toString()}
@@ -258,41 +260,79 @@ export default function SuperAdminArchivePage() {
 
           {/* Search & Filters */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-            <div className="p-6 border-b border-gray-200 bg-gray-50">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input
-                  type="text"
-                  placeholder="Search by name, email, or company..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-                <select
-                  value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
-                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                >
-                  <option value="">All Roles</option>
-                  {Object.entries(ROLE_LABELS).map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label} {roleCounts[key] ? `(${roleCounts[key]})` : ''}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setRoleFilter('');
-                  }}
-                  className="px-4 py-2.5 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  Clear Filters
-                </button>
-              </div>
+            <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-6">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search by name, email, or company..."
+                pillFilters={[
+                  {
+                    value: roleFilter,
+                    onChange: setRoleFilter,
+                    options: [
+                      { value: '', label: 'All Roles', mobileLabel: 'All' },
+                      ...Object.entries(ROLE_LABELS).map(([key, label]) => ({
+                        value: key,
+                        label: `${label}${roleCounts[key] ? ` (${roleCounts[key]})` : ''}`,
+                        mobileLabel: label,
+                      })),
+                    ],
+                  },
+                ]}
+                onClear={() => {
+                  setSearchQuery('');
+                  setRoleFilter('');
+                }}
+              />
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
+            <div>
+              {filteredUsers.length > 0 ? (
+                <>
+                <div className="divide-y divide-gray-200 md:hidden">
+                  {filteredUsers.map((u: any) => (
+                    <MobileUserRecordCard
+                      key={u._id}
+                      avatar={
+                        <AuthImage
+                          path={u.profilePicture}
+                          alt=""
+                          className="h-10 w-10 shrink-0 rounded-full object-cover"
+                          fallback={
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
+                              <span className="text-sm font-semibold text-red-600">{getInitials(u)}</span>
+                            </div>
+                          }
+                        />
+                      }
+                      title={getFullName(u) || 'N/A'}
+                      subtitle={u.email}
+                      badges={
+                        <>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${ROLE_COLORS[u.role] || 'bg-gray-100 text-gray-800'}`}>{ROLE_LABELS[u.role] || u.role}</span>
+                          <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-800">Deactivated</span>
+                        </>
+                      }
+                      details={getProfileInfo(u) || undefined}
+                      joined={new Date(u.createdAt).toLocaleDateString('en-GB')}
+                      menuItems={[
+                        {
+                          label: 'View Detail',
+                          hidden: !getDetailPath(u),
+                          onClick: () => router.push(getDetailPath(u)),
+                        },
+                        {
+                          label: actionLoading === u._id ? 'Activating...' : 'Activate',
+                          variant: 'success',
+                          disabled: actionLoading === u._id,
+                          onClick: () => handleReactivate(u),
+                        },
+                      ]}
+                    />
+                  ))}
+                </div>
+                <div className="hidden overflow-x-auto md:block">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -305,8 +345,7 @@ export default function SuperAdminArchivePage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredUsers.length > 0 ? (
-                    filteredUsers.map((u: any) => (
+                    {filteredUsers.map((u: any) => (
                       <tr key={u._id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -362,26 +401,26 @@ export default function SuperAdminArchivePage() {
                           </div>
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center">
-                        <div className="text-gray-400">
-                          <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                          </svg>
-                          <p className="text-lg font-medium text-gray-900 mb-1">No archived users found</p>
-                          <p className="text-sm text-gray-500">
-                            {searchQuery || roleFilter
-                              ? 'Try adjusting your filters'
-                              : 'Deactivated users will appear here'}
-                          </p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
+                    ))}
                 </tbody>
               </table>
+                </div>
+                </>
+              ) : (
+                <div className="p-12 text-center">
+                  <div className="text-gray-400">
+                    <svg className="mx-auto mb-4 h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                    </svg>
+                    <p className="mb-1 text-lg font-medium text-gray-900">No archived users found</p>
+                    <p className="text-sm text-gray-500">
+                      {searchQuery || roleFilter
+                        ? 'Try adjusting your filters'
+                        : 'Deactivated users will appear here'}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

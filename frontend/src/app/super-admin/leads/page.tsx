@@ -6,6 +6,8 @@ import { authAPI, superAdminAPI } from '@/lib/api';
 import { User, USER_ROLE, LEAD_STAGE, SERVICE_TYPE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import ListPageFilters from '@/components/ListPageFilters';
+import MobileRecordCard from '@/components/MobileRecordCard';
 
 interface LeadData {
   _id: string;
@@ -176,16 +178,16 @@ export default function SuperAdminLeadsPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={currentUser}>
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">All Leads</h2>
-            <p className="text-gray-600 mt-1">View all leads across all admins (read-only)</p>
+          <div className="mb-6 md:mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">All Leads</h2>
+            <p className="mt-1 text-gray-600">View all leads across all admins (read-only)</p>
           </div>
 
           {/* Stage Cards - Counselor Dashboard Style */}
           {stats && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-8">
+            <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:mb-8 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
               {stageCards.map((card) => {
                 const value = stats[card.key as keyof LeadStats] || 0;
                 const percentage = stats.total > 0 ? (value / stats.total) * 100 : 0;
@@ -209,38 +211,26 @@ export default function SuperAdminLeadsPage() {
 
           {/* Search & Filters */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-            <div className="p-4 border-b border-gray-100 bg-gray-50 rounded-t-xl">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Search by name, email, phone, company..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-4 py-2.5 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  />
-                  <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <select
-                  value={serviceFilter}
-                  onChange={(e) => setServiceFilter(e.target.value)}
-                  className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                >
-                  <option value="">All Services</option>
-                  <option value={SERVICE_TYPE.CAREER_FOCUS_STUDY_ABROAD}>Career Focus Study Abroad</option>
-                  <option value={SERVICE_TYPE.IVY_LEAGUE_ADMISSION}>Ivy League Admission</option>
-                  <option value={SERVICE_TYPE.EDUCATION_PLANNING}>Education Planning</option>
-                  <option value={SERVICE_TYPE.COACHING_CLASSES}>Coaching Classes</option>
-                </select>
-                <button
-                  onClick={() => { setSearchQuery(''); setServiceFilter(''); setSelectedStageCard(null); setStageFilter(''); }}
-                  className="px-4 py-2.5 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  Clear Filters
-                </button>
-              </div>
+            <div className="p-3 sm:p-4 border-b border-gray-100 bg-gray-50 rounded-t-xl">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search by name, email, phone, company..."
+                pillFilters={[
+                  {
+                    value: serviceFilter,
+                    onChange: setServiceFilter,
+                    options: [
+                      { value: '', label: 'All Services', mobileLabel: 'All' },
+                      { value: SERVICE_TYPE.CAREER_FOCUS_STUDY_ABROAD, label: 'Career Focus Study Abroad', mobileLabel: 'Study Abroad' },
+                      { value: SERVICE_TYPE.IVY_LEAGUE_ADMISSION, label: 'Ivy League Admission', mobileLabel: 'Ivy' },
+                      { value: SERVICE_TYPE.EDUCATION_PLANNING, label: 'Education Planning', mobileLabel: 'Edu Plan' },
+                      { value: SERVICE_TYPE.COACHING_CLASSES, label: 'Coaching Classes', mobileLabel: 'Coaching' },
+                    ],
+                  },
+                ]}
+                onClear={() => { setSearchQuery(''); setServiceFilter(''); setSelectedStageCard(null); setStageFilter(''); }}
+              />
             </div>
 
             {/* Leads Table */}
@@ -257,7 +247,43 @@ export default function SuperAdminLeadsPage() {
                 <p className="text-gray-400 text-sm mt-1">Try adjusting your search or filters</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                {/* Mobile card list */}
+                <div className="divide-y divide-gray-200 md:hidden">
+                  {filteredLeads.map((lead) => (
+                    <MobileRecordCard
+                      key={lead._id}
+                      title={lead.name}
+                      subtitle={lead.email}
+                      badges={
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getStageColor(lead.stage)}`}>{lead.stage}</span>
+                      }
+                      tags={
+                        lead.serviceTypes.length > 0 ? (
+                          lead.serviceTypes.map((service, idx) => (
+                            <span key={`${service}-${idx}`} className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${getServiceColor(service)}`}>{service}</span>
+                          ))
+                        ) : (
+                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">No services</span>
+                        )
+                      }
+                      fields={[
+                        { label: 'Phone', value: lead.mobileNumber, colSpan: 2 },
+                        { label: 'Created', value: new Date(lead.createdAt).toLocaleDateString('en-GB') },
+                        { label: 'Admin', value: lead.adminId?.companyName || lead.adminId?.name || 'N/A', colSpan: 3 },
+                      ]}
+                      menuItems={[
+                        {
+                          label: 'View',
+                          onClick: () => router.push(`/super-admin/leads/${lead._id}`),
+                        },
+                      ]}
+                    />
+                  ))}
+                </div>
+
+                {/* Desktop table */}
+                <div className="hidden overflow-x-auto md:block">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
@@ -310,7 +336,8 @@ export default function SuperAdminLeadsPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             )}
           </div>
 
@@ -349,24 +376,24 @@ function StatCard({ title, value, icon, color, onClick, isActive, percentage, sh
   };
 
   return (
-    <div 
-      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md' : ''
+    <div
+      className={`rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all sm:p-5 ${
+        onClick ? 'cursor-pointer hover:shadow-md active:scale-[0.98]' : ''
       } ${
         isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
       }`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${colorClasses[color]} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6`}>
           {icon}
         </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+        <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{value}</h3>
       </div>
-      <div className="flex items-center justify-between mt-3">
-        <p className="text-sm font-semibold text-gray-700">{title}</p>
+      <div className="mt-2 flex items-center justify-between gap-2 sm:mt-3">
+        <p className="truncate text-xs font-semibold text-gray-700 sm:text-sm">{title}</p>
         {showPercentage && percentage !== undefined && (
-          <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
+          <p className="shrink-0 text-xs font-semibold text-gray-900 sm:text-sm">{percentage.toFixed(1)}%</p>
         )}
       </div>
     </div>

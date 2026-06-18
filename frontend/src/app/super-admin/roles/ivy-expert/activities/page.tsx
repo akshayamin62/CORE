@@ -444,8 +444,8 @@ export default function SuperAdminActivitiesPage() {
       {/* Header */}
       <div className="bg-white border-b border-blue-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3 sm:gap-4">
               <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
                 <svg
                   className="w-6 h-6 text-white"
@@ -462,7 +462,7 @@ export default function SuperAdminActivitiesPage() {
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
                   Activity Management
                 </h1>
                 <p className="text-sm text-gray-500 mt-0.5">
@@ -598,7 +598,7 @@ export default function SuperAdminActivitiesPage() {
 
         {/* Edit Activity Modal */}
         {editingActivity && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
             <div
               className="absolute inset-0 bg-black/50 backdrop-blur-sm"
               onClick={closeEditModal}

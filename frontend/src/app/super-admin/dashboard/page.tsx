@@ -10,7 +10,6 @@ import { getFullName } from '@/utils/nameHelpers';
 import TeamMeetCalendar from '@/components/TeamMeetCalendar';
 import TeamMeetSidebar from '@/components/TeamMeetSidebar';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
-import { VerticalWordsLabel } from '@/utils/verticalLabel';
 
 interface RoleStats {
   ADMIN?: number;
@@ -186,15 +185,24 @@ export default function SuperAdminDashboardPage() {
       <SuperAdminLayout user={user}>
         <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-6 md:mb-8 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{getFullName(user)}</h1>
-            </div>
-            {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="sm:text-right"><p className="text-2xl sm:text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></div>); })()}
+          <div className="mb-5 md:mb-8 flex items-center justify-between gap-3">
+            <h1 className="min-w-0 flex-1 truncate text-lg font-bold text-gray-900 sm:text-2xl md:text-3xl">
+              {getFullName(user)}
+            </h1>
+            {(() => {
+              const t = new Date();
+              const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000);
+              return (
+                <div className="shrink-0 text-right">
+                  <p className="text-lg font-extrabold leading-none text-gray-900 sm:text-2xl md:text-3xl">Day {d}</p>
+                  <p className="mt-0.5 text-[10px] text-gray-500 sm:text-sm">of {t.getFullYear()}</p>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Role Stats Cards (site visits + roles + leads together) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-8">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:mb-8 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
             <RoleStatCard
               title="Total Site Visits"
               value={totalVisitors ?? 0}
@@ -228,8 +236,8 @@ export default function SuperAdminDashboardPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">
               Quick Actions
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -339,23 +347,22 @@ function RoleStatCard({ title, value, color, onClick, icon }: RoleStatCardProps)
   const colorStyle = colorClasses[color] || colorClasses.blue;
 
   return (
-    <div 
+    <div
       onClick={onClick}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer"
+      className="cursor-pointer rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm transition-all hover:border-gray-300 hover:shadow-md active:scale-[0.98] sm:p-4 md:p-6"
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">
-            <VerticalWordsLabel
-              text={title}
-              multiWordClassName="sm:inline-flex sm:flex-row sm:gap-1"
-            />
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="mb-0.5 text-[11px] leading-tight text-gray-600 sm:mb-1 sm:text-sm">
+            <span className="block truncate whitespace-nowrap">{title}</span>
           </p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+          <p className="text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">{value}</p>
         </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorStyle.bg} ${colorStyle.text}`}>
+        <div
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 md:h-12 md:w-12 ${colorStyle.bg} ${colorStyle.text} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-5 sm:[&>svg]:w-5 md:[&>svg]:h-6 md:[&>svg]:w-6`}
+        >
           {icon ?? (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
           )}
