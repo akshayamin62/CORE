@@ -118,6 +118,12 @@ const referrerSchema = new Schema<IReferrer>(
   { timestamps: true }
 );
 
+referrerSchema.post('init', function (this: IReferrer) {
+  if (!Array.isArray(this.notes)) {
+    this.notes = [];
+  }
+});
+
 referrerSchema.index({ adminId: 1 });
 
 export default mongoose.model<IReferrer>("Referrer", referrerSchema);

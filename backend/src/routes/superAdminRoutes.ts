@@ -56,6 +56,7 @@ import {
   toggleReferrerStatusForSuperAdmin,
   getReferrerDashboardForSuperAdmin,
   updateReferrerStageForSuperAdmin,
+  updateReferrerForSuperAdmin,
   addReferrerNoteForSuperAdmin,
   updateReferrerNoteForSuperAdmin,
   deleteReferrerNoteForSuperAdmin,
@@ -378,6 +379,7 @@ router.get("/referrer/:referrerId/dashboard", getReferrerDashboardForSuperAdmin)
  * @access  Super Admin only
  */
 router.patch("/referrer/:referrerId/stage", updateReferrerStageForSuperAdmin);
+router.patch("/referrer/:referrerId", updateReferrerForSuperAdmin);
 router.post("/referrer/:referrerId/notes", addReferrerNoteForSuperAdmin);
 router.patch("/referrer/:referrerId/notes/:noteId", updateReferrerNoteForSuperAdmin);
 router.delete("/referrer/:referrerId/notes/:noteId", deleteReferrerNoteForSuperAdmin);

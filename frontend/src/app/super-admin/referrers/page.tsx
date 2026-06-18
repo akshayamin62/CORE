@@ -12,6 +12,7 @@ import ListPageFilters from '@/components/ListPageFilters';
 import MobileRecordCard from '@/components/MobileRecordCard';
 import PageStatCard from '@/components/PageStatCard';
 import AddReferrerModal from '@/components/AddReferrerModal';
+import EditReferrerModal, { ReferrerEditFormData } from '@/components/EditReferrerModal';
 
 interface AdminData {
   _id: string;
@@ -43,7 +44,14 @@ interface ReferrerData {
   };
   adminCompanyName?: string;
   email: string;
-  mobileNumber?: string;  stage?: string;  referralSlug: string;
+  mobileNumber?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  qualification?: string;
+  currentRole?: string;
+  stage?: string;
+  referralSlug: string;
   leadCount: number;
   createdAt: string;
 }
@@ -55,6 +63,9 @@ export default function SuperAdminReferrersPage() {
   const [admins, setAdmins] = useState<AdminData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingReferrer, setEditingReferrer] = useState<ReferrerData | null>(null);
+  const [editingSubmitting, setEditingSubmitting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending' | 'archived'>('all');
@@ -73,6 +84,65 @@ export default function SuperAdminReferrersPage() {
     qualification: '',
     currentRole: '',
   });
+  const [editFormData, setEditFormData] = useState<ReferrerEditFormData>({
+    email: '',
+    mobileNumber: '',
+    adminId: '',
+    country: '',
+    state: '',
+    city: '',
+    qualification: '',
+    currentRole: '',
+  });
+
+  const openEditReferrer = (referrer: ReferrerData) => {
+    setEditingReferrer(referrer);
+    setEditFormData({
+      email: referrer.email || '',
+      mobileNumber: referrer.mobileNumber || '',
+      adminId: referrer.adminId?._id || '',
+      country: referrer.country || '',
+      state: referrer.state || '',
+      city: referrer.city || '',
+      qualification: referrer.qualification || '',
+      currentRole: referrer.currentRole || '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingReferrer) return;
+
+    if (!editFormData.mobileNumber.trim()) {
+      toast.error('Mobile number is required');
+      return;
+    }
+
+    const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,5}[-\s.]?[0-9]{1,5}$/;
+    if (!phoneRegex.test(editFormData.mobileNumber.trim())) {
+      toast.error('Invalid phone number format');
+      return;
+    }
+
+    if (!editFormData.adminId) {
+      toast.error('Please select an admin');
+      return;
+    }
+
+    setEditingSubmitting(true);
+    try {
+      await superAdminAPI.updateReferrer(editingReferrer._id, editFormData);
+      toast.success('Referrer updated successfully!');
+      setShowEditModal(false);
+      setEditingReferrer(null);
+      fetchReferrers();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update referrer');
+    } finally {
+      setEditingSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     checkAuth();
@@ -424,6 +494,20 @@ export default function SuperAdminReferrersPage() {
             admins={admins}
           />
 
+          <EditReferrerModal
+            open={showEditModal}
+            onClose={() => {
+              setShowEditModal(false);
+              setEditingReferrer(null);
+            }}
+            onSubmit={handleEditSubmit}
+            submitting={editingSubmitting}
+            formData={editFormData}
+            setFormData={setEditFormData}
+            referrerName={editingReferrer ? getFullName(editingReferrer.userId) : ''}
+            admins={admins}
+          />
+
           {/* Referrers Table */}
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-6">
@@ -519,6 +603,10 @@ export default function SuperAdminReferrersPage() {
                       {
                         label: 'View',
                         onClick: () => router.push(`/super-admin/referrers/${referrer._id}`),
+                      },
+                      {
+                        label: 'Edit',
+                        onClick: () => openEditReferrer(referrer),
                       },
                       {
                         label: !referrer.userId?.isVerified ? 'Activate' : referrer.userId?.isActive ? 'Deactivate' : 'Activate',
@@ -653,6 +741,12 @@ export default function SuperAdminReferrersPage() {
                             className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                           >
                             View Detail
+                          </button>
+                          <button
+                            onClick={() => openEditReferrer(referrer)}
+                            className="px-3 py-1.5 rounded-lg transition-colors text-xs bg-brand-600 text-white hover:bg-brand-700"
+                          >
+                            Edit
                           </button>
                           <button
                             onClick={() => handleToggleStatus(referrer._id, referrer.userId?.isVerified, referrer.userId?.isActive)}

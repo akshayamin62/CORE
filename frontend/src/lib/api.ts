@@ -258,6 +258,17 @@ export const superAdminAPI = {
   updateReferrerStage: (referrerId: string, stage: string) =>
     api.patch(`/super-admin/referrer/${referrerId}/stage`, { stage }),
 
+  updateReferrer: (referrerId: string, data: {
+    email?: string;
+    mobileNumber?: string;
+    adminId?: string;
+    country?: string;
+    state?: string;
+    city?: string;
+    qualification?: string;
+    currentRole?: string;
+  }) => api.patch(`/super-admin/referrer/${referrerId}`, data),
+
   addReferrerNote: (referrerId: string, data: { text: string; noteDate: string }) =>
     api.post(`/super-admin/referrer/${referrerId}/notes`, data),
   updateReferrerNote: (referrerId: string, noteId: string, data: { text: string; noteDate: string }) =>
@@ -576,6 +587,16 @@ export const adminAPI = {
 
   updateReferrerStage: (referrerId: string, stage: string) =>
     api.patch(`/admin/referrer/${referrerId}/stage`, { stage }),
+
+  updateReferrer: (referrerId: string, data: {
+    email?: string;
+    mobileNumber?: string;
+    country?: string;
+    state?: string;
+    city?: string;
+    qualification?: string;
+    currentRole?: string;
+  }) => api.patch(`/admin/referrer/${referrerId}`, data),
 
   addReferrerNote: (referrerId: string, data: { text: string; noteDate: string }) =>
     api.post(`/admin/referrer/${referrerId}/notes`, data),

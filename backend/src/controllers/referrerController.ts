@@ -1,4 +1,5 @@
 import { Response, Request } from "express";
+import mongoose from "mongoose";
 import { AuthRequest } from "../types/auth";
 import User from "../models/User";
 import Admin from "../models/Admin";
@@ -27,6 +28,75 @@ const getUniqueReferralSlug = async (baseSlug: string): Promise<string> => {
 
   return slug;
 };
+
+/** Old referrer documents may not have notes field — Mongoose default only applies on create */
+function getReferrerNotes(referrer: { notes?: unknown }) {
+  return Array.isArray(referrer.notes) ? referrer.notes : [];
+}
+
+const REFERRER_PHONE_REGEX = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,5}[-\s.]?[0-9]{1,5}$/;
+
+async function getNoteCreatorName(userId?: string): Promise<string> {
+  if (!userId) return '';
+  const creatorUser = await User.findById(userId).select('firstName middleName lastName');
+  return creatorUser
+    ? [creatorUser.firstName, creatorUser.middleName, creatorUser.lastName].filter(Boolean).join(' ')
+    : '';
+}
+
+function buildReferrerProfileUpdates(
+  body: Record<string, unknown>,
+  options?: { allowAdminId?: boolean }
+): { updates: Record<string, unknown>; error?: string } {
+  const updates: Record<string, unknown> = {};
+
+  if (body.email !== undefined) {
+    const email = String(body.email).trim().toLowerCase();
+    if (!email) return { updates: {}, error: 'Email is required' };
+    updates.email = email;
+  }
+  if (body.mobileNumber !== undefined) {
+    const mobile = String(body.mobileNumber).trim();
+    if (!mobile) return { updates: {}, error: 'Mobile number is required' };
+    if (!REFERRER_PHONE_REGEX.test(mobile)) {
+      return { updates: {}, error: 'Invalid phone number format' };
+    }
+    updates.mobileNumber = mobile;
+  }
+  if (body.country !== undefined) updates.country = String(body.country).trim();
+  if (body.state !== undefined) updates.state = String(body.state).trim();
+  if (body.city !== undefined) updates.city = String(body.city).trim();
+  if (body.qualification !== undefined) updates.qualification = String(body.qualification).trim();
+  if (body.currentRole !== undefined) updates.currentRole = String(body.currentRole).trim();
+  if (options?.allowAdminId && body.adminId !== undefined) {
+    if (!body.adminId) return { updates: {}, error: 'Admin selection is required' };
+    updates.adminId = body.adminId;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return { updates: {}, error: 'No fields to update' };
+  }
+
+  return { updates };
+}
+
+function mapReferrerProfile(re: any) {
+  return {
+    _id: re._id,
+    userId: re.userId,
+    adminId: re.adminId,
+    email: re.email,
+    mobileNumber: re.mobileNumber,
+    country: re.country,
+    state: re.state,
+    city: re.city,
+    qualification: re.qualification,
+    currentRole: re.currentRole,
+    stage: re.stage || REFERRER_STAGE.NEW,
+    referralSlug: re.referralSlug,
+    createdAt: re.createdAt,
+  };
+}
 
 // ============= ADMIN ENDPOINTS (manage referrers) =============
 
@@ -258,14 +328,14 @@ export const toggleReferrerStatus = async (req: AuthRequest, res: Response): Pro
     // (do NOT run the verification flow, do NOT change isVerified)
     if (referrer.stage === REFERRER_STAGE.CLOSED) {
       user.isActive = true;
+      await Referrer.findByIdAndUpdate(referrer._id, { $set: { stage: REFERRER_STAGE.NEW } }, { runValidators: false });
       referrer.stage = REFERRER_STAGE.NEW;
-      await referrer.save();
     } else if (!user.isVerified) {
       // First-time activation: verify, activate, set stage to Converted
       user.isVerified = true;
       user.isActive = true;
+      await Referrer.findByIdAndUpdate(referrer._id, { $set: { stage: REFERRER_STAGE.CONVERTED } }, { runValidators: false });
       referrer.stage = REFERRER_STAGE.CONVERTED;
-      await referrer.save();
 
       // Send activation email
       const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
@@ -566,14 +636,14 @@ export const toggleReferrerStatusForSuperAdmin = async (req: AuthRequest, res: R
     // (do NOT run the verification flow, do NOT change isVerified)
     if (referrer.stage === REFERRER_STAGE.CLOSED) {
       user.isActive = true;
+      await Referrer.findByIdAndUpdate(referrer._id, { $set: { stage: REFERRER_STAGE.NEW } }, { runValidators: false });
       referrer.stage = REFERRER_STAGE.NEW;
-      await referrer.save();
     } else if (!user.isVerified) {
       // First-time activation: verify, activate, set stage to Converted
       user.isVerified = true;
       user.isActive = true;
+      await Referrer.findByIdAndUpdate(referrer._id, { $set: { stage: REFERRER_STAGE.CONVERTED } }, { runValidators: false });
       referrer.stage = REFERRER_STAGE.CONVERTED;
-      await referrer.save();
 
       // Send activation email
       const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
@@ -1354,7 +1424,7 @@ export const updateReferrerStage = async (req: AuthRequest, res: Response): Prom
     }
 
     referrer.stage = stage as REFERRER_STAGE;
-    await referrer.save();
+    await Referrer.findByIdAndUpdate(referrer._id, { $set: { stage } }, { runValidators: false });
 
     // Auto-deactivate user when stage is set to Closed
     if (stage === REFERRER_STAGE.CLOSED) {
@@ -1401,7 +1471,7 @@ export const updateReferrerStageForSuperAdmin = async (req: AuthRequest, res: Re
     }
 
     referrer.stage = stage as REFERRER_STAGE;
-    await referrer.save();
+    await Referrer.findByIdAndUpdate(referrer._id, { $set: { stage } }, { runValidators: false });
 
     // Auto-deactivate user when stage is set to Closed
     if (stage === REFERRER_STAGE.CLOSED) {
@@ -1423,6 +1493,126 @@ export const updateReferrerStageForSuperAdmin = async (req: AuthRequest, res: Re
   }
 };
 
+/**
+ * ADMIN: Update referrer profile (name is not editable)
+ */
+export const updateReferrerForAdmin = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { referrerId } = req.params;
+    const adminUserId = req.user?.userId;
+    const { updates, error } = buildReferrerProfileUpdates(req.body);
+
+    if (error) {
+      return res.status(400).json({ success: false, message: error });
+    }
+
+    const referrer = await Referrer.findOne({ _id: referrerId, adminId: adminUserId });
+    if (!referrer) {
+      return res.status(404).json({ success: false, message: 'Referrer not found or unauthorized' });
+    }
+
+    if (updates.email && updates.email !== referrer.email) {
+      const emailTaken = await Referrer.findOne({
+        email: updates.email,
+        _id: { $ne: referrer._id },
+      });
+      if (emailTaken) {
+        return res.status(400).json({ success: false, message: 'Email is already in use by another referrer' });
+      }
+      const userEmailTaken = await User.findOne({
+        email: updates.email,
+        _id: { $ne: referrer.userId },
+      });
+      if (userEmailTaken) {
+        return res.status(400).json({ success: false, message: 'Email is already in use' });
+      }
+    }
+
+    const updated = await Referrer.findByIdAndUpdate(
+      referrer._id,
+      { $set: updates },
+      { new: true, runValidators: false }
+    ).populate('userId', 'firstName middleName lastName email profilePicture isActive isVerified');
+
+    if (updates.email) {
+      await User.findByIdAndUpdate(referrer.userId, { email: updates.email });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Referrer updated successfully',
+      data: { referrer: mapReferrerProfile(updated) },
+    });
+  } catch (error: any) {
+    console.error('Update referrer (admin) error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update referrer' });
+  }
+};
+
+/**
+ * SUPER ADMIN: Update referrer profile (name is not editable)
+ */
+export const updateReferrerForSuperAdmin = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { referrerId } = req.params;
+    const { updates, error } = buildReferrerProfileUpdates(req.body, { allowAdminId: true });
+
+    if (error) {
+      return res.status(400).json({ success: false, message: error });
+    }
+
+    const referrer = await Referrer.findById(referrerId);
+    if (!referrer) {
+      return res.status(404).json({ success: false, message: 'Referrer not found' });
+    }
+
+    if (updates.adminId) {
+      const adminUser = await User.findOne({ _id: updates.adminId, role: USER_ROLE.ADMIN });
+      if (!adminUser) {
+        return res.status(400).json({ success: false, message: 'Invalid admin selected' });
+      }
+    }
+
+    if (updates.email && updates.email !== referrer.email) {
+      const emailTaken = await Referrer.findOne({
+        email: updates.email,
+        _id: { $ne: referrer._id },
+      });
+      if (emailTaken) {
+        return res.status(400).json({ success: false, message: 'Email is already in use by another referrer' });
+      }
+      const userEmailTaken = await User.findOne({
+        email: updates.email,
+        _id: { $ne: referrer.userId },
+      });
+      if (userEmailTaken) {
+        return res.status(400).json({ success: false, message: 'Email is already in use' });
+      }
+    }
+
+    const updated = await Referrer.findByIdAndUpdate(
+      referrer._id,
+      { $set: updates },
+      { new: true, runValidators: false }
+    )
+      .populate('userId', 'firstName middleName lastName email profilePicture isActive isVerified')
+      .populate('adminId', 'firstName middleName lastName email');
+
+    if (updates.email) {
+      await User.findByIdAndUpdate(referrer.userId, { email: updates.email });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Referrer updated successfully',
+      data: { referrer: mapReferrerProfile(updated) },
+    });
+  } catch (error: any) {
+    console.error('Update referrer (super admin) error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update referrer' });
+  }
+};
+
 // ============= PUBLIC REFERRER REGISTRATION =============
 
 /**
@@ -1441,29 +1631,30 @@ export const addReferrerNoteForAdmin = async (req: AuthRequest, res: Response): 
       return res.status(400).json({ success: false, message: 'Note date is required' });
     }
 
-    const referrer = await Referrer.findOne({ _id: referrerId, adminId: adminUserId });
-    if (!referrer) {
+    const exists = await Referrer.findOne({ _id: referrerId, adminId: adminUserId }).select('_id');
+    if (!exists) {
       return res.status(404).json({ success: false, message: 'Referrer not found or unauthorized' });
     }
 
-    const creatorUser = await User.findById(adminUserId).select('firstName middleName lastName');
-    const createdByName = creatorUser
-      ? [creatorUser.firstName, creatorUser.middleName, creatorUser.lastName].filter(Boolean).join(' ')
-      : '';
-
-    (referrer.notes as any[]).push({
+    const createdByName = await getNoteCreatorName(adminUserId);
+    const newNote = {
       text: text.trim(),
       noteDate: new Date(noteDate),
       createdByRole: 'ADMIN',
       createdByName,
       createdAt: new Date(),
-    });
-    await referrer.save();
+    };
+
+    const referrer = await Referrer.findByIdAndUpdate(
+      referrerId,
+      { $push: { notes: newNote } },
+      { new: true, runValidators: false }
+    );
 
     return res.json({
       success: true,
       message: 'Note added successfully',
-      data: { notes: referrer.notes },
+      data: { notes: getReferrerNotes(referrer || {}) },
     });
   } catch (error: any) {
     console.error('Add referrer note (admin) error:', error);
@@ -1487,29 +1678,30 @@ export const addReferrerNoteForSuperAdmin = async (req: AuthRequest, res: Respon
       return res.status(400).json({ success: false, message: 'Note date is required' });
     }
 
-    const referrer = await Referrer.findById(referrerId);
-    if (!referrer) {
+    const exists = await Referrer.findById(referrerId).select('_id');
+    if (!exists) {
       return res.status(404).json({ success: false, message: 'Referrer not found' });
     }
 
-    const creatorUser = await User.findById(superAdminUserId).select('firstName middleName lastName');
-    const createdByName = creatorUser
-      ? [creatorUser.firstName, creatorUser.middleName, creatorUser.lastName].filter(Boolean).join(' ')
-      : '';
-
-    (referrer.notes as any[]).push({
+    const createdByName = await getNoteCreatorName(superAdminUserId);
+    const newNote = {
       text: text.trim(),
       noteDate: new Date(noteDate),
       createdByRole: 'SUPER_ADMIN',
       createdByName,
       createdAt: new Date(),
-    });
-    await referrer.save();
+    };
+
+    const referrer = await Referrer.findByIdAndUpdate(
+      referrerId,
+      { $push: { notes: newNote } },
+      { new: true, runValidators: false }
+    );
 
     return res.json({
       success: true,
       message: 'Note added successfully',
-      data: { notes: referrer.notes },
+      data: { notes: getReferrerNotes(referrer || {}) },
     });
   } catch (error: any) {
     console.error('Add referrer note (super admin) error:', error);
@@ -1538,23 +1730,29 @@ export const updateReferrerNoteForAdmin = async (req: AuthRequest, res: Response
       return res.status(404).json({ success: false, message: 'Referrer not found or unauthorized' });
     }
 
-    const noteIndex = (referrer.notes as any[]).findIndex((n: any) => n._id.toString() === noteId);
-    if (noteIndex === -1) {
+    const note = getReferrerNotes(referrer).find((n: any) => n._id.toString() === noteId);
+    if (!note) {
       return res.status(404).json({ success: false, message: 'Note not found' });
     }
-    const note = (referrer.notes as any[])[noteIndex];
     if (note.createdByRole !== 'ADMIN') {
       return res.status(403).json({ success: false, message: 'You can only edit notes you created' });
     }
 
-    note.text = text.trim();
-    note.noteDate = new Date(noteDate);
-    await referrer.save();
+    await Referrer.updateOne(
+      { _id: referrerId, 'notes._id': noteId },
+      {
+        $set: {
+          'notes.$.text': text.trim(),
+          'notes.$.noteDate': new Date(noteDate),
+        },
+      }
+    );
 
+    const updated = await Referrer.findById(referrerId);
     return res.json({
       success: true,
       message: 'Note updated successfully',
-      data: { notes: referrer.notes },
+      data: { notes: getReferrerNotes(updated || {}) },
     });
   } catch (error: any) {
     console.error('Update referrer note (admin) error:', error);
@@ -1575,22 +1773,24 @@ export const deleteReferrerNoteForAdmin = async (req: AuthRequest, res: Response
       return res.status(404).json({ success: false, message: 'Referrer not found or unauthorized' });
     }
 
-    const noteIndex = (referrer.notes as any[]).findIndex((n: any) => n._id.toString() === noteId);
-    if (noteIndex === -1) {
+    const note = getReferrerNotes(referrer).find((n: any) => n._id.toString() === noteId);
+    if (!note) {
       return res.status(404).json({ success: false, message: 'Note not found' });
     }
-    const note = (referrer.notes as any[])[noteIndex];
     if (note.createdByRole !== 'ADMIN') {
       return res.status(403).json({ success: false, message: 'You can only delete notes you created' });
     }
 
-    (referrer.notes as any[]).splice(noteIndex, 1);
-    await referrer.save();
+    await Referrer.updateOne(
+      { _id: referrerId },
+      { $pull: { notes: { _id: new mongoose.Types.ObjectId(noteId) } } }
+    );
 
+    const updated = await Referrer.findById(referrerId);
     return res.json({
       success: true,
       message: 'Note deleted successfully',
-      data: { notes: referrer.notes },
+      data: { notes: getReferrerNotes(updated || {}) },
     });
   } catch (error: any) {
     console.error('Delete referrer note (admin) error:', error);
@@ -1618,23 +1818,29 @@ export const updateReferrerNoteForSuperAdmin = async (req: AuthRequest, res: Res
       return res.status(404).json({ success: false, message: 'Referrer not found' });
     }
 
-    const noteIndex = (referrer.notes as any[]).findIndex((n: any) => n._id.toString() === noteId);
-    if (noteIndex === -1) {
+    const note = getReferrerNotes(referrer).find((n: any) => n._id.toString() === noteId);
+    if (!note) {
       return res.status(404).json({ success: false, message: 'Note not found' });
     }
-    const note = (referrer.notes as any[])[noteIndex];
     if (note.createdByRole !== 'SUPER_ADMIN') {
       return res.status(403).json({ success: false, message: 'You can only edit notes you created' });
     }
 
-    note.text = text.trim();
-    note.noteDate = new Date(noteDate);
-    await referrer.save();
+    await Referrer.updateOne(
+      { _id: referrerId, 'notes._id': noteId },
+      {
+        $set: {
+          'notes.$.text': text.trim(),
+          'notes.$.noteDate': new Date(noteDate),
+        },
+      }
+    );
 
+    const updated = await Referrer.findById(referrerId);
     return res.json({
       success: true,
       message: 'Note updated successfully',
-      data: { notes: referrer.notes },
+      data: { notes: getReferrerNotes(updated || {}) },
     });
   } catch (error: any) {
     console.error('Update referrer note (super admin) error:', error);
@@ -1654,22 +1860,24 @@ export const deleteReferrerNoteForSuperAdmin = async (req: AuthRequest, res: Res
       return res.status(404).json({ success: false, message: 'Referrer not found' });
     }
 
-    const noteIndex = (referrer.notes as any[]).findIndex((n: any) => n._id.toString() === noteId);
-    if (noteIndex === -1) {
+    const note = getReferrerNotes(referrer).find((n: any) => n._id.toString() === noteId);
+    if (!note) {
       return res.status(404).json({ success: false, message: 'Note not found' });
     }
-    const note = (referrer.notes as any[])[noteIndex];
     if (note.createdByRole !== 'SUPER_ADMIN') {
       return res.status(403).json({ success: false, message: 'You can only delete notes you created' });
     }
 
-    (referrer.notes as any[]).splice(noteIndex, 1);
-    await referrer.save();
+    await Referrer.updateOne(
+      { _id: referrerId },
+      { $pull: { notes: { _id: new mongoose.Types.ObjectId(noteId) } } }
+    );
 
+    const updated = await Referrer.findById(referrerId);
     return res.json({
       success: true,
       message: 'Note deleted successfully',
-      data: { notes: referrer.notes },
+      data: { notes: getReferrerNotes(updated || {}) },
     });
   } catch (error: any) {
     console.error('Delete referrer note (super admin) error:', error);

@@ -9,6 +9,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
 import AddReferrerModal from '@/components/AddReferrerModal';
+import EditReferrerModal, { ReferrerEditFormData } from '@/components/EditReferrerModal';
 import ListPageFilters from '@/components/ListPageFilters';
 import MobileRecordCard from '@/components/MobileRecordCard';
 
@@ -26,6 +27,11 @@ interface ReferrerData {
   };
   email: string;
   mobileNumber?: string;
+  country?: string;
+  state?: string;
+  city?: string;
+  qualification?: string;
+  currentRole?: string;
   stage?: string;
   referralSlug: string;
   leadCount: number;
@@ -38,6 +44,9 @@ export default function ReferrersListPage() {
   const [referrers, setReferrers] = useState<ReferrerData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingReferrer, setEditingReferrer] = useState<ReferrerData | null>(null);
+  const [editingSubmitting, setEditingSubmitting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending' | 'archived'>('all');
@@ -57,6 +66,61 @@ export default function ReferrersListPage() {
     qualification: '',
     currentRole: '',
   });
+  const [editFormData, setEditFormData] = useState<ReferrerEditFormData>({
+    email: '',
+    mobileNumber: '',
+    adminId: '',
+    country: '',
+    state: '',
+    city: '',
+    qualification: '',
+    currentRole: '',
+  });
+
+  const openEditReferrer = (referrer: ReferrerData) => {
+    setEditingReferrer(referrer);
+    setEditFormData({
+      email: referrer.email || '',
+      mobileNumber: referrer.mobileNumber || '',
+      adminId: '',
+      country: referrer.country || '',
+      state: referrer.state || '',
+      city: referrer.city || '',
+      qualification: referrer.qualification || '',
+      currentRole: referrer.currentRole || '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingReferrer) return;
+
+    if (!editFormData.mobileNumber.trim()) {
+      toast.error('Mobile number is required');
+      return;
+    }
+
+    const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,5}[-\s.]?[0-9]{1,5}$/;
+    if (!phoneRegex.test(editFormData.mobileNumber.trim())) {
+      toast.error('Invalid phone number format');
+      return;
+    }
+
+    setEditingSubmitting(true);
+    try {
+      const { adminId: _adminId, ...payload } = editFormData;
+      await adminAPI.updateReferrer(editingReferrer._id, payload);
+      toast.success('Referrer updated successfully!');
+      setShowEditModal(false);
+      setEditingReferrer(null);
+      fetchReferrers();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update referrer');
+    } finally {
+      setEditingSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     checkAuth();
@@ -477,6 +541,19 @@ export default function ReferrersListPage() {
             setFormData={setFormData}
           />
 
+          <EditReferrerModal
+            open={showEditModal}
+            onClose={() => {
+              setShowEditModal(false);
+              setEditingReferrer(null);
+            }}
+            onSubmit={handleEditSubmit}
+            submitting={editingSubmitting}
+            formData={editFormData}
+            setFormData={setEditFormData}
+            referrerName={editingReferrer ? getFullName(editingReferrer.userId) : ''}
+          />
+
           {/* Referrers Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             {referrers.length === 0 ? (
@@ -524,6 +601,10 @@ export default function ReferrersListPage() {
                       {
                         label: 'View',
                         onClick: () => router.push(`/admin/referrers/${referrer._id}`),
+                      },
+                      {
+                        label: 'Edit',
+                        onClick: () => openEditReferrer(referrer),
                       },
                       {
                         label: !referrer.userId?.isVerified ? 'Activate' : referrer.userId?.isActive ? 'Deactivate' : 'Activate',
@@ -651,6 +732,12 @@ export default function ReferrersListPage() {
                             className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                           >
                             View Detail
+                          </button>
+                          <button
+                            onClick={() => openEditReferrer(referrer)}
+                            className="px-3 py-1.5 rounded-lg transition-colors text-xs bg-brand-600 text-white hover:bg-brand-700"
+                          >
+                            Edit
                           </button>
                           <button
                             onClick={() => handleToggleStatus(referrer._id, referrer.userId?.isVerified, referrer.userId?.isActive)}

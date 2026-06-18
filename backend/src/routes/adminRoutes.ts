@@ -14,6 +14,7 @@ import {
   toggleReferrerStatus,
   getReferrerDashboardForAdmin,
   updateReferrerStage,
+  updateReferrerForAdmin,
   addReferrerNoteForAdmin,
   updateReferrerNoteForAdmin,
   deleteReferrerNoteForAdmin,
@@ -120,6 +121,7 @@ router.get("/referrer/:referrerId/dashboard", getReferrerDashboardForAdmin);
  * @access  Admin only
  */
 router.patch("/referrer/:referrerId/stage", updateReferrerStage);
+router.patch("/referrer/:referrerId", updateReferrerForAdmin);
 router.post("/referrer/:referrerId/notes", addReferrerNoteForAdmin);
 router.patch("/referrer/:referrerId/notes/:noteId", updateReferrerNoteForAdmin);
 router.delete("/referrer/:referrerId/notes/:noteId", deleteReferrerNoteForAdmin);
