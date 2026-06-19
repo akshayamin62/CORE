@@ -8,8 +8,7 @@ import B2BOpsLayout from '@/components/B2BOpsLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
 import B2BFollowUpFormPanel from '@/components/B2BFollowUpFormPanel';
-import ScheduleCalendar from '@/components/ScheduleCalendar';
-import ScheduleOverview from '@/components/ScheduleOverview';
+import ScheduleCalendarGrid from '@/components/ScheduleCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 
 // Adapter: map B2B follow-up data to FollowUp shape for calendar/sidebar
@@ -245,32 +244,20 @@ export default function B2BOpsDashboardPage() {
 
 
 
-          {/* Schedule Section */}
           <div className="mt-8">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              <div className="lg:col-span-3">
-                <ScheduleCalendar
-                  followUps={adaptB2BFollowUps(allFollowUps)}
-                  teamMeets={teamMeets}
-                  onFollowUpSelect={(fu: any) => { const orig = allFollowUps.find((f: any) => f._id === fu._id); setSelectedFollowUp(orig || fu); setShowFollowUpPanel(true); }}
-                  onTeamMeetSelect={handleTeamMeetSelect}
-                  onDateSelect={handleTeamMeetDateSelect}
-                  currentUserId={user?.id || user?._id}
-                />
-              </div>
-              <div className="lg:col-span-1">
-                <ScheduleOverview
-                  followUps={adaptB2BFollowUps(allFollowUps)}
-                  teamMeets={teamMeets}
-                  onFollowUpClick={(fu: any) => { const orig = allFollowUps.find((f: any) => f._id === fu._id); setSelectedFollowUp(orig || fu); setShowFollowUpPanel(true); }}
-                  onTeamMeetClick={handleTeamMeetSelect}
-                  onScheduleClick={handleScheduleTeamMeet}
-                  currentUserId={user?.id || user?._id}
-                  showLeadLink={true}
-                  basePath="/b2b-ops/leads"
-                />
-              </div>
-            </div>
+            <ScheduleCalendarGrid
+              followUps={adaptB2BFollowUps(allFollowUps)}
+              teamMeets={teamMeets}
+              onFollowUpSelect={(fu: FollowUp) => { const orig = allFollowUps.find((f: any) => f._id === fu._id); setSelectedFollowUp(orig || fu); setShowFollowUpPanel(true); }}
+              onTeamMeetSelect={handleTeamMeetSelect}
+              onDateSelect={handleTeamMeetDateSelect}
+              onFollowUpClick={(fu: FollowUp) => { const orig = allFollowUps.find((f: any) => f._id === fu._id); setSelectedFollowUp(orig || fu); setShowFollowUpPanel(true); }}
+              onTeamMeetClick={handleTeamMeetSelect}
+              onScheduleClick={handleScheduleTeamMeet}
+              currentUserId={user?.id || user?._id}
+              showLeadLink={true}
+              basePath="/b2b-ops/leads"
+            />
           </div>
         </div>
       </B2BOpsLayout>

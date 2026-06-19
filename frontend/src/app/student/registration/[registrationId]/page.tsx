@@ -15,9 +15,8 @@ import axios from 'axios';
 import BrainographyDataDisplay, { BrainographyDataType } from '@/components/BrainographyDataDisplay';
 import PortfolioSection, { PortfolioItem, PortfolioRow, usePortfolioDownload } from '@/components/PortfolioSection';
 import ActivityAnalyticsDashboard from '@/components/ActivityAnalyticsDashboard';
-import TeamMeetSidebar from '@/components/TeamMeetSidebar';
+import OpsCalendarGrid from '@/components/OpsCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
-import OpsScheduleCalendar from '@/components/OpsScheduleCalendar';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
 import CoachingClassCards, { ClassTiming } from '@/components/CoachingClassCards';
 import { fetchBlobUrl } from '@/lib/useBlobUrl';
@@ -873,26 +872,18 @@ function MyDetailsContent() {
 
         {/* Schedule Calendar Section (Combined OPS Tasks + Team Meet) */}
         <div>
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-3">
-              <OpsScheduleCalendar
-                schedules={opsTasks}
-                onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
-                onDateSelect={handleTeamMeetDateSelect}
-                teamMeets={teamMeets}
-                onTeamMeetSelect={handleTeamMeetSelect}
-                currentUserId={currentUserId}
-              />
-            </div>
-            <div className="lg:col-span-1">
-              <TeamMeetSidebar
-                teamMeets={teamMeets}
-                onTeamMeetClick={handleTeamMeetSelect}
-                onScheduleClick={handleScheduleTeamMeet}
-                currentUserId={currentUserId}
-              />
-            </div>
-          </div>
+          <OpsCalendarGrid
+                    title="Schedule"
+                    subtitle="Student meetings and tasks"
+                    schedules={opsTasks}
+                    teamMeets={teamMeets}
+                    currentUserId={currentUserId}
+                    sidebar="teamMeet"
+                    onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
+                    onDateSelect={() => {}}
+                    onTeamMeetSelect={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
+                    onTeamMeetClick={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
+                  />
         </div>
       </div>
     );
@@ -958,26 +949,18 @@ function MyDetailsContent() {
 
         {/* Schedule Calendar Section */}
         <div>
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-3">
-              <OpsScheduleCalendar
-                schedules={opsTasks}
-                onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
-                onDateSelect={handleTeamMeetDateSelect}
-                teamMeets={teamMeets}
-                onTeamMeetSelect={handleTeamMeetSelect}
-                currentUserId={currentUserId}
-              />
-            </div>
-            <div className="lg:col-span-1">
-              <TeamMeetSidebar
-                teamMeets={teamMeets}
-                onTeamMeetClick={handleTeamMeetSelect}
-                onScheduleClick={handleScheduleTeamMeet}
-                currentUserId={currentUserId}
-              />
-            </div>
-          </div>
+          <OpsCalendarGrid
+                    title="Schedule"
+                    subtitle="Student meetings and tasks"
+                    schedules={opsTasks}
+                    teamMeets={teamMeets}
+                    currentUserId={currentUserId}
+                    sidebar="teamMeet"
+                    onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
+                    onDateSelect={() => {}}
+                    onTeamMeetSelect={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
+                    onTeamMeetClick={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
+                  />
         </div>
       </div>
     );

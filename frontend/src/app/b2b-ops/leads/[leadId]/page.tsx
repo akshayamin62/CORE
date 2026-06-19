@@ -8,8 +8,7 @@ import B2BOpsLayout from '@/components/B2BOpsLayout';
 import { BACKEND_URL } from '@/lib/ivyApi';
 import toast, { Toaster } from 'react-hot-toast';
 import { format } from 'date-fns';
-import FollowUpCalendar from '@/components/FollowUpCalendar';
-import FollowUpSidebar from '@/components/FollowUpSidebar';
+import FollowUpCalendarGrid from '@/components/FollowUpCalendarGrid';
 import B2BFollowUpFormPanel from '@/components/B2BFollowUpFormPanel';
 
 // Adapter: map B2B follow-up data to FollowUp shape for calendar/sidebar components
@@ -385,15 +384,17 @@ export default function B2BOpsLeadDetailPage() {
             </div>
           </div>
 
-          {/* Follow-Up Calendar and Overview */}
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-3">
-              <FollowUpCalendar followUps={adaptedFollowUps} onFollowUpSelect={handleFollowUpClick} leadName={leadName} />
-            </div>
-            <div className="lg:col-span-1">
-              <FollowUpSidebar today={todayFollowUps} missed={missedFollowUps} upcoming={upcomingFollowUps} onFollowUpClick={handleFollowUpClick} leadName={leadName} basePath="/b2b-ops/leads" showLeadLink={false} />
-            </div>
-          </div>
+          <FollowUpCalendarGrid
+            className="mt-6"
+            followUps={adaptedFollowUps}
+            today={todayFollowUps}
+            missed={missedFollowUps}
+            upcoming={upcomingFollowUps}
+            onFollowUpSelect={handleFollowUpClick}
+            leadName={leadName}
+            basePath="/b2b-ops/leads"
+            showLeadLink={false}
+          />
 
           {/* Follow-Up History */}
           <div className="mt-6">

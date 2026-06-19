@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import { authAPI, parentAPI, teamMeetAPI } from '@/lib/api';
 import { User, USER_ROLE, TeamMeet, TEAMMEET_STATUS } from '@/types';
 import ParentLayout from '@/components/ParentLayout';
-import TeamMeetCalendar from '@/components/TeamMeetCalendar';
-import TeamMeetSidebar from '@/components/TeamMeetSidebar';
+import TeamMeetCalendarGrid from '@/components/TeamMeetCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
@@ -189,27 +188,13 @@ export default function ParentDashboardPage() {
 
           {/* Team Meet Section */}
           <div className="mt-2">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Calendar Section */}
-              <div className="lg:col-span-3">
-                <TeamMeetCalendar
-                  teamMeets={teamMeets}
-                  onTeamMeetSelect={handleTeamMeetSelect}
-                  onDateSelect={handleTeamMeetDateSelect}
-                  currentUserId={user?.id || user?._id}
-                />
-              </div>
-
-              {/* Sidebar Section */}
-              <div className="lg:col-span-1">
-                <TeamMeetSidebar
-                  teamMeets={teamMeets}
-                  onTeamMeetClick={handleTeamMeetSelect}
-                  onScheduleClick={handleScheduleTeamMeet}
-                  currentUserId={user?.id || user?._id}
-                />
-              </div>
-            </div>
+            <TeamMeetCalendarGrid
+              teamMeets={teamMeets}
+              onTeamMeetSelect={handleTeamMeetSelect}
+              onDateSelect={handleTeamMeetDateSelect}
+              onScheduleClick={handleScheduleTeamMeet}
+              currentUserId={user?.id || user?._id}
+            />
           </div>
         </div>
       </ParentLayout>

@@ -181,29 +181,29 @@ export default function PaymentSection({
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 sm:px-6 sm:py-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/20 sm:h-10 sm:w-10">
+              <svg className="h-4 w-4 text-white sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white">Payment Information</h3>
-              {serviceName && <p className="text-blue-100 text-sm">{serviceName} {planTier && `· ${planTier}`}</p>}
+            <div className="min-w-0">
+              <h3 className="text-base font-semibold text-white sm:text-lg">Payment Information</h3>
+              {serviceName && <p className="truncate text-xs text-blue-100 sm:text-sm">{serviceName} {planTier && `· ${planTier}`}</p>}
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {isInstallment && (
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white">
+              <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-medium text-white sm:px-3 sm:text-xs">
                 Installment Plan
               </span>
             )}
             {readOnly && (
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white">
+              <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-medium text-white sm:px-3 sm:text-xs">
                 Read Only
               </span>
             )}
@@ -212,11 +212,11 @@ export default function PaymentSection({
       </div>
 
       {/* Summary Cards */}
-      <div className="p-6">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Net Payable</p>
-            <p className="text-xl font-bold text-gray-900">{fmt(netPayable)}</p>
+      <div className="p-4 sm:p-6">
+        <div className="mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4 lg:grid-cols-4">
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 sm:p-4">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 sm:text-xs">Net Payable</p>
+            <p className="text-lg font-bold text-gray-900 sm:text-xl">{fmt(netPayable)}</p>
             <div className="mt-1 space-y-0.5">
               <p className="text-[10px] text-gray-400">Base: {fmt(baseTotal)}</p>
               {discountedAmount != null && discountedAmount !== totalAmount && (
@@ -225,20 +225,20 @@ export default function PaymentSection({
               <p className="text-[10px] text-gray-400">GST ({GST_RATE}%): +{fmt(gstAmount)}</p>
             </div>
           </div>
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Paid</p>
-            <p className="text-xl font-bold text-green-600">{fmt(totalPaid)}</p>
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 sm:p-4">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 sm:text-xs">Paid</p>
+            <p className="text-lg font-bold text-green-600 sm:text-xl">{fmt(totalPaid)}</p>
             <div className="mt-2 w-full bg-gray-200 rounded-full h-1.5">
               <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${progress}%` }} />
             </div>
             <p className="text-[10px] text-gray-400 mt-1">{progress}% paid</p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Balance</p>
-            <p className={`text-xl font-bold ${balance > 0 ? 'text-amber-600' : 'text-green-600'}`}>{fmt(balance)}</p>
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 sm:p-4">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 sm:text-xs">Balance</p>
+            <p className={`text-lg font-bold sm:text-xl ${balance > 0 ? 'text-amber-600' : 'text-green-600'}`}>{fmt(balance)}</p>
           </div>
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Status</p>
+          <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 sm:p-4">
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 sm:text-xs">Status</p>
             <div className="flex items-center gap-2 mt-1">
               <span className={`w-2 h-2 rounded-full ${pst.dot}`} />
               <span className={`text-sm font-semibold px-2.5 py-0.5 rounded-full ${pst.bg} ${pst.text}`}>
@@ -252,11 +252,11 @@ export default function PaymentSection({
         {/* Tabs */}
         {registrationId && (
           <>
-            <div className="border-b border-gray-200 mb-4">
-              <nav className="flex gap-1 -mb-px">
+            <div className="-mx-4 mb-4 overflow-x-auto border-b border-gray-200 px-4 sm:mx-0 sm:px-0">
+              <nav className="-mb-px flex min-w-max gap-1">
                 {tabs.map(t => (
                   <button key={t.key} onClick={() => setTab(t.key)}
-                    className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${tab === t.key ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                    className={`shrink-0 border-b-2 px-3 py-2 text-xs font-medium transition-colors sm:px-4 sm:py-2.5 sm:text-sm ${tab === t.key ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
                     {t.label}
                   </button>
                 ))}

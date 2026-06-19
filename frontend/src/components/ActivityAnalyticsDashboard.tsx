@@ -200,13 +200,14 @@ export default function ActivityAnalyticsDashboard({ registrationId }: Props) {
   const heatmapMap = new Map(data.heatmap.map(h => [h.date, h]));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header + Period Selector */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <span className="text-2xl">📊</span> Activity Analysis
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 sm:text-2xl">
+          <span className="text-xl sm:text-2xl">📊</span> Activity Analysis
         </h2>
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 border border-gray-200">
+        <div className="-mx-1 overflow-x-auto px-1 pb-1 sm:mx-0 sm:overflow-visible sm:pb-0">
+          <div className="flex min-w-max items-center gap-1 rounded-lg border border-gray-200 bg-gray-100 p-1">
           {[
             { m: 1, label: '1 Mo' },
             { m: 3, label: '3 Mo' },
@@ -219,18 +220,19 @@ export default function ActivityAnalyticsDashboard({ registrationId }: Props) {
             <button
               key={m}
               onClick={() => setMonths(m)}
-              className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-all ${
+              className={`shrink-0 rounded-md px-2.5 py-1.5 text-xs font-semibold transition-all sm:px-3 sm:text-sm ${
                 months === m ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               {label}
             </button>
           ))}
+          </div>
         </div>
       </div>
 
       {/* ─── Stats Cards ─── */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
         <StatCard icon="🔥" label="Current Streak" value={`${data.streak.current} days`} accent="orange" />
         <StatCard icon="🏆" label="Longest Streak" value={`${data.streak.longest} days`} accent="yellow" />
         <StatCard icon="📅" label="Total Days" value={`${data.streak.totalDays}`} accent="blue" />
@@ -399,22 +401,22 @@ function StatCard({ icon, label, value, sub, accent }: { icon: string; label: st
   const bg = accent === 'orange' ? 'bg-orange-50 border-orange-200' :
     accent === 'yellow' ? 'bg-amber-50 border-amber-200' :
     accent === 'blue' ? 'bg-blue-50 border-blue-200' :
-    accent === 'purple' ? 'bg-purple-50 border-purple-200' :
+    accent === 'purple' ? 'bg-purple-50 border-purple-200 col-span-2 sm:col-span-1' :
     'bg-emerald-50 border-emerald-200';
   return (
-    <div className={`rounded-xl border p-4 ${bg}`}>
-      <span className="text-2xl">{icon}</span>
-      <p className="text-sm text-gray-500 mt-1">{label}</p>
-      <p className="text-xl font-bold text-gray-900">{value}</p>
-      {sub && <p className="text-sm text-gray-500">{sub}</p>}
+    <div className={`rounded-xl border p-3 sm:p-4 ${bg}`}>
+      <span className="text-xl sm:text-2xl">{icon}</span>
+      <p className="mt-1 text-[11px] leading-tight text-gray-500 sm:text-sm">{label}</p>
+      <p className="text-base font-bold text-gray-900 sm:text-xl">{value}</p>
+      {sub && <p className="text-[11px] text-gray-500 sm:text-sm">{sub}</p>}
     </div>
   );
 }
 
 function ChartCard({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
+    <div className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5">
+      <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-900 sm:mb-4 sm:text-base">
         <span>{icon}</span> {title}
       </h3>
       {children}

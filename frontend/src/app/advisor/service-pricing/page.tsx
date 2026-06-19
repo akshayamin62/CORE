@@ -97,7 +97,7 @@ export default function AdvisorServicePricingPage() {
           </div>
         </div>
 
-        <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <div className="px-4 py-6 pb-24 sm:px-6 sm:py-8 md:pb-8 lg:px-8">
           {services.length === 0 ? (
             <div className="rounded-xl border border-gray-200 bg-white p-8 text-center sm:rounded-2xl sm:p-12">
               <p className="text-gray-500">No services have been assigned to your advisor yet.</p>

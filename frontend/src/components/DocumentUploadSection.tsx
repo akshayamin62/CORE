@@ -376,31 +376,31 @@ export default function DocumentUploadSection({
     return (
       <div
         key={documentKey}
-        className="border-2 border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-gray-50"
+        className="rounded-xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-3 transition-all duration-200 hover:border-blue-300 hover:shadow-md sm:p-5"
       >
         {/* Show field title and upload button only if no documents OR if multiple upload allowed */}
         {(fieldDocuments.length === 0 || allowMultiple) && (
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-gray-600" />
+          <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <FileText className="h-5 w-5 shrink-0 text-gray-600" />
                 <h4 className="font-medium text-gray-900">{documentName}</h4>
                 {required && (
-                  <span className="text-sm text-red-500 font-bold">*</span>
+                  <span className="text-sm font-bold text-red-500">*</span>
                 )}
                 {allowMultiple && (
-                  <span className="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Multiple</span>
+                  <span className="rounded bg-blue-50 px-2 py-0.5 text-xs text-blue-600">Multiple</span>
                 )}
               </div>
               {helpText && (
-                <p className="text-sm text-gray-700 mt-1">{helpText}</p>
+                <p className="mt-1 text-sm text-gray-700">{helpText}</p>
               )}
             </div>
 
             {/* Upload Button */}
             {canUpload && (allowMultiple || fieldDocuments.length === 0) && (
-              <div className="ml-4">
-                <label className="cursor-pointer">
+              <div className="w-full shrink-0 sm:ml-4 sm:w-auto">
+                <label className="block cursor-pointer">
                   <input
                     type="file"
                     className="hidden"
@@ -411,8 +411,8 @@ export default function DocumentUploadSection({
                     }}
                     disabled={isUploading}
                   />
-                  <div className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all text-sm font-semibold flex items-center gap-2 whitespace-nowrap shadow-md hover:shadow-lg">
-                    <Upload className="w-4 h-4" />
+                  <div className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-lg sm:w-auto sm:px-5">
+                    <Upload className="h-4 w-4" />
                     {isUploading ? 'Uploading...' : allowMultiple && fieldDocuments.length > 0 ? 'Add More' : 'Upload'}
                   </div>
                 </label>
@@ -423,13 +423,13 @@ export default function DocumentUploadSection({
             {fieldDocuments.length > 0 && (
               <div className={allowMultiple ? "space-y-3" : ""}>
                 {fieldDocuments.map((document) => (
-                  <div key={document._id} className="border-2 border-blue-100 rounded-xl p-5 bg-gradient-to-r from-white to-blue-50/30 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-200">
-                    <div className="flex items-center justify-between gap-4">
+                  <div key={document._id} className="rounded-xl border-2 border-blue-100 bg-gradient-to-r from-white to-blue-50/30 p-3 shadow-sm transition-all duration-200 hover:border-blue-300 hover:shadow-lg sm:p-5">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                       {/* Document Name + Upload Date */}
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <FileText className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                      <div className="flex min-w-0 flex-1 items-start gap-2">
+                        <FileText className="h-5 w-5 shrink-0 text-blue-600" />
                         <div className="min-w-0">
-                          <h5 className="text-base font-semibold text-gray-900 truncate">{document.documentName}</h5>
+                          <h5 className="truncate text-base font-semibold text-gray-900">{document.documentName}</h5>
                           {document.uploadedAt && (
                             <p className="text-xs text-gray-500">
                               Uploaded: <span className="font-medium">{new Date(document.uploadedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
@@ -439,44 +439,46 @@ export default function DocumentUploadSection({
                       </div>
                       
                       {/* Status Badge */}
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0 self-start">
                         {document.status === DocumentStatus.PENDING && (
-                          <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-300">
-                            <AlertCircle className="w-3.5 h-3.5 mr-1.5" />
+                          <span className="inline-flex items-center rounded-full border border-yellow-300 bg-yellow-100 px-3 py-1.5 text-xs font-semibold text-yellow-800">
+                            <AlertCircle className="mr-1.5 h-3.5 w-3.5" />
                             Pending
                           </span>
                         )}
                         {document.status === DocumentStatus.APPROVED && (
-                          <div className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-500">
-                            <Check className="w-4 h-4 text-white" strokeWidth={3} />
+                          <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-green-500">
+                            <Check className="h-4 w-4 text-white" strokeWidth={3} />
                           </div>
                         )}
                       </div>
                       
                       {/* Action Buttons */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
                         <button
+                          type="button"
                           onClick={() => handleViewDocument(document._id, documentKey)}
-                          className={`px-4 py-2 rounded-lg transition-all text-xs font-semibold flex items-center gap-1.5 shadow-sm ${
+                          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold shadow-sm transition-all sm:flex-none sm:px-4 ${
                             viewingDocument?.docId === document._id
                               ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-md'
-                              : 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 hover:from-blue-100 hover:to-blue-200 border border-blue-200'
+                              : 'border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 hover:from-blue-100 hover:to-blue-200'
                           }`}
                         >
-                          <FileText className="w-4 h-4" />
+                          <FileText className="h-4 w-4" />
                           {viewingDocument?.docId === document._id ? 'Hide' : 'View'}
                         </button>
                         
                         <button
+                          type="button"
                           onClick={() => handleDownload(document)}
-                          className="px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 rounded-lg hover:from-gray-100 hover:to-gray-200 transition-all text-xs font-semibold flex items-center gap-1.5 border border-gray-300 shadow-sm"
+                          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-gradient-to-r from-gray-50 to-gray-100 px-3 py-2 text-xs font-semibold text-gray-700 shadow-sm transition-all hover:from-gray-100 hover:to-gray-200 sm:flex-none sm:px-4"
                         >
-                          <Download className="w-4 h-4" />
+                          <Download className="h-4 w-4" />
                           Download
                         </button>
                         
                         {userRole === 'SUPER_ADMIN' && (
-                          <label className="cursor-pointer">
+                          <label className="block w-full cursor-pointer sm:w-auto">
                             <input
                               type="file"
                               className="hidden"
@@ -487,8 +489,8 @@ export default function DocumentUploadSection({
                               }}
                               disabled={isUploading}
                             />
-                            <div className="px-4 py-2 bg-gradient-to-r from-purple-50 to-purple-100 text-purple-700 rounded-lg hover:from-purple-100 hover:to-purple-200 transition-all text-xs font-semibold flex items-center gap-1.5 border border-purple-300 shadow-sm">
-                              <Upload className="w-4 h-4" />
+                            <div className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-purple-300 bg-gradient-to-r from-purple-50 to-purple-100 px-3 py-2 text-xs font-semibold text-purple-700 shadow-sm transition-all hover:from-purple-100 hover:to-purple-200 sm:w-auto sm:px-4">
+                              <Upload className="h-4 w-4" />
                               Reupload
                             </div>
                           </label>
@@ -497,17 +499,19 @@ export default function DocumentUploadSection({
                         {(userRole === 'OPS' || userRole === 'SUPER_ADMIN') && document.status === DocumentStatus.PENDING && (
                           <>
                             <button
+                              type="button"
                               onClick={() => handleApprove(document)}
-                              className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                              className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-green-600 to-green-700 px-3 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:from-green-700 hover:to-green-800 sm:w-auto sm:px-4"
                             >
-                              <Check className="w-4 h-4" />
+                              <Check className="h-4 w-4" />
                               Approve
                             </button>
                             <button
+                              type="button"
                               onClick={() => handleRejectClick(document._id)}
-                              className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-700 hover:to-red-800 transition-all text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                              className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-red-600 to-red-700 px-3 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:from-red-700 hover:to-red-800 sm:w-auto sm:px-4"
                             >
-                              <X className="w-4 h-4" />
+                              <X className="h-4 w-4" />
                               Reject
                             </button>
                           </>
@@ -518,11 +522,11 @@ export default function DocumentUploadSection({
                     {/* Inline Document Viewer */}
                     {viewingDocument?.docId === document._id && documentBlobUrls[document._id] && (
                       <div className="mt-3 border-t pt-3">
-                        <div className="bg-white rounded border border-gray-300 overflow-hidden">
+                        <div className="overflow-hidden rounded border border-gray-300 bg-white">
                           {document.mimeType === 'application/pdf' ? (
                             <iframe
                               src={documentBlobUrls[document._id]}
-                              className="w-full h-[600px] border-0"
+                              className="h-[50vh] w-full border-0 sm:h-[600px]"
                               title={document.fileName}
                             />
                           ) : document.mimeType.startsWith('image/') ? (
@@ -623,15 +627,16 @@ export default function DocumentUploadSection({
 
     return (
       <>
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Add Document Button - Only for OPS/SUPER_ADMIN */}
           {canUpload && (userRole === 'SUPER_ADMIN' || userRole === 'OPS') && (
-            <div className="flex justify-end">
+            <div className="flex justify-stretch sm:justify-end">
               <button
+                type="button"
                 onClick={() => setShowAddExtraFieldModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 sm:w-auto"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="h-4 w-4" />
                 Add Document Field
               </button>
             </div>
@@ -639,12 +644,11 @@ export default function DocumentUploadSection({
 
           {/* Primary Documents */}
           {primaryFields.length > 0 && (
-            <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden shadow-md">
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b-2 border-gray-200">
-                <h3 className="text-xl font-bold text-gray-900">Primary Documents</h3>
-                {/* <p className="text-gray-600 text-sm mt-1">Required documents for your application</p> */}
+            <div className="overflow-hidden rounded-xl border-2 border-gray-200 bg-white shadow-md">
+              <div className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 sm:px-6 sm:py-4">
+                <h3 className="text-lg font-bold text-gray-900 sm:text-xl">Primary Documents</h3>
               </div>
-              <div className="p-6 space-y-3">
+              <div className="space-y-3 p-3 sm:p-6">
                 {primaryFields.map((field) =>
                   renderDocumentField(
                     field.documentKey,
@@ -661,12 +665,11 @@ export default function DocumentUploadSection({
 
           {/* Secondary Documents */}
           {secondaryFields.length > 0 && (
-            <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden shadow-md">
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b-2 border-gray-200">
-                <h3 className="text-xl font-bold text-gray-900">Secondary Documents</h3>
-                {/* <p className="text-gray-600 text-sm mt-1">Optional supporting documents</p> */}
+            <div className="overflow-hidden rounded-xl border-2 border-gray-200 bg-white shadow-md">
+              <div className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 sm:px-6 sm:py-4">
+                <h3 className="text-lg font-bold text-gray-900 sm:text-xl">Secondary Documents</h3>
               </div>
-              <div className="p-6 space-y-3">
+              <div className="space-y-3 p-3 sm:p-6">
                 {secondaryFields.map((field) =>
                   renderDocumentField(
                     field.documentKey,
@@ -683,12 +686,11 @@ export default function DocumentUploadSection({
 
           {/* Extra Documents - Student-specific, dynamic fields */}
           {extraDocumentFields.length > 0 && (
-            <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden shadow-md">
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b-2 border-gray-200">
-                <h3 className="text-xl text-red-500 font-bold ">Extra Documents</h3>
-                {/* <p className=" text-sm mt-1">Additional documents specific to your profile</p> */}
+            <div className="overflow-hidden rounded-xl border-2 border-gray-200 bg-white shadow-md">
+              <div className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 sm:px-6 sm:py-4">
+                <h3 className="text-lg font-bold text-red-500 sm:text-xl">Extra Documents</h3>
               </div>
-              <div className="p-6 space-y-3">
+              <div className="space-y-3 p-3 sm:p-6">
                 {extraDocumentFields.map((field) =>
                   renderDocumentField(
                     field.documentKey,

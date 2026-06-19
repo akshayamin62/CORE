@@ -88,7 +88,7 @@ export default function AdvisorStudyAbroadPricingPage() {
           <p className="text-gray-500 mt-1 max-w-2xl">Set the selling prices for your students&apos; Study Abroad plans.</p>
         </div>
 
-        <div className="p-6 lg:p-8">
+        <div className="p-4 pb-24 sm:p-6 md:pb-8 lg:p-8">
           {basePricing && (
             <div className="mb-6 bg-gradient-to-r from-slate-50 to-slate-100 rounded-2xl border border-slate-200 p-6 shadow-sm">
               <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">CORE Platform Base Price</h3>

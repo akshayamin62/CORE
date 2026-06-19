@@ -90,7 +90,7 @@ export default function AdvisorStudentsPage() {
     <>
       <Toaster position="top-right" />
       <AdvisorLayout user={user}>
-        <div className="p-4 sm:p-6 md:p-8">
+        <div className="p-4 pb-24 sm:p-6 md:p-8 md:pb-8">
           <div className="mb-5 md:mb-6">
             <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Students</h1>
             <p className="mt-1 text-sm text-gray-600 sm:text-base">Manage your converted students</p>

@@ -5,8 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { User, USER_ROLE, TeamMeet, TEAMMEET_STATUS } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
-import OpsScheduleCalendar from '@/components/OpsScheduleCalendar';
-import TeamMeetSidebar from '@/components/TeamMeetSidebar';
+import OpsCalendarGrid from '@/components/OpsCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
@@ -269,24 +268,18 @@ export default function IvyExpertDashboardReadOnlyPage() {
 
         {/* Read-Only Calendar */}
         <div className="mb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <OpsScheduleCalendar
-                schedules={[]}
-                onScheduleSelect={() => {}}
-                teamMeets={teamMeets}
-                onTeamMeetSelect={handleViewTeamMeet}
-                currentUserId=""
-              />
-            </div>
-            <div>
-              <TeamMeetSidebar
-                teamMeets={teamMeets}
-                onTeamMeetClick={handleViewTeamMeet}
-                currentUserId=""
-              />
-            </div>
-          </div>
+          <OpsCalendarGrid
+            title="Team Meet Calendar"
+            subtitle="Ivy expert meetings"
+            schedules={[]}
+            teamMeets={teamMeets}
+            currentUserId=""
+            sidebar="teamMeet"
+            onScheduleSelect={() => {}}
+            onDateSelect={() => {}}
+            onTeamMeetSelect={handleViewTeamMeet}
+            onTeamMeetClick={handleViewTeamMeet}
+          />
         </div>
 
       </div>

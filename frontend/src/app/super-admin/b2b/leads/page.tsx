@@ -7,6 +7,7 @@ import { User, USER_ROLE, B2B_LEAD_STAGE, B2B_LEAD_TYPE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import ListPageFilters from '@/components/ListPageFilters';
+import EnquiryUrlCopy from '@/components/EnquiryUrlCopy';
 import MobileRecordCard from '@/components/MobileRecordCard';
 
 interface B2BLeadData {
@@ -130,23 +131,11 @@ export default function SuperAdminB2BLeadsPage() {
   const [enquirySlug, setEnquirySlug] = useState('');
   const [approving, setApproving] = useState(false);
 
-  // Copy URL state
-  const [copied, setCopied] = useState(false);
-
   const getEnquiryFormUrl = () => {
     if (typeof window !== 'undefined') {
       return `${window.location.origin}/b2b-enquiry`;
     }
     return '/b2b-enquiry';
-  };
-
-  const handleCopyUrl = () => {
-    const url = getEnquiryFormUrl();
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      toast.success('B2B Enquiry form URL copied!');
-      setTimeout(() => setCopied(false), 2000);
-    });
   };
 
   useEffect(() => {
@@ -401,38 +390,7 @@ export default function SuperAdminB2BLeadsPage() {
               <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">B2B Leads</h2>
               <p className="mt-1 text-sm text-gray-600 sm:text-base">Manage franchise, institution, and advisor leads</p>
             </div>
-            <div className="w-full lg:w-auto">
-              <div className="flex flex-col gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 sm:flex-row sm:items-center">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-blue-600">B2B Enquiry Form</p>
-                  <p className="mt-0.5 break-all text-xs font-mono text-blue-800 select-all sm:text-sm">{getEnquiryFormUrl()}</p>
-                </div>
-                <button
-                  onClick={handleCopyUrl}
-                  className={`shrink-0 rounded-lg px-3 py-2 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${
-                    copied
-                      ? 'bg-green-600 text-white'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
-                  }`}
-                >
-                  {copied ? (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Copy URL
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
+            <EnquiryUrlCopy label="B2B Enquiry Form" url={getEnquiryFormUrl()} />
           </div>
 
           {/* Tabs */}

@@ -8,10 +8,11 @@ import { User, USER_ROLE, B2B_LEAD_STAGE, FOLLOWUP_STATUS, LEAD_STAGE, FollowUp 
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
-import FollowUpCalendar from '@/components/FollowUpCalendar';
-import FollowUpSidebar from '@/components/FollowUpSidebar';
+import FollowUpCalendarGrid from '@/components/FollowUpCalendarGrid';
 import B2BFollowUpFormPanel from '@/components/B2BFollowUpFormPanel';
 import MobileRecordCard from '@/components/MobileRecordCard';
+import { ListPageStatGrid } from '@/components/SuperAdminRoleDetailFrame';
+import PageStatCard from '@/components/PageStatCard';
 
 // Adapter: map B2B follow-up data to FollowUp shape for calendar/sidebar
 function adaptB2BFollowUps(b2bFollowUps: any[]): FollowUp[] {
@@ -329,67 +330,50 @@ export default function B2BOpsDetailPage() {
           </div>
 
           {/* Follow-up Summary Cards */}
-          <div className="mb-6 grid grid-cols-3 gap-3 sm:gap-4 md:mb-8">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Today&apos;s Follow-ups</p>
-                  <h3 className="text-2xl font-extrabold text-blue-600 mt-1">{followUpSummary?.counts?.today || 0}</h3>
-                </div>
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Missed Follow-ups</p>
-                  <h3 className="text-2xl font-extrabold text-red-600 mt-1">{followUpSummary?.counts?.missed || 0}</h3>
-                </div>
-                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Upcoming Follow-ups</p>
-                  <h3 className="text-2xl font-extrabold text-green-600 mt-1">{followUpSummary?.counts?.upcoming || 0}</h3>
-                </div>
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ListPageStatGrid columns={3}>
+            <PageStatCard
+              compact
+              title="Today's Follow-ups"
+              mobileTitle="Today"
+              value={followUpSummary?.counts?.today || 0}
+              color="blue"
+            />
+            <PageStatCard
+              compact
+              title="Missed Follow-ups"
+              mobileTitle="Missed"
+              value={followUpSummary?.counts?.missed || 0}
+              color="purple"
+            />
+            <PageStatCard
+              compact
+              title="Upcoming Follow-ups"
+              mobileTitle="Upcoming"
+              value={followUpSummary?.counts?.upcoming || 0}
+              color="green"
+            />
+          </ListPageStatGrid>
 
           {/* Collapsed Calendar Icon */}
           {calendarCollapsed && (
-            <div className="flex justify-end mb-4">
+            <div className="mb-4 flex justify-stretch sm:justify-end">
               <button
+                type="button"
                 onClick={handleExpandCalendar}
-                className="flex items-center gap-2 px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-300 transition-all"
+                className="flex w-full items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition-all hover:border-blue-300 hover:shadow-md sm:w-auto"
               >
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100">
+                  <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <div className="text-left">
-                  <p className="font-semibold text-gray-900 text-sm">Follow-Up Calendar</p>
+                <div className="min-w-0 text-left">
+                  <p className="text-sm font-semibold text-gray-900">Follow-Up Calendar</p>
                   <p className="text-xs text-gray-500">
                     {allFollowUps.length} scheduled • {followUpSummary?.counts?.missed || 0} missed
                   </p>
                 </div>
-                <svg className="w-5 h-5 text-gray-400 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="ml-2 h-5 w-5 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
@@ -398,32 +382,20 @@ export default function B2BOpsDetailPage() {
 
           {/* Calendar and Sidebar Section (Read-only for SA) */}
           {!calendarCollapsed && (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-              <div className="lg:col-span-3">
-                <FollowUpCalendar
-                  followUps={adaptB2BFollowUps(allFollowUps)}
-                  onFollowUpSelect={(fu: any) => {
-                    const orig = allFollowUps.find((f: any) => f._id === fu._id);
-                    setSelectedFollowUp(orig || fu);
-                    setShowFollowUpPanel(true);
-                  }}
-                />
-              </div>
-              <div className="lg:col-span-1">
-                <FollowUpSidebar
-                  today={todayFollowUps}
-                  missed={missedFollowUps}
-                  upcoming={upcomingFollowUps}
-                  onFollowUpClick={(fu: any) => {
-                    const orig = allFollowUps.find((f: any) => f._id === fu._id);
-                    setSelectedFollowUp(orig || fu);
-                    setShowFollowUpPanel(true);
-                  }}
-                  basePath="/super-admin/b2b/leads"
-                  showLeadLink={true}
-                />
-              </div>
-            </div>
+            <FollowUpCalendarGrid
+              className="mb-6 md:mb-8"
+              followUps={adaptB2BFollowUps(allFollowUps)}
+              today={todayFollowUps}
+              missed={missedFollowUps}
+              upcoming={upcomingFollowUps}
+              onFollowUpSelect={(fu: FollowUp) => {
+                const orig = allFollowUps.find((f: any) => f._id === fu._id);
+                setSelectedFollowUp(orig || fu);
+                setShowFollowUpPanel(true);
+              }}
+              basePath="/super-admin/b2b/leads"
+              showLeadLink={true}
+            />
           )}
 
           {/* Leads Table */}

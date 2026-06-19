@@ -105,7 +105,7 @@ export default function AdvisorEducationPlanningPricingPage() {
           <p className="text-gray-500 mt-1 max-w-2xl">Set the selling prices for your students&apos; Education Planning plans.</p>
         </div>
 
-        <div className="p-6 lg:p-8">
+        <div className="p-4 pb-24 sm:p-6 md:pb-8 lg:p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {plans.map((plan) => {
               const price = pricing?.[plan.key];

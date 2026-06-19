@@ -6,8 +6,7 @@ import { authAPI, advisorAPI, followUpAPI } from '@/lib/api';
 import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE, FollowUp, FOLLOWUP_STATUS, MEETING_TYPE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import { format } from 'date-fns';
-import FollowUpCalendar from '@/components/FollowUpCalendar';
-import FollowUpSidebar from '@/components/FollowUpSidebar';
+import FollowUpCalendarGrid from '@/components/FollowUpCalendarGrid';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
 import AdvisorLayout from '@/components/AdvisorLayout';
 import {
@@ -733,27 +732,15 @@ export default function AdvisorLeadDetailPage() {
         </div>
 
         {/* Follow-Up Calendar and Overview */}
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Calendar Section */}
-          <div className="lg:col-span-3">
-            <FollowUpCalendar
-              followUps={followUps}
-              onFollowUpSelect={handleFollowUpClick}
-              leadName={lead.name}
-            />
-          </div>
-
-          {/* Sidebar Section */}
-          <div className="lg:col-span-1">
-            <FollowUpSidebar
-              today={todayFollowUps}
-              missed={missedFollowUps}
-              upcoming={upcomingFollowUps}
-              onFollowUpClick={handleFollowUpClick}
-              leadName={lead.name}
-            />
-          </div>
-        </div>
+        <FollowUpCalendarGrid
+          className="mt-6"
+          followUps={followUps}
+          today={todayFollowUps}
+          missed={missedFollowUps}
+          upcoming={upcomingFollowUps}
+          onFollowUpSelect={handleFollowUpClick}
+          leadName={lead.name}
+        />
 
         {/* Follow-Ups History Section */}
           <div className="mt-6">

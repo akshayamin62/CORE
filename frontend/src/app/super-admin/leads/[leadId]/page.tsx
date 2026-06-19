@@ -7,8 +7,7 @@ import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE, FollowUp, FOLLOWUP_STA
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { format } from 'date-fns';
-import FollowUpCalendar from '@/components/FollowUpCalendar';
-import FollowUpSidebar from '@/components/FollowUpSidebar';
+import FollowUpCalendarGrid from '@/components/FollowUpCalendarGrid';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
 import { getFullName } from '@/utils/nameHelpers';
 import {
@@ -462,29 +461,16 @@ export default function SuperAdminLeadDetailPage() {
             </div>
           </div>
 
-          {/* Follow-Up Calendar and Overview - Separate sections like dashboard */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
-            {/* Calendar Section */}
-            <div className="lg:col-span-3">
-              <FollowUpCalendar
-                followUps={followUps}
-                onFollowUpSelect={handleFollowUpClick}
-                leadName={lead.name}
-              />
-            </div>
-
-            {/* Sidebar Section */}
-            <div className="lg:col-span-1">
-              <FollowUpSidebar
-                today={todayFollowUps}
-                missed={missedFollowUps}
-                upcoming={upcomingFollowUps}
-                onFollowUpClick={handleFollowUpClick}
-                leadName={lead.name}
-                basePath="/super-admin/leads"
-              />
-            </div>
-          </div>
+          <FollowUpCalendarGrid
+            className="mb-6"
+            followUps={followUps}
+            today={todayFollowUps}
+            missed={missedFollowUps}
+            upcoming={upcomingFollowUps}
+            onFollowUpSelect={handleFollowUpClick}
+            leadName={lead.name}
+            basePath="/super-admin/leads"
+          />
 
           {/* Follow-Ups History Section - Full Width */}
           <div className="mb-6">

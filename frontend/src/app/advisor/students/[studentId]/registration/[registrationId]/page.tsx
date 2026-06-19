@@ -11,8 +11,7 @@ import FormPartsNavigation from '@/components/FormPartsNavigation';
 import FormSectionsNavigation from '@/components/FormSectionsNavigation';
 import StudentFormHeader from '@/components/StudentFormHeader';
 import ProgramSection from '@/components/ProgramSection';
-import OpsScheduleCalendar from '@/components/OpsScheduleCalendar';
-import TeamMeetSidebar from '@/components/TeamMeetSidebar';
+import OpsCalendarGrid from '@/components/OpsCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
 import toast, { Toaster } from 'react-hot-toast';
@@ -478,14 +477,18 @@ export default function AdvisorStudentFormViewPage() {
                   </div>
                 </div>
                 <div>
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <div className="lg:col-span-3">
-                      <OpsScheduleCalendar schedules={opsTasks} onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }} onDateSelect={() => {}} teamMeets={teamMeets} onTeamMeetSelect={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }} currentUserId={currentUserId} />
-                    </div>
-                    <div className="lg:col-span-1">
-                      <TeamMeetSidebar teamMeets={teamMeets} onTeamMeetClick={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }} onScheduleClick={isOwnRegistration ? handleScheduleTeamMeet : undefined} currentUserId={currentUserId} />
-                    </div>
-                  </div>
+                  <OpsCalendarGrid
+                    title="Schedule"
+                    subtitle="Student meetings and tasks"
+                    schedules={opsTasks}
+                    teamMeets={teamMeets}
+                    currentUserId={currentUserId}
+                    sidebar="teamMeet"
+                    onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
+                    onDateSelect={() => {}}
+                    onTeamMeetSelect={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
+                    onTeamMeetClick={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
+                  />
                 </div>
               </div>
             );
@@ -662,26 +665,18 @@ export default function AdvisorStudentFormViewPage() {
                 </div>
 
                 <div>
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <div className="lg:col-span-3">
-                      <OpsScheduleCalendar
-                        schedules={opsTasks}
-                        onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
-                        onDateSelect={() => {}}
-                        teamMeets={teamMeets}
-                        onTeamMeetSelect={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
-                        currentUserId={currentUserId}
-                      />
-                    </div>
-                    <div className="lg:col-span-1">
-                      <TeamMeetSidebar
-                        teamMeets={teamMeets}
-                        onTeamMeetClick={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
-                        onScheduleClick={isOwnRegistration ? handleScheduleTeamMeet : undefined}
-                        currentUserId={currentUserId}
-                      />
-                    </div>
-                  </div>
+                  <OpsCalendarGrid
+                    title="Schedule"
+                    subtitle="Student meetings and tasks"
+                    schedules={opsTasks}
+                    teamMeets={teamMeets}
+                    currentUserId={currentUserId}
+                    sidebar="teamMeet"
+                    onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
+                    onDateSelect={() => {}}
+                    onTeamMeetSelect={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
+                    onTeamMeetClick={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
+                  />
                 </div>
               </div>
             );
@@ -697,10 +692,10 @@ export default function AdvisorStudentFormViewPage() {
               {currentSection && currentPart && (
                 <div className="mb-6">
                   {currentPart.key === 'APPLICATION' && (currentSection.title === 'Apply to Program' || currentSection.title === 'Applied Program') ? (
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
-                      <div className="bg-blue-600 px-6 py-4 -mx-6 -mt-6 mb-6 border-b border-blue-700">
-                        <h3 className="text-xl font-semibold text-white">{currentSection.title}</h3>
-                        {currentSection.description && <p className="text-indigo-100 text-sm mt-1">{currentSection.description}</p>}
+                    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
+                      <div className="-mx-4 -mt-4 mb-4 border-b border-blue-700 bg-blue-600 px-4 py-3 sm:-mx-6 sm:-mt-6 sm:px-6 sm:py-4">
+                        <h3 className="text-lg font-semibold text-white sm:text-xl">{currentSection.title}</h3>
+                        {currentSection.description && <p className="mt-1 text-sm text-indigo-100">{currentSection.description}</p>}
                       </div>
                       <ProgramSection studentId={studentId} sectionType={currentSection.title === 'Apply to Program' ? 'available' : 'applied'} registrationId={registrationId} userRole={!isOwnRegistration ? "REFERRER" : "ADVISOR"} isReadOnly={!isOwnRegistration} />
                     </div>

@@ -1,6 +1,6 @@
 /** Shared responsive class strings for student detail pages (mobile-first, desktop unchanged). */
 
-export const studentPagePadding = 'px-4 py-4 sm:px-6 sm:py-6 lg:p-8';
+export const studentPagePadding = 'px-4 py-4 pb-24 sm:px-6 sm:py-6 md:pb-8 lg:p-8';
 
 export const studentCardClass =
   'mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6 sm:p-6';
@@ -62,3 +62,22 @@ export const registrationNavBtnClass =
 
 export const activityCalendarPopupClass =
   'absolute right-0 top-full z-50 mt-2 w-[min(420px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl animate-fadeIn';
+
+/** Parent detail pages — compact 2-col meta on mobile */
+export const parentMetaGridClass =
+  'grid grid-cols-2 gap-x-3 gap-y-3 border-t border-gray-200 pt-3 sm:grid-cols-3 sm:gap-4 sm:pt-4 lg:grid-cols-5';
+
+export const parentMetaItemClass = 'min-w-0';
+
+export const parentMetaLabelClass = 'mb-0.5 text-xs text-gray-500 sm:text-sm';
+
+export const parentMetaValueClass = 'truncate text-sm font-medium text-gray-900';
+
+export const parentLinkedSectionClass =
+  'rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-6';
+
+export const parentLinkedStudentRowClass =
+  'flex flex-col gap-3 border-b border-gray-100 py-3 last:border-0 sm:flex-row sm:items-center sm:justify-between';
+
+export const parentLinkedStudentBtnClass =
+  'w-full shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-center text-xs font-medium text-white transition-colors hover:bg-blue-700 sm:w-auto sm:py-1.5';

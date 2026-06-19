@@ -6,8 +6,7 @@ import { authAPI, superAdminAPI } from '@/lib/api';
 import { User, USER_ROLE, TeamMeet, TEAMMEET_STATUS } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
-import TeamMeetCalendar from '@/components/TeamMeetCalendar';
-import TeamMeetSidebar from '@/components/TeamMeetSidebar';
+import TeamMeetCalendarGrid from '@/components/TeamMeetCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
@@ -386,25 +385,11 @@ export default function SuperAdminAdminDashboardPage() {
 
               {/* Team Meet Section */}
               <div className="mt-6 sm:mt-8">
-                  <div className="grid grid-cols-1 gap-4 lg:grid-cols-4 lg:gap-6">
-                    {/* Calendar Section */}
-                    <div className="lg:col-span-3">
-                      <TeamMeetCalendar
-                        teamMeets={teamMeets}
-                        onTeamMeetSelect={handleTeamMeetSelect}
-                        currentUserId={adminId}
-                      />
-                    </div>
-
-                    {/* Sidebar Section - No schedule button for read only */}
-                    <div className="lg:col-span-1">
-                      <TeamMeetSidebar
-                        teamMeets={teamMeets}
-                        onTeamMeetClick={handleTeamMeetSelect}
-                        currentUserId={adminId}
-                      />
-                    </div>
-                  </div>
+                <TeamMeetCalendarGrid
+                  teamMeets={teamMeets}
+                  onTeamMeetSelect={handleTeamMeetSelect}
+                  currentUserId={adminId}
+                />
               </div>
             </>
           )}

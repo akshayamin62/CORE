@@ -7,6 +7,7 @@ import { User, USER_ROLE, Lead, LEAD_STAGE, SERVICE_TYPE } from '@/types';
 import AdvisorLayout from '@/components/AdvisorLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import ListPageFilters from '@/components/ListPageFilters';
+import EnquiryUrlCopy from '@/components/EnquiryUrlCopy';
 import LeadMobileList, {
   getLeadServiceColor,
   getLeadStageColor,
@@ -21,7 +22,6 @@ export default function AdvisorLeadsPage() {
   const [allLeads, setAllLeads] = useState<Lead[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [enquiryFormUrl, setEnquiryFormUrl] = useState<string>('');
-  const [copySuccess, setCopySuccess] = useState(false);
 
   // Filters
   const [stageFilter, setStageFilter] = useState<string>('');
@@ -90,16 +90,6 @@ export default function AdvisorLeadsPage() {
     }
   };
 
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(enquiryFormUrl);
-      setCopySuccess(true);
-      toast.success('URL copied to clipboard!');
-      setTimeout(() => setCopySuccess(false), 2000);
-    } catch {
-      toast.error('Failed to copy URL');
-    }
-  };
 
   const handleStageCardClick = (stage: string | null) => {
     if (stage === null || stage === 'all') {
@@ -153,43 +143,21 @@ export default function AdvisorLeadsPage() {
     <>
       <Toaster position="top-right" />
       <AdvisorLayout user={user}>
-        <div className="p-4 sm:p-6 md:p-8">
+        <div className="p-4 pb-24 sm:p-6 md:p-8 md:pb-8">
           {/* Header */}
-          <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="mb-5 flex flex-col gap-3 sm:mb-6 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Lead Management</h1>
-              <p className="text-gray-600 mt-1">Manage and track your enquiry leads</p>
+              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Lead Management</h1>
+              <p className="mt-1 text-sm text-gray-600 sm:text-base">Manage and track your enquiry leads</p>
             </div>
 
             {enquiryFormUrl && (
-              <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-200 p-3 shadow-sm">
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500 mb-1">Your Enquiry Form URL</p>
-                  <p className="text-sm text-gray-700 truncate max-w-xs">{enquiryFormUrl}</p>
-                </div>
-                <button
-                  onClick={copyToClipboard}
-                  className={`p-2 rounded-lg transition-colors ${
-                    copySuccess ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  title="Copy URL"
-                >
-                  {copySuccess ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
+              <EnquiryUrlCopy label="Your Enquiry Form URL" url={enquiryFormUrl} />
             )}
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
             <StatCard title="Total Leads" value={totalLeads} icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>} color="blue" onClick={() => handleStageCardClick('all')} isActive={selectedStageCard === 'all'} showPercentage={false} />
             <StatCard title="New" value={newLeads} icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>} color="blue" onClick={() => handleStageCardClick(LEAD_STAGE.NEW)} isActive={selectedStageCard === LEAD_STAGE.NEW} percentage={totalLeads > 0 ? (newLeads / totalLeads) * 100 : 0} />
             <StatCard title="Hot" value={hotLeads} icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /></svg>} color="red" onClick={() => handleStageCardClick(LEAD_STAGE.HOT)} isActive={selectedStageCard === LEAD_STAGE.HOT} percentage={totalLeads > 0 ? (hotLeads / totalLeads) * 100 : 0} />
@@ -199,32 +167,33 @@ export default function AdvisorLeadsPage() {
             <StatCard title="Closed" value={closedLeads} icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>} color="gray" onClick={() => handleStageCardClick(LEAD_STAGE.CLOSED)} isActive={selectedStageCard === LEAD_STAGE.CLOSED} percentage={totalLeads > 0 ? (closedLeads / totalLeads) * 100 : 0} />
           </div>
 
-          {/* Search and Filters */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4 mb-6">
-            <div className="md:hidden">
-              <ListPageFilters
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                searchPlaceholder="Search by name or email..."
-                pillFilters={[
-                  {
-                    value: stageFilter,
-                    onChange: (value) => {
-                      setStageFilter(value);
-                      setSelectedStageCard(value || null);
+          {/* Search and Filters + Leads List */}
+          <div className="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="rounded-t-xl border-b border-gray-100 bg-gray-50 p-3 sm:p-4">
+              <div className="md:hidden">
+                <ListPageFilters
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  searchPlaceholder="Search by name or email..."
+                  pillFilters={[
+                    {
+                      value: stageFilter,
+                      onChange: (value) => {
+                        setStageFilter(value);
+                        setSelectedStageCard(value || null);
+                      },
+                      options: LEAD_STAGE_FILTER_OPTIONS,
                     },
-                    options: LEAD_STAGE_FILTER_OPTIONS,
-                  },
-                  {
-                    value: serviceFilter,
-                    onChange: setServiceFilter,
-                    options: LEAD_SERVICE_FILTER_OPTIONS,
-                  },
-                ]}
-                onClear={clearAllFilters}
-              />
-            </div>
-            <div className="hidden md:block">
+                    {
+                      value: serviceFilter,
+                      onChange: setServiceFilter,
+                      options: LEAD_SERVICE_FILTER_OPTIONS,
+                    },
+                  ]}
+                  onClear={clearAllFilters}
+                />
+              </div>
+              <div className="hidden md:block">
             <div className="flex flex-wrap gap-4">
               <div className="flex-1 min-w-[200px]">
                 <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
@@ -280,18 +249,16 @@ export default function AdvisorLeadsPage() {
               </div>
             </div>
             </div>
-          </div>
+            </div>
 
-          {/* Leads Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            {leads.length === 0 ? (
+            {filteredLeads.length === 0 ? (
               <div className="text-center py-12">
                 <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 <h3 className="text-lg font-medium text-gray-900 mb-1">No leads found</h3>
                 <p className="text-gray-500">
-                  {stageFilter || serviceFilter ? 'Try adjusting your filters' : 'Share your enquiry form URL to start receiving leads'}
+                  {stageFilter || serviceFilter || searchQuery ? 'Try adjusting your filters' : 'Share your enquiry form URL to start receiving leads'}
                 </p>
               </div>
             ) : (
@@ -363,6 +330,12 @@ export default function AdvisorLeadsPage() {
               </>
             )}
           </div>
+
+          {filteredLeads.length > 0 && (
+            <p className="text-sm text-gray-600">
+              Showing {filteredLeads.length} of {allLeads.length} total leads
+            </p>
+          )}
         </div>
       </AdvisorLayout>
     </>
@@ -393,23 +366,23 @@ function StatCard({ title, value, icon, color, onClick, isActive, percentage, sh
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md' : ''
+      className={`rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all sm:p-5 ${
+        onClick ? 'cursor-pointer hover:shadow-md active:scale-[0.98]' : ''
       } ${
         isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
       }`}
       onClick={onClick}
     >
-      <div className="flex items-center justify-between">
-        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${colorClasses[color]} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6`}>
           {icon}
         </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
+        <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{value}</h3>
       </div>
-      <div className="flex items-center justify-between mt-3">
-        <p className="text-sm font-semibold text-gray-700">{title}</p>
+      <div className="mt-2 flex items-center justify-between gap-2 sm:mt-3">
+        <p className="truncate text-xs font-semibold text-gray-700 sm:text-sm">{title}</p>
         {showPercentage && percentage !== undefined && (
-          <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
+          <p className="shrink-0 text-xs font-semibold text-gray-900 sm:text-sm">{percentage.toFixed(1)}%</p>
         )}
       </div>
     </div>

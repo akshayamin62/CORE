@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation';
 import { authAPI, opsScheduleAPI, teamMeetAPI } from '@/lib/api';
 import { User, USER_ROLE, OpsSchedule, OpsScheduleSummary, OpsScheduleStudent, CreateOpsScheduleData, TeamMeet, TEAMMEET_STATUS } from '@/types';
 import OpsLayout from '@/components/OpsLayout';
-import OpsScheduleCalendar from '@/components/OpsScheduleCalendar';
+import OpsCalendarGrid from '@/components/OpsCalendarGrid';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
-import OpsScheduleOverview from '@/components/OpsScheduleOverview';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
@@ -237,17 +236,15 @@ export default function OpsDashboardPage() {
     <>
       <Toaster position="top-right" />
       <OpsLayout user={user}>
-        <div className="p-8">
+        <div className="p-4 pb-24 sm:p-6 md:p-8 md:pb-8">
           {/* Header */}
-          <div className="mb-8 flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{getFullName(user)}</h1>
-            </div>
-            {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="text-right"><p className="text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></div>); })()}
+          <div className="mb-5 flex items-center justify-between gap-3 md:mb-8">
+            <h1 className="min-w-0 flex-1 truncate text-lg font-bold text-gray-900 sm:text-2xl md:text-3xl">{getFullName(user)}</h1>
+            {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="shrink-0 text-right"><p className="text-lg font-extrabold leading-none text-gray-900 sm:text-2xl md:text-3xl">Day {d}</p><p className="mt-0.5 text-[10px] text-gray-500 sm:text-sm">of {t.getFullYear()}</p></div>); })()}
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:mb-8 lg:grid-cols-3">
             <StatCard
               title="Assigned Students"
               value={students.length.toString()}
@@ -280,30 +277,21 @@ export default function OpsDashboardPage() {
             />
           </div>
 
-          {/* Unified Calendar Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
-            <div className="lg:col-span-3">
-              <OpsScheduleCalendar
-                schedules={schedules}
-                onScheduleSelect={handleScheduleSelect}
-                onDateSelect={handleDateSelect}
-                teamMeets={teamMeets}
-                onTeamMeetSelect={handleTeamMeetSelect}
-                currentUserId={currentUserId}
-              />
-            </div>
-            <div className="lg:col-span-1">
-              <OpsScheduleOverview
-                opsTasks={schedules}
-                teamMeets={teamMeets}
-                onTaskClick={handleScheduleSelect}
-                onTeamMeetClick={handleTeamMeetSelect}
-                onScheduleClick={() => { setSelectedSchedule(null); setSelectedDate(new Date()); setShowFormPanel(true); }}
-                onScheduleTeamMeet={() => { setSelectedTeamMeet(null); setSelectedTeamMeetDate(new Date()); setTeamMeetPanelMode('create'); setShowTeamMeetPanel(true); }}
-                currentUserId={user?._id || currentUserId}
-              />
-            </div>
-          </div>
+          <OpsCalendarGrid
+            title="Schedule Calendar"
+            subtitle="OPS tasks and team meetings"
+            summary={`${summary.counts.today} today • ${summary.counts.missed} missed • ${summary.counts.total} total`}
+            schedules={schedules}
+            teamMeets={teamMeets}
+            currentUserId={currentUserId}
+            onScheduleSelect={handleScheduleSelect}
+            onDateSelect={handleDateSelect}
+            onTeamMeetSelect={handleTeamMeetSelect}
+            onTaskClick={handleScheduleSelect}
+            onTeamMeetClick={handleTeamMeetSelect}
+            onScheduleClick={() => { setSelectedSchedule(null); setSelectedDate(new Date()); setShowFormPanel(true); }}
+            onScheduleTeamMeet={() => { setSelectedTeamMeet(null); setSelectedTeamMeetDate(new Date()); setTeamMeetPanelMode('create'); setShowTeamMeetPanel(true); }}
+          />
 
       {/* OPS Schedule Form Panel - Slide-in from left (overlay) */}
       <OpsScheduleFormPanel
@@ -331,11 +319,11 @@ export default function OpsDashboardPage() {
       />
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">
               Quick Actions
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <ActionButton
                 onClick={() => router.push('/ops/students')}
                 icon={
@@ -380,13 +368,13 @@ function StatCard({ title, value, icon, color }: StatCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+    <div className="rounded-xl border border-gray-200 bg-white p-3.5 shadow-sm transition-all hover:border-gray-300 hover:shadow-md sm:p-4 md:p-6">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="mb-0.5 truncate text-[11px] leading-tight text-gray-600 sm:mb-1 sm:text-sm">{title}</p>
+          <p className="text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">{value}</p>
         </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 md:h-12 md:w-12 ${colorClasses[color]} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-5 sm:[&>svg]:w-5 md:[&>svg]:h-6 md:[&>svg]:w-6`}>
           {icon}
         </div>
       </div>

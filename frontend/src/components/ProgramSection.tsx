@@ -488,11 +488,11 @@ export default function ProgramSection({
   if (sectionType === 'available') {
     return (
       <div className="space-y-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Available Programs</h3>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="text-base font-semibold text-gray-900 sm:text-lg">Available Programs</h3>
             {canAddPrograms && (
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-2 sm:gap-3">
                 {(userRole === 'OPS' || userRole === 'SUPER_ADMIN') && (
                   <>
                     <button
@@ -530,20 +530,20 @@ export default function ProgramSection({
           {programs.length > 0 ? (
             <div className="space-y-4">
               {programs.map((program, index) => (
-                <div key={program._id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                <div key={program._id} className="rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 sm:p-4">
                   {canSelectPrograms ? (
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       {/* Program Number Badge */}
-                      <div className="flex items-start gap-3 flex-1">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-xs">
+                      <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-start">
+                        <div className="min-w-0 flex-1">
+                          <div className="mb-1 flex items-start gap-2">
+                            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">
                               {index + 1}
                             </div>
-                            <h4 className="font-semibold text-gray-900">{program.programName}</h4>
+                            <h4 className="break-words font-semibold text-gray-900">{program.programName}</h4>
                           </div>
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <p className="font-semibold text-md italic text-gray-800">{program.university}</p>
+                        <div className="mb-2 flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-semibold italic text-gray-800 sm:text-base">{program.university}</p>
                           {classifyUniversity(program.university) === 'ivy-league' && (
                             <a
                               href="https://en.wikipedia.org/wiki/Ivy_League"
@@ -577,7 +577,7 @@ export default function ProgramSection({
                             Uploaded: <span className="font-medium">{new Date(program.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                           </p>
                         )}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                        <div className="grid grid-cols-1 gap-2 text-sm text-gray-600 sm:grid-cols-2 md:grid-cols-4 sm:gap-4">
                           {program.campus && <div><span className="font-medium">Campus:</span> {program.campus}</div>}
                           <div><span className="font-medium">Country:</span> {program.country}</div>
                           <div><span className="font-medium">Study Level:</span> {program.studyLevel}</div>
@@ -622,7 +622,7 @@ export default function ProgramSection({
                       {!expandedPrograms.has(program._id) ? (
                         <button
                           onClick={() => handleSelectProgram(program._id)}
-                          className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                          className="w-full shrink-0 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:ml-4 sm:w-auto"
                         >
                           Select
                         </button>

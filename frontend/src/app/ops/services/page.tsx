@@ -69,19 +69,19 @@ export default function OpsServicesPage() {
     <>
       <Toaster position="top-right" />
       <OpsLayout user={user}>
-        <div className="p-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Services</h1>
-            <p className="text-gray-600 mt-2">View all available services</p>
+        <div className="p-4 pb-24 sm:p-6 md:p-8 md:pb-8">
+          <div className="mb-5 md:mb-6">
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Services</h1>
+            <p className="mt-1 text-sm text-gray-600 sm:text-base">View all available services</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
             {services.map((service) => (
               <div
                 key={service._id}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-6"
               >
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.name}</h3>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900 sm:text-xl">{service.name}</h3>
                 <p className="text-gray-600 text-sm mb-4">{service.shortDescription}</p>
                 <div className="flex items-center justify-between">
                   <span

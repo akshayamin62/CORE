@@ -31,7 +31,7 @@ export default function OpsServiceProvidersPage() {
 
   return (
     <OpsLayout user={user}>
-      <div className="p-8">
+      <div className="p-4 pb-24 sm:p-6 md:p-8 md:pb-8">
         <ComingSoon title="Service Providers" />
       </div>
     </OpsLayout>

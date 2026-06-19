@@ -79,15 +79,14 @@ export default function StudentFormHeader({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-      {/* Top row: student info + trigger button */}
-      <div className="flex items-center justify-between gap-6">
-        <div className="shrink-0">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">{studentName}</h1>
-          <p className="text-gray-600">
+    <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <div className="min-w-0 shrink-0">
+          <h1 className="mb-1 text-xl font-bold text-gray-900 sm:text-2xl">{studentName}</h1>
+          <p className="text-sm text-gray-600 sm:text-base">
             Service: <span className="font-medium text-gray-900">{serviceName}</span>
             {planTier && (
-              <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-800 rounded text-xs font-medium">
+              <span className="ml-2 rounded px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-800">
                 {planTier}
               </span>
             )}
@@ -95,7 +94,7 @@ export default function StudentFormHeader({
         </div>
 
         {studentId && !open && editMode !== 'VIEW' && (
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
             {adminId && (
               <button
                 onClick={() => {

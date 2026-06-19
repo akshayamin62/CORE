@@ -10,8 +10,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
 import LeadDetailPanel from '@/components/LeadDetailPanel';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
-import ScheduleCalendar from '@/components/ScheduleCalendar';
-import ScheduleOverview from '@/components/ScheduleOverview';
+import ScheduleCalendarGrid from '@/components/ScheduleCalendarGrid';
 import ListPageFilters from '@/components/ListPageFilters';
 import SuperAdminRoleDetailFrame, {
   DetailInfoCard,
@@ -510,33 +509,18 @@ export default function AdminCounselorDetailPage() {
                 />
               ) : (
                 // Schedule Calendar + Sidebar (Read-only)
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                  {/* Calendar Section */}
-                  <div className="lg:col-span-3">
-                    <ScheduleCalendar
-                      followUps={followUps}
-                      teamMeets={teamMeets}
-                      onFollowUpSelect={handleFollowUpSelect}
-                      onTeamMeetSelect={handleTeamMeetSelect}
-                      currentUserId={counselor?.userId?._id}
-                      readOnly={true}
-                    />
-                  </div>
-
-                  {/* Sidebar Section */}
-                  <div className="lg:col-span-1">
-                    <ScheduleOverview
-                      followUps={followUps}
-                      teamMeets={teamMeets}
-                      onFollowUpClick={handleSidebarFollowUpClick}
-                      onTeamMeetClick={handleTeamMeetSelect}
-                      currentUserId={counselor?.userId?._id}
-                      showLeadLink={true}
-                      basePath="/admin/leads"
-                      readOnly={true}
-                    />
-                  </div>
-                </div>
+                <ScheduleCalendarGrid
+                  followUps={followUps}
+                  teamMeets={teamMeets}
+                  onFollowUpSelect={handleFollowUpSelect}
+                  onTeamMeetSelect={handleTeamMeetSelect}
+                  onFollowUpClick={handleSidebarFollowUpClick}
+                  onTeamMeetClick={handleTeamMeetSelect}
+                  currentUserId={counselor?.userId?._id}
+                  showLeadLink={true}
+                  basePath="/admin/leads"
+                  readOnly={true}
+                />
               )}
             </div>
           )}

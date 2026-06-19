@@ -8,8 +8,7 @@ import { User, USER_ROLE, B2B_LEAD_STAGE, FOLLOWUP_STATUS, LEAD_STAGE, FollowUp 
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
-import FollowUpCalendar from '@/components/FollowUpCalendar';
-import FollowUpSidebar from '@/components/FollowUpSidebar';
+import FollowUpCalendarGrid from '@/components/FollowUpCalendarGrid';
 import B2BFollowUpFormPanel from '@/components/B2BFollowUpFormPanel';
 import MobileRecordCard from '@/components/MobileRecordCard';
 import SuperAdminRoleDetailFrame, {
@@ -389,32 +388,20 @@ export default function B2BSalesDetailPage() {
 
           {/* Calendar and Sidebar Section (Read-only for SA) */}
           {!calendarCollapsed && (
-            <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-4 lg:gap-6 lg:mb-8">
-              <div className="lg:col-span-3">
-                <FollowUpCalendar
-                  followUps={adaptB2BFollowUps(allFollowUps)}
-                  onFollowUpSelect={(fu: any) => {
-                    const orig = allFollowUps.find((f: any) => f._id === fu._id);
-                    setSelectedFollowUp(orig || fu);
-                    setShowFollowUpPanel(true);
-                  }}
-                />
-              </div>
-              <div className="lg:col-span-1">
-                <FollowUpSidebar
-                  today={todayFollowUps}
-                  missed={missedFollowUps}
-                  upcoming={upcomingFollowUps}
-                  onFollowUpClick={(fu: any) => {
-                    const orig = allFollowUps.find((f: any) => f._id === fu._id);
-                    setSelectedFollowUp(orig || fu);
-                    setShowFollowUpPanel(true);
-                  }}
-                  basePath="/super-admin/b2b/leads"
-                  showLeadLink={true}
-                />
-              </div>
-            </div>
+            <FollowUpCalendarGrid
+              className="mb-6 md:mb-8"
+              followUps={adaptB2BFollowUps(allFollowUps)}
+              today={todayFollowUps}
+              missed={missedFollowUps}
+              upcoming={upcomingFollowUps}
+              onFollowUpSelect={(fu: FollowUp) => {
+                const orig = allFollowUps.find((f: any) => f._id === fu._id);
+                setSelectedFollowUp(orig || fu);
+                setShowFollowUpPanel(true);
+              }}
+              basePath="/super-admin/b2b/leads"
+              showLeadLink={true}
+            />
           )}
 
           {/* Leads Table */}

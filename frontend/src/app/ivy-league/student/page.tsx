@@ -6,8 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { teamMeetAPI, authAPI, opsScheduleAPI } from '@/lib/api';
 import { TeamMeet, OpsSchedule, TEAMMEET_STATUS, USER_ROLE } from '@/types';
-import OpsScheduleCalendar from '@/components/OpsScheduleCalendar';
-import TeamMeetSidebar from '@/components/TeamMeetSidebar';
+import OpsCalendarGrid from '@/components/OpsCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
 
@@ -387,11 +386,11 @@ function IvyScoreContent() {
 
     return (
         <>
-        <div className="p-8 md:p-12 max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        <div className="mx-auto max-w-6xl animate-in fade-in slide-in-from-bottom-4 p-4 duration-1000 sm:p-6 md:p-8 lg:p-12">
             {/* Read-Only Banner for Super Admin */}
             {readOnly && (
-                <div className="mb-8 bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-center gap-3">
-                    <svg className="w-6 h-6 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="mb-6 flex items-center gap-3 rounded-2xl border-2 border-amber-200 bg-amber-50 p-3 sm:mb-8 sm:p-4">
+                    <svg className="h-5 w-5 shrink-0 text-amber-600 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
@@ -400,16 +399,16 @@ function IvyScoreContent() {
             )}
 
             {/* Header */}
-            <header className="mb-16">
-                <div className="flex items-start justify-between gap-4">
-                    <div>
-                        <h1 className="text-6xl font-black text-gray-900 tracking-tighter mb-4 leading-tight">Your IVY League Readiness Score</h1>
-                        <p className="text-xl text-gray-400 font-medium max-w-2xl leading-relaxed">Track your competitive trajectory across all core admission pillars. Your score is real-time and reflects current Ivy Expert evaluations.</p>
+            <header className="mb-8 sm:mb-12 md:mb-16">
+                <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0">
+                        <h1 className="mb-3 text-2xl font-black leading-tight tracking-tighter text-gray-900 sm:mb-4 sm:text-4xl md:text-5xl lg:text-6xl">Your IVY League Readiness Score</h1>
+                        <p className="max-w-2xl text-sm font-medium leading-relaxed text-gray-400 sm:text-base md:text-xl">Track your competitive trajectory across all core admission pillars. Your score is real-time and reflects current Ivy Expert evaluations.</p>
                     </div>
-                    <div className="flex items-center gap-3 flex-shrink-0">
+                    <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
                         <button
                             onClick={() => setShowCalendar(prev => !prev)}
-                            className="inline-flex items-center gap-2 px-5 py-3 bg-brand-600 text-white text-sm font-bold rounded-xl hover:bg-brand-700 transition-all shadow-lg"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:bg-brand-700 sm:w-auto sm:px-5 sm:py-3"
                         >
                             {showCalendar ? (
                                 <>
@@ -432,7 +431,7 @@ function IvyScoreContent() {
                                 const uid = serviceData?.studentId?.userId || '';
                                 router.push(uid ? `/ivy-league/candidate-profile?userId=${uid}` : '/ivy-league/candidate-profile');
                             }}
-                            className="inline-flex items-center gap-2 px-5 py-3 bg-brand-600 text-white text-sm font-bold rounded-xl hover:bg-brand-700 transition-all shadow-lg"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:bg-brand-700 sm:w-auto sm:px-5 sm:py-3"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
@@ -446,28 +445,28 @@ function IvyScoreContent() {
 
             {!showCalendar && (<>
             {/* Overall Score Card - always visible */}
-            <div className="relative mb-16 group">
-                <div className="absolute inset-0 bg-brand-600 rounded-[3rem] blur-3xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
-                <div className="relative bg-white rounded-[3.5rem] shadow-[0_32px_64px_-16px_rgba(41,89,186,0.1)] border border-gray-100 p-12 overflow-hidden">
-                    <div className="flex flex-col md:flex-row items-center gap-12">
+            <div className="relative mb-8 group sm:mb-12 md:mb-16">
+                <div className="absolute inset-0 rounded-[2rem] bg-brand-600 opacity-10 blur-3xl transition-opacity group-hover:opacity-20 md:rounded-[3rem]"></div>
+                <div className="relative overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-6 shadow-[0_32px_64px_-16px_rgba(41,89,186,0.1)] sm:p-8 md:rounded-[3.5rem] md:p-12">
+                    <div className="flex flex-col items-center gap-8 md:flex-row md:gap-12">
                         <div className="flex-1 text-center md:text-left">
-                            <span className="text-[10px] font-black tracking-[0.4em] text-gray-400 uppercase mb-4 block">Calculated Potential</span>
-                            <div className="flex items-baseline justify-center md:justify-start gap-4 mb-6">
-                                <span className="text-9xl font-black text-brand-600 leading-none tracking-tighter">{overallScore.toFixed(1)}</span>
-                                <span className="text-3xl font-black text-gray-300">/ {totalMaxScore}</span>
+                            <span className="mb-3 block text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 sm:mb-4">Calculated Potential</span>
+                            <div className="mb-4 flex items-baseline justify-center gap-2 sm:mb-6 sm:gap-4 md:justify-start">
+                                <span className="text-5xl font-black leading-none tracking-tighter text-brand-600 sm:text-7xl md:text-9xl">{overallScore.toFixed(1)}</span>
+                                <span className="text-xl font-black text-gray-300 sm:text-2xl md:text-3xl">/ {totalMaxScore}</span>
                             </div>
-                            <div className="inline-flex items-center gap-3 bg-brand-50 text-brand-600 px-6 py-3 rounded-full text-base font-black uppercase tracking-widest">
+                            <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-4 py-2 text-sm font-black uppercase tracking-widest text-brand-600 sm:gap-3 sm:px-6 sm:py-3 sm:text-base">
                                 <span className="h-2 w-2 bg-brand-600 rounded-full animate-pulse"></span>
                                 {getScoreGrade(overallScore, totalMaxScore)}
                             </div>
                         </div>
 
-                        <div className="w-full md:w-[400px] space-y-6">
-                            <div className="flex items-end justify-between mb-2">
-                                <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Aggregate Readiness</span>
-                                <span className="text-2xl font-black text-brand-600">{overallPercentage.toFixed(0)}%</span>
+                        <div className="w-full space-y-4 md:w-[400px] md:space-y-6">
+                            <div className="mb-2 flex items-end justify-between">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 sm:text-xs">Aggregate Readiness</span>
+                                <span className="text-xl font-black text-brand-600 sm:text-2xl">{overallPercentage.toFixed(0)}%</span>
                             </div>
-                            <div className="h-8 bg-gray-50 rounded-2xl overflow-hidden p-1.5 border border-gray-100 flex items-center">
+                            <div className="flex h-6 items-center overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 p-1 sm:h-8 sm:p-1.5">
                                 <div
                                     className="h-full bg-brand-600 rounded-xl transition-all duration-1500 ease-out shadow-[0_0_20px_rgba(41,89,186,0.3)]"
                                     style={{ width: `${overallPercentage}%` }}
@@ -481,7 +480,7 @@ function IvyScoreContent() {
 
             {/* Individual Pointer Scores - hidden in read-only mode */}
             {!isRestrictedReadOnly && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
                 {scoreData.pointerScores.map((pointer) => {
                     // Use academic excellence score for Pointer 1 if available
                     // Use pointer5Score for Pointer 5 if available
@@ -497,14 +496,14 @@ function IvyScoreContent() {
                         <div
                             key={pointer.pointerNo}
                             onClick={() => handlePointerClick(pointer.pointerNo)}
-                            className={`bg-white rounded-[2.5rem] shadow-sm hover:shadow-2xl hover:translate-y-[-8px] transition-all duration-500 p-8 border border-gray-100 hover:border-brand-100 group flex flex-col ${isRestrictedReadOnly ? 'cursor-default' : 'cursor-pointer'}`}
+                            className={`group flex flex-col rounded-[1.5rem] border border-gray-100 bg-white p-5 shadow-sm transition-all duration-500 hover:border-brand-100 sm:rounded-[2.5rem] sm:p-8 sm:hover:shadow-2xl sm:hover:translate-y-[-8px] ${isRestrictedReadOnly ? 'cursor-default' : 'cursor-pointer'}`}
                         >
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 font-black text-xl border border-brand-100 shadow-inner group-hover:bg-brand-600 group-hover:text-white transition-colors">
+                            <div className="mb-4 flex items-center justify-between sm:mb-6">
+                                <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-brand-100 bg-brand-50 text-lg font-black text-brand-600 shadow-inner transition-colors group-hover:bg-brand-600 group-hover:text-white sm:h-12 sm:w-12 sm:text-xl">
                                         {pointer.pointerNo}
                                     </div>
-                                    <h3 className="font-black text-gray-900 text-lg leading-tight uppercase tracking-tight">
+                                    <h3 className="text-sm font-black uppercase leading-tight tracking-tight text-gray-900 sm:text-lg">
                                         {pointerNames[pointer.pointerNo]}
                                     </h3>
                                 </div>
@@ -662,26 +661,18 @@ function IvyScoreContent() {
                             <span className="text-xs font-bold text-amber-800 uppercase tracking-wide">Read-Only Calendar</span>
                         </div>
                     )}
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        <div className="lg:col-span-3">
-                            <OpsScheduleCalendar
-                                schedules={opsTasks}
-                                onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
-                                onDateSelect={readOnly ? undefined : handleTeamMeetDateSelect}
-                                teamMeets={teamMeets}
-                                onTeamMeetSelect={readOnly ? (tm: TeamMeet) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); } : handleTeamMeetSelect}
-                                currentUserId={currentUserId}
-                            />
-                        </div>
-                        <div className="lg:col-span-1">
-                            <TeamMeetSidebar
-                                teamMeets={teamMeets}
-                                onTeamMeetClick={readOnly ? (tm: TeamMeet) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); } : handleTeamMeetSelect}
-                                onScheduleClick={readOnly ? undefined : handleScheduleTeamMeet}
-                                currentUserId={currentUserId}
-                            />
-                        </div>
-                    </div>
+                    <OpsCalendarGrid
+                    title="Schedule"
+                    subtitle="Student meetings and tasks"
+                    schedules={opsTasks}
+                    teamMeets={teamMeets}
+                    currentUserId={currentUserId}
+                    sidebar="teamMeet"
+                    onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
+                    onDateSelect={() => {}}
+                    onTeamMeetSelect={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
+                    onTeamMeetClick={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
+                  />
                 </div>
             )}
         </div>

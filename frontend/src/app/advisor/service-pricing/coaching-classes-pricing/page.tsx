@@ -85,7 +85,7 @@ export default function AdvisorCoachingClassesPricingPage() {
           <p className="text-gray-500 mt-1 max-w-2xl">Set the selling prices for your students&apos; coaching classes.</p>
         </div>
 
-        <div className="p-6 lg:p-8">
+        <div className="p-4 pb-24 sm:p-6 md:pb-8 lg:p-8">
           <div>
             <CoachingClassCards
               plans={plans}

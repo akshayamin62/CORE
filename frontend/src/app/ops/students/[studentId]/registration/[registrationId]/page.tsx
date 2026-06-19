@@ -12,14 +12,18 @@ import FormSectionsNavigation from '@/components/FormSectionsNavigation';
 import FormSaveButtons from '@/components/FormSaveButtons';
 import StudentFormHeader from '@/components/StudentFormHeader';
 import ProgramSection from '@/components/ProgramSection';
-import OpsScheduleCalendar from '@/components/OpsScheduleCalendar';
-import TeamMeetSidebar from '@/components/TeamMeetSidebar';
+import OpsCalendarGrid from '@/components/OpsCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
 import axios from 'axios';
 import PaymentSection from '@/components/PaymentSection';
+import {
+  eduPlanStatCardClass,
+  eduPlanStatGridClass,
+  studentPagePadding,
+} from '@/components/studentDetailResponsive';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -420,11 +424,12 @@ export default function StudentFormEditPage() {
     <>
       <Toaster position="top-right" />
       <OpsLayout user={user}>
-        <div className="p-8">
+        <div className={studentPagePadding}>
           {/* Back Button */}
           <button
+            type="button"
             onClick={() => router.push(`/ops/students/${studentId}`)}
-            className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            className="mb-4 flex items-center text-sm text-gray-600 transition-colors hover:text-gray-900 sm:mb-6"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -484,11 +489,11 @@ export default function StudentFormEditPage() {
               setActiveView('form');
             };
             return (
-              <div className="mb-6 space-y-8">
+              <div className="mb-6 space-y-6 sm:space-y-8">
                 {/* Application Stats */}
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Application Overview</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                  <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">Application Overview</h2>
+                  <div className={eduPlanStatGridClass}>
                     {dashboardStatCards.map((card) => {
                       const colorMap: Record<string, string> = {
                         blue: 'bg-blue-100 text-blue-600', cyan: 'bg-cyan-100 text-cyan-600',
@@ -501,17 +506,17 @@ export default function StudentFormEditPage() {
                         <div
                           key={card.title}
                           onClick={() => navigateToApplicationSection(targetSection)}
-                          className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all cursor-pointer hover:border-blue-400 hover:shadow-md"
+                          className={`${eduPlanStatCardClass} cursor-pointer transition-all hover:border-blue-400 hover:shadow-md active:scale-[0.98]`}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className={`w-10 h-10 ${colorMap[card.color]} rounded-lg flex items-center justify-center`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${colorMap[card.color]} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6`}>
                               {card.icon}
                             </div>
-                            <h3 className="text-3xl font-extrabold text-gray-900">{card.value}</h3>
+                            <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{card.value}</h3>
                           </div>
-                          <div className="flex items-center justify-between mt-3">
-                            <p className="text-sm font-semibold text-gray-700">{card.title}</p>
-                            <p className="text-sm font-semibold text-gray-900">{pct.toFixed(1)}%</p>
+                          <div className="mt-2 flex items-center justify-between gap-2 sm:mt-3">
+                            <p className="truncate text-xs font-semibold text-gray-700 sm:text-sm">{card.title}</p>
+                            <p className="shrink-0 text-xs font-semibold text-gray-900 sm:text-sm">{pct.toFixed(1)}%</p>
                           </div>
                         </div>
                       );
@@ -519,39 +524,18 @@ export default function StudentFormEditPage() {
                   </div>
                 </div>
 
-                {/* Schedule Calendar Section */}
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-semibold text-gray-900">Schedule</h2>
-                      <p className="text-sm text-gray-500">Student meetings and tasks</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <div className="lg:col-span-3">
-                      <OpsScheduleCalendar
-                        schedules={opsTasks}
-                        onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
-                        onDateSelect={() => {}}
-                        teamMeets={teamMeets}
-                        onTeamMeetSelect={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
-                        currentUserId={currentUserId}
-                      />
-                    </div>
-                    <div className="lg:col-span-1">
-                      <TeamMeetSidebar
-                        teamMeets={teamMeets}
-                        onTeamMeetClick={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
-                        currentUserId={currentUserId}
-                      />
-                    </div>
-                  </div>
-                </div>
+                <OpsCalendarGrid
+                  title="Schedule"
+                  subtitle="Student meetings and tasks"
+                  schedules={opsTasks}
+                  teamMeets={teamMeets}
+                  currentUserId={currentUserId}
+                  sidebar="teamMeet"
+                  onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
+                  onDateSelect={() => {}}
+                  onTeamMeetSelect={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
+                  onTeamMeetClick={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
+                />
               </div>
             );
           })()}
@@ -589,11 +573,11 @@ export default function StudentFormEditPage() {
               {/* Check if this is Application section with program management */}
               {currentPart.key === 'APPLICATION' && 
                (currentSection.title === 'Apply to Program' || currentSection.title === 'Applied Program') ? (
-                <div className="bg-white rounded-lg border border-gray-200 p-6">
-                  <div className="bg-blue-600 px-6 py-4 -mx-6 -mt-6 mb-6 border-b border-blue-700">
-                    <h3 className="text-xl font-semibold text-white">{currentSection.title}</h3>
+                <div className="overflow-hidden rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
+                  <div className="-mx-4 -mt-4 mb-4 border-b border-blue-700 bg-blue-600 px-4 py-3 sm:-mx-6 sm:-mt-6 sm:px-6 sm:py-4">
+                    <h3 className="text-lg font-semibold text-white sm:text-xl">{currentSection.title}</h3>
                     {currentSection.description && (
-                      <p className="text-blue-100 text-sm mt-1">{currentSection.description}</p>
+                      <p className="mt-1 text-sm text-blue-100">{currentSection.description}</p>
                     )}
                   </div>
                   <ProgramSection

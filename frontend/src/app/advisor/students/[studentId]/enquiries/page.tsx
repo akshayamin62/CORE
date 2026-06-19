@@ -76,66 +76,67 @@ export default function AdvisorStudentEnquiriesPage() {
     <AdvisorLayout user={user}>
       <Toaster position="top-right" />
       <div className="bg-gray-50 min-h-[calc(100vh-5rem)]">
-        <div className="max-w-7xl mx-auto p-6 lg:p-8">
+        <div className="mx-auto max-w-7xl p-4 pb-24 sm:p-6 md:pb-8 lg:p-8">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Student Service Enquiries</h1>
-              <p className="text-gray-500 mt-1">All service enquiries sent by this student</p>
+          <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">Student Service Enquiries</h1>
+              <p className="mt-1 text-sm text-gray-500 sm:text-base">All service enquiries sent by this student</p>
             </div>
             <button
+              type="button"
               onClick={() => router.push(`/advisor/students/${studentId}`)}
-              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+              className="w-full shrink-0 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:w-auto"
             >
               ← Back
             </button>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
+            <div className="rounded-xl border-2 border-gray-200 bg-white p-3.5 shadow-sm sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 sm:h-10 sm:w-10">
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <span className="text-3xl font-extrabold text-gray-900">{enquiries.length}</span>
+                <span className="text-xl font-extrabold text-gray-900 sm:text-3xl">{enquiries.length}</span>
               </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Total Enquiries</p>
+              <p className="mt-2 text-xs font-semibold text-gray-700 sm:mt-3 sm:text-sm">Total Enquiries</p>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="rounded-xl border-2 border-gray-200 bg-white p-3.5 shadow-sm sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 sm:h-10 sm:w-10">
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <span className="text-3xl font-extrabold text-gray-900">{enquiries.filter(e => e.status === 'New').length}</span>
+                <span className="text-xl font-extrabold text-gray-900 sm:text-3xl">{enquiries.filter(e => e.status === 'New').length}</span>
               </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">New</p>
+              <p className="mt-2 text-xs font-semibold text-gray-700 sm:mt-3 sm:text-sm">New</p>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="rounded-xl border-2 border-gray-200 bg-white p-3.5 shadow-sm sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-yellow-100 text-yellow-600 sm:h-10 sm:w-10">
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                 </div>
-                <span className="text-3xl font-extrabold text-gray-900">{enquiries.filter(e => e.status === 'Contacted').length}</span>
+                <span className="text-xl font-extrabold text-gray-900 sm:text-3xl">{enquiries.filter(e => e.status === 'Contacted').length}</span>
               </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Contacted</p>
+              <p className="mt-2 text-xs font-semibold text-gray-700 sm:mt-3 sm:text-sm">Contacted</p>
             </div>
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="rounded-xl border-2 border-gray-200 bg-white p-3.5 shadow-sm sm:p-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-600 sm:h-10 sm:w-10">
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <span className="text-3xl font-extrabold text-gray-900">{enquiries.filter(e => e.status === 'Converted').length}</span>
+                <span className="text-xl font-extrabold text-gray-900 sm:text-3xl">{enquiries.filter(e => e.status === 'Converted').length}</span>
               </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Converted</p>
+              <p className="mt-2 text-xs font-semibold text-gray-700 sm:mt-3 sm:text-sm">Converted</p>
             </div>
           </div>
 

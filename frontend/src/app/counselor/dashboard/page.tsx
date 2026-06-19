@@ -6,8 +6,7 @@ import Link from 'next/link';
 import { authAPI, leadAPI, followUpAPI, teamMeetAPI } from '@/lib/api';
 import { User, USER_ROLE, LEAD_STAGE, FollowUp, FollowUpSummary, FOLLOWUP_STATUS, TeamMeet, TEAMMEET_STATUS, SERVICE_TYPE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
-import ScheduleCalendar from '@/components/ScheduleCalendar';
-import ScheduleOverview from '@/components/ScheduleOverview';
+import ScheduleCalendarGrid from '@/components/ScheduleCalendarGrid';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
 import LeadDetailPanel from '@/components/LeadDetailPanel';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
@@ -488,34 +487,18 @@ export default function CounselorDashboardPage() {
                   onFollowUpScheduled={handleFollowUpScheduled}
                 />
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                  {/* Schedule Calendar Section */}
-                  <div className="lg:col-span-3">
-                    <ScheduleCalendar
-                      followUps={followUps}
-                      teamMeets={teamMeets}
-                      onFollowUpSelect={handleFollowUpSelect}
-                      onTeamMeetSelect={handleTeamMeetSelect}
-                      onDateSelect={handleTeamMeetDateSelect}
-                      minimized={false}
-                      onToggleMinimize={() => setCalendarCollapsed(true)}
-                      currentUserId={user?.id || user?._id}
-                    />
-                  </div>
-
-                  {/* Schedule Overview Section */}
-                  <div className="lg:col-span-1">
-                    <ScheduleOverview
-                      followUps={followUps}
-                      teamMeets={teamMeets}
-                      onFollowUpClick={handleSidebarFollowUpClick}
-                      onTeamMeetClick={handleTeamMeetSelect}
-                      onScheduleClick={handleScheduleTeamMeet}
-                      currentUserId={user?.id || user?._id}
-                      showLeadLink={true}
-                    />
-                  </div>
-                </div>
+                <ScheduleCalendarGrid
+                  followUps={followUps}
+                  teamMeets={teamMeets}
+                  onFollowUpSelect={handleFollowUpSelect}
+                  onTeamMeetSelect={handleTeamMeetSelect}
+                  onDateSelect={handleTeamMeetDateSelect}
+                  onFollowUpClick={handleSidebarFollowUpClick}
+                  onTeamMeetClick={handleTeamMeetSelect}
+                  onScheduleClick={handleScheduleTeamMeet}
+                  currentUserId={user?.id || user?._id}
+                  showLeadLink={true}
+                />
               )}
             </div>
           )}

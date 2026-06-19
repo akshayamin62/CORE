@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
+import SuperAdminRoleDetailFrame from '@/components/SuperAdminRoleDetailFrame';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import AuthImage from '@/components/AuthImage';
@@ -537,25 +538,19 @@ export default function CandidateDetailPage() {
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={user}>
-        <div className="p-4 sm:p-6 md:p-8">
-          {/* Header */}
-          <div className="mb-6 flex items-start gap-3">
-            <button
-              onClick={() => router.push(backPath)}
-              className="shrink-0 rounded-lg p-2 transition-colors hover:bg-gray-100"
-            >
-              <svg className="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-                {candidate ? getFullName(candidate) : 'Student Details'}
-              </h1>
-              <p className="mt-1 text-sm text-gray-600 sm:text-base">
-                {candidate ? `${candidate.schoolName} • Grade ${candidate.currentGrade} • ${candidate.curriculum}` : ''}
+        <SuperAdminRoleDetailFrame
+          backLabel="Back to Candidates"
+          onBack={() => router.push(backPath)}
+        >
+          <div className="mb-4 sm:mb-6">
+            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl">
+              {candidate ? getFullName(candidate) : 'Student Details'}
+            </h1>
+            {candidate && (
+              <p className="mt-1 text-sm text-gray-600">
+                {candidate.schoolName} • Grade {candidate.currentGrade} • {candidate.curriculum}
               </p>
-            </div>
+            )}
           </div>
 
           {loading ? (
@@ -566,41 +561,42 @@ export default function CandidateDetailPage() {
             <>
               {/* Student Info Card */}
               {candidate && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Student Name</p>
-                      <p className="text-sm font-semibold text-gray-900 mt-1">{getFullName(candidate)}</p>
+                <div className="mb-4 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:mb-6 sm:p-6">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase text-gray-500 sm:text-xs">Student Name</p>
+                      <p className="mt-0.5 truncate text-sm font-semibold text-gray-900">{getFullName(candidate)}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Student Contact</p>
-                      <p className="text-sm text-gray-900 mt-1">{candidate.email}</p>
-                      {candidate.mobileNumber && <p className="text-sm text-gray-600">{candidate.mobileNumber}</p>}
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase text-gray-500 sm:text-xs">Student Contact</p>
+                      <p className="mt-0.5 truncate text-sm text-gray-900">{candidate.email}</p>
+                      {candidate.mobileNumber && <p className="truncate text-xs text-gray-600 sm:text-sm">{candidate.mobileNumber}</p>}
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Parent Name</p>
-                      <p className="text-sm font-semibold text-gray-900 mt-1">{getParentName(candidate)}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase text-gray-500 sm:text-xs">Parent Name</p>
+                      <p className="mt-0.5 truncate text-sm font-semibold text-gray-900">{getParentName(candidate)}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Parent Contact</p>
-                      <p className="text-sm text-gray-900 mt-1">{candidate.parentEmail}</p>
-                      <p className="text-sm text-gray-900">{candidate.parentMobile}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase text-gray-500 sm:text-xs">Parent Contact</p>
+                      <p className="mt-0.5 truncate text-sm text-gray-900">{candidate.parentEmail}</p>
+                      <p className="truncate text-xs text-gray-900 sm:text-sm">{candidate.parentMobile}</p>
                     </div>
                   </div>
                 </div>
               )}
 
               {/* Tab Navigation */}
-              <div className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+              <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-none sm:mb-6">
                 {[
-                  { key: 'test', label: '📝 Test Score', color: 'blue' },
-                  { key: 'student-interview', label: '🎓 Student Interview', color: 'green' },
-                  { key: 'parent-interview', label: '👨‍👩‍👧 Parent Interview', color: 'purple' },
+                  { key: 'test', label: '📝 Test Score', mobileLabel: '📝 Test', color: 'blue' },
+                  { key: 'student-interview', label: '🎓 Student Interview', mobileLabel: '🎓 Student', color: 'green' },
+                  { key: 'parent-interview', label: '👨‍👩‍👧 Parent Interview', mobileLabel: '👨‍👩‍👧 Parent', color: 'purple' },
                 ].map((tab) => (
                   <button
                     key={tab.key}
+                    type="button"
                     onClick={() => setActiveTab(tab.key as any)}
-                    className={`shrink-0 whitespace-nowrap px-4 py-2.5 rounded-lg font-semibold text-sm transition-colors sm:px-5 ${
+                    className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:px-5 sm:py-2.5 sm:text-sm ${
                       activeTab === tab.key
                         ? tab.color === 'blue'
                           ? 'bg-blue-600 text-white'
@@ -610,7 +606,8 @@ export default function CandidateDetailPage() {
                         : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                     }`}
                   >
-                    {tab.label}
+                    <span className="sm:hidden">{tab.mobileLabel}</span>
+                    <span className="hidden sm:inline">{tab.label}</span>
                   </button>
                 ))}
               </div>
@@ -628,49 +625,50 @@ export default function CandidateDetailPage() {
                   ) : (
                     <>
                       {/* Score Summary */}
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-bold text-gray-900">Score Summary</h3>
+                      <div className="mb-4 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:mb-6 sm:p-6">
+                        <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between">
+                          <h3 className="text-base font-bold text-gray-900 sm:text-lg">Score Summary</h3>
                           {clearances.testCleared ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold bg-green-100 text-green-700">
+                            <span className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-100 px-3 py-1.5 text-sm font-semibold text-green-700 sm:w-auto">
                               ✓ Test Cleared
                             </span>
                           ) : (
                             <button
+                              type="button"
                               onClick={() => handleClearStage('test')}
                               disabled={clearingStage === 'test'}
-                              className="px-4 py-1.5 rounded-lg text-sm font-semibold bg-green-600 text-white hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                              className="w-full rounded-lg bg-green-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                             >
                               {clearingStage === 'test' ? 'Clearing...' : '✓ Clear Test'}
                             </button>
                           )}
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                          <div className="bg-blue-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-blue-700">{testResult.totalScore}</p>
-                            <p className="text-xs font-semibold text-blue-600 mt-1">Total Score</p>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 md:grid-cols-5">
+                          <div className="rounded-lg bg-blue-50 p-2.5 text-center sm:p-4">
+                            <p className="text-xl font-extrabold text-blue-700 sm:text-2xl">{testResult.totalScore}</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-blue-600 sm:text-xs">Total Score</p>
                           </div>
-                          <div className="bg-gray-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-gray-700">{testResult.maxScore}</p>
-                            <p className="text-xs font-semibold text-gray-600 mt-1">Max Score</p>
+                          <div className="rounded-lg bg-gray-50 p-2.5 text-center sm:p-4">
+                            <p className="text-xl font-extrabold text-gray-700 sm:text-2xl">{testResult.maxScore}</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-gray-600 sm:text-xs">Max Score</p>
                           </div>
-                          <div className="bg-green-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-green-700">
+                          <div className="rounded-lg bg-green-50 p-2.5 text-center sm:p-4">
+                            <p className="text-xl font-extrabold text-green-700 sm:text-2xl">
                               {testResult.sections.reduce((s, sec) => s + sec.correct, 0)}
                             </p>
-                            <p className="text-xs font-semibold text-green-600 mt-1">Correct</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-green-600 sm:text-xs">Correct</p>
                           </div>
-                          <div className="bg-red-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-red-700">
+                          <div className="rounded-lg bg-red-50 p-2.5 text-center sm:p-4">
+                            <p className="text-xl font-extrabold text-red-700 sm:text-2xl">
                               {testResult.sections.reduce((s, sec) => s + sec.incorrect, 0)}
                             </p>
-                            <p className="text-xs font-semibold text-red-600 mt-1">Incorrect</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-red-600 sm:text-xs">Incorrect</p>
                           </div>
-                          <div className="bg-amber-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-amber-700">
+                          <div className="col-span-2 rounded-lg bg-amber-50 p-2.5 text-center sm:col-span-1 sm:p-4">
+                            <p className="text-xl font-extrabold text-amber-700 sm:text-2xl">
                               {testResult.sections.reduce((s, sec) => s + sec.unanswered, 0)}
                             </p>
-                            <p className="text-xs font-semibold text-amber-600 mt-1">Skipped</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-amber-600 sm:text-xs">Skipped</p>
                           </div>
                         </div>
                         {testResult.violations > 0 && (
@@ -732,10 +730,11 @@ export default function CandidateDetailPage() {
 
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                               {/* 1. Radar Chart — Strengths Profile */}
-                              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                                <h4 className="text-sm font-bold text-gray-900 mb-0.5 uppercase tracking-wide">Strengths Profile</h4>
-                                <p className="text-xs text-gray-900 mb-3 font-bold">Percentage scored in each section</p>
-                                <ResponsiveContainer width="100%" height={260}>
+                              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
+                                <h4 className="mb-0.5 text-xs font-bold uppercase tracking-wide text-gray-900 sm:text-sm">Strengths Profile</h4>
+                                <p className="mb-2 text-[10px] font-bold text-gray-900 sm:mb-3 sm:text-xs">Percentage scored in each section</p>
+                                <div className="h-[200px] sm:h-[260px]">
+                                <ResponsiveContainer width="100%" height="100%">
                                   <RadarChart data={radarData} outerRadius="75%">
                                     <PolarGrid stroke="#e5e7eb" />
                                     <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 600 }} />
@@ -743,14 +742,15 @@ export default function CandidateDetailPage() {
                                     <Radar name="Score %" dataKey="score" stroke="#6366f1" fill="#6366f1" fillOpacity={0.25} strokeWidth={2} dot={{ r: 4, fill: '#6366f1' }} />
                                   </RadarChart>
                                 </ResponsiveContainer>
+                                </div>
                               </div>
 
                               {/* 2. Donut — Overall Accuracy */}
-                              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                                <h4 className="text-sm font-bold text-gray-900 mb-0.5 uppercase tracking-wide">Overall Accuracy</h4>
-                                <p className="text-xs text-gray-900 mb-3 font-bold">Distribution of {totalQ} questions</p>
-                                <div className="relative">
-                                  <ResponsiveContainer width="100%" height={260}>
+                              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
+                                <h4 className="mb-0.5 text-xs font-bold uppercase tracking-wide text-gray-900 sm:text-sm">Overall Accuracy</h4>
+                                <p className="mb-2 text-[10px] font-bold text-gray-900 sm:mb-3 sm:text-xs">Distribution of {totalQ} questions</p>
+                                <div className="relative h-[200px] sm:h-[260px]">
+                                  <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                       <Pie
                                         data={donutData}
@@ -778,7 +778,7 @@ export default function CandidateDetailPage() {
                                     <span className="text-xs font-bold text-gray-400">Accuracy</span>
                                   </div>
                                 </div>
-                                <div className="flex justify-center gap-5 mt-1">
+                                <div className="mt-1 flex flex-wrap justify-center gap-2 sm:gap-5">
                                   {donutData.map((d) => (
                                     <div key={d.name} className="flex items-center gap-1.5">
                                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
@@ -789,10 +789,11 @@ export default function CandidateDetailPage() {
                               </div>
 
                               {/* 3. Bar Chart — Score vs Max */}
-                              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                                <h4 className="text-sm font-bold text-gray-900 mb-0.5 uppercase tracking-wide">Section Scores</h4>
-                                <p className="text-xs text-gray-900 mb-3 font-bold">Score compared to maximum marks</p>
-                                <ResponsiveContainer width="100%" height={260}>
+                              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
+                                <h4 className="mb-0.5 text-xs font-bold uppercase tracking-wide text-gray-900 sm:text-sm">Section Scores</h4>
+                                <p className="mb-2 text-[10px] font-bold text-gray-900 sm:mb-3 sm:text-xs">Score compared to maximum marks</p>
+                                <div className="h-[200px] sm:h-[260px]">
+                                <ResponsiveContainer width="100%" height="100%">
                                   <BarChart data={barData} barGap={4}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                                     <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 600 }} />
@@ -807,12 +808,13 @@ export default function CandidateDetailPage() {
                                     <Bar dataKey="Max Marks" fill="#ef4444" radius={[6, 6, 0, 0]} />
                                   </BarChart>
                                 </ResponsiveContainer>
+                                </div>
                               </div>
 
                               {/* 4. Section Accuracy — horizontal bars */}
-                              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                                <h4 className="text-sm font-bold text-gray-900 mb-0.5 uppercase tracking-wide">Section Accuracy</h4>
-                                <p className="text-xs text-gray-900 mb-3 font-bold">Percentage of attempted questions answered correctly</p>
+                              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
+                                <h4 className="mb-0.5 text-xs font-bold uppercase tracking-wide text-gray-900 sm:text-sm">Section Accuracy</h4>
+                                <p className="mb-2 text-[10px] font-bold text-gray-900 sm:mb-3 sm:text-xs">Percentage of attempted questions answered correctly</p>
                                 <div className="space-y-5 mt-2">
                                   {accuracyData.map((sec, idx) => (
                                     <div key={idx}>
@@ -836,11 +838,11 @@ export default function CandidateDetailPage() {
                       })()}
 
                       {/* Section Cards */}
-                      <div className="flex gap-4 mb-6">
+                      <div className="mb-4 flex flex-col gap-3 sm:mb-6 md:flex-row md:gap-4">
                         {testResult.sections.map((sec, idx) => (
                           <div
                             key={idx}
-                            className="flex-1 min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-all"
+                            className="min-w-0 flex-1 cursor-pointer rounded-xl border border-gray-200 bg-white p-3 shadow-sm transition-all hover:shadow-md sm:p-5"
                             style={{ borderLeftWidth: 4, borderLeftColor: SECTION_COLORS[idx] || '#6b7280' }}
                             onClick={() => { setActiveSectionIdx(idx); }}
                           >
@@ -881,8 +883,8 @@ export default function CandidateDetailPage() {
                       {/* Question-level Review */}
                       {testResult.sections[activeSectionIdx]?.status === 'submitted' &&
                        testResult.sections[activeSectionIdx].questions.length > 0 && (
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                          <h3 className="text-lg font-bold text-gray-900 mb-4">
+                        <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
+                          <h3 className="mb-3 text-base font-bold text-gray-900 sm:mb-4 sm:text-lg">
                             {SECTION_ICONS[activeSectionIdx]} {testResult.sections[activeSectionIdx].sectionName} — Questions
                           </h3>
                           <div className="space-y-5">
@@ -1022,7 +1024,7 @@ export default function CandidateDetailPage() {
                           }
                           setShowStudentScheduleForm((v) => !v);
                         }}
-                        className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition-colors"
+                        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50 sm:px-6 sm:py-4"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-green-100 text-green-600 flex items-center justify-center">
@@ -1124,9 +1126,9 @@ export default function CandidateDetailPage() {
                             const edit = getMeetEdit(m._id, m.status, (m as any).notes);
                             const dirty = !!meetEditState[m._id];
                             return (
-                            <div key={m._id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1 min-w-0">
+                            <div key={m._id} className="rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="min-w-0 flex-1">
                                   <p className="font-semibold text-gray-900 text-sm">{m.subject}</p>
                                   <p className="text-xs text-gray-500 mt-0.5">
                                     {new Date(m.scheduledDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at {m.scheduledTime} &bull; {m.duration} min &bull; {m.meetingType === 'ONLINE' ? 'Online' : 'In Person'}
@@ -1142,7 +1144,7 @@ export default function CandidateDetailPage() {
                                     </div>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-3 shrink-0">
+                                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
                                   <select
                                     value={edit.status}
                                     onChange={(e) => setMeetEditState((s) => ({ ...s, [m._id]: { ...getMeetEdit(m._id, m.status, (m as any).notes), status: e.target.value } }))}
@@ -1186,9 +1188,9 @@ export default function CandidateDetailPage() {
                     )}
 
                     {/* Overall header */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-600 sm:h-10 sm:w-10">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
@@ -1198,10 +1200,10 @@ export default function CandidateDetailPage() {
                           <p className="text-sm text-gray-500">Rate each question 1–5 ★. Section score = average of question scores.</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Overall Score</p>
-                          <p className="text-3xl font-extrabold text-green-700">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-4">
+                        <div className="text-left sm:text-right">
+                          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Overall Score</p>
+                          <p className="text-2xl font-extrabold text-green-700 sm:text-3xl">
                             {overallScore ?? '—'}
                             {overallScore && <span className="text-base font-semibold text-gray-400"> / 20</span>}
                           </p>
@@ -1209,7 +1211,7 @@ export default function CandidateDetailPage() {
                         <button
                           onClick={() => handleSaveInterview('student')}
                           disabled={saving}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold disabled:opacity-50"
+                          className="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 sm:w-auto"
                         >
                           {saving ? 'Saving...' : 'Save'}
                         </button>
@@ -1243,7 +1245,7 @@ export default function CandidateDetailPage() {
                       return (
                         <div key={sIdx} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                           {/* Section header */}
-                          <div className={`flex items-center justify-between px-6 py-4 border-b border-blue-500 ${cl.header}`}>
+                          <div className={`flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4 border-b border-blue-500 ${cl.header}`}>
                             <div>
                               <p className="text-xs font-semibold text-blue-100 uppercase tracking-wide mb-0.5">Section {sIdx + 1}</p>
                               <h4 className="text-base font-bold text-white">{section.icon} {section.title}</h4>
@@ -1367,7 +1369,7 @@ export default function CandidateDetailPage() {
                           }
                           setShowParentScheduleForm((v) => !v);
                         }}
-                        className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition-colors"
+                        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50 sm:px-6 sm:py-4"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
@@ -1469,9 +1471,9 @@ export default function CandidateDetailPage() {
                             const edit = getMeetEdit(m._id, m.status, (m as any).notes);
                             const dirty = !!meetEditState[m._id];
                             return (
-                            <div key={m._id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1 min-w-0">
+                            <div key={m._id} className="rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="min-w-0 flex-1">
                                   <p className="font-semibold text-gray-900 text-sm">{m.subject}</p>
                                   <p className="text-xs text-gray-500 mt-0.5">
                                     {new Date(m.scheduledDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at {m.scheduledTime} &bull; {m.duration} min &bull; {m.meetingMode === 'online' ? 'Online' : 'In Person'}
@@ -1488,7 +1490,7 @@ export default function CandidateDetailPage() {
                                     </div>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-3 shrink-0">
+                                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
                                   <select
                                     value={edit.status}
                                     onChange={(e) => setMeetEditState((s) => ({ ...s, [m._id]: { ...getMeetEdit(m._id, m.status, (m as any).notes), status: e.target.value } }))}
@@ -1532,9 +1534,9 @@ export default function CandidateDetailPage() {
                     )}
 
                     {/* Overall header */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-100 text-purple-600 sm:h-10 sm:w-10">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
@@ -1545,10 +1547,10 @@ export default function CandidateDetailPage() {
                           {candidate && <p className="text-xs text-gray-400 mt-1">Parent: {getParentName(candidate)}</p>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Overall Score</p>
-                          <p className="text-3xl font-extrabold text-purple-700">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-4">
+                        <div className="text-left sm:text-right">
+                          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Overall Score</p>
+                          <p className="text-2xl font-extrabold text-purple-700 sm:text-3xl">
                             {overallScore ?? '—'}
                             {overallScore && <span className="text-base font-semibold text-gray-400"> / 20</span>}
                           </p>
@@ -1556,7 +1558,7 @@ export default function CandidateDetailPage() {
                         <button
                           onClick={() => handleSaveInterview('parent')}
                           disabled={saving}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-semibold disabled:opacity-50"
+                          className="w-full rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50 sm:w-auto"
                         >
                           {saving ? 'Saving...' : 'Save'}
                         </button>
@@ -1590,7 +1592,7 @@ export default function CandidateDetailPage() {
                       return (
                         <div key={sIdx} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                           {/* Section header */}
-                          <div className={`flex items-center justify-between px-6 py-4 border-b border-blue-500 ${cl.header}`}>
+                          <div className={`flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4 border-b border-blue-500 ${cl.header}`}>
                             <div>
                               <p className="text-xs font-semibold text-blue-100 uppercase tracking-wide mb-0.5">Section {sIdx + 1}</p>
                               <h4 className="text-base font-bold text-white">{section.icon} {section.title}</h4>
@@ -1670,7 +1672,7 @@ export default function CandidateDetailPage() {
               })()}
             </>
           )}
-        </div>
+        </SuperAdminRoleDetailFrame>
       </SuperAdminLayout>
     </>
   );

@@ -8,6 +8,7 @@ import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
 import ListPageFilters from '@/components/ListPageFilters';
+import EnquiryUrlCopy from '@/components/EnquiryUrlCopy';
 import LeadMobileList, {
   getLeadServiceColor,
   getLeadStageColor,
@@ -24,7 +25,6 @@ export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [counselors, setCounselors] = useState<any[]>([]);
   const [enquiryFormUrl, setEnquiryFormUrl] = useState<string>('');
-  const [copySuccess, setCopySuccess] = useState(false);
 
   // Filters
   const [stageFilter, setStageFilter] = useState<string>('');
@@ -116,17 +116,6 @@ export default function AdminLeadsPage() {
       setEnquiryFormUrl(response.data.data.url);
     } catch (error) {
       console.error('Error fetching enquiry form URL:', error);
-    }
-  };
-
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(enquiryFormUrl);
-      setCopySuccess(true);
-      toast.success('URL copied to clipboard!');
-      setTimeout(() => setCopySuccess(false), 2000);
-    } catch (error) {
-      toast.error('Failed to copy URL');
     }
   };
 
@@ -280,33 +269,8 @@ export default function AdminLeadsPage() {
               <p className="mt-1 text-sm text-gray-600 sm:text-base">Manage and track your enquiry leads</p>
             </div>
 
-            {/* Enquiry Form URL */}
             {enquiryFormUrl && (
-              <div className="flex w-full flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center lg:w-auto">
-                <div className="min-w-0 flex-1">
-                  <p className="mb-1 text-xs text-gray-500">Your Enquiry Form URL</p>
-                  <p className="break-all text-sm text-gray-700 lg:max-w-xs lg:truncate">{enquiryFormUrl}</p>
-                </div>
-                <button
-                  onClick={copyToClipboard}
-                  className={`p-2 rounded-lg transition-colors ${
-                    copySuccess
-                      ? 'bg-green-100 text-green-600'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                  title="Copy URL"
-                >
-                  {copySuccess ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
+              <EnquiryUrlCopy label="Your Enquiry Form URL" url={enquiryFormUrl} />
             )}
           </div>
 

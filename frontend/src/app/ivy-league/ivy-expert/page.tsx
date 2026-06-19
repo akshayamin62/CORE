@@ -7,8 +7,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { teamMeetAPI, authAPI, opsScheduleAPI } from '@/lib/api';
 import { TeamMeet, OpsSchedule, TEAMMEET_STATUS } from '@/types';
-import OpsScheduleCalendar from '@/components/OpsScheduleCalendar';
-import TeamMeetSidebar from '@/components/TeamMeetSidebar';
+import OpsCalendarGrid from '@/components/OpsCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
 
@@ -623,24 +622,18 @@ function IvyExpertDashboard() {
                                 <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                                 <span className="text-xs font-bold text-amber-800 uppercase tracking-wide">Read-Only Calendar</span>
                             </div>
-                            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                                <div className="lg:col-span-3">
-                                    <OpsScheduleCalendar
-                                        schedules={opsTasks}
-                                        onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
-                                        teamMeets={teamMeets}
-                                        onTeamMeetSelect={(tm: TeamMeet) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
-                                        currentUserId={currentUserId}
-                                    />
-                                </div>
-                                <div className="lg:col-span-1">
-                                    <TeamMeetSidebar
-                                        teamMeets={teamMeets}
-                                        onTeamMeetClick={(tm: TeamMeet) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
-                                        currentUserId={currentUserId}
-                                    />
-                                </div>
-                            </div>
+                            <OpsCalendarGrid
+                    title="Schedule"
+                    subtitle="Student meetings and tasks"
+                    schedules={opsTasks}
+                    teamMeets={teamMeets}
+                    currentUserId={currentUserId}
+                    sidebar="teamMeet"
+                    onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
+                    onDateSelect={() => {}}
+                    onTeamMeetSelect={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
+                    onTeamMeetClick={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
+                  />
                         </div>
                     )}
                 </div>
@@ -725,27 +718,19 @@ function IvyExpertDashboard() {
                         </div>
                     </div>
 
-                    {/* Calendar + TeamMeet Sidebar */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-2">
-                            <OpsScheduleCalendar
-                                schedules={[]}
-                                onScheduleSelect={() => { }}
-                                onDateSelect={handleTeamMeetDateSelect}
-                                teamMeets={teamMeets}
-                                onTeamMeetSelect={handleTeamMeetSelect}
-                                currentUserId={currentUserId}
-                            />
-                        </div>
-                        <div>
-                            <TeamMeetSidebar
-                                teamMeets={teamMeets}
-                                onTeamMeetClick={handleTeamMeetSelect}
-                                onScheduleClick={handleScheduleTeamMeet}
-                                currentUserId={currentUserId}
-                            />
-                        </div>
-                    </div>
+                    <OpsCalendarGrid
+                        title="Team Meet Calendar"
+                        subtitle="Schedule and manage team meetings"
+                        schedules={[]}
+                        teamMeets={teamMeets}
+                        currentUserId={currentUserId}
+                        sidebar="teamMeet"
+                        onScheduleSelect={() => {}}
+                        onDateSelect={handleTeamMeetDateSelect}
+                        onTeamMeetSelect={handleTeamMeetSelect}
+                        onTeamMeetClick={handleTeamMeetSelect}
+                        onScheduleTeamMeet={handleScheduleTeamMeet}
+                    />
                 </div>
             </div>
             <TeamMeetFormPanel

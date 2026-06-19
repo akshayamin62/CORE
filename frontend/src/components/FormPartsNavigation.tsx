@@ -28,15 +28,15 @@ export default function FormPartsNavigation({
   if (formStructure.length === 0 && !showDashboard && !showPayment) return null;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
-      <div className="flex border-b border-gray-200">
+    <div className="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="flex overflow-x-auto border-b border-gray-200 scrollbar-none">
         {showDashboard && (
           <button
             onClick={onDashboardClick}
-            className={`flex-1 px-6 py-4 font-medium transition-colors border-b-2 ${
+            className={`shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors md:flex-1 md:px-6 md:py-4 ${
               isDashboardActive
-                ? 'border-blue-600 text-blue-600 bg-blue-50'
-                : 'border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                ? 'border-blue-600 bg-blue-50 text-blue-600'
+                : 'border-transparent text-gray-700 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
             Dashboard
@@ -46,10 +46,10 @@ export default function FormPartsNavigation({
           <button
             key={formStruct.part.key}
             onClick={() => onPartChange(index)}
-            className={`flex-1 px-6 py-4 font-medium transition-colors border-b-2 ${
+            className={`shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors md:flex-1 md:px-6 md:py-4 ${
               !isDashboardActive && !isPaymentActive && currentPartIndex === index
-                ? 'border-blue-600 text-blue-600 bg-blue-50'
-                : 'border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                ? 'border-blue-600 bg-blue-50 text-blue-600'
+                : 'border-transparent text-gray-700 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
             {formStruct.part.title}
@@ -58,10 +58,10 @@ export default function FormPartsNavigation({
         {showPayment && (
           <button
             onClick={onPaymentClick}
-            className={`flex-1 px-6 py-4 font-medium transition-colors border-b-2 ${
+            className={`shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors md:flex-1 md:px-6 md:py-4 ${
               isPaymentActive
-                ? 'border-blue-600 text-blue-600 bg-blue-50'
-                : 'border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                ? 'border-blue-600 bg-blue-50 text-blue-600'
+                : 'border-transparent text-gray-700 hover:bg-gray-50 hover:text-gray-900'
             }`}
           >
             Payment
