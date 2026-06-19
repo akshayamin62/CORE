@@ -224,7 +224,7 @@ export default function FollowUpFormPanel({
       {isOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-[45] bg-black/30 md:hidden"
+          className="fixed inset-0 z-[65] bg-black/30 md:hidden"
           aria-label="Close follow-up panel"
           onClick={onClose}
         />
@@ -232,9 +232,9 @@ export default function FollowUpFormPanel({
 
       {/* Slide-in Panel from Left - compact, no full height */}
       <div 
-        className={`fixed z-[55] flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl transition-all duration-300 ease-in-out
+        className={`fixed z-[70] flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl transition-all duration-300 ease-in-out
           left-4 right-4 top-28 bottom-[calc(7.25rem+env(safe-area-inset-bottom,0px))]
-          md:left-4 md:right-auto md:top-[140px] md:bottom-auto md:w-[380px] md:max-h-[calc(100vh-220px)]
+          md:left-4 md:right-auto md:top-[140px] md:bottom-auto md:z-[55] md:w-[380px] md:max-h-[calc(100vh-220px)]
           ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-[120%] opacity-0 pointer-events-none md:-translate-x-full'}`}
       >
         {/* Compact Header */}

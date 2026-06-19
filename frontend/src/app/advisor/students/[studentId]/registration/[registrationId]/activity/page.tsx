@@ -22,6 +22,7 @@ import {
 } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import { activityCalendarPopupClass } from '@/components/studentDetailResponsive';
 
 /* ─────────── Calendar localizer ─────────── */
 const locales = { 'en-US': enUS };
@@ -130,8 +131,8 @@ function DurationDisplay({ value, label }: { value: number; label: string }) {
   const hrs = Math.floor(value / 60);
   const mins = value % 60;
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm text-gray-600 w-[250px] shrink-0">{label}</span>
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <span className="w-full shrink-0 text-sm text-gray-600 sm:w-[250px]">{label}</span>
       <div className="flex items-center gap-1">
         <span className="w-14 px-2 py-1 border border-gray-200 rounded text-center text-sm bg-gray-50 text-gray-600">{hrs}</span>
         <span className="text-xs text-gray-400">h</span>
@@ -380,7 +381,7 @@ function ActivityContent() {
   return (
     <AdvisorLayout>
       <Toaster position="top-right" />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 p-4 md:p-6 animate-fadeIn">
+      <div className="min-h-screen animate-fadeIn bg-gradient-to-br from-gray-50 via-white to-blue-50/30 p-4 pb-24 md:p-6 md:pb-6">
         {/* Top Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
           <div className="flex items-center gap-3">
@@ -407,7 +408,7 @@ function ActivityContent() {
               </button>
 
               {calOpen && (
-                <div className="absolute right-0 top-full mt-2 w-[420px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 animate-fadeIn overflow-hidden">
+                <div className={`${activityCalendarPopupClass} max-md:fixed max-md:inset-x-4 max-md:top-24 max-md:bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] max-md:mt-0 max-md:flex max-md:flex-col`}>
                   {/* Cal nav */}
                   <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50">
                     <div className="flex items-center justify-between mb-1.5">
@@ -441,7 +442,7 @@ function ActivityContent() {
                     </div>
                   </div>
                   {/* Cal body */}
-                  <div className="p-2" style={{ height: calView === 'month' ? 340 : 380 }}>
+                  <div className="min-h-0 flex-1 p-2 max-md:overflow-y-auto" style={{ height: calView === 'month' ? 340 : 380 }}>
                     <Calendar
                       localizer={localizer} events={calEvents}
                       startAccessor="start" endAccessor="end"
@@ -708,22 +709,34 @@ function ActivityContent() {
                                 <span className="font-semibold text-gray-700 text-sm uppercase tracking-wide">{domainName}</span>
                                 <span className="text-xs text-gray-400">{domainRows.filter(d => d.row.completed === 'Completed').length}/{domainRows.length} completed</span>
                               </div>
-                              <div className="p-3 space-y-1.5">
-                                <div className="grid grid-cols-[80px_1fr_100px_1fr] gap-1.5 text-xs font-semibold text-gray-400 uppercase px-0.5">
+                              <div className="space-y-2 p-3">
+                                <div className="hidden gap-1.5 px-0.5 text-xs font-semibold uppercase text-gray-400 md:grid md:grid-cols-[80px_1fr_100px_1fr]">
                                   <span>Session</span><span>Activity</span><span>Status</span><span>Experience</span>
                                 </div>
                                 {domainRows.map(({ sIdx, rIdx, row }) => (
-                                  <div key={`${sIdx}-${rIdx}`} className="grid grid-cols-[80px_1fr_100px_1fr] gap-1.5">
-                                    <span className="px-5 py-1.5 text-xs text-gray-500 flex items-center gap-1">
-                                      <span>{SESSION_ICONS[planner.plans[sIdx].session]}</span>
-                                    </span>
-                                    <span className="px-2 py-1.5 border border-gray-100 rounded text-xs bg-gray-50 text-gray-600 break-words min-w-0">{row.activity}</span>
-                                    <span className="px-1 py-1.5 border border-gray-200 rounded text-xs bg-gray-50 text-gray-600 text-center">
-                                      {row.completed || '—'}
-                                    </span>
-                                    <span className="px-2 py-1.5 border border-gray-200 rounded text-xs bg-gray-50 text-gray-600">
-                                      {row.experience || '—'}
-                                    </span>
+                                  <div key={`${sIdx}-${rIdx}`} className="rounded-lg border border-gray-100 bg-gray-50/80 p-3 md:grid md:grid-cols-[80px_1fr_100px_1fr] md:gap-1.5 md:border-0 md:bg-transparent md:p-0">
+                                    <div className="mb-2 flex items-center gap-2 md:mb-0 md:px-5 md:py-1.5">
+                                      <span className="text-xs font-semibold uppercase text-gray-400 md:hidden">Session</span>
+                                      <span className="flex items-center gap-1 text-xs text-gray-500">
+                                        <span>{SESSION_ICONS[planner.plans[sIdx].session]}</span>
+                                      </span>
+                                    </div>
+                                    <div className="mb-2 md:mb-0">
+                                      <span className="mb-1 block text-xs font-semibold uppercase text-gray-400 md:hidden">Activity</span>
+                                      <span className="block break-words rounded border border-gray-100 bg-gray-50 px-2 py-1.5 text-xs text-gray-600 md:min-w-0">{row.activity}</span>
+                                    </div>
+                                    <div className="mb-2 md:mb-0">
+                                      <span className="mb-1 block text-xs font-semibold uppercase text-gray-400 md:hidden">Status</span>
+                                      <span className="block rounded border border-gray-200 bg-gray-50 px-1 py-1.5 text-center text-xs text-gray-600 md:px-1">
+                                        {row.completed || '—'}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="mb-1 block text-xs font-semibold uppercase text-gray-400 md:hidden">Experience</span>
+                                      <span className="block rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-600">
+                                        {row.experience || '—'}
+                                      </span>
+                                    </div>
                                   </div>
                                 ))}
                               </div>

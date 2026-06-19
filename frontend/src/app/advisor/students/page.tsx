@@ -10,6 +10,8 @@ import { getFullName, getInitials } from '@/utils/nameHelpers';
 import toast, { Toaster } from 'react-hot-toast';
 import { StudentMobileList } from '@/components/StudentMobileRecordCard';
 import ListPageFilters from '@/components/ListPageFilters';
+import PageStatCard from '@/components/PageStatCard';
+import { ListPageStatGrid } from '@/components/SuperAdminRoleDetailFrame';
 
 interface Student {
   _id: string;
@@ -24,28 +26,6 @@ interface Student {
   };
   adminId?: string;
   createdAt: string;
-}
-
-function StatCard({ title, value, color }: { title: string; value: string; color: string }) {
-  const colorClasses: Record<string, string> = {
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-green-100 text-green-600',
-  };
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
-        </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color] || 'bg-blue-100 text-blue-600'}`}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 export default function AdvisorStudentsPage() {
@@ -111,15 +91,15 @@ export default function AdvisorStudentsPage() {
       <Toaster position="top-right" />
       <AdvisorLayout user={user}>
         <div className="p-4 sm:p-6 md:p-8">
-          <div className="mb-6">
+          <div className="mb-5 md:mb-6">
             <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Students</h1>
-            <p className="mt-1 text-gray-600">Manage your converted students</p>
+            <p className="mt-1 text-sm text-gray-600 sm:text-base">Manage your converted students</p>
           </div>
 
-          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 md:gap-6">
-            <StatCard title="Total Students" value={students.length.toString()} color="blue" />
-            <StatCard title="Active Students" value={activeCount.toString()} color="green" />
-          </div>
+          <ListPageStatGrid>
+            <PageStatCard title="Total Students" value={students.length} color="blue" />
+            <PageStatCard title="Active Students" value={activeCount} color="green" />
+          </ListPageStatGrid>
 
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
             <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-4">

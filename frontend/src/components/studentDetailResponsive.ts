@@ -47,3 +47,18 @@ export const leadTitleClass = 'text-xl font-bold text-gray-900 sm:text-2xl lg:te
 export const leadContactGridClass = 'grid grid-cols-1 gap-4 sm:grid-cols-2';
 
 export const leadQuickActionsClass = 'flex flex-wrap gap-2';
+
+export const eduPlanStatGridClass =
+  'grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5';
+
+export const eduPlanStatCardClass =
+  'rounded-xl border-2 border-gray-200 bg-white p-3.5 shadow-sm sm:p-5';
+
+export const registrationNavClass =
+  'flex overflow-x-auto border-b border-gray-200 scrollbar-none';
+
+export const registrationNavBtnClass =
+  'shrink-0 flex items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-3 text-xs font-semibold transition-colors sm:px-4 sm:py-4 sm:text-sm';
+
+export const activityCalendarPopupClass =
+  'absolute right-0 top-full z-50 mt-2 w-[min(420px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl animate-fadeIn';

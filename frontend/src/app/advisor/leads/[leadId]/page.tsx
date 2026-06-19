@@ -13,8 +13,11 @@ import AdvisorLayout from '@/components/AdvisorLayout';
 import {
   leadContactGridClass,
   leadPagePadding,
+  leadQuickActionsClass,
   leadTitleClass,
 } from '@/components/studentDetailResponsive';
+import ResponsiveFormModal from '@/components/ResponsiveFormModal';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 export default function AdvisorLeadDetailPage() {
   const router = useRouter();
@@ -57,6 +60,7 @@ export default function AdvisorLeadDetailPage() {
   const [todayFollowUps, setTodayFollowUps] = useState<FollowUp[]>([]);
   const [missedFollowUps, setMissedFollowUps] = useState<FollowUp[]>([]);
   const [upcomingFollowUps, setUpcomingFollowUps] = useState<FollowUp[]>([]);
+  const isMobile = useIsMobile();
 
   // Student info for converted leads
   const [studentId, setStudentId] = useState<string | null>(null);
@@ -369,6 +373,114 @@ export default function AdvisorLeadDetailPage() {
 
   if (!user || !lead) return null;
 
+  const closeScheduleForm = () => {
+    setShowScheduleForm(false);
+    setAvailabilityStatus(null);
+  };
+
+  const scheduleFormFields = (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-600">Date</label>
+          <input
+            type="date"
+            value={newFollowUp.date}
+            onChange={(e) => {
+              setNewFollowUp({ ...newFollowUp, date: e.target.value });
+              setAvailabilityStatus(null);
+            }}
+            min={format(new Date(), 'yyyy-MM-dd')}
+            lang="en-GB"
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-600">Time</label>
+          <input
+            type="time"
+            value={newFollowUp.time}
+            onChange={(e) => {
+              setNewFollowUp({ ...newFollowUp, time: e.target.value });
+              setAvailabilityStatus(null);
+            }}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-600">Duration</label>
+          <select
+            value={newFollowUp.duration}
+            onChange={(e) => {
+              setNewFollowUp({ ...newFollowUp, duration: parseInt(e.target.value) });
+              setAvailabilityStatus(null);
+            }}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+          >
+            <option value={15}>15 min</option>
+            <option value={30}>30 min</option>
+            <option value={45}>45 min</option>
+            <option value={60}>60 min</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-gray-600">Meeting Type</label>
+          <select
+            value={newFollowUp.meetingType}
+            onChange={(e) => {
+              setNewFollowUp({ ...newFollowUp, meetingType: e.target.value as MEETING_TYPE });
+            }}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+          >
+            <option value={MEETING_TYPE.ONLINE}>Online</option>
+            <option value={MEETING_TYPE.FACE_TO_FACE}>Face to Face</option>
+            <option value={MEETING_TYPE.PHONE_CALL}>Phone Call</option>
+          </select>
+        </div>
+      </div>
+
+      {availabilityStatus && (
+        <div
+          className={`rounded-lg p-2 text-sm font-medium ${
+            availabilityStatus.available
+              ? 'border border-green-200 bg-green-100 text-green-800'
+              : 'border border-red-200 bg-red-100 text-red-800'
+          }`}
+        >
+          {availabilityStatus.message}
+        </div>
+      )}
+    </div>
+  );
+
+  const scheduleFormActions = (
+    <>
+      <button
+        type="button"
+        onClick={checkAvailability}
+        disabled={checkingAvailability || !newFollowUp.date || !newFollowUp.time}
+        className="flex w-full items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+      >
+        {checkingAvailability ? 'Checking...' : 'Check Availability'}
+      </button>
+      <button
+        type="button"
+        onClick={closeScheduleForm}
+        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 sm:w-auto"
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        onClick={handleScheduleFollowUp}
+        disabled={scheduling}
+        className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
+      >
+        {scheduling ? 'Scheduling...' : 'Schedule'}
+      </button>
+    </>
+  );
+
   return (
     <>
       <Toaster position="top-right" />
@@ -392,7 +504,7 @@ export default function AdvisorLeadDetailPage() {
               <p className="text-gray-600 mt-1">Lead Details</p>
             </div>
             {/* Quick Actions */}
-            <div className="flex gap-2">
+            <div className={leadQuickActionsClass}>
               <a
                 href={`mailto:${lead.email}`}
                 className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium"
@@ -420,7 +532,7 @@ export default function AdvisorLeadDetailPage() {
         {/* Main Info Cards - 2 columns: Contact Info (2/3) | Stage+Services (1/3) */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
           {/* Contact Information Card */}
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="lg:col-span-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Contact Information</h3>
             <div className={leadContactGridClass}>
               <div>
@@ -644,14 +756,15 @@ export default function AdvisorLeadDetailPage() {
         </div>
 
         {/* Follow-Ups History Section */}
-        <div className="mt-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
+          <div className="mt-6">
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Follow-Up History</h3>
                 {followUps.length === 0 && (
                   <button
-                    onClick={() => setShowScheduleForm(!showScheduleForm)}
-                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-1"
+                    type="button"
+                    onClick={() => setShowScheduleForm(true)}
+                    className="inline-flex w-full items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:w-auto sm:py-1.5"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -661,120 +774,12 @@ export default function AdvisorLeadDetailPage() {
                 )}
               </div>
 
-              {/* Schedule Form */}
-              {showScheduleForm && followUps.length === 0 && (
-                <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="grid grid-cols-4 gap-3 mb-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
-                      <input
-                        type="date"
-                        value={newFollowUp.date}
-                        onChange={(e) => {
-                          setNewFollowUp({ ...newFollowUp, date: e.target.value });
-                          setAvailabilityStatus(null);
-                        }}
-                        min={format(new Date(), 'yyyy-MM-dd')}
-                        lang="en-GB"
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Time</label>
-                      <input
-                        type="time"
-                        value={newFollowUp.time}
-                        onChange={(e) => {
-                          setNewFollowUp({ ...newFollowUp, time: e.target.value });
-                          setAvailabilityStatus(null);
-                        }}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Duration</label>
-                      <select
-                        value={newFollowUp.duration}
-                        onChange={(e) => {
-                          setNewFollowUp({ ...newFollowUp, duration: parseInt(e.target.value) });
-                          setAvailabilityStatus(null);
-                        }}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value={15}>15 min</option>
-                        <option value={30}>30 min</option>
-                        <option value={45}>45 min</option>
-                        <option value={60}>60 min</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Meeting Type</label>
-                      <select
-                        value={newFollowUp.meetingType}
-                        onChange={(e) => {
-                          setNewFollowUp({ ...newFollowUp, meetingType: e.target.value as MEETING_TYPE });
-                        }}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value={MEETING_TYPE.ONLINE}>Online</option>
-                        <option value={MEETING_TYPE.FACE_TO_FACE}>Face to Face</option>
-                        <option value={MEETING_TYPE.PHONE_CALL}>Phone Call</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Availability Status */}
-                  {availabilityStatus && (
-                    <div className={`mb-3 p-2 rounded-lg text-sm font-medium ${
-                      availabilityStatus.available
-                        ? 'bg-green-100 text-green-800 border border-green-200'
-                        : 'bg-red-100 text-red-800 border border-red-200'
-                    }`}>
-                      {availabilityStatus.message}
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-center gap-2">
-                    <button
-                      onClick={checkAvailability}
-                      disabled={checkingAvailability || !newFollowUp.date || !newFollowUp.time}
-                      className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                    >
-                      {checkingAvailability ? (
-                        <>
-                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Checking...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          Check Availability
-                        </>
-                      )}
-                    </button>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          setShowScheduleForm(false);
-                          setAvailabilityStatus(null);
-                        }}
-                        className="px-3 py-1.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleScheduleFollowUp}
-                        disabled={scheduling}
-                        className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
-                      >
-                        {scheduling ? 'Scheduling...' : 'Schedule'}
-                      </button>
-                    </div>
+              {/* Schedule Form — desktop inline */}
+              {showScheduleForm && followUps.length === 0 && !isMobile && (
+                <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                  {scheduleFormFields}
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    {scheduleFormActions}
                   </div>
                 </div>
               )}
@@ -870,6 +875,20 @@ export default function AdvisorLeadDetailPage() {
           </div>
         </div>
       </AdvisorLayout>
+
+      <ResponsiveFormModal
+        open={showScheduleForm && followUps.length === 0 && isMobile}
+        onClose={closeScheduleForm}
+        title="Schedule First Follow-Up"
+        maxWidth="lg"
+        footer={
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            {scheduleFormActions}
+          </div>
+        }
+      >
+        {scheduleFormFields}
+      </ResponsiveFormModal>
 
       {/* Follow-up Edit Panel */}
       <FollowUpFormPanel
