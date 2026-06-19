@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { authAPI, servicePlanAPI } from '@/lib/api';
 import { User } from '@/types';
 import CoachingClassCards from '@/components/CoachingClassCards';
-import { getServicePlans } from '@/config/servicePlans';
+import { getServicePlans, COACHING_CLASSES_SUMMARY } from '@/config/servicePlans';
 import toast, { Toaster } from 'react-hot-toast';
 
 function CoachingClassesPlansContent() {
@@ -62,7 +62,7 @@ function CoachingClassesPlansContent() {
             Back
           </button>
           <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Coaching Classes Plans</h1>
-          <p className="mt-1 text-gray-500 text-lg max-w-2xl">Expert coaching for IELTS, GRE, GMAT, SAT, PTE &amp; language courses.</p>
+          <p className="mt-1 text-gray-500 text-lg max-w-2xl">Expert coaching for {COACHING_CLASSES_SUMMARY}.</p>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8 py-10">

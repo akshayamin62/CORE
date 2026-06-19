@@ -1,7 +1,7 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ICoachingBatch extends Document {
-  planKey: string; // e.g. IELTS, GRE, FRENCH_A1 etc.
+  planKey: string; // e.g. IELTS, GRE, PTE, TOEFL, FRENCH_A1 etc.
   batchDate: Date;
   timeFrom: string; // e.g. "10:00 PM"
   timeTo: string;   // e.g. "11:30 PM"

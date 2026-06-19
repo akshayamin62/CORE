@@ -140,7 +140,7 @@ const features = [
   },
   {
     title: 'ACCESS TO VERIFIED SERVICE PROVIDERS',
-    description: 'Choose from trusted, vetted providers for IELTS/SAT/ACT/PTE prep, essay writing, research programs & more',
+    description: 'Choose from trusted, vetted providers for IELTS/TOEFL/SAT/ACT/PTE prep, essay writing, research programs & more',
     icon: Award
   }
 ];

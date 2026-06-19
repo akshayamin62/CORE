@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { authAPI, servicePlanAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
+import { COACHING_CLASSES_SUMMARY } from '@/config/servicePlans';
 
 const allServices = [
   {
@@ -55,7 +56,7 @@ const allServices = [
   {
     slug: 'coaching-classes',
     name: 'Coaching Classes',
-    description: 'Expert coaching for IELTS, GRE, GMAT, SAT, PTE and language courses.',
+    description: `Expert coaching for ${COACHING_CLASSES_SUMMARY.replace(' & ', ' and ')}.`,
     color: 'from-teal-500 via-emerald-500 to-cyan-500',
     iconBg: 'bg-teal-100',
     iconColor: 'text-teal-600',

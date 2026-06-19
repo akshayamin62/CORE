@@ -7,6 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { ServicePricingIndexCard } from '@/components/ServicePricingPageFrame';
+import { COACHING_CLASSES_SUMMARY } from '@/config/servicePlans';
 
 const services = [
   {
@@ -20,7 +21,7 @@ const services = [
   {
     name: 'Coaching Classes',
     slug: 'coaching-classes',
-    description: 'Set pricing for Coaching Classes PRO, PREMIUM, and PLATINUM plans — IELTS, GRE, GMAT, SAT, PTE & language courses.',
+    description: `Set pricing for Coaching Classes PRO, PREMIUM, and PLATINUM plans — ${COACHING_CLASSES_SUMMARY}.`,
     icon: '📚',
     path: '/admin/service-pricing/coaching-classes-pricing',
     color: 'teal',

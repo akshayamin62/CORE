@@ -42,6 +42,9 @@ export const STUDY_ABROAD_PLANS: PlanConfig[] = [
   },
 ];
 
+export const COACHING_CLASSES_SUMMARY =
+  'IELTS, GRE, GMAT, SAT, PTE, TOEFL & language courses';
+
 export const COACHING_CLASSES_PLANS: PlanConfig[] = [
   {
     key: 'IELTS', name: 'IELTS', subtitle: '25 Sessions × 1.5 hrs • 02 Mocks',
@@ -78,6 +81,12 @@ export const COACHING_CLASSES_PLANS: PlanConfig[] = [
     borderColor: 'border-emerald-300', headerGradient: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
     textColor: 'text-emerald-700', iconBg: 'bg-emerald-100', iconText: 'text-emerald-600',
     cellBg: 'bg-emerald-50/30', badgeBg: 'bg-emerald-600', glowColor: 'shadow-emerald-200/50',
+  },
+  {
+    key: 'TOEFL', name: 'TOEFL', subtitle: '20 Sessions × 1.5 hrs • 01 Mock',
+    borderColor: 'border-sky-300', headerGradient: 'bg-gradient-to-br from-sky-500 to-sky-600',
+    textColor: 'text-sky-700', iconBg: 'bg-sky-100', iconText: 'text-sky-600',
+    cellBg: 'bg-sky-50/30', badgeBg: 'bg-sky-600', glowColor: 'shadow-sky-200/50',
   },
   {
     key: 'GERMAN_A1', name: 'German A1 Level', subtitle: '45 Sessions • 03 Mocks',

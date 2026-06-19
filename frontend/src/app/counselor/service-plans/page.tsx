@@ -7,7 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import CounselorLayout from '@/components/CounselorLayout';
 import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
 import CoachingClassCards from '@/components/CoachingClassCards';
-import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
+import { getServicePlans, getServiceFeatures, COACHING_CLASSES_SUMMARY } from '@/config/servicePlans';
 import toast, { Toaster } from 'react-hot-toast';
 
 const availableServices = [
@@ -24,7 +24,7 @@ const availableServices = [
   {
     slug: 'coaching-classes',
     name: 'Coaching Classes',
-    description: 'Expert coaching for IELTS, GRE, GMAT, SAT, PTE and language courses with study material and recordings.',
+    description: `Expert coaching for ${COACHING_CLASSES_SUMMARY.replace(' & ', ' and ')} with study material and recordings.`,
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
