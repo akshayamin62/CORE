@@ -8,6 +8,9 @@ import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import EditReferrerModal, { ReferrerEditFormData } from '@/components/EditReferrerModal';
+import ReferrerQuickActions from '@/components/ReferrerQuickActions';
+import { toDatetimeLocalValue, datetimeLocalToISO } from '@/utils/datetimeLocal';
 
 interface LeadData {
   _id: string;
@@ -74,11 +77,7 @@ export default function AdminReferrerDetailPage() {
   const [selectedReferrerStage, setSelectedReferrerStage] = useState<string>('');
   const [savingStage, setSavingStage] = useState(false);
   const [newNote, setNewNote] = useState('');
-  const [noteDate, setNoteDate] = useState(() => {
-    const now = new Date();
-    const ist = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
-    return ist.toISOString().slice(0, 16);
-  });
+  const [noteDate, setNoteDate] = useState(() => toDatetimeLocalValue());
   const [addingNote, setAddingNote] = useState(false);
   const [activeSection, setActiveSection] = useState<'leads' | 'notes'>('leads');
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -86,6 +85,18 @@ export default function AdminReferrerDetailPage() {
   const [editNoteDate, setEditNoteDate] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingSubmitting, setEditingSubmitting] = useState(false);
+  const [editFormData, setEditFormData] = useState<ReferrerEditFormData>({
+    email: '',
+    mobileNumber: '',
+    adminId: '',
+    country: '',
+    state: '',
+    city: '',
+    qualification: '',
+    currentRole: '',
+  });
 
   useEffect(() => {
     checkAuth();
@@ -121,6 +132,51 @@ export default function AdminReferrerDetailPage() {
     }
   };
 
+  const openEditReferrer = () => {
+    if (!dashboard) return;
+    const r = dashboard.referrer;
+    setEditFormData({
+      email: r.email || '',
+      mobileNumber: r.mobileNumber || '',
+      adminId: '',
+      country: r.country || '',
+      state: r.state || '',
+      city: r.city || '',
+      qualification: r.qualification || '',
+      currentRole: r.currentRole || '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!dashboard) return;
+
+    if (!editFormData.mobileNumber.trim()) {
+      toast.error('Mobile number is required');
+      return;
+    }
+
+    const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,5}[-\s.]?[0-9]{1,5}$/;
+    if (!phoneRegex.test(editFormData.mobileNumber.trim())) {
+      toast.error('Invalid phone number format');
+      return;
+    }
+
+    setEditingSubmitting(true);
+    try {
+      const { adminId: _adminId, ...payload } = editFormData;
+      await adminAPI.updateReferrer(referrerId, payload);
+      toast.success('Referrer updated successfully!');
+      setShowEditModal(false);
+      await fetchDashboard();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update referrer');
+    } finally {
+      setEditingSubmitting(false);
+    }
+  };
+
   const handleSaveReferrerStage = async () => {
     if (!dashboard || !selectedReferrerStage) return;
     setSavingStage(true);
@@ -139,14 +195,13 @@ export default function AdminReferrerDetailPage() {
     if (!newNote.trim() || !noteDate) return;
     setAddingNote(true);
     try {
-      const response = await adminAPI.addReferrerNote(referrerId, { text: newNote.trim(), noteDate });
+      const response = await adminAPI.addReferrerNote(referrerId, {
+        text: newNote.trim(),
+        noteDate: datetimeLocalToISO(noteDate),
+      });
       setDashboard(prev => prev ? { ...prev, referrer: { ...prev.referrer, notes: response.data.data.notes } } : prev);
       setNewNote('');
-      setNoteDate(() => {
-        const now = new Date();
-        const ist = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
-        return ist.toISOString().slice(0, 16);
-      });
+      setNoteDate(toDatetimeLocalValue());
       toast.success('Note added');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to add note');
@@ -158,14 +213,17 @@ export default function AdminReferrerDetailPage() {
   const handleStartEditNote = (note: ReferrerNote) => {
     setEditingNoteId(note._id);
     setEditNoteText(note.text);
-    setEditNoteDate(new Date(note.noteDate).toISOString().slice(0, 16));
+    setEditNoteDate(toDatetimeLocalValue(note.noteDate));
   };
 
   const handleSaveEditNote = async () => {
     if (!editingNoteId || !editNoteText.trim() || !editNoteDate) return;
     setSavingEdit(true);
     try {
-      const response = await adminAPI.updateReferrerNote(referrerId, editingNoteId, { text: editNoteText.trim(), noteDate: editNoteDate });
+      const response = await adminAPI.updateReferrerNote(referrerId, editingNoteId, {
+        text: editNoteText.trim(),
+        noteDate: datetimeLocalToISO(editNoteDate),
+      });
       setDashboard(prev => prev ? { ...prev, referrer: { ...prev.referrer, notes: response.data.data.notes } } : prev);
       setEditingNoteId(null);
       toast.success('Note updated');
@@ -251,9 +309,16 @@ export default function AdminReferrerDetailPage() {
           </button>
 
           {/* Header */}
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Referrer Dashboard</h1>
-            <p className="text-gray-600 mt-1">Leads referred by this referrer</p>
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Referrer Dashboard</h1>
+              <p className="text-gray-600 mt-1">Leads referred by this referrer</p>
+            </div>
+            <ReferrerQuickActions
+              email={dashboard.referrer.email || referrerUser.email}
+              mobileNumber={dashboard.referrer.mobileNumber}
+              onEdit={openEditReferrer}
+            />
           </div>
 
           {/* Referrer Profile Card */}
@@ -323,8 +388,17 @@ export default function AdminReferrerDetailPage() {
                 </div>
                 {/* Right column: detail grid */}
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <ReferrerInfoItem label="Email" value={referrerUser.email} />
-                  <ReferrerInfoItem label="Mobile" value={dashboard.referrer.mobileNumber || '—'} />
+                  <ReferrerInfoItem label="Email" value={referrerUser.email} href={`mailto:${referrerUser.email}`} />
+                  <ReferrerInfoItem
+                    label="Mobile"
+                    value={dashboard.referrer.mobileNumber || '—'}
+                    href={
+                      dashboard.referrer.mobileNumber
+                        ? `https://wa.me/${dashboard.referrer.mobileNumber.replace(/[^0-9]/g, '')}`
+                        : undefined
+                    }
+                    external={!!dashboard.referrer.mobileNumber}
+                  />
                   <ReferrerInfoItem label="Location" value={[dashboard.referrer.city, dashboard.referrer.state, dashboard.referrer.country].filter(Boolean).join(', ') || '—'} />
                   <ReferrerInfoItem label="Qualification" value={dashboard.referrer.qualification || '—'} />
                   <ReferrerInfoItem label="Current Role" value={dashboard.referrer.currentRole || '—'} />
@@ -609,6 +683,15 @@ export default function AdminReferrerDetailPage() {
           </>
           )}
         </div>
+        <EditReferrerModal
+          open={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onSubmit={handleEditSubmit}
+          submitting={editingSubmitting}
+          formData={editFormData}
+          setFormData={setEditFormData}
+          referrerName={dashboard ? getFullName(dashboard.referrer.userId) : ''}
+        />
       </AdminLayout>
     </>
   );
@@ -661,11 +744,31 @@ function StatCard({ title, value, icon, color, onClick, isActive, percentage, sh
 }
 
 // Referrer Info Item Component
-function ReferrerInfoItem({ label, value }: { label: string; value: string }) {
+function ReferrerInfoItem({
+  label,
+  value,
+  href,
+  external,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+  external?: boolean;
+}) {
   return (
     <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
       <p className="text-xs font-medium text-gray-500 mb-0.5">{label}</p>
-      <p className="text-sm font-semibold text-gray-800 wrap-break-word">{value}</p>
+      {href && value !== '—' ? (
+        <a
+          href={href}
+          {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+          className="text-sm font-semibold text-blue-600 hover:underline wrap-break-word"
+        >
+          {value}
+        </a>
+      ) : (
+        <p className="text-sm font-semibold text-gray-800 wrap-break-word">{value}</p>
+      )}
     </div>
   );
 }

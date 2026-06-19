@@ -44,6 +44,14 @@ async function getNoteCreatorName(userId?: string): Promise<string> {
     : '';
 }
 
+/** Parse datetime-local values as IST; ISO strings with offset/Z are parsed as-is */
+function parseReferrerNoteDate(value: string): Date {
+  if (/[zZ]|[+-]\d{2}:\d{2}$/.test(value)) {
+    return new Date(value);
+  }
+  return new Date(`${value}:00+05:30`);
+}
+
 function buildReferrerProfileUpdates(
   body: Record<string, unknown>,
   options?: { allowAdminId?: boolean }
@@ -1639,7 +1647,7 @@ export const addReferrerNoteForAdmin = async (req: AuthRequest, res: Response): 
     const createdByName = await getNoteCreatorName(adminUserId);
     const newNote = {
       text: text.trim(),
-      noteDate: new Date(noteDate),
+      noteDate: parseReferrerNoteDate(noteDate),
       createdByRole: 'ADMIN',
       createdByName,
       createdAt: new Date(),
@@ -1686,7 +1694,7 @@ export const addReferrerNoteForSuperAdmin = async (req: AuthRequest, res: Respon
     const createdByName = await getNoteCreatorName(superAdminUserId);
     const newNote = {
       text: text.trim(),
-      noteDate: new Date(noteDate),
+      noteDate: parseReferrerNoteDate(noteDate),
       createdByRole: 'SUPER_ADMIN',
       createdByName,
       createdAt: new Date(),
@@ -1743,7 +1751,7 @@ export const updateReferrerNoteForAdmin = async (req: AuthRequest, res: Response
       {
         $set: {
           'notes.$.text': text.trim(),
-          'notes.$.noteDate': new Date(noteDate),
+          'notes.$.noteDate': parseReferrerNoteDate(noteDate),
         },
       }
     );
@@ -1831,7 +1839,7 @@ export const updateReferrerNoteForSuperAdmin = async (req: AuthRequest, res: Res
       {
         $set: {
           'notes.$.text': text.trim(),
-          'notes.$.noteDate': new Date(noteDate),
+          'notes.$.noteDate': parseReferrerNoteDate(noteDate),
         },
       }
     );
