@@ -13,7 +13,6 @@ import MobileRecordCard from '@/components/MobileRecordCard';
 import PageStatCard from '@/components/PageStatCard';
 import AddReferrerModal from '@/components/AddReferrerModal';
 import EditReferrerModal, { ReferrerEditFormData } from '@/components/EditReferrerModal';
-import ReferrerQuickActions, { openReferrerEmail, openReferrerWhatsApp } from '@/components/ReferrerQuickActions';
 
 interface AdminData {
   _id: string;
@@ -605,12 +604,6 @@ export default function SuperAdminReferrersPage() {
                         label: 'View',
                         onClick: () => router.push(`/super-admin/referrers/${referrer._id}`),
                       },
-                      ...(referrer.email
-                        ? [{ label: 'Email', onClick: () => openReferrerEmail(referrer.email) }]
-                        : []),
-                      ...(referrer.mobileNumber
-                        ? [{ label: 'WhatsApp', onClick: () => openReferrerWhatsApp(referrer.mobileNumber) }]
-                        : []),
                       {
                         label: 'Edit',
                         onClick: () => openEditReferrer(referrer),
@@ -742,19 +735,19 @@ export default function SuperAdminReferrersPage() {
                         {new Date(referrer.createdAt).toLocaleDateString('en-GB')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex items-center gap-2">
                           <button
                             onClick={() => router.push(`/super-admin/referrers/${referrer._id}`)}
                             className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                           >
                             View Detail
                           </button>
-                          <ReferrerQuickActions
-                            email={referrer.email}
-                            mobileNumber={referrer.mobileNumber}
-                            onEdit={() => openEditReferrer(referrer)}
-                            size="sm"
-                          />
+                          <button
+                            onClick={() => openEditReferrer(referrer)}
+                            className="px-3 py-1.5 rounded-lg transition-colors text-xs bg-brand-600 text-white hover:bg-brand-700"
+                          >
+                            Edit
+                          </button>
                           <button
                             onClick={() => handleToggleStatus(referrer._id, referrer.userId?.isVerified, referrer.userId?.isActive)}
                             className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
