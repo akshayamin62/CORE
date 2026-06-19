@@ -182,7 +182,7 @@ export default function ReferrerStudentDetailPage() {
         <div className={studentPagePadding}>
           {/* Back Button */}
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/referrer/students')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

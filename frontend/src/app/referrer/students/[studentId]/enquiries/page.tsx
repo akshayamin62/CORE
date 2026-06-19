@@ -84,7 +84,7 @@ export default function StudentEnquiriesPage() {
               <p className="text-gray-500 mt-1">All service enquiries sent by the student</p>
             </div>
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push(`/referrer/students/${studentId}`)}
               className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
             >
               ← Back

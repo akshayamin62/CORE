@@ -407,7 +407,7 @@ export default function StudentDetailPage() {
         <div className="px-4 py-4 text-center sm:px-6 sm:py-6 lg:p-8">
           <p className="text-red-600">Student not found</p>
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/super-admin/roles/student')}
             className="mt-4 text-blue-600 hover:underline"
           >
             Go Back
@@ -425,7 +425,7 @@ export default function StudentDetailPage() {
           {/* Back Button */}
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => router.push('/super-admin/roles/student')}
             className="mb-4 flex items-center text-sm text-gray-600 transition-colors hover:text-gray-900 sm:mb-6"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
