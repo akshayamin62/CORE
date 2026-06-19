@@ -3,13 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI, adminAPI } from '@/lib/api';
-import { User, USER_ROLE, LEAD_STAGE } from '@/types';
+import { User, USER_ROLE, LEAD_STAGE, ReferrerFollowUp, FOLLOWUP_STATUS } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import { format } from 'date-fns';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
 import EditReferrerModal, { ReferrerEditFormData } from '@/components/EditReferrerModal';
 import ReferrerQuickActions from '@/components/ReferrerQuickActions';
+import ReferrerFollowUpCalendarGrid from '@/components/ReferrerFollowUpCalendarGrid';
+import ReferrerFollowUpFormPanel from '@/components/ReferrerFollowUpFormPanel';
+import { categorizeReferrerFollowUps } from '@/utils/referrerFollowUpHelpers';
 import { toDatetimeLocalValue, datetimeLocalToISO } from '@/utils/datetimeLocal';
 
 interface LeadData {
@@ -98,9 +102,25 @@ export default function AdminReferrerDetailPage() {
     currentRole: '',
   });
 
+  const [followUps, setFollowUps] = useState<ReferrerFollowUp[]>([]);
+  const [loadingFollowUps, setLoadingFollowUps] = useState(false);
+  const [todayFollowUps, setTodayFollowUps] = useState<ReferrerFollowUp[]>([]);
+  const [missedFollowUps, setMissedFollowUps] = useState<ReferrerFollowUp[]>([]);
+  const [upcomingFollowUps, setUpcomingFollowUps] = useState<ReferrerFollowUp[]>([]);
+  const [selectedFollowUp, setSelectedFollowUp] = useState<ReferrerFollowUp | null>(null);
+  const [showFollowUpPanel, setShowFollowUpPanel] = useState(false);
+  const [followUpPanelMode, setFollowUpPanelMode] = useState<'create' | 'update'>('create');
+  const [selectedFollowUpDate, setSelectedFollowUpDate] = useState<Date | undefined>(undefined);
+
   useEffect(() => {
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (user && referrerId) {
+      fetchFollowUps();
+    }
+  }, [user, referrerId]);
 
   const checkAuth = async () => {
     try {
@@ -266,6 +286,50 @@ export default function AdminReferrerDetailPage() {
     toast.success('Referral link copied!');
   };
 
+  const fetchFollowUps = async () => {
+    try {
+      setLoadingFollowUps(true);
+      const response = await adminAPI.getReferrerFollowUpHistory(referrerId);
+      const allFollowUps = response.data.data.followUps || [];
+      setFollowUps(allFollowUps);
+      const { todayList, missedList, upcomingList } = categorizeReferrerFollowUps(allFollowUps);
+      setTodayFollowUps(todayList);
+      setMissedFollowUps(missedList);
+      setUpcomingFollowUps(upcomingList);
+    } catch (error) {
+      console.error('Error fetching referrer follow-ups:', error);
+    } finally {
+      setLoadingFollowUps(false);
+    }
+  };
+
+  const handleFollowUpClick = (followUp: ReferrerFollowUp) => {
+    setSelectedFollowUp(followUp);
+    setFollowUpPanelMode('update');
+    setShowFollowUpPanel(true);
+  };
+
+  const handleScheduleFollowUp = () => {
+    setSelectedFollowUp(null);
+    setSelectedFollowUpDate(undefined);
+    setFollowUpPanelMode('create');
+    setShowFollowUpPanel(true);
+  };
+
+  const handleFollowUpSave = async () => {
+    setShowFollowUpPanel(false);
+    setSelectedFollowUp(null);
+    setSelectedFollowUpDate(undefined);
+    await fetchFollowUps();
+    fetchDashboard();
+  };
+
+  const handleFollowUpPanelClose = () => {
+    setShowFollowUpPanel(false);
+    setSelectedFollowUp(null);
+    setSelectedFollowUpDate(undefined);
+  };
+
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -408,6 +472,66 @@ export default function AdminReferrerDetailPage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Referrer Follow-Up Calendar */}
+          <ReferrerFollowUpCalendarGrid
+            className="mb-6"
+            followUps={followUps}
+            today={todayFollowUps}
+            missed={missedFollowUps}
+            upcoming={upcomingFollowUps}
+            onFollowUpSelect={handleFollowUpClick}
+            referrerName={getFullName(referrerUser)}
+            showReferrerLink={false}
+            headerAction={
+              <button
+                onClick={handleScheduleFollowUp}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Schedule Follow-Up
+              </button>
+            }
+          />
+
+          {/* Follow-Up History */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Follow-Up History</h3>
+            {loadingFollowUps ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600" />
+              </div>
+            ) : followUps.length > 0 ? (
+              <div className="space-y-3">
+                {followUps.map((followUp) => (
+                  <div
+                    key={followUp._id}
+                    onClick={() => handleFollowUpClick(followUp)}
+                    className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-all"
+                  >
+                    <div className={`w-2 h-2 mt-2 rounded-full ${
+                      followUp.status === FOLLOWUP_STATUS.SCHEDULED ? 'bg-indigo-500' : 'bg-gray-400'
+                    }`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-gray-900">
+                          #{followUp.followUpNumber} — {format(new Date(followUp.scheduledDate), 'dd MMM yyyy')} at {followUp.scheduledTime}
+                        </span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">{followUp.status}</span>
+                      </div>
+                      {followUp.notes && (
+                        <p className="text-sm text-gray-600 mt-1 truncate">{followUp.notes}</p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 italic">No follow-ups scheduled yet</p>
+            )}
           </div>
 
           {/* Section Toggle Bar */}
@@ -691,6 +815,17 @@ export default function AdminReferrerDetailPage() {
           formData={editFormData}
           setFormData={setEditFormData}
           referrerName={dashboard ? getFullName(dashboard.referrer.userId) : ''}
+        />
+        <ReferrerFollowUpFormPanel
+          mode={followUpPanelMode}
+          followUp={selectedFollowUp}
+          referrerId={referrerId}
+          referrerName={getFullName(referrerUser)}
+          referrerStage={dashboard.referrer.stage}
+          isOpen={showFollowUpPanel}
+          onClose={handleFollowUpPanelClose}
+          onSave={handleFollowUpSave}
+          selectedDate={selectedFollowUpDate}
         />
       </AdminLayout>
     </>

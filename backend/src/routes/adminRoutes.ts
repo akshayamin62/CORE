@@ -25,6 +25,14 @@ import {
   approveTransfer,
   rejectTransfer,
 } from "../controllers/studentTransferController";
+import {
+  createReferrerFollowUp,
+  getAdminReferrerFollowUps,
+  getAdminReferrerFollowUpSummary,
+  getReferrerFollowUpHistory,
+  getReferrerFollowUpById,
+  updateReferrerFollowUp,
+} from "../controllers/referrerFollowUpController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
 import { USER_ROLE } from "../types/roles";
@@ -125,6 +133,15 @@ router.patch("/referrer/:referrerId", updateReferrerForAdmin);
 router.post("/referrer/:referrerId/notes", addReferrerNoteForAdmin);
 router.patch("/referrer/:referrerId/notes/:noteId", updateReferrerNoteForAdmin);
 router.delete("/referrer/:referrerId/notes/:noteId", deleteReferrerNoteForAdmin);
+
+// ============= REFERRER FOLLOW-UP ROUTES =============
+
+router.post("/referrer-follow-ups", createReferrerFollowUp);
+router.get("/referrer-follow-ups/summary", getAdminReferrerFollowUpSummary);
+router.get("/referrer-follow-ups/referrer/:referrerId", getReferrerFollowUpHistory);
+router.get("/referrer-follow-ups", getAdminReferrerFollowUps);
+router.get("/referrer-follow-ups/:followUpId", getReferrerFollowUpById);
+router.patch("/referrer-follow-ups/:followUpId", updateReferrerFollowUp);
 
 // ============= STUDENT TRANSFER ROUTES =============
 

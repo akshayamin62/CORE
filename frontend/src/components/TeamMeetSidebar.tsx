@@ -1,8 +1,10 @@
 'use client';
 
-import { TeamMeet, TEAMMEET_STATUS, TEAMMEET_TYPE } from '@/types';
+import { TeamMeet, TEAMMEET_STATUS, TEAMMEET_TYPE, ReferrerFollowUp, REFERRER_STAGE } from '@/types';
 import { format, isToday, isTomorrow, isPast, isFuture, startOfDay } from 'date-fns';
+import Link from 'next/link';
 import { getFullName } from '@/utils/nameHelpers';
+import { getReferrerDisplayName, getReferrerIdFromFollowUp } from '@/utils/referrerFollowUpHelpers';
 
 interface TeamMeetSidebarProps {
   teamMeets: TeamMeet[];
@@ -10,6 +12,11 @@ interface TeamMeetSidebarProps {
   onScheduleClick?: () => void;
   hideHeader?: boolean;
   currentUserId?: string;
+  referrerFollowUpsToday?: ReferrerFollowUp[];
+  referrerFollowUpsMissed?: ReferrerFollowUp[];
+  referrerFollowUpsUpcoming?: ReferrerFollowUp[];
+  onReferrerFollowUpClick?: (followUp: ReferrerFollowUp) => void;
+  referrerBasePath?: string;
 }
 
 // Helper to get user ID from populated object (handles both _id and id)
@@ -106,13 +113,109 @@ function TeamMeetItem({ teamMeet, onClick, showDate = false, currentUserId, isAc
   );
 }
 
+const getReferrerStageBadgeColor = (stage: REFERRER_STAGE | string) => {
+  switch (stage) {
+    case REFERRER_STAGE.NEW:
+      return 'bg-indigo-100 text-indigo-800';
+    case REFERRER_STAGE.HOT:
+      return 'bg-red-100 text-red-800';
+    case REFERRER_STAGE.WARM:
+      return 'bg-orange-100 text-orange-800';
+    case REFERRER_STAGE.COLD:
+      return 'bg-cyan-100 text-cyan-800';
+    case REFERRER_STAGE.CONVERTED:
+      return 'bg-green-100 text-green-800';
+    case REFERRER_STAGE.CLOSED:
+      return 'bg-gray-100 text-gray-600';
+    default:
+      return 'bg-indigo-100 text-indigo-800';
+  }
+};
+
+function ReferrerFollowUpSidebarItem({
+  followUp,
+  onClick,
+  showDate = false,
+  isMissed = false,
+  basePath = '/admin/referrers',
+}: {
+  followUp: ReferrerFollowUp;
+  onClick: () => void;
+  showDate?: boolean;
+  isMissed?: boolean;
+  basePath?: string;
+}) {
+  const referrer = typeof followUp.referrerId === 'object' ? followUp.referrerId : undefined;
+  const stage = referrer?.stage || followUp.stageAtFollowUp;
+  const displayName = getReferrerDisplayName(referrer);
+  const referrerId = getReferrerIdFromFollowUp(followUp);
+
+  return (
+    <div
+      onClick={onClick}
+      className={`p-3 rounded-lg cursor-pointer transition-all hover:shadow-md ${
+        isMissed
+          ? 'bg-purple-50 border border-purple-200 hover:bg-purple-100'
+          : 'bg-white border border-gray-200 hover:border-indigo-300'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1">
+            <span className="text-xs">📞</span>
+            {referrerId ? (
+              <Link
+                href={`${basePath}/${referrerId}`}
+                onClick={(e) => e.stopPropagation()}
+                className={`font-medium truncate block hover:underline ${isMissed ? 'text-purple-900' : 'text-gray-900'}`}
+              >
+                {displayName}
+              </Link>
+            ) : (
+              <p className={`font-medium truncate ${isMissed ? 'text-purple-900' : 'text-gray-900'}`}>
+                {displayName}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`text-xs font-medium ${isMissed ? 'text-purple-700' : 'text-gray-600'}`}>
+              {followUp.scheduledTime}
+            </span>
+            {showDate && (
+              <span className="text-xs text-gray-500">
+                {format(new Date(followUp.scheduledDate), 'd MMM')}
+              </span>
+            )}
+            <span className={`px-1.5 py-0.5 text-xs rounded ${getReferrerStageBadgeColor(stage)}`}>
+              {stage}
+            </span>
+          </div>
+        </div>
+        <div className="text-xs px-2 py-1 rounded whitespace-nowrap bg-gray-100 text-gray-600">
+          {followUp.duration}m
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TeamMeetSidebar({
   teamMeets,
   onTeamMeetClick,
   onScheduleClick,
   hideHeader = false,
   currentUserId,
+  referrerFollowUpsToday = [],
+  referrerFollowUpsMissed = [],
+  referrerFollowUpsUpcoming = [],
+  onReferrerFollowUpClick,
+  referrerBasePath = '/admin/referrers',
 }: TeamMeetSidebarProps) {
+  const hasReferrerFollowUps =
+    referrerFollowUpsToday.length > 0 ||
+    referrerFollowUpsMissed.length > 0 ||
+    referrerFollowUpsUpcoming.length > 0 ||
+    !!onReferrerFollowUpClick;
   // Categorize team meets with proper ID comparison
   const pendingActions = teamMeets.filter(
     (tm) => tm.status === TEAMMEET_STATUS.PENDING_CONFIRMATION && getUserId(tm.requestedTo) === currentUserId
@@ -176,6 +279,87 @@ export default function TeamMeetSidebar({
       )}
 
       <div className="divide-y divide-gray-300\">
+        {hasReferrerFollowUps && onReferrerFollowUpClick && (
+          <>
+            <div className="p-4 bg-indigo-50/50">
+              <p className="text-xs font-semibold text-indigo-800 uppercase tracking-wide mb-3">Referrer Follow-Ups</p>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                    <h4 className="text-sm font-semibold text-gray-700">Today</h4>
+                    <span className="ml-auto bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                      {referrerFollowUpsToday.length}
+                    </span>
+                  </div>
+                  {referrerFollowUpsToday.length === 0 ? (
+                    <p className="text-sm text-gray-500 italic">No referrer follow-ups today</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {referrerFollowUpsToday.map((followUp) => (
+                        <ReferrerFollowUpSidebarItem
+                          key={followUp._id}
+                          followUp={followUp}
+                          onClick={() => onReferrerFollowUpClick(followUp)}
+                          basePath={referrerBasePath}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-purple-500" />
+                    <h4 className="text-sm font-semibold text-gray-700">Missed</h4>
+                    <span className="ml-auto bg-purple-100 text-purple-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                      {referrerFollowUpsMissed.length}
+                    </span>
+                  </div>
+                  {referrerFollowUpsMissed.length === 0 ? (
+                    <p className="text-sm text-gray-500 italic">No missed referrer follow-ups</p>
+                  ) : (
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {referrerFollowUpsMissed.map((followUp) => (
+                        <ReferrerFollowUpSidebarItem
+                          key={followUp._id}
+                          followUp={followUp}
+                          onClick={() => onReferrerFollowUpClick(followUp)}
+                          showDate
+                          isMissed
+                          basePath={referrerBasePath}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                    <h4 className="text-sm font-semibold text-gray-700">Tomorrow</h4>
+                    <span className="ml-auto bg-blue-100 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                      {referrerFollowUpsUpcoming.length}
+                    </span>
+                  </div>
+                  {referrerFollowUpsUpcoming.length === 0 ? (
+                    <p className="text-sm text-gray-500 italic">No referrer follow-ups tomorrow</p>
+                  ) : (
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {referrerFollowUpsUpcoming.map((followUp) => (
+                        <ReferrerFollowUpSidebarItem
+                          key={followUp._id}
+                          followUp={followUp}
+                          onClick={() => onReferrerFollowUpClick(followUp)}
+                          basePath={referrerBasePath}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
         {/* Pending Actions Section (Needs Response) */}
         <div className="p-4">
           <div className="flex items-center gap-2 mb-3">

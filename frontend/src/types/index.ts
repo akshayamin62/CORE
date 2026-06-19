@@ -590,6 +590,85 @@ export interface UpdateFollowUpData {
   };
 }
 
+// Referrer Follow-Up Types
+export enum REFERRER_STAGE {
+  NEW = 'New',
+  HOT = 'Hot',
+  WARM = 'Warm',
+  COLD = 'Cold',
+  CONVERTED = 'Converted',
+  CLOSED = 'Closed',
+}
+
+export interface ReferrerPopulated {
+  _id: string;
+  email: string;
+  mobileNumber?: string;
+  stage?: REFERRER_STAGE;
+  referralSlug: string;
+  userId?: {
+    _id?: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
+    email?: string;
+  };
+}
+
+export interface ReferrerFollowUp {
+  _id: string;
+  referrerId: ReferrerPopulated | string;
+  adminId: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  duration: number;
+  meetingType: MEETING_TYPE;
+  status: FOLLOWUP_STATUS;
+  stageAtFollowUp: REFERRER_STAGE;
+  stageChangedTo?: REFERRER_STAGE;
+  followUpNumber: number;
+  notes?: string;
+  zohoMeetingKey?: string;
+  zohoMeetingUrl?: string;
+  zohoMeetingId?: string;
+  zohoMeetingPassword?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReferrerFollowUpSummary {
+  today: ReferrerFollowUp[];
+  missed: ReferrerFollowUp[];
+  upcoming: ReferrerFollowUp[];
+  counts: {
+    today: number;
+    missed: number;
+    upcoming: number;
+  };
+}
+
+export interface CreateReferrerFollowUpData {
+  referrerId: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  duration: number;
+  meetingType?: MEETING_TYPE;
+  notes?: string;
+}
+
+export interface UpdateReferrerFollowUpData {
+  status?: FOLLOWUP_STATUS;
+  stageChangedTo?: REFERRER_STAGE;
+  notes?: string;
+  nextFollowUp?: {
+    scheduledDate: string;
+    scheduledTime: string;
+    duration: number;
+    meetingType?: MEETING_TYPE;
+  };
+}
+
 // TeamMeet Types
 export enum TEAMMEET_STATUS {
   PENDING_CONFIRMATION = 'PENDING_CONFIRMATION',

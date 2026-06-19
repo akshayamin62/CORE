@@ -3,13 +3,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { authAPI, adminAPI, leadAPI, teamMeetAPI } from '@/lib/api';
-import { User, USER_ROLE, LEAD_STAGE, TeamMeet, TEAMMEET_STATUS } from '@/types';
+import { User, USER_ROLE, LEAD_STAGE, TeamMeet, TEAMMEET_STATUS, ReferrerFollowUp, ReferrerFollowUpSummary } from '@/types';
 import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import TeamMeetCalendarGrid from '@/components/TeamMeetCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
+import ReferrerFollowUpFormPanel from '@/components/ReferrerFollowUpFormPanel';
 import EnquiryUrlCopy from '@/components/EnquiryUrlCopy';
 import { getFullName } from '@/utils/nameHelpers';
+import { getReferrerIdFromFollowUp } from '@/utils/referrerFollowUpHelpers';
 
 interface DashboardStats {
   totalCounselors: number;
@@ -31,6 +33,12 @@ export default function AdminDashboardPage() {
   const [teamMeetPanelMode, setTeamMeetPanelMode] = useState<'create' | 'view' | 'respond'>('create');
   const [selectedTeamMeetDate, setSelectedTeamMeetDate] = useState<Date | undefined>(undefined);
 
+  // Referrer follow-up state
+  const [referrerFollowUps, setReferrerFollowUps] = useState<ReferrerFollowUp[]>([]);
+  const [referrerFollowUpSummary, setReferrerFollowUpSummary] = useState<ReferrerFollowUpSummary | null>(null);
+  const [selectedReferrerFollowUp, setSelectedReferrerFollowUp] = useState<ReferrerFollowUp | null>(null);
+  const [showReferrerFollowUpPanel, setShowReferrerFollowUpPanel] = useState(false);
+
   useEffect(() => {
     checkAuth();
   }, []);
@@ -41,6 +49,19 @@ export default function AdminDashboardPage() {
       setTeamMeets(response.data.data.teamMeets);
     } catch (error: any) {
       console.error('Error fetching team meets:', error);
+    }
+  }, []);
+
+  const fetchReferrerFollowUps = useCallback(async () => {
+    try {
+      const [followUpsRes, summaryRes] = await Promise.all([
+        adminAPI.getReferrerFollowUps(),
+        adminAPI.getReferrerFollowUpSummary(),
+      ]);
+      setReferrerFollowUps(followUpsRes.data.data.followUps || []);
+      setReferrerFollowUpSummary(summaryRes.data.data);
+    } catch (error: any) {
+      console.error('Error fetching referrer follow-ups:', error);
     }
   }, []);
 
@@ -58,6 +79,7 @@ export default function AdminDashboardPage() {
       setUser(userData);
       fetchStats();
       fetchTeamMeets();
+      fetchReferrerFollowUps();
     } catch (error) {
       toast.error('Please login to continue');
       router.push('/login');
@@ -131,6 +153,22 @@ export default function AdminDashboardPage() {
     setShowTeamMeetPanel(false);
     setSelectedTeamMeet(null);
     setSelectedTeamMeetDate(undefined);
+  };
+
+  const handleReferrerFollowUpSelect = (followUp: ReferrerFollowUp) => {
+    setSelectedReferrerFollowUp(followUp);
+    setShowReferrerFollowUpPanel(true);
+  };
+
+  const handleReferrerFollowUpSave = async () => {
+    setShowReferrerFollowUpPanel(false);
+    setSelectedReferrerFollowUp(null);
+    await fetchReferrerFollowUps();
+  };
+
+  const handleReferrerFollowUpPanelClose = () => {
+    setShowReferrerFollowUpPanel(false);
+    setSelectedReferrerFollowUp(null);
   };
 
   if (loading) {
@@ -226,14 +264,20 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Team Meet Section */}
+          {/* Team Meet + Referrer Follow-Up Calendar */}
           <div className="mt-8">
             <TeamMeetCalendarGrid
               teamMeets={teamMeets}
+              referrerFollowUps={referrerFollowUps}
+              referrerFollowUpsToday={referrerFollowUpSummary?.today || []}
+              referrerFollowUpsMissed={referrerFollowUpSummary?.missed || []}
+              referrerFollowUpsUpcoming={referrerFollowUpSummary?.upcoming || []}
               onTeamMeetSelect={handleTeamMeetSelect}
+              onReferrerFollowUpSelect={handleReferrerFollowUpSelect}
               onDateSelect={handleTeamMeetDateSelect}
               onScheduleClick={handleScheduleTeamMeet}
               currentUserId={user?.id || user?._id}
+              referrerBasePath="/admin/referrers"
             />
           </div>
         </div>
@@ -248,6 +292,14 @@ export default function AdminDashboardPage() {
         selectedDate={selectedTeamMeetDate}
         mode={teamMeetPanelMode}
         currentUserId={user?.id || user?._id}
+      />
+      <ReferrerFollowUpFormPanel
+        mode="update"
+        followUp={selectedReferrerFollowUp}
+        referrerId={selectedReferrerFollowUp ? (getReferrerIdFromFollowUp(selectedReferrerFollowUp) || '') : ''}
+        isOpen={showReferrerFollowUpPanel}
+        onClose={handleReferrerFollowUpPanelClose}
+        onSave={handleReferrerFollowUpSave}
       />
     </>
   );

@@ -604,6 +604,39 @@ export const adminAPI = {
     api.patch(`/admin/referrer/${referrerId}/notes/${noteId}`, data),
   deleteReferrerNote: (referrerId: string, noteId: string) =>
     api.delete(`/admin/referrer/${referrerId}/notes/${noteId}`),
+
+  // Referrer follow-ups
+  createReferrerFollowUp: (data: {
+    referrerId: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    duration: number;
+    meetingType?: string;
+    notes?: string;
+  }) => api.post('/admin/referrer-follow-ups', data),
+
+  getReferrerFollowUps: (params?: { startDate?: string; endDate?: string; status?: string }) =>
+    api.get('/admin/referrer-follow-ups', { params }),
+
+  getReferrerFollowUpSummary: () => api.get('/admin/referrer-follow-ups/summary'),
+
+  getReferrerFollowUpHistory: (referrerId: string) =>
+    api.get(`/admin/referrer-follow-ups/referrer/${referrerId}`),
+
+  getReferrerFollowUpById: (followUpId: string) =>
+    api.get(`/admin/referrer-follow-ups/${followUpId}`),
+
+  updateReferrerFollowUp: (followUpId: string, data: {
+    status?: string;
+    stageChangedTo?: string;
+    notes?: string;
+    nextFollowUp?: {
+      scheduledDate: string;
+      scheduledTime: string;
+      duration: number;
+      meetingType?: string;
+    };
+  }) => api.patch(`/admin/referrer-follow-ups/${followUpId}`, data),
 };
 
 // Lead API

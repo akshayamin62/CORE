@@ -4,9 +4,10 @@ import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, setMonth, setYear, addMonths, addWeeks, addDays } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { TeamMeet, TEAMMEET_STATUS } from '@/types';
+import { TeamMeet, TEAMMEET_STATUS, ReferrerFollowUp, REFERRER_STAGE, FOLLOWUP_STATUS } from '@/types';
 import { useState, useCallback, useMemo } from 'react';
 import { getFullName } from '@/utils/nameHelpers';
+import { getReferrerDisplayName } from '@/utils/referrerFollowUpHelpers';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import CalendarNavigationBar from '@/components/calendar/CalendarNavigationBar';
 import BigCalendarViewport from '@/components/calendar/BigCalendarViewport';
@@ -32,12 +33,15 @@ interface CalendarEvent {
   title: string;
   start: Date;
   end: Date;
-  resource: TeamMeet;
+  type: 'teammeet' | 'referrerFollowUp';
+  resource: TeamMeet | ReferrerFollowUp;
 }
 
 interface TeamMeetCalendarProps {
   teamMeets: TeamMeet[];
+  referrerFollowUps?: ReferrerFollowUp[];
   onTeamMeetSelect: (teamMeet: TeamMeet) => void;
+  onReferrerFollowUpSelect?: (followUp: ReferrerFollowUp) => void;
   onDateSelect?: (date: Date) => void;
   minimized?: boolean;
   onToggleMinimize?: () => void;
@@ -71,7 +75,27 @@ const STATUS_LEGEND = [
   { color: 'bg-slate-400', label: 'Cancelled' },
   { color: 'bg-teal-500', label: 'Completed' },
   { color: '', label: 'Invited', style: { backgroundColor: '#D97706' } as const },
+  { color: 'bg-indigo-500', label: 'Referrer Follow-Up' },
 ];
+
+const getReferrerStageColor = (stage: REFERRER_STAGE | string) => {
+  switch (stage) {
+    case REFERRER_STAGE.NEW:
+      return { bg: '#E0E7FF', border: '#6366F1', text: '#3730A3' };
+    case REFERRER_STAGE.HOT:
+      return { bg: '#FEE2E2', border: '#EF4444', text: '#991B1B' };
+    case REFERRER_STAGE.WARM:
+      return { bg: '#FFEDD5', border: '#F97316', text: '#9A3412' };
+    case REFERRER_STAGE.COLD:
+      return { bg: '#CFFAFE', border: '#06B6D4', text: '#155E75' };
+    case REFERRER_STAGE.CONVERTED:
+      return { bg: '#DCFCE7', border: '#22C55E', text: '#166534' };
+    case REFERRER_STAGE.CLOSED:
+      return { bg: '#F3F4F6', border: '#9CA3AF', text: '#4B5563' };
+    default:
+      return { bg: '#E0E7FF', border: '#6366F1', text: '#3730A3' };
+  }
+};
 
 function StatusLegendContent() {
   return (
@@ -91,7 +115,9 @@ function StatusLegendContent() {
 
 export default function TeamMeetCalendar({
   teamMeets,
+  referrerFollowUps = [],
   onTeamMeetSelect,
+  onReferrerFollowUpSelect,
   onDateSelect,
   minimized = false,
   onToggleMinimize,
@@ -104,13 +130,12 @@ export default function TeamMeetCalendar({
   const [showLegendModal, setShowLegendModal] = useState(false);
   const isMobile = useIsMobile();
 
-  // Convert team meets to calendar events
   const events: CalendarEvent[] = useMemo(() => {
-    return teamMeets.map((teamMeet) => {
+    const teamMeetEvents: CalendarEvent[] = teamMeets.map((teamMeet) => {
       const otherParty = teamMeet.requestedBy._id === currentUserId
         ? getFullName(teamMeet.requestedTo)
         : getFullName(teamMeet.requestedBy);
-      
+
       const [hours, minutes] = teamMeet.scheduledTime.split(':').map(Number);
       const startDate = new Date(teamMeet.scheduledDate);
       startDate.setHours(hours, minutes, 0, 0);
@@ -119,14 +144,38 @@ export default function TeamMeetCalendar({
       endDate.setMinutes(endDate.getMinutes() + teamMeet.duration);
 
       return {
-        id: teamMeet._id,
+        id: `tm-${teamMeet._id}`,
         title: `${otherParty} - ${teamMeet.scheduledTime}`,
         start: startDate,
         end: endDate,
+        type: 'teammeet' as const,
         resource: teamMeet,
       };
     });
-  }, [teamMeets, currentUserId]);
+
+    const referrerEvents: CalendarEvent[] = referrerFollowUps.map((followUp) => {
+      const displayName = getReferrerDisplayName(
+        typeof followUp.referrerId === 'object' ? followUp.referrerId : undefined
+      );
+      const [hours, minutes] = followUp.scheduledTime.split(':').map(Number);
+      const startDate = new Date(followUp.scheduledDate);
+      startDate.setHours(hours, minutes, 0, 0);
+
+      const endDate = new Date(startDate);
+      endDate.setMinutes(endDate.getMinutes() + followUp.duration);
+
+      return {
+        id: `rf-${followUp._id}`,
+        title: `📞 ${displayName} - ${followUp.scheduledTime}`,
+        start: startDate,
+        end: endDate,
+        type: 'referrerFollowUp' as const,
+        resource: followUp,
+      };
+    });
+
+    return [...teamMeetEvents, ...referrerEvents];
+  }, [teamMeets, referrerFollowUps, currentUserId]);
 
   // Check if user is an invited participant (not sender or receiver)
   const isInvitedOnly = useCallback((teamMeet: TeamMeet) => {
@@ -137,12 +186,33 @@ export default function TeamMeetCalendar({
     return teamMeet.invitedUsers?.some((u) => u._id === currentUserId) || false;
   }, [currentUserId]);
 
-  // Custom event styling based on status
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
-    const status = event.resource.status;
+    if (event.type === 'referrerFollowUp') {
+      const followUp = event.resource as ReferrerFollowUp;
+      const referrer = typeof followUp.referrerId === 'object' ? followUp.referrerId : undefined;
+      const stage = referrer?.stage || followUp.stageAtFollowUp;
+      const colors = getReferrerStageColor(stage);
+      const isMissed =
+        event.start < new Date() && followUp.status === FOLLOWUP_STATUS.SCHEDULED;
 
-    // If user is only an invited participant, show in light brown
-    if (isInvitedOnly(event.resource)) {
+      return {
+        style: {
+          backgroundColor: isMissed ? '#F3E8FF' : colors.bg,
+          borderLeft: `4px solid ${isMissed ? '#9333EA' : colors.border}`,
+          color: isMissed ? '#6B21A8' : colors.text,
+          borderRadius: '4px',
+          padding: '2px 6px',
+          fontSize: '12px',
+          fontWeight: 500,
+          cursor: 'pointer',
+        },
+      };
+    }
+
+    const teamMeet = event.resource as TeamMeet;
+    const status = teamMeet.status;
+
+    if (isInvitedOnly(teamMeet)) {
       return {
         style: {
           backgroundColor: '#FDE8CD',
@@ -174,8 +244,12 @@ export default function TeamMeetCalendar({
   }, [isInvitedOnly]);
 
   const handleEventSelect = useCallback((event: CalendarEvent) => {
-    onTeamMeetSelect(event.resource);
-  }, [onTeamMeetSelect]);
+    if (event.type === 'referrerFollowUp') {
+      onReferrerFollowUpSelect?.(event.resource as ReferrerFollowUp);
+    } else {
+      onTeamMeetSelect(event.resource as TeamMeet);
+    }
+  }, [onTeamMeetSelect, onReferrerFollowUpSelect]);
 
   const handleNavigate = useCallback((newDate: Date) => {
     setDate(newDate);
@@ -277,7 +351,12 @@ export default function TeamMeetCalendar({
             </div>
             <div className="min-w-0">
               <h3 className="text-sm font-semibold text-gray-900 md:text-base">Team Meet Calendar</h3>
-              <p className="text-xs text-gray-500 md:text-sm">{events.length} meetings scheduled</p>
+              <p className="text-xs text-gray-500 md:text-sm">
+                {teamMeets.length} meeting{teamMeets.length === 1 ? '' : 's'}
+                {referrerFollowUps.length > 0 && (
+                  <> • {referrerFollowUps.length} referrer follow-up{referrerFollowUps.length === 1 ? '' : 's'}</>
+                )}
+              </p>
             </div>
           </div>
           
