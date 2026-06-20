@@ -1,6 +1,7 @@
 'use client';
 
 import { PlanConfig, ServiceFeature } from '@/config/servicePlans';
+import ServicePlanFeaturesDocument from '@/components/ServicePlanFeaturesDocument';
 
 interface ServicePlanDetailsViewProps {
   features: ServiceFeature[];
@@ -150,9 +151,17 @@ export default function ServicePlanDetailsView({
         </div>
       )}
 
-      {/* Features Comparison Table */}
+      {/* Features Comparison — mobile document viewer + desktop table */}
       {features.length > 0 && (
         <div className="mb-8">
+          <ServicePlanFeaturesDocument
+            features={features}
+            plans={plans}
+            serviceName={serviceName}
+            currentPlanTier={currentPlanTier}
+          />
+
+          <div className="hidden md:block">
           <div className="mb-6">
             <h2 className="text-xl font-extrabold text-gray-900 tracking-tight">What&apos;s Included</h2>
             <p className="text-sm text-gray-500 mt-1">Compare what each {serviceName} plan offers</p>
@@ -265,6 +274,7 @@ export default function ServicePlanDetailsView({
                 Not included
               </span>
             </div>
+          </div>
           </div>
         </div>
       )}

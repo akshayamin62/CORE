@@ -22,6 +22,7 @@ import BrainographyDataDisplay, { BrainographyDataType } from '@/components/Brai
 import PortfolioSection, { PortfolioItem, PortfolioRow, usePortfolioDownload } from '@/components/PortfolioSection';
 import ActivityAnalyticsDashboard from '@/components/ActivityAnalyticsDashboard';
 import { fetchBlobUrl } from '@/lib/useBlobUrl';
+import { studentPagePadding, eduPlanStatGridClass, eduPlanStatCardClass, registrationNavClass, registrationNavBtnClass } from '@/components/studentDetailResponsive';
 
 const BRAINOGRAPHY_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -319,9 +320,9 @@ export default function ParentStudentRegistrationPage() {
     <>
       <Toaster position="top-right" />
       <ParentLayout user={user}>
-        <div className="p-8">
-          <button onClick={() => router.push(`/parent/students/${studentId}`)} className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className={studentPagePadding}>
+          <button onClick={() => router.push(`/parent/students/${studentId}`)} className="mb-3 inline-flex items-center text-sm text-gray-600 transition-colors hover:text-gray-900 sm:mb-6">
+            <svg className="mr-1.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Back to Student Details
@@ -349,23 +350,28 @@ export default function ParentStudentRegistrationPage() {
 
           {/* Education Planning Navigation */}
           {isEducationPlanning && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
-              <div className="flex border-b border-gray-200">
+            <div className="mb-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:mb-6">
+              <div className={registrationNavClass}>
                 {([
                   { key: 'dashboard' as ActiveView, label: 'Dashboard' },
                   { key: 'analytics' as ActiveView, label: 'Activity Analysis' },
-                  { key: 'brainography' as ActiveView, label: 'Brainography Analysis' },
-                  { key: 'portfolio' as ActiveView, label: 'Education Portfolio Generator' },
+                  { key: 'brainography' as ActiveView, label: 'Brainography' },
+                  { key: 'portfolio' as ActiveView, label: 'Portfolio' },
                   { key: 'payment' as ActiveView, label: 'Payment' },
                 ] as const).map((btn) => (
-                  <button key={btn.key} onClick={() => setActiveView(btn.key)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-4 text-sm font-semibold transition-colors border-b-2 ${activeView === btn.key ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50'}`}>
+                  <button
+                    key={btn.key}
+                    onClick={() => setActiveView(btn.key)}
+                    className={`${registrationNavBtnClass} ${activeView === btn.key ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50'}`}
+                  >
                     {btn.label}
                   </button>
                 ))}
-                <button onClick={() => router.push(`/parent/students/${studentId}/registration/${registrationId}/activity`)}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-4 text-sm font-semibold transition-colors border-b-2 border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                  Activity Management
+                <button
+                  onClick={() => router.push(`/parent/students/${studentId}/registration/${registrationId}/activity`)}
+                  className={`${registrationNavBtnClass} border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50`}
+                >
+                  Activity
                 </button>
               </div>
             </div>
@@ -379,15 +385,15 @@ export default function ParentStudentRegistrationPage() {
             const totalCompleted = entries.reduce((s, e) => s + e.completed, 0);
             const overall = totalPlanned > 0 ? Math.round((totalCompleted / totalPlanned) * 50) / 10 : 0;
             return (
-              <div className="mb-6 space-y-8">
+              <div className="mb-4 space-y-6 sm:mb-6 sm:space-y-8">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Activity Overview <span className="text-sm font-normal text-gray-500">(Last 3 Months)</span></h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center text-lg">🔥</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.current ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Current Streak (days)</p></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center text-lg">🏆</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.longest ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Longest Streak (days)</p></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-lg">📅</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.totalDays ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Total Days</p></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-lg">📝</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.wordCount.total ?? 0}</h3></div><div className="flex items-center justify-between mt-3"><p className="text-sm font-semibold text-gray-700">New Words</p><p className="text-xs text-gray-500">{stats?.wordCount.thisMonth ?? 0} this month</p></div></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-lg">⭐</div><h3 className="text-3xl font-extrabold text-gray-900">{overall} / 5</h3></div><div className="flex items-center justify-between mt-3"><p className="text-sm font-semibold text-gray-700">Overall Performance</p><p className="text-xs text-gray-500">{totalCompleted}/{totalPlanned}</p></div></div>
+                  <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">Activity Overview <span className="text-sm font-normal text-gray-500">(Last 3 Months)</span></h2>
+                  <div className={eduPlanStatGridClass}>
+                    <div className={eduPlanStatCardClass}><div className="flex items-center justify-between"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 text-lg text-orange-600 sm:h-10 sm:w-10">🔥</div><h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{stats?.streak.current ?? 0}</h3></div><p className="mt-2 text-[11px] font-semibold text-gray-700 sm:mt-3 sm:text-sm">Current Streak (days)</p></div>
+                    <div className={eduPlanStatCardClass}><div className="flex items-center justify-between"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100 text-lg text-yellow-600 sm:h-10 sm:w-10">🏆</div><h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{stats?.streak.longest ?? 0}</h3></div><p className="mt-2 text-[11px] font-semibold text-gray-700 sm:mt-3 sm:text-sm">Longest Streak (days)</p></div>
+                    <div className={eduPlanStatCardClass}><div className="flex items-center justify-between"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-lg text-blue-600 sm:h-10 sm:w-10">📅</div><h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{stats?.streak.totalDays ?? 0}</h3></div><p className="mt-2 text-[11px] font-semibold text-gray-700 sm:mt-3 sm:text-sm">Total Days</p></div>
+                    <div className={eduPlanStatCardClass}><div className="flex items-center justify-between"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 text-lg text-green-600 sm:h-10 sm:w-10">📝</div><h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{stats?.wordCount.total ?? 0}</h3></div><div className="mt-2 flex items-center justify-between sm:mt-3"><p className="text-[11px] font-semibold text-gray-700 sm:text-sm">New Words</p><p className="text-[10px] text-gray-500 sm:text-xs">{stats?.wordCount.thisMonth ?? 0} this month</p></div></div>
+                    <div className={eduPlanStatCardClass}><div className="flex items-center justify-between"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-lg text-purple-600 sm:h-10 sm:w-10">⭐</div><h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{overall} / 5</h3></div><div className="mt-2 flex items-center justify-between sm:mt-3"><p className="text-[11px] font-semibold text-gray-700 sm:text-sm">Overall Performance</p><p className="text-[10px] text-gray-500 sm:text-xs">{totalCompleted}/{totalPlanned}</p></div></div>
                   </div>
                 </div>
                 <div>
@@ -525,10 +531,10 @@ export default function ParentStudentRegistrationPage() {
             ];
             const totalPrograms = programStats.suggested + programStats.selected;
             return (
-              <div className="mb-6 space-y-8">
+              <div className="mb-4 space-y-6 sm:mb-6 sm:space-y-8">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Application Overview</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                  <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">Application Overview</h2>
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
                     {dashboardStatCards.map((card) => {
                       const colorMap: Record<string, string> = {
                         blue: 'bg-blue-100 text-blue-600', cyan: 'bg-cyan-100 text-cyan-600',
@@ -537,16 +543,16 @@ export default function ParentStudentRegistrationPage() {
                       };
                       const pct = totalPrograms > 0 ? (card.value / totalPrograms) * 100 : 0;
                       return (
-                        <div key={card.title} className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5">
+                        <div key={card.title} className="rounded-xl border-2 border-gray-200 bg-white p-3 shadow-sm sm:p-5">
                           <div className="flex items-center justify-between">
-                            <div className={`w-10 h-10 ${colorMap[card.color]} rounded-lg flex items-center justify-center`}>
-                              {card.icon}
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${colorMap[card.color]}`}>
+                              <span className="scale-75 sm:scale-100">{card.icon}</span>
                             </div>
-                            <h3 className="text-3xl font-extrabold text-gray-900">{card.value}</h3>
+                            <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{card.value}</h3>
                           </div>
-                          <div className="flex items-center justify-between mt-3">
-                            <p className="text-sm font-semibold text-gray-700">{card.title}</p>
-                            <p className="text-sm font-semibold text-gray-900">{pct.toFixed(1)}%</p>
+                          <div className="mt-2 flex items-center justify-between sm:mt-3">
+                            <p className="text-[11px] font-semibold text-gray-700 sm:text-sm">{card.title}</p>
+                            <p className="text-[11px] font-semibold text-gray-900 sm:text-sm">{pct.toFixed(1)}%</p>
                           </div>
                         </div>
                       );
@@ -598,6 +604,7 @@ export default function ParentStudentRegistrationPage() {
                       onRemoveInstance={handleRemoveInstance}
                       errors={{}}
                       readOnly={true}
+                      compact
                       registrationId={registrationId}
                       studentId={studentId}
                       userRole="PARENT"

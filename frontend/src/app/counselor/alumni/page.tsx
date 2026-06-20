@@ -31,7 +31,7 @@ export default function CounselorAlumniPage() {
 
   return (
     <CounselorLayout user={user}>
-      <div className="p-8">
+      <div className="p-4 sm:p-6 md:p-8">
         <ComingSoon title="Alumni" />
       </div>
     </CounselorLayout>

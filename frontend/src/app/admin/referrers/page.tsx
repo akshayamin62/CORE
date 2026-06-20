@@ -12,6 +12,7 @@ import AddReferrerModal from '@/components/AddReferrerModal';
 import EditReferrerModal, { ReferrerEditFormData } from '@/components/EditReferrerModal';
 import ListPageFilters from '@/components/ListPageFilters';
 import MobileRecordCard from '@/components/MobileRecordCard';
+import PageStatCard from '@/components/PageStatCard';
 
 interface ReferrerData {
   _id: string;
@@ -314,85 +315,64 @@ export default function ReferrersListPage() {
             </button>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-6">
+            <PageStatCard
+              title="Total"
+              value={referrers.length}
+              color="blue"
               onClick={() => { setStatusFilter('all'); setStageFilter(''); }}
-              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'all' && !stageFilter ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-900">{referrers.length}</h3>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Total</p>
-            </div>
-            <div
+              active={statusFilter === 'all' && !stageFilter}
+            />
+            <PageStatCard
+              title="Active"
+              value={referrers.filter(r => r.userId?.isVerified && r.userId?.isActive).length}
+              color="green"
               onClick={() => { setStatusFilter('active'); setStageFilter(''); }}
-              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'active' && !stageFilter ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'}`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.userId?.isVerified && r.userId?.isActive).length}</h3>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Active</p>
-            </div>
-            <div
+              active={statusFilter === 'active' && !stageFilter}
+            />
+            <PageStatCard
+              title="Pending"
+              value={referrers.filter(r => !r.userId?.isVerified).length}
+              color="amber"
               onClick={() => { setStatusFilter('pending'); setStageFilter(''); }}
-              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'pending' && !stageFilter ? 'border-amber-500 ring-2 ring-amber-200' : 'border-gray-200'}`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => !r.userId?.isVerified).length}</h3>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Pending</p>
-            </div>
-            <div
+              active={statusFilter === 'pending' && !stageFilter}
+            />
+            <PageStatCard
+              title="Archived"
+              value={referrers.filter(r => r.userId?.isVerified && !r.userId?.isActive).length}
+              color="gray"
               onClick={() => { setStatusFilter('archived'); setStageFilter(''); }}
-              className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${statusFilter === 'archived' && !stageFilter ? 'border-gray-500 ring-2 ring-gray-200' : 'border-gray-200'}`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
-                </div>
-                <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.userId?.isVerified && !r.userId?.isActive).length}</h3>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Archived</p>
-            </div>
+              active={statusFilter === 'archived' && !stageFilter}
+            />
           </div>
 
           {/* Referrer Pipeline Overview */}
           <div className="mb-6">
-            <h3 className="text-sm font-semibold text-gray-600 uppercase mb-3">Referrer Pipeline Overview</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <h3 className="mb-3 text-sm font-semibold uppercase text-gray-600">Referrer Pipeline Overview</h3>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-7">
               {/* Total */}
               <div
                 onClick={() => setStageFilter('')}
-                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${!stageFilter ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-5 ${!stageFilter ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-600 sm:h-10 sm:w-10">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   </div>
-                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.length}</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{referrers.length}</h3>
                 </div>
-                <p className="text-sm font-semibold text-gray-700 mt-3">Total Referrers</p>
+                <p className="mt-2 truncate text-xs font-semibold text-gray-700 sm:mt-3 sm:text-sm">Total Referrers</p>
               </div>
               {/* New */}
               <div
                 onClick={() => setStageFilter(stageFilter === 'New' ? '' : 'New')}
-                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'New' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-5 ${stageFilter === 'New' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                   </div>
-                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => (r.stage || 'New') === 'New').length}</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{referrers.filter(r => (r.stage || 'New') === 'New').length}</h3>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-sm font-semibold text-gray-700">New</p>
@@ -402,13 +382,13 @@ export default function ReferrersListPage() {
               {/* Hot */}
               <div
                 onClick={() => setStageFilter(stageFilter === 'Hot' ? '' : 'Hot')}
-                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Hot' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-5 ${stageFilter === 'Hot' ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-red-100 text-red-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /></svg>
                   </div>
-                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Hot').length}</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{referrers.filter(r => r.stage === 'Hot').length}</h3>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-sm font-semibold text-gray-700">Hot</p>
@@ -418,13 +398,13 @@ export default function ReferrersListPage() {
               {/* Warm */}
               <div
                 onClick={() => setStageFilter(stageFilter === 'Warm' ? '' : 'Warm')}
-                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Warm' ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-5 ${stageFilter === 'Warm' ? 'border-orange-500 ring-2 ring-orange-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707" /></svg>
                   </div>
-                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Warm').length}</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{referrers.filter(r => r.stage === 'Warm').length}</h3>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-sm font-semibold text-gray-700">Warm</p>
@@ -434,13 +414,13 @@ export default function ReferrersListPage() {
               {/* Cold */}
               <div
                 onClick={() => setStageFilter(stageFilter === 'Cold' ? '' : 'Cold')}
-                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Cold' ? 'border-cyan-500 ring-2 ring-cyan-200' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-5 ${stageFilter === 'Cold' ? 'border-cyan-500 ring-2 ring-cyan-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-cyan-100 text-cyan-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                   </div>
-                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Cold').length}</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{referrers.filter(r => r.stage === 'Cold').length}</h3>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-sm font-semibold text-gray-700">Cold</p>
@@ -450,13 +430,13 @@ export default function ReferrersListPage() {
               {/* Converted */}
               <div
                 onClick={() => setStageFilter(stageFilter === 'Converted' ? '' : 'Converted')}
-                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Converted' ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-5 ${stageFilter === 'Converted' ? 'border-green-500 ring-2 ring-green-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   </div>
-                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Converted').length}</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{referrers.filter(r => r.stage === 'Converted').length}</h3>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-sm font-semibold text-gray-700">Converted</p>
@@ -466,13 +446,13 @@ export default function ReferrersListPage() {
               {/* Closed */}
               <div
                 onClick={() => setStageFilter(stageFilter === 'Closed' ? '' : 'Closed')}
-                className={`bg-white rounded-xl shadow-sm border-2 p-5 cursor-pointer transition-all hover:shadow-md ${stageFilter === 'Closed' ? 'border-gray-500 ring-2 ring-gray-200' : 'border-gray-200'}`}
+                className={`cursor-pointer rounded-xl border-2 bg-white p-3.5 shadow-sm transition-all hover:shadow-md sm:p-5 ${stageFilter === 'Closed' ? 'border-gray-500 ring-2 ring-gray-200' : 'border-gray-200'}`}
               >
                 <div className="flex items-center justify-between">
                   <div className="w-10 h-10 bg-gray-200 text-gray-600 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </div>
-                  <h3 className="text-3xl font-extrabold text-gray-900">{referrers.filter(r => r.stage === 'Closed').length}</h3>
+                  <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{referrers.filter(r => r.stage === 'Closed').length}</h3>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <p className="text-sm font-semibold text-gray-700">Closed</p>

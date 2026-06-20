@@ -7,6 +7,16 @@ import { User, USER_ROLE, SPEnquiryItem } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import AuthImage from '@/components/AuthImage';
+import ListPageFilters from '@/components/ListPageFilters';
+import PageStatCard from '@/components/PageStatCard';
+import {
+  roleListPagePadding,
+  roleListTitleClass,
+  roleListSubtitleClass,
+  roleListStatGridClass,
+  roleListBackBtnClass,
+  formatSpServicePrice,
+} from '@/components/studentDetailResponsive';
 
 const statusColors: Record<string, { bg: string; text: string }> = {
   New: { bg: 'bg-blue-100', text: 'text-blue-700' },
@@ -75,162 +85,112 @@ export default function SPEnquiriesPage() {
   return (
     <SuperAdminLayout user={user}>
       <Toaster position="top-right" />
-      <div className="bg-gray-50 min-h-[calc(100vh-5rem)]">
-        <div className="max-w-7xl mx-auto p-6 lg:p-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Service Provider Enquiries</h1>
-              <p className="text-gray-500 mt-1">All enquiries received by this service provider</p>
-            </div>
-            <button
-              onClick={() => router.back()}
-              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
-            >
-              ← Back
-            </button>
-          </div>
+      <div className="min-h-[calc(100vh-5rem)] bg-gray-50">
+        <div className={`mx-auto max-w-7xl ${roleListPagePadding}`}>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className={roleListBackBtnClass}
+          >
+            <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <span className="text-3xl font-extrabold text-gray-900">{enquiries.length}</span>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Total Enquiries</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <span className="text-3xl font-extrabold text-gray-900">{enquiries.filter(e => e.status === 'New').length}</span>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">New</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                </div>
-                <span className="text-3xl font-extrabold text-gray-900">{enquiries.filter(e => e.status === 'Contacted').length}</span>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Contacted</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <span className="text-3xl font-extrabold text-gray-900">{enquiries.filter(e => e.status === 'Converted').length}</span>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Converted</p>
+          <div className="mb-4 flex flex-col gap-2 sm:mb-6">
+            <div className="min-w-0">
+              <h1 className={roleListTitleClass}>Service Provider Enquiries</h1>
+              <p className={roleListSubtitleClass}>All enquiries received by this service provider</p>
             </div>
           </div>
 
-          {/* Search */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-            <div className="relative">
-              <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by service name, student name, email, or message..."
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+          <div className={roleListStatGridClass}>
+            <PageStatCard compact title="Total Enquiries" mobileTitle="Total" value={enquiries.length} color="blue" />
+            <PageStatCard compact title="New Enquiries" mobileTitle="New" value={enquiries.filter((e) => e.status === 'New').length} color="green" />
+            <PageStatCard compact title="Contacted" mobileTitle="Contacted" value={enquiries.filter((e) => e.status === 'Contacted').length} color="yellow" />
+            <PageStatCard compact title="Converted" mobileTitle="Converted" value={enquiries.filter((e) => e.status === 'Converted').length} color="green" />
+          </div>
+
+          <div className="mb-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:mb-6">
+            <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-4">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search by service, student, email, or message..."
+                onClear={() => setSearchQuery('')}
               />
             </div>
           </div>
 
-          {/* Enquiry Cards */}
           {filteredEnquiries.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-12">
+              <svg className="mx-auto mb-4 h-12 w-12 text-gray-300 sm:h-16 sm:w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No enquiries found</h3>
-              <p className="text-gray-500">{searchQuery ? 'Try adjusting your search criteria.' : 'This provider has not received any enquiries yet.'}</p>
+              <h3 className="mb-2 text-base font-semibold text-gray-900 sm:text-lg">No enquiries found</h3>
+              <p className="text-sm text-gray-500">{searchQuery ? 'Try adjusting your search criteria.' : 'This provider has not received any enquiries yet.'}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
               {filteredEnquiries.map((enquiry) => {
                 const svc = typeof enquiry.spServiceId === 'object' ? enquiry.spServiceId : null;
                 const statusColor = statusColors[enquiry.status] || { bg: 'bg-gray-100', text: 'text-gray-700' };
                 return (
-                  <div key={enquiry._id} className="bg-white rounded-xl shadow-sm border-2 border-gray-200 overflow-hidden">
+                  <div key={enquiry._id} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:border-blue-300 hover:shadow-md sm:border-2">
                     {svc?.thumbnail && (
-                      <div className="h-40 w-full overflow-hidden bg-gray-100">
+                      <div className="h-32 w-full overflow-hidden bg-gray-100 sm:h-40">
                         <AuthImage
                           path={svc.thumbnail}
                           alt={svc.title || ''}
-                          className="w-full h-full object-cover"
+                          className="h-full w-full object-cover"
                         />
                       </div>
                     )}
-                    <div className="p-6">
-                      {/* Student info */}
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                          <span className="text-indigo-600 font-bold text-sm">{enquiry.studentName?.charAt(0) || 'S'}</span>
+                    <div className="p-3 sm:p-6">
+                      <div className="mb-3 flex items-center gap-2.5 sm:mb-4 sm:gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100">
+                          <span className="text-sm font-bold text-indigo-600">{enquiry.studentName?.charAt(0) || 'S'}</span>
                         </div>
-                        <div>
-                          <p className="font-semibold text-gray-900 text-sm">{enquiry.studentName || 'Student'}</p>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-gray-900">{enquiry.studentName || 'Student'}</p>
                           {enquiry.studentEmail && (
-                            <p className="text-xs text-gray-500">{enquiry.studentEmail}</p>
+                            <p className="truncate text-xs text-gray-500">{enquiry.studentEmail}</p>
                           )}
                         </div>
                       </div>
 
                       {enquiry.studentMobile && (
-                        <p className="text-xs text-gray-500 mb-3">
+                        <p className="mb-3 text-xs text-gray-500">
                           <span className="font-medium">Mobile:</span> {enquiry.studentMobile}
                         </p>
                       )}
 
-                      {/* Service info */}
-                      <h3 className="text-lg font-bold text-gray-900 mb-2">{svc?.title || 'Service'}</h3>
+                      <h3 className="mb-2 text-base font-bold break-words text-gray-900 sm:text-lg">{svc?.title || 'Service'}</h3>
                       {svc?.category && (
-                        <span className="inline-block px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold mb-3">
+                        <span className="mb-3 inline-block rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
                           {svc.category}
                         </span>
                       )}
                       {svc?.description && (
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-3">{svc.description}</p>
+                        <p className="mb-3 line-clamp-3 text-sm text-gray-600">{svc.description}</p>
                       )}
 
-                      {/* Price */}
                       {svc?.priceType && (
-                        <div className="mb-3">
-                          <p className="text-lg font-bold text-gray-900">
-                            {svc.priceType === 'Contact for Price'
-                              ? 'Contact for Price'
-                              : `${svc.priceType}: ₹${svc.price?.toLocaleString()}`}
+                        <div className="mb-2 sm:mb-3">
+                          <p className="text-base font-bold text-gray-900 sm:text-lg">
+                            {formatSpServicePrice(svc.priceType, svc.price)}
                           </p>
                         </div>
                       )}
 
-                      {/* Message */}
-                      <div className="bg-gray-50 rounded-lg px-3 py-2.5 mb-4">
-                        <p className="text-xs text-gray-400 font-medium mb-1">Student&apos;s message</p>
-                        <p className="text-sm text-gray-600 italic line-clamp-3">&quot;{enquiry.message}&quot;</p>
+                      <div className="mb-4 rounded-lg bg-gray-50 px-3 py-2.5">
+                        <p className="mb-1 text-xs font-medium text-gray-400">Student&apos;s message</p>
+                        <p className="line-clamp-3 text-sm italic text-gray-600">&quot;{enquiry.message}&quot;</p>
                       </div>
 
-                      {/* Status + date */}
                       <div className="flex items-center justify-between">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColor.bg} ${statusColor.text}`}>
+                        <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusColor.bg} ${statusColor.text}`}>
                           {enquiry.status}
                         </span>
                         {enquiry.createdAt && (

@@ -154,9 +154,9 @@ export default function CalendarNavigationBar({
         )}
       </div>
 
-      {/* Desktop — unchanged layout */}
+      {/* Desktop — grouped toolbar */}
       <div className="hidden border-b border-gray-200 bg-gray-50 px-4 py-3 md:block">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-center gap-2 lg:gap-3">
           <button
             type="button"
             onClick={onPrevious}
@@ -165,47 +165,45 @@ export default function CalendarNavigationBar({
             ← Previous
           </button>
 
-          <div className="flex items-center gap-3">
-            <ViewSwitcher view={view} accent={accent} onViewChange={onViewChange} />
+          <ViewSwitcher view={view} accent={accent} onViewChange={onViewChange} />
 
-            <select
-              value={currentMonth}
-              onChange={onMonthChange}
-              className={`rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-900 ${selectFocus}`}
-            >
-              {CALENDAR_MONTHS.map((month, index) => (
-                <option key={month} value={index}>
-                  {month}
-                </option>
-              ))}
-            </select>
+          <select
+            value={currentMonth}
+            onChange={onMonthChange}
+            className={`rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-900 ${selectFocus}`}
+          >
+            {CALENDAR_MONTHS.map((month, index) => (
+              <option key={month} value={index}>
+                {month}
+              </option>
+            ))}
+          </select>
 
-            <select
-              value={currentYear}
-              onChange={onYearChange}
-              className={`rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-900 ${selectFocus}`}
-            >
-              {CALENDAR_YEARS.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
+          <select
+            value={currentYear}
+            onChange={onYearChange}
+            className={`rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-900 ${selectFocus}`}
+          >
+            {CALENDAR_YEARS.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
 
-            <button
-              type="button"
-              onClick={onToday}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${today}`}
-            >
-              Today
-            </button>
+          <button
+            type="button"
+            onClick={onToday}
+            className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${today}`}
+          >
+            Today
+          </button>
 
-            {view === 'day' && (
-              <div className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-900">
-                {format(date, 'EEEE, d')}
-              </div>
-            )}
-          </div>
+          {view === 'day' && (
+            <div className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-semibold text-gray-900">
+              {format(date, 'EEEE, d')}
+            </div>
+          )}
 
           <button
             type="button"

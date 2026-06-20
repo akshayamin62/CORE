@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 const MOBILE_DASHBOARD_PREFIXES = [
   '/super-admin',
@@ -21,17 +22,24 @@ const MOBILE_DASHBOARD_PREFIXES = [
   '/study-abroad',
   '/coaching-classes',
   '/ivy-league',
+  '/service-plans',
+  '/dashboard',
 ];
 
 export default function Footer() {
   const pathname = usePathname();
+  const isMobile = useIsMobile();
   const currentYear = new Date().getFullYear();
   const hideOnMobile = MOBILE_DASHBOARD_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
+  if (hideOnMobile && isMobile) {
+    return null;
+  }
+
   return (
     <footer
-      className={`relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-300 ${
-        hideOnMobile ? 'hidden md:block' : ''
+      className={`relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-300${
+        hideOnMobile ? ' max-md:hidden' : ''
       }`}
     >
       {/* Decorative Elements */}

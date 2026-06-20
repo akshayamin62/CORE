@@ -7,6 +7,15 @@ import { User, USER_ROLE, SPServiceListing } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import AuthImage from '@/components/AuthImage';
+import ListPageFilters from '@/components/ListPageFilters';
+import PageStatCard from '@/components/PageStatCard';
+import {
+  roleListPagePadding,
+  roleListTitleClass,
+  roleListSubtitleClass,
+  roleListBackBtnClass,
+  formatSpServicePrice,
+} from '@/components/studentDetailResponsive';
 
 export default function SPServicesPage() {
   const router = useRouter();
@@ -52,8 +61,8 @@ export default function SPServicesPage() {
     );
   });
 
-  const activeCount = services.filter(s => s.isActive).length;
-  const categories = [...new Set(services.map(s => s.category))];
+  const activeCount = services.filter((s) => s.isActive).length;
+  const categories = [...new Set(services.map((s) => s.category))];
 
   if (loading || !user) {
     return (
@@ -69,128 +78,91 @@ export default function SPServicesPage() {
   return (
     <SuperAdminLayout user={user}>
       <Toaster position="top-right" />
-      <div className="bg-gray-50 min-h-[calc(100vh-5rem)]">
-        <div className="max-w-7xl mx-auto p-6 lg:p-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Service Provider&apos;s Services</h1>
-              <p className="text-gray-500 mt-1">All services offered by this provider</p>
-            </div>
-            <button
-              onClick={() => router.back()}
-              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors"
-            >
-              ← Back
-            </button>
-          </div>
+      <div className="min-h-[calc(100vh-5rem)] bg-gray-50">
+        <div className={`mx-auto max-w-7xl ${roleListPagePadding}`}>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className={roleListBackBtnClass}
+          >
+            <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back
+          </button>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                  </svg>
-                </div>
-                <span className="text-3xl font-extrabold text-gray-900">{services.length}</span>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Total Services</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <span className="text-3xl font-extrabold text-gray-900">{activeCount}</span>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Active</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                  </svg>
-                </div>
-                <span className="text-3xl font-extrabold text-gray-900">{categories.length}</span>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Categories</p>
+          <div className="mb-4 flex flex-col gap-2 sm:mb-6">
+            <div className="min-w-0">
+              <h1 className={roleListTitleClass}>Service Provider&apos;s Services</h1>
+              <p className={roleListSubtitleClass}>All services offered by this provider</p>
             </div>
           </div>
 
-          {/* Search */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-            <div className="relative">
-              <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by service name, description, or category..."
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+          <div className="mb-4 grid grid-cols-2 gap-2 sm:gap-3 md:mb-6 md:grid-cols-3 md:gap-4">
+            <PageStatCard compact title="Total Services" mobileTitle="Total" value={services.length} color="blue" />
+            <PageStatCard compact title="Active" mobileTitle="Active" value={activeCount} color="green" />
+            <PageStatCard compact title="Categories" mobileTitle="Categories" value={categories.length} color="purple" />
+          </div>
+
+          <div className="mb-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:mb-6">
+            <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-4">
+              <ListPageFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                searchPlaceholder="Search by service name, description, or category..."
+                onClear={() => setSearchQuery('')}
               />
             </div>
           </div>
 
-          {/* Service Cards */}
           {filteredServices.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-12">
+              <svg className="mx-auto mb-4 h-12 w-12 text-gray-300 sm:h-16 sm:w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No services found</h3>
-              <p className="text-gray-500">{searchQuery ? 'Try adjusting your search criteria.' : 'This provider has not created any services yet.'}</p>
+              <h3 className="mb-2 text-base font-semibold text-gray-900 sm:text-lg">No services found</h3>
+              <p className="text-sm text-gray-500">{searchQuery ? 'Try adjusting your search criteria.' : 'This provider has not created any services yet.'}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
               {filteredServices.map((svc) => (
-                <div key={svc._id} className="bg-white rounded-xl shadow-sm border-2 border-gray-200 overflow-hidden">
+                <div key={svc._id} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:border-blue-300 hover:shadow-md sm:border-2">
                   {svc.thumbnail && (
-                    <div className="h-40 w-full overflow-hidden bg-gray-100">
+                    <div className="h-32 w-full overflow-hidden bg-gray-100 sm:h-40">
                       <AuthImage
                         path={svc.thumbnail}
                         alt={svc.title || ''}
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                       />
                     </div>
                   )}
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-lg font-bold text-gray-900">{svc.title}</h3>
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${svc.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  <div className="p-3 sm:p-6">
+                    <div className="mb-3 flex items-start justify-between gap-2">
+                      <h3 className="min-w-0 flex-1 text-base font-bold break-words text-gray-900 sm:text-lg">{svc.title}</h3>
+                      <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${svc.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {svc.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </div>
 
                     {svc.category && (
-                      <span className="inline-block px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold mb-3">
+                      <span className="mb-3 inline-block rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
                         {svc.category}
                       </span>
                     )}
 
                     {svc.description && (
-                      <p className="text-sm text-gray-600 mb-4 line-clamp-3">{svc.description}</p>
+                      <p className="mb-4 line-clamp-3 text-sm text-gray-600">{svc.description}</p>
                     )}
 
-                    {/* Price */}
                     <div className="mb-4">
-                      <p className="text-lg font-bold text-gray-900">
-                        {svc.priceType === 'Contact for Price'
-                          ? 'Contact for Price'
-                          : `${svc.priceType}: ₹${svc.price?.toLocaleString()}`}
+                      <p className="text-base font-bold text-gray-900 sm:text-lg">
+                        {formatSpServicePrice(svc.priceType, svc.price)}
                       </p>
                     </div>
 
-                    {/* Date */}
                     {svc.createdAt && (
                       <div className="flex items-center text-xs text-gray-400">
-                        <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="mr-1 h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         Created {new Date(svc.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}

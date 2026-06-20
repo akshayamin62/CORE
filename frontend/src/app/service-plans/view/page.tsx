@@ -7,6 +7,15 @@ import { User, Service, USER_ROLE } from '@/types';
 import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
 import CoachingClassCards, { ClassTiming } from '@/components/CoachingClassCards';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
+import ParentLayout from '@/components/ParentLayout';
+import PageStatCard from '@/components/PageStatCard';
+import {
+  roleListPagePadding,
+  roleListTitleClass,
+  roleListSubtitleClass,
+  roleListBackBtnClass,
+  roleListTabStatGridClass,
+} from '@/components/studentDetailResponsive';
 import toast, { Toaster } from 'react-hot-toast';
 
 interface PlanDiscountInfo {
@@ -201,56 +210,105 @@ function ServicePlansViewContent() {
   const selectedServiceInfo = services.find(s => s.slug === selectedService);
   const plans = selectedService ? getServicePlans(selectedService) : [];
   const features = selectedService ? getServiceFeatures(selectedService) : [];
+  const isParent = user?.role === USER_ROLE.PARENT;
 
-  return (
+  const handlePageBack = () => {
+    if (selectedService) {
+      setSelectedService(null);
+      setPricing(null);
+      return;
+    }
+    if (studentId && isParent) {
+      router.push(`/parent/students/${studentId}`);
+      return;
+    }
+    router.back();
+  };
+
+  const pageContent = (
     <>
       <Toaster position="top-right" />
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
+      <div className="min-h-screen bg-gray-50">
+        <div className={`mx-auto max-w-7xl ${roleListPagePadding}`}>
+          <button
+            type="button"
+            onClick={handlePageBack}
+            className={roleListBackBtnClass}
+          >
+            <svg className="mr-1.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            {selectedService ? 'Back to Services' : studentId && isParent ? 'Back to Student' : 'Back'}
+          </button>
 
+          {!selectedService && (
+            <div className="mb-4 sm:mb-6">
+              <h1 className={roleListTitleClass}>Service Plans</h1>
+              <p className={roleListSubtitleClass}>
+                {studentName
+                  ? `View ${studentName}'s registered plans and pricing`
+                  : 'Select a service to view plan details and pricing'}
+              </p>
+            </div>
+          )}
 
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
           {/* Service Selection */}
           {!selectedService && (
             <>
-              <div className="mb-8">
-                <h2 className="text-xl font-bold text-gray-900">Select a Service</h2>
-                <p className="text-sm text-gray-500 mt-1">Choose a service to view its plan details and pricing.</p>
+              <div className={roleListTabStatGridClass}>
+                <PageStatCard
+                  title="Available Services"
+                  mobileTitle="Services"
+                  value={services.length}
+                  color="blue"
+                />
+                <PageStatCard
+                  title="Registered Plans"
+                  mobileTitle="Registered"
+                  value={Object.keys(studentPlanTiers).length}
+                  color="green"
+                />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
                 {services.map((service) => (
                   <button
                     key={service._id}
+                    type="button"
                     onClick={() => handleSelectService(service.slug)}
-                    className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-100 overflow-hidden transition-all duration-300 hover:-translate-y-1 text-left"
+                    className="group w-full overflow-hidden rounded-xl border border-gray-200 bg-white text-left shadow-sm transition-all hover:border-blue-300 hover:shadow-md sm:border-2"
                   >
-                    <div className="h-1.5 bg-blue-600" />
-                    <div className="p-6">
-                      <div className="flex items-start gap-4">
-                        <div className="w-14 h-14 bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-sm">
-                          <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="p-3 sm:p-6">
+                      <div className="mb-3 flex items-center gap-2.5 sm:mb-4 sm:gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-indigo-100 shadow-sm transition-transform group-hover:scale-105 sm:h-12 sm:w-12">
+                          <svg className="h-5 w-5 text-blue-600 sm:h-6 sm:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                           </svg>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{service.name}</h3>
-                          <p className="text-sm text-gray-500 mt-1 line-clamp-2">{service.shortDescription}</p>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate text-base font-bold text-gray-900 transition-colors group-hover:text-blue-600 sm:text-lg">{service.name}</h3>
+                          <p className="mt-0.5 line-clamp-2 text-xs text-gray-500 sm:text-sm">{service.shortDescription}</p>
                         </div>
                       </div>
-                      <div className="mt-5 pt-4 border-t border-gray-100 flex items-center justify-between">
-                        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 group-hover:text-blue-700">
-                          View Plans
-                          <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                        </span>
+
+                      <div className="flex flex-wrap items-center gap-2">
                         {studentPlanTiers[service.slug] && (
-                          <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-800">
-                            {studentPlanTiers[service.slug]}
+                          <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-800 sm:text-xs">
+                            {studentPlanTiers[service.slug]} Plan
                           </span>
                         )}
                         {service.slug === 'coaching-classes' && Object.keys(coachingRegisteredClasses).length > 0 && (
-                          <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-green-100 text-green-800">
+                          <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-[10px] font-bold text-green-800 sm:text-xs">
                             {Object.keys(coachingRegisteredClasses).length} Registered
                           </span>
                         )}
+                      </div>
+
+                      <div className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-2 text-xs font-semibold text-white transition-colors group-hover:bg-blue-700 sm:mt-4 sm:py-2.5 sm:text-sm">
+                        View Plans
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
                       </div>
                     </div>
                   </button>
@@ -267,14 +325,6 @@ function ServicePlansViewContent() {
           {/* Plan Details for Selected Service */}
           {selectedService && (
             <div>
-              <button
-                onClick={() => { setSelectedService(null); setPricing(null); }}
-                className="mb-6 inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors font-medium"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                Back to Services
-              </button>
-
               {loadingPlans ? (
                 <div className="flex items-center justify-center py-20">
                   <div className="text-center"><div className="spinner mx-auto mb-4"></div><p className="text-gray-600">Loading plan details...</p></div>
@@ -388,7 +438,18 @@ function ServicePlansViewContent() {
                   </>
                 ) : (
                   <>
-                    <div className="bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 text-white rounded-2xl p-8 mb-8 relative overflow-hidden">
+                    {/* Mobile title */}
+                    <div className="mb-4 md:hidden">
+                      <h2 className={roleListTitleClass}>{selectedServiceInfo?.name} Plans</h2>
+                      <p className={roleListSubtitleClass}>
+                        {studentPlanTiers[selectedService!]
+                          ? `${studentName || 'Student'} is on the ${studentPlanTiers[selectedService!]} plan.`
+                          : 'Compare features and pricing across all plan tiers.'}
+                      </p>
+                    </div>
+
+                    {/* Desktop banner — unchanged */}
+                    <div className="mb-8 hidden rounded-2xl bg-gradient-to-r from-slate-900 via-blue-900 to-indigo-900 p-8 text-white relative overflow-hidden md:block">
                       <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full" />
                       <div className="absolute -bottom-8 -left-8 w-32 h-32 bg-indigo-500/10 rounded-full" />
                       <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight relative">{selectedServiceInfo?.name} Plans</h2>
@@ -399,9 +460,9 @@ function ServicePlansViewContent() {
                       </p>
                     </div>
 
-                    {/* Plan Cards with current plan indicator */}
+                    {/* Plan Cards — full-width stacked on mobile (like student plans page) */}
                     {plans.length > 0 && studentPlanTiers[selectedService!] && (
-                      <div className={`grid gap-5 mb-8 ${plans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+                      <div className={`mb-6 grid gap-4 sm:mb-8 sm:gap-6 ${plans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
                         {plans.map((plan) => {
                           const currentTier = studentPlanTiers[selectedService!];
                           const isCurrent = currentTier === plan.key;
@@ -422,37 +483,37 @@ function ServicePlansViewContent() {
                                   Current Plan
                                 </div>
                               )}
-                              <div className="p-5">
+                              <div className="p-4 sm:p-5 md:p-7">
                                 <div className="mb-1">
-                                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isCurrent ? 'bg-white/20 text-white' : `${plan.badgeBg} text-white`}`}>{plan.name}</span>
+                                  <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${isCurrent ? 'bg-white/20 text-white' : `${plan.badgeBg} text-white`}`}>{plan.name}</span>
                                 </div>
-                                {plan.subtitle && <p className={`text-xs uppercase font-semibold tracking-wide mb-3 ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>{plan.subtitle}</p>}
+                                {plan.subtitle && <p className={`mb-3 text-xs font-semibold uppercase tracking-wide sm:mb-4 ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>{plan.subtitle}</p>}
                                 {pricing?.[plan.key] != null ? (
-                                  <div className="mb-3">
+                                  <div className="mb-4 sm:mb-5">
                                     {discountedPrice != null ? (
                                       <>
                                         <p className={`text-lg line-through ${isCurrent ? 'text-blue-300' : 'text-gray-400'}`}>₹{pricing[plan.key].toLocaleString('en-IN')}</p>
-                                        <p className={`text-3xl font-extrabold ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{discountedPrice.toLocaleString('en-IN')}</p>
-                                        <p className={`text-xs font-semibold mt-1 ${isCurrent ? 'text-blue-200' : 'text-gray-600'}`}>
+                                        <p className={`text-2xl font-extrabold sm:text-3xl md:text-4xl ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{discountedPrice.toLocaleString('en-IN')}</p>
+                                        <p className={`mt-1 text-xs font-semibold ${isCurrent ? 'text-blue-200' : 'text-gray-600'}`}>
                                           {disc.type === 'percentage' ? `${disc.value}% off` : `₹${disc.calculatedAmount.toLocaleString('en-IN')} off`}
                                         </p>
                                       </>
                                     ) : (
-                                      <p className={`text-3xl font-extrabold ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{pricing[plan.key].toLocaleString('en-IN')}</p>
+                                      <p className={`text-2xl font-extrabold sm:text-3xl md:text-4xl ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{pricing[plan.key].toLocaleString('en-IN')}</p>
                                     )}
                                     {isUpgradePlan && priceDiff != null && priceDiff > 0 && (
-                                      <p className={`text-sm font-semibold mt-2 ${isCurrent ? 'text-blue-200' : 'text-emerald-600'}`}>+₹{priceDiff.toLocaleString('en-IN')} upgrade difference</p>
+                                      <p className={`mt-2 text-sm font-semibold ${isCurrent ? 'text-blue-200' : 'text-emerald-600'}`}>+₹{priceDiff.toLocaleString('en-IN')} upgrade difference</p>
                                     )}
                                   </div>
                                 ) : (
-                                  <div className="mb-3"><p className={`text-sm font-medium ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>Price not set</p></div>
+                                  <div className="mb-4 sm:mb-5"><p className={`text-sm font-medium ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>Price not set</p></div>
                                 )}
                                 {isCurrent ? (
-                                  <span className="inline-block w-full text-center py-2 px-4 rounded-full font-bold text-sm text-blue-600 bg-white">Current Plan</span>
+                                  <span className="inline-block w-full rounded-full bg-white py-2.5 text-center text-sm font-bold text-blue-600 sm:py-3">Current Plan</span>
                                 ) : isUpgradePlan ? (
-                                  <span className="inline-block w-full text-center py-2 px-4 rounded-full font-bold text-sm text-blue-600 bg-blue-50 border border-blue-200">Upgrade Option</span>
+                                  <span className="inline-block w-full rounded-full border border-blue-200 bg-blue-50 py-2.5 text-center text-sm font-bold text-blue-600 sm:py-3">Upgrade Option</span>
                                 ) : isLowerPlan ? (
-                                  <span className="inline-block w-full text-center py-2 px-4 rounded-full font-bold text-sm text-gray-400 bg-gray-100">Lower Tier</span>
+                                  <span className="inline-block w-full rounded-full bg-gray-100 py-2.5 text-center text-sm font-bold text-gray-400 sm:py-3">Lower Tier</span>
                                 ) : null}
                               </div>
                             </div>
@@ -552,6 +613,12 @@ function ServicePlansViewContent() {
       </div>
     </>
   );
+
+  if (isParent) {
+    return <ParentLayout user={user}>{pageContent}</ParentLayout>;
+  }
+
+  return pageContent;
 }
 
 export default function ServicePlansViewPage() {

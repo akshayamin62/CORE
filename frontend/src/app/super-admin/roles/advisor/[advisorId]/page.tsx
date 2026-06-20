@@ -16,6 +16,7 @@ import SuperAdminRoleDetailFrame, {
   DetailPageHeader,
   DetailStatGrid,
 } from '@/components/SuperAdminRoleDetailFrame';
+import EnquiryUrlCopy from '@/components/EnquiryUrlCopy';
 
 interface DashboardStats {
   totalLeads: number;
@@ -116,11 +117,6 @@ export default function SuperAdminAdvisorDashboardPage() {
   const handleTeamMeetPanelClose = () => {
     setShowTeamMeetPanel(false);
     setSelectedTeamMeet(null);
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success('URL copied to clipboard!');
   };
 
   if (loading && !currentUser) {
@@ -245,29 +241,11 @@ export default function SuperAdminAdvisorDashboardPage() {
                 />
               </DetailStatGrid>
 
-              {/* Enquiry Form URL */}
-              <div className="mb-6 flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-8 sm:p-5 lg:max-w-2xl">
-                <div className="flex items-center gap-2">
-                  <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  <h3 className="text-sm font-semibold text-gray-900">Enquiry Form URL</h3>
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <div className="min-w-0 flex-1 rounded-lg bg-blue-50 px-3 py-2">
-                    <code className="break-all font-mono text-xs text-blue-700">
-                      {stats?.enquiryFormUrl || 'Loading...'}
-                    </code>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => stats?.enquiryFormUrl && copyToClipboard(stats.enquiryFormUrl)}
-                    className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-                  >
-                    Copy URL
-                  </button>
-                </div>
-              </div>
+              <EnquiryUrlCopy
+                label="Enquiry Form URL"
+                url={stats?.enquiryFormUrl || 'Loading...'}
+                className="mb-6 sm:mb-8 lg:max-w-2xl"
+              />
 
               {/* Quick Actions */}
               <div>

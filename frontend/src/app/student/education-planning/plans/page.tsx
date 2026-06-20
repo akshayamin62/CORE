@@ -230,8 +230,8 @@ export default function StudentEducationPlanningPlansPage() {
       )}
       <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-screen">
         {/* Header */}
-        <div className="px-6 lg:px-8 py-8">
-          <button onClick={() => router.back()} className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium">
+        <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+          <button onClick={() => router.back()} className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900 sm:mb-4">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             Back
           </button>
@@ -243,9 +243,9 @@ export default function StudentEducationPlanningPlansPage() {
           </p>
         </div>
 
-        <div className="p-6 lg:p-8">
+        <div className="px-4 pb-6 sm:px-6 sm:pb-8 lg:p-8">
           {/* Plan Cards */}
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-3 mb-10">
+          <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 sm:mb-10 sm:gap-6">
             {plans.map((plan) => {
               const isCurrent = currentPlanTier === plan.key;
               const canUpgrade = isUpgrade(plan.key);
@@ -261,7 +261,7 @@ export default function StudentEducationPlanningPlansPage() {
                       Current Plan
                     </div>
                   )}
-                  <div className="p-7">
+                  <div className="p-4 sm:p-7">
                     <div className="mb-1">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isCurrent ? 'bg-white/20 text-white' : `${plan.badgeBg} text-white`}`}>{plan.name}</span>
                     </div>

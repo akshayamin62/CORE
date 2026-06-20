@@ -739,12 +739,12 @@ export default function ProgramSection({
   return (
   <>
     <div className="space-y-4">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Applied Programs</h3>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6">
+        <h3 className="text-base font-semibold text-gray-900 mb-3 sm:text-lg sm:mb-4">Applied Programs</h3>
         {programs.length > 0 ? (
-          <div className={`flex gap-4 ${selectedChatProgram ? '' : 'flex-col'}`}>
+          <div className={`flex flex-col gap-4 ${selectedChatProgram ? 'md:flex-row' : ''}`}>
             {/* Programs List */}
-            <div className={`space-y-4 ${selectedChatProgram ? 'w-1/2 overflow-y-auto max-h-[600px]' : 'w-full'}`}>
+            <div className={`space-y-4 w-full ${selectedChatProgram ? 'md:w-1/2 md:overflow-y-auto md:max-h-[600px]' : ''}`}>
               {programs.map((program, index) => (
                 <div key={program._id} className={selectedChatProgram?._id === program._id ? 'bg-gray-200 rounded-lg p-2' : ''}>
                   {canEditApplied && editingProgram === program._id ? (
@@ -827,8 +827,8 @@ export default function ProgramSection({
                         showActions={false}
                         index={index}
                         topRow={
-                          <div className="flex items-start justify-between gap-2">
-                            <div className={`flex items-center gap-2 flex-wrap ${selectedChatProgram ? 'max-w-[55%]' : ''}`}>
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div className={`flex min-w-0 flex-wrap items-center gap-2 ${selectedChatProgram ? 'md:max-w-[55%]' : ''}`}>
                               {/* Status Dropdown for OPS / Super Admin */}
                               {canChangeStatus && (
                                 <select
@@ -875,14 +875,14 @@ export default function ProgramSection({
                               )}
                             </div>
                             {/* Chat buttons on the right */}
-                            <div className="flex gap-2 shrink-0">
+                            <div className="flex flex-wrap gap-2 shrink-0">
                               {userRole === 'REFERRER' ? null : (userRole === 'STUDENT' || userRole === 'PARENT') ? (
                                 <button
                                   onClick={() => {
                                     setSelectedChatProgram(program);
                                     setSelectedChatType('open');
                                   }}
-                                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs font-medium shadow flex items-center space-x-1"
+                                  className="flex items-center space-x-1 rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow transition-colors hover:bg-blue-700 sm:px-4 sm:py-2"
                                 >
                                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -951,7 +951,7 @@ export default function ProgramSection({
 
             {/* Chat View */}
             {selectedChatProgram && (
-              <div className="w-1/2">
+              <div className="w-full md:w-1/2">
                 <ProgramChatView
                   program={selectedChatProgram}
                   onClose={() => setSelectedChatProgram(null)}

@@ -15,6 +15,19 @@ import ReferrerFollowUpCalendarGrid from '@/components/ReferrerFollowUpCalendarG
 import ReferrerFollowUpFormPanel from '@/components/ReferrerFollowUpFormPanel';
 import { categorizeReferrerFollowUps } from '@/utils/referrerFollowUpHelpers';
 import { toDatetimeLocalValue, datetimeLocalToISO } from '@/utils/datetimeLocal';
+import SuperAdminRoleDetailFrame, {
+  DetailInfoCard,
+  DetailPageHeader,
+  ListPageStatGrid,
+} from '@/components/SuperAdminRoleDetailFrame';
+import ListPageFilters from '@/components/ListPageFilters';
+import LeadMobileList, {
+  getLeadServiceColor,
+  getLeadStageColor,
+  LEAD_STAGE_FILTER_OPTIONS,
+} from '@/components/LeadMobileList';
+import PageStatCard from '@/components/PageStatCard';
+import EnquiryUrlCopy from '@/components/EnquiryUrlCopy';
 
 interface LeadData {
   _id: string;
@@ -267,24 +280,8 @@ export default function AdminReferrerDetailPage() {
     }
   };
 
-  const getStageColor = (stage: string) => {
-    switch (stage) {
-      case LEAD_STAGE.NEW: return 'bg-blue-100 text-blue-800';
-      case LEAD_STAGE.HOT: return 'bg-red-100 text-red-800';
-      case LEAD_STAGE.WARM: return 'bg-orange-100 text-orange-800';
-      case LEAD_STAGE.COLD: return 'bg-cyan-100 text-cyan-800';
-      case LEAD_STAGE.CONVERTED: return 'bg-green-100 text-green-800';
-      case LEAD_STAGE.CLOSED: return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const copyReferralLink = () => {
-    if (!dashboard) return;
-    const link = `${window.location.origin}/referral/${dashboard.referrer.referralSlug}`;
-    navigator.clipboard.writeText(link);
-    toast.success('Referral link copied!');
-  };
+  const getStageColor = getLeadStageColor;
+  const getServiceColor = getLeadServiceColor;
 
   const fetchFollowUps = async () => {
     try {
@@ -360,24 +357,31 @@ export default function AdminReferrerDetailPage() {
     <>
       <Toaster position="top-right" />
       <AdminLayout user={user}>
-        <div className="p-8">
-          {/* Back Button */}
-          <button
-            onClick={() => router.push('/admin/referrers')}
-            className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Referrers
-          </button>
-
-          {/* Header */}
-          <div className="mb-6 flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Referrer Dashboard</h1>
-              <p className="text-gray-600 mt-1">Leads referred by this referrer</p>
-            </div>
+        <SuperAdminRoleDetailFrame
+          backLabel="Back to Referrers"
+          onBack={() => router.push('/admin/referrers')}
+        >
+          <div className="mb-4 flex items-start justify-between gap-4 sm:mb-6">
+            <DetailPageHeader
+              title={getFullName(referrerUser)}
+              subtitle={
+                <a href={`mailto:${referrerUser.email}`} className="text-blue-600 hover:underline">
+                  {referrerUser.email}
+                </a>
+              }
+              avatar={
+                <AuthImage
+                  path={referrerUser.profilePicture}
+                  alt=""
+                  className="h-12 w-12 shrink-0 rounded-xl object-cover shadow-sm sm:h-14 sm:w-14"
+                  fallback={
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-100 shadow-sm sm:h-14 sm:w-14">
+                      <span className="text-lg font-bold text-blue-600">{getInitials(referrerUser)}</span>
+                    </div>
+                  }
+                />
+              }
+            />
             <ReferrerQuickActions
               email={dashboard.referrer.email || referrerUser.email}
               mobileNumber={dashboard.referrer.mobileNumber}
@@ -385,94 +389,115 @@ export default function AdminReferrerDetailPage() {
             />
           </div>
 
-          {/* Referrer Profile Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
-            <div className="h-1.5 bg-linear-to-r from-blue-500 to-indigo-500" />
-            <div className="p-6">
-              <div className="flex flex-col lg:flex-row gap-6">
-                {/* Left column: avatar, name, status, stage, copy link */}
-                <div className="flex flex-col items-center lg:items-start gap-3 lg:w-56 shrink-0">
-                  <AuthImage
-                    path={referrerUser.profilePicture}
-                    alt=""
-                    className="w-20 h-20 rounded-xl object-cover shadow-md"
-                    fallback={
-                      <div className="w-20 h-20 bg-blue-100 rounded-xl shadow-md flex items-center justify-center">
-                        <span className="text-blue-600 font-bold text-2xl">{getInitials(referrerUser)}</span>
-                      </div>
-                    }
-                  />
-                  <div className="text-center lg:text-left">
-                    <h2 className="text-xl font-bold text-gray-900">{getFullName(referrerUser)}</h2>
-                    <div className="flex flex-wrap items-center gap-2 mt-1 justify-center lg:justify-start">
-                      {!referrerUser.isVerified ? (
-                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-700">Pending</span>
-                      ) : referrerUser.isActive ? (
-                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700">Active</span>
-                      ) : (
-                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Inactive</span>
-                      )}
-                    </div>
-                  </div>
-                  {/* Stage Selector */}
-                  <div className="w-full">
-                    <p className="text-xs font-medium text-gray-500 mb-1">Referrer Stage</p>
-                    {dashboard.referrer.stage === 'Converted' ? (
-                      <span className="px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium border border-green-200 inline-block">Converted (locked)</span>
-                    ) : (
-                      <div className="flex gap-2">
-                        <select
-                          value={selectedReferrerStage}
-                          onChange={(e) => setSelectedReferrerStage(e.target.value)}
-                          className="flex-1 px-2 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                          {['New', 'Hot', 'Warm', 'Cold', 'Closed'].map((s) => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
-                        <button
-                          onClick={handleSaveReferrerStage}
-                          disabled={savingStage || selectedReferrerStage === (dashboard.referrer.stage || 'New')}
-                          className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-                        >
-                          {savingStage ? '...' : 'Save'}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={copyReferralLink}
-                    className="w-full px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors flex items-center justify-center gap-2"
+          <DetailInfoCard>
+            <div className="flex flex-wrap items-center gap-2">
+              {!referrerUser.isVerified ? (
+                <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">Pending</span>
+              ) : referrerUser.isActive ? (
+                <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">Active</span>
+              ) : (
+                <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600">Inactive</span>
+              )}
+              <span
+                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                  dashboard.referrer.stage === 'Hot'
+                    ? 'bg-red-100 text-red-800'
+                    : dashboard.referrer.stage === 'Warm'
+                      ? 'bg-orange-100 text-orange-800'
+                      : dashboard.referrer.stage === 'Cold'
+                        ? 'bg-cyan-100 text-cyan-800'
+                        : dashboard.referrer.stage === 'Converted'
+                          ? 'bg-green-100 text-green-800'
+                          : dashboard.referrer.stage === 'Closed'
+                            ? 'bg-gray-100 text-gray-800'
+                            : 'bg-blue-100 text-blue-800'
+                }`}
+              >
+                {dashboard.referrer.stage || 'New'}
+              </span>
+            </div>
+            <div className="w-full text-sm">
+              <span className="text-gray-500">Phone: </span>
+              {dashboard.referrer.mobileNumber ? (
+                <a
+                  href={`https://wa.me/${dashboard.referrer.mobileNumber.replace(/[^0-9]/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  {dashboard.referrer.mobileNumber}
+                </a>
+              ) : (
+                <span className="text-gray-900">—</span>
+              )}
+            </div>
+            <div className="w-full">
+              <p className="mb-1 text-xs font-medium text-gray-500">Referrer Stage</p>
+              {dashboard.referrer.stage === 'Converted' ? (
+                <span className="inline-block rounded-lg border border-green-200 bg-green-100 px-3 py-1.5 text-sm font-medium text-green-700">Converted (locked)</span>
+              ) : (
+                <div className="flex gap-2">
+                  <select
+                    value={selectedReferrerStage}
+                    onChange={(e) => setSelectedReferrerStage(e.target.value)}
+                    className="flex-1 rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
-                    Copy Referral Link
+                    {['New', 'Hot', 'Warm', 'Cold', 'Closed'].map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={handleSaveReferrerStage}
+                    disabled={savingStage || selectedReferrerStage === (dashboard.referrer.stage || 'New')}
+                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {savingStage ? '...' : 'Save'}
                   </button>
                 </div>
-                {/* Right column: detail grid */}
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <ReferrerInfoItem label="Email" value={referrerUser.email} href={`mailto:${referrerUser.email}`} />
-                  <ReferrerInfoItem
-                    label="Mobile"
-                    value={dashboard.referrer.mobileNumber || '—'}
-                    href={
-                      dashboard.referrer.mobileNumber
-                        ? `https://wa.me/${dashboard.referrer.mobileNumber.replace(/[^0-9]/g, '')}`
-                        : undefined
-                    }
-                    external={!!dashboard.referrer.mobileNumber}
-                  />
-                  <ReferrerInfoItem label="Location" value={[dashboard.referrer.city, dashboard.referrer.state, dashboard.referrer.country].filter(Boolean).join(', ') || '—'} />
-                  <ReferrerInfoItem label="Qualification" value={dashboard.referrer.qualification || '—'} />
-                  <ReferrerInfoItem label="Current Role" value={dashboard.referrer.currentRole || '—'} />
-                  <ReferrerInfoItem label="Member Since" value={new Date(referrerUser.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} />
-                  <ReferrerInfoItem label="Referral Slug" value={dashboard.referrer.referralSlug} />
-                  <ReferrerInfoItem label="Total Leads" value={String(allLeads.length)} />
-                </div>
-              </div>
+              )}
             </div>
+            <EnquiryUrlCopy
+              label="Referral Link"
+              url={
+                dashboard.referrer.referralSlug && typeof window !== 'undefined'
+                  ? `${window.location.origin}/referral/${dashboard.referrer.referralSlug}`
+                  : 'Loading...'
+              }
+              className="w-full"
+            />
+          </DetailInfoCard>
+
+          <div className="mb-4 hidden gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6 sm:p-6 md:grid md:grid-cols-2 lg:grid-cols-3">
+            <ReferrerInfoItem label="Email" value={referrerUser.email} href={`mailto:${referrerUser.email}`} />
+            <ReferrerInfoItem
+              label="Mobile"
+              value={dashboard.referrer.mobileNumber || '—'}
+              href={
+                dashboard.referrer.mobileNumber
+                  ? `https://wa.me/${dashboard.referrer.mobileNumber.replace(/[^0-9]/g, '')}`
+                  : undefined
+              }
+              external={!!dashboard.referrer.mobileNumber}
+            />
+            <ReferrerInfoItem label="Location" value={[dashboard.referrer.city, dashboard.referrer.state, dashboard.referrer.country].filter(Boolean).join(', ') || '—'} />
+            <ReferrerInfoItem label="Qualification" value={dashboard.referrer.qualification || '—'} />
+            <ReferrerInfoItem label="Current Role" value={dashboard.referrer.currentRole || '—'} />
+            <ReferrerInfoItem label="Member Since" value={new Date(referrerUser.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} />
+            <ReferrerInfoItem label="Referral Slug" value={dashboard.referrer.referralSlug} />
+            <ReferrerInfoItem label="Total Leads" value={String(allLeads.length)} />
           </div>
+
+          <ListPageStatGrid columns={3}>
+            <PageStatCard compact title="Total Leads" mobileTitle="Leads" value={allLeads.length} color="blue" />
+            <PageStatCard compact title="Students" mobileTitle="Students" value={dashboard.totalStudents} color="green" />
+            <PageStatCard
+              compact
+              title="Converted"
+              mobileTitle="Converted"
+              value={dashboard.stageCounts?.[LEAD_STAGE.CONVERTED] || 0}
+              color="purple"
+            />
+          </ListPageStatGrid>
 
           {/* Referrer Follow-Up Calendar */}
           <ReferrerFollowUpCalendarGrid
@@ -498,7 +523,7 @@ export default function AdminReferrerDetailPage() {
           />
 
           {/* Follow-Up History */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Follow-Up History</h3>
             {loadingFollowUps ? (
               <div className="flex items-center justify-center py-8">
@@ -523,7 +548,7 @@ export default function AdminReferrerDetailPage() {
                         <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">{followUp.status}</span>
                       </div>
                       {followUp.notes && (
-                        <p className="text-sm text-gray-600 mt-1 truncate">{followUp.notes}</p>
+                        <p className="mt-1 text-sm text-gray-600 break-words sm:truncate">{followUp.notes}</p>
                       )}
                     </div>
                   </div>
@@ -565,7 +590,7 @@ export default function AdminReferrerDetailPage() {
 
           {/* Notes Section */}
           {activeSection === 'notes' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
+          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6 sm:p-5">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Notes</h3>
             {/* Add Note Form */}
             <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -691,65 +716,96 @@ export default function AdminReferrerDetailPage() {
           {/* Leads Section */}
           {activeSection === 'leads' && (
           <>
-          {/* Search and Filter */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-50">
-                <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
-                <div className="relative">
-                  <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Search by name, email or phone..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 min-w-37.5">
-                <label className="block text-xs font-medium text-gray-500 mb-1">Stage</label>
-                <select
-                  value={stageFilter}
-                  onChange={(e) => {
-                    setStageFilter(e.target.value);
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">All Stages</option>
-                  {Object.values(LEAD_STAGE).map((stage) => (
-                    <option key={stage} value={stage}>{stage}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-end">
-                <button
-                  onClick={() => {
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-100 bg-gray-50 p-3 sm:p-4">
+              <div className="md:hidden">
+                <ListPageFilters
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  searchPlaceholder="Search by name, email or phone..."
+                  pillFilters={[
+                    {
+                      value: stageFilter,
+                      onChange: setStageFilter,
+                      options: LEAD_STAGE_FILTER_OPTIONS,
+                    },
+                  ]}
+                  onClear={() => {
                     setStageFilter('');
                     setSearchQuery('');
                   }}
-                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  Clear All
-                </button>
+                />
+              </div>
+              <div className="hidden md:flex md:flex-wrap md:gap-4">
+                <div className="min-w-[200px] flex-1">
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Search</label>
+                  <div className="relative">
+                    <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Search by name, email or phone..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-4 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <div className="min-w-[150px] flex-1">
+                  <label className="mb-1 block text-xs font-medium text-gray-500">Stage</label>
+                  <select
+                    value={stageFilter}
+                    onChange={(e) => setStageFilter(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">All Stages</option>
+                    {Object.values(LEAD_STAGE).map((stage) => (
+                      <option key={stage} value={stage}>{stage}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStageFilter('');
+                      setSearchQuery('');
+                    }}
+                    className="rounded-lg px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800"
+                  >
+                    Clear All
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Leads Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             {filteredLeads.length === 0 ? (
-              <div className="text-center py-12">
-                <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="py-12 text-center">
+                <svg className="mx-auto mb-4 h-16 w-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                <h3 className="text-lg font-medium text-gray-900 mb-1">No leads found</h3>
+                <h3 className="mb-1 text-lg font-medium text-gray-900">No leads found</h3>
                 <p className="text-gray-500">No referral leads match current filters</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+                <LeadMobileList
+                  leads={filteredLeads.map((lead) => ({
+                    ...lead,
+                    mobileNumber: lead.mobileNumber || '',
+                    serviceTypes: lead.serviceTypes || [],
+                  }))}
+                  getStageColor={getStageColor}
+                  getServiceColor={getServiceColor}
+                  getMenuItems={(lead) => [
+                    {
+                      label: 'View',
+                      onClick: () => router.push(`/admin/leads/${lead._id}`),
+                    },
+                  ]}
+                />
+                <div className="hidden overflow-x-auto md:block">
                 <table className="w-full table-fixed">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
@@ -773,7 +829,7 @@ export default function AdminReferrerDetailPage() {
                         <td className="px-4 py-4">
                           <div className="flex flex-col gap-1">
                             {lead.serviceTypes?.map((service) => (
-                              <span key={service} className="px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                              <span key={service} className={`rounded-full px-2 py-1 text-xs font-medium ${getServiceColor(service)}`}>
                                 {service}
                               </span>
                             ))}
@@ -801,12 +857,13 @@ export default function AdminReferrerDetailPage() {
                     ))}
                   </tbody>
                 </table>
-              </div>
+                </div>
+              </>
             )}
           </div>
           </>
           )}
-        </div>
+        </SuperAdminRoleDetailFrame>
         <EditReferrerModal
           open={showEditModal}
           onClose={() => setShowEditModal(false)}
@@ -829,52 +886,6 @@ export default function AdminReferrerDetailPage() {
         />
       </AdminLayout>
     </>
-  );
-}
-
-// Stat Card Component
-interface StatCardProps {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-  color: 'blue' | 'green' | 'red' | 'orange' | 'cyan' | 'gray' | 'purple';
-  onClick?: () => void;
-  isActive?: boolean;
-  percentage?: number;
-  showPercentage?: boolean;
-}
-
-function StatCard({ title, value, icon, color, onClick, isActive, percentage, showPercentage = true }: StatCardProps) {
-  const colorClasses: Record<string, string> = {
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-green-100 text-green-600',
-    red: 'bg-red-100 text-red-600',
-    orange: 'bg-orange-100 text-orange-600',
-    cyan: 'bg-cyan-100 text-cyan-600',
-    gray: 'bg-gray-200 text-gray-600',
-    purple: 'bg-purple-100 text-purple-600',
-  };
-
-  return (
-    <div
-      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md' : ''
-      } ${isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'}`}
-      onClick={onClick}
-    >
-      <div className="flex items-center justify-between">
-        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
-          {icon}
-        </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
-      </div>
-      <div className="flex items-center justify-between mt-3">
-        <p className="text-sm font-semibold text-gray-700">{title}</p>
-        {showPercentage && percentage !== undefined && (
-          <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
-        )}
-      </div>
-    </div>
   );
 }
 

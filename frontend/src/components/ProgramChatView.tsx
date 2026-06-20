@@ -356,7 +356,7 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
   const canSaveToExtra = userRole === 'OPS' || userRole === 'SUPER_ADMIN';
 
   return (
-    <div className="w-full h-150 bg-white rounded-lg shadow-lg overflow-hidden flex flex-col relative">
+    <div className="relative flex h-[min(75vh,600px)] w-full flex-col overflow-hidden rounded-lg bg-white shadow-lg md:h-[600px]">
       {/* Save to Extra Modal */}
       {saveModalOpen && (
         <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
@@ -461,11 +461,11 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
       )}
 
       {/* Chat Header */}
-      <div className={`${chatType === 'notes' ? 'bg-linear-to-r from-amber-600 to-orange-600' : chatType === 'private' ? 'bg-linear-to-r from-teal-600 to-cyan-600' : 'bg-linear-to-r from-blue-600 to-indigo-600'} text-white p-6 shadow-lg`}>
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-xl font-bold">{chatType === 'notes' ? 'Notes' : chatType === 'private' ? 'Private Chat' : 'Open Chat'}</h3>
+      <div className={`${chatType === 'notes' ? 'bg-linear-to-r from-amber-600 to-orange-600' : chatType === 'private' ? 'bg-linear-to-r from-teal-600 to-cyan-600' : 'bg-linear-to-r from-blue-600 to-indigo-600'} p-3 text-white shadow-lg sm:p-4 md:p-6`}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className="mb-0.5 flex flex-wrap items-center gap-1.5 sm:mb-1 sm:gap-2">
+              <h3 className="text-base font-bold sm:text-xl">{chatType === 'notes' ? 'Notes' : chatType === 'private' ? 'Private Chat' : 'Open Chat'}</h3>
               {chatType === 'private' && (
                 <span className="px-2 py-0.5 bg-white/20 rounded text-xs">Staff Only</span>
               )}
@@ -473,7 +473,7 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
                 <span className="px-2 py-0.5 bg-white/20 rounded text-xs">Super Admin &amp; OPS Only</span>
               )}
             </div>
-            <p className={`text-sm ${chatType === 'notes' ? 'text-amber-100' : chatType === 'private' ? 'text-teal-100' : 'text-blue-100'}`}>{program.programName} - {program.university}</p>
+            <p className={`truncate text-xs sm:text-sm ${chatType === 'notes' ? 'text-amber-100' : chatType === 'private' ? 'text-teal-100' : 'text-blue-100'}`}>{program.programName} - {program.university}</p>
           </div>
           <button
             onClick={onClose}
@@ -489,7 +489,7 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
       {/* Messages Container */}
       <div
         ref={messageContainerRef}
-        className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50"
+        className="flex-1 space-y-3 overflow-y-auto bg-gray-50 p-3 sm:space-y-4 sm:p-6"
       >
         {loading ? (
           <div className="flex items-center justify-center h-full">
@@ -618,8 +618,8 @@ export default function ProgramChatView({ program, onClose, userRole, isReadOnly
           <p className="text-sm text-gray-500 text-center">Chat is in read-only mode</p>
         </div>
       ) : (
-        <div className="bg-white border-t border-gray-200 p-4">
-          <form onSubmit={handleSendMessage} className="flex items-end space-x-3">
+        <div className="border-t border-gray-200 bg-white p-2 sm:p-4">
+          <form onSubmit={handleSendMessage} className="flex items-end gap-2 sm:space-x-3">
             <div className="flex-1">
               {/* Formatting toolbar + attachment */}
               <div className="flex items-center gap-1 mb-1.5">

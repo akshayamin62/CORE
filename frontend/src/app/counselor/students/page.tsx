@@ -10,6 +10,12 @@ import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
 import { StudentMobileList } from '@/components/StudentMobileRecordCard';
 import ListPageFilters from '@/components/ListPageFilters';
+import PageStatCard from '@/components/PageStatCard';
+import {
+  roleListTitleClass,
+  roleListSubtitleClass,
+  roleListStatGridClass,
+} from '@/components/studentDetailResponsive';
 
 interface StudentData {
   _id: string;
@@ -63,30 +69,6 @@ interface StudentData {
 interface UserStats {
   total: number;
   active: number;
-}
-
-// Stat Card Component
-function StatCard({ title, value, color }: { title: string; value: string; color: string }) {
-  const colorClasses: Record<string, string> = {
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-blue-100 text-blue-600',
-    purple: 'bg-purple-100 text-purple-600',
-  };
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
-        </div>
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colorClasses[color]}`}>
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 export default function CounselorStudentsPage() {
@@ -175,19 +157,18 @@ export default function CounselorStudentsPage() {
       <CounselorLayout user={user}>
         <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">Students</h1>
-            <p className="text-gray-600 mt-1">View all converted students (Read-only)</p>
+          <div className="mb-4 sm:mb-6">
+            <h1 className={roleListTitleClass}>Students</h1>
+            <p className={roleListSubtitleClass}>View all converted students (Read-only)</p>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <StatCard title="Total Students" value={stats.total.toString()} color="blue" />
-            <StatCard title="Active Users" value={stats.active.toString()} color="green" />
+          <div className={roleListStatGridClass}>
+            <PageStatCard compact title="Total Students" mobileTitle="Total" value={stats.total} color="blue" />
+            <PageStatCard compact title="Active Users" mobileTitle="Active" value={stats.active} color="green" />
           </div>
 
           {/* Search & Filters */}
-          <div className="mb-6 rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="mb-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:mb-6">
             <div className="rounded-t-xl border-b border-gray-100 bg-gray-50 p-3 sm:p-4">
               <ListPageFilters
                 searchQuery={searchQuery}

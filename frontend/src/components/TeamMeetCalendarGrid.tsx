@@ -55,8 +55,8 @@ export default function TeamMeetCalendarGrid({
       summary={scheduleSummary}
       className={className}
     >
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4 lg:gap-6">
-        <div className="lg:col-span-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4 lg:items-start lg:gap-6">
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm lg:col-span-3">
           <TeamMeetCalendar
             teamMeets={teamMeets}
             referrerFollowUps={referrerFollowUps}
@@ -64,6 +64,7 @@ export default function TeamMeetCalendarGrid({
             onReferrerFollowUpSelect={onReferrerFollowUpSelect}
             onDateSelect={onDateSelect}
             currentUserId={currentUserId}
+            hideHeader
           />
         </div>
         <div className="lg:col-span-1">

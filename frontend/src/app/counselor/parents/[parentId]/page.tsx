@@ -8,6 +8,12 @@ import CounselorLayout from '@/components/CounselorLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import {
+  studentPagePadding,
+  roleListBackBtnClass,
+  parentLinkedSectionClass,
+  parentMetaGridClass,
+} from '@/components/studentDetailResponsive';
 
 interface ParentDetail {
   _id: string;
@@ -55,8 +61,8 @@ export default function CounselorParentDetailPage() {
 
   if (!parent) return (
     <CounselorLayout user={user}>
-      <div className="p-8">
-        <p className="text-gray-600 mb-4">Parent not found.</p>
+      <div className={studentPagePadding}>
+        <p className="mb-4 text-gray-600">Parent not found.</p>
         <button onClick={() => router.back()} className="text-blue-600 hover:underline">Go Back</button>
       </div>
     </CounselorLayout>
@@ -66,14 +72,14 @@ export default function CounselorParentDetailPage() {
     <>
       <Toaster position="top-right" />
       <CounselorLayout user={user}>
-        <div className="p-8">
-          <button onClick={() => router.back()} className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+        <div className={studentPagePadding}>
+          <button type="button" onClick={() => router.back()} className={roleListBackBtnClass}>
+            <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             Back to Parents
           </button>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex items-center mb-6">
+          <div className={`${parentLinkedSectionClass} mb-4 sm:mb-6`}>
+            <div className="mb-4 flex items-center sm:mb-6">
               <AuthImage
                   path={parent.userId.profilePicture}
                   alt={getFullName(parent.userId)}
@@ -95,7 +101,7 @@ export default function CounselorParentDetailPage() {
               </div>
             </div>
             <div className="border-t border-gray-200 pt-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              <div className={parentMetaGridClass}>
                 <div><p className="text-sm text-gray-600 mb-1">Relationship</p><p className="font-medium text-gray-900">{parent.relationship || '-'}</p></div>
                 <div><p className="text-sm text-gray-600 mb-1">Mobile</p><p className="font-medium text-gray-900">{parent.mobileNumber || '-'}</p></div>
                 <div><p className="text-sm text-gray-600 mb-1">Email</p><p className="font-medium text-gray-900">{parent.email || parent.userId.email}</p></div>

@@ -174,8 +174,8 @@ export default function StudentCoachingClassesPlansPage() {
       )}
       <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-[calc(100vh-5rem)]">
         {/* Header */}
-        <div className="px-6 lg:px-8 py-8">
-          <button onClick={() => router.back()} className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium">
+        <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+          <button onClick={() => router.back()} className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900 sm:mb-4">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             Back
           </button>
@@ -183,7 +183,7 @@ export default function StudentCoachingClassesPlansPage() {
           <p className="text-gray-500 mt-1 max-w-2xl">Choose your coaching class. Each includes study material, session recordings, and dedicated mock tests.</p>
         </div>
 
-        <div className="p-6 lg:p-8">
+        <div className="px-4 pb-6 sm:px-6 sm:pb-8 lg:p-8">
           <CoachingClassCards
             plans={plans}
             pricing={pricing}

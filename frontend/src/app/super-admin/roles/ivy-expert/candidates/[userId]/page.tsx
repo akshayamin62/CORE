@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, usePathname } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
@@ -208,6 +208,7 @@ const PARENT_INTERVIEW_SECTIONS = [
 
 export default function CandidateDetailPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const params = useParams();
   const userId = params?.userId as string;
 
@@ -530,16 +531,18 @@ export default function CandidateDetailPage() {
 
   if (!user) return null;
 
-  const backPath = window?.location?.pathname?.includes('/students/')
+  const isStudentsRoute = pathname?.includes('/ivy-expert/students/');
+  const backPath = isStudentsRoute
     ? '/super-admin/roles/ivy-expert/students'
     : '/super-admin/roles/ivy-expert/candidates';
+  const backLabel = isStudentsRoute ? 'Back to Students' : 'Back to Candidates';
 
   return (
     <>
       <Toaster position="top-right" />
       <SuperAdminLayout user={user}>
         <SuperAdminRoleDetailFrame
-          backLabel="Back to Candidates"
+          backLabel={backLabel}
           onBack={() => router.push(backPath)}
         >
           <div className="mb-4 sm:mb-6">
@@ -846,18 +849,18 @@ export default function CandidateDetailPage() {
                             style={{ borderLeftWidth: 4, borderLeftColor: SECTION_COLORS[idx] || '#6b7280' }}
                             onClick={() => { setActiveSectionIdx(idx); }}
                           >
-                            <div className="flex items-center justify-between mb-3">
-                              <p className="text-lg font-bold text-gray-900">
+                            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                              <p className="text-sm font-bold text-gray-900 break-words sm:text-lg">
                                 {SECTION_ICONS[idx]} {sec.sectionName}
                               </p>
-                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                              <span className={`self-start px-2.5 py-0.5 rounded-full text-xs font-semibold sm:self-auto ${
                                 sec.status === 'submitted' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
                               }`}>
                                 {sec.status === 'submitted' ? 'Submitted' : sec.status}
                               </span>
                             </div>
                             {sec.status === 'submitted' && (
-                              <div className="grid grid-cols-4 gap-2 text-center">
+                              <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
                                 <div>
                                   <p className="text-lg font-bold" style={{ color: SECTION_COLORS[idx] }}>{sec.score}</p>
                                   <p className="text-[10px] text-gray-500 font-semibold">Score</p>
@@ -884,14 +887,14 @@ export default function CandidateDetailPage() {
                       {testResult.sections[activeSectionIdx]?.status === 'submitted' &&
                        testResult.sections[activeSectionIdx].questions.length > 0 && (
                         <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
-                          <h3 className="mb-3 text-base font-bold text-gray-900 sm:mb-4 sm:text-lg">
+                          <h3 className="mb-3 text-base font-bold text-gray-900 break-words sm:mb-4 sm:text-lg">
                             {SECTION_ICONS[activeSectionIdx]} {testResult.sections[activeSectionIdx].sectionName} — Questions
                           </h3>
                           <div className="space-y-5">
                             {testResult.sections[activeSectionIdx].questions.map((q) => (
                               <div key={q.questionNumber} className="border border-gray-200 rounded-lg overflow-hidden">
                                 {/* Question Header */}
-                                <div className={`px-4 py-2 flex items-center justify-between text-sm font-semibold ${
+                                <div className={`px-3 py-2 sm:px-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between text-sm font-semibold ${
                                   q.isCorrect === true
                                     ? 'bg-green-50 text-green-700'
                                     : q.isCorrect === false
@@ -908,7 +911,7 @@ export default function CandidateDetailPage() {
                                   </span>
                                 </div>
 
-                                <div className="p-4">
+                                <div className="p-3 sm:p-4">
                                   {/* Question Text */}
                                   <p className="text-sm font-medium text-gray-900 mb-3">{q.questionText}</p>
 
@@ -941,30 +944,32 @@ export default function CandidateDetailPage() {
                                       return (
                                         <div
                                           key={opt.label}
-                                          className={`flex items-center gap-3 px-3 py-2 rounded-lg border ${borderColor} ${bgColor}`}
+                                          className={`flex flex-col gap-2 px-3 py-2 rounded-lg border sm:flex-row sm:items-center sm:gap-3 ${borderColor} ${bgColor}`}
                                         >
-                                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                                            isCorrect
-                                              ? 'bg-green-500 text-white'
-                                              : isSelected
-                                              ? 'bg-red-500 text-white'
-                                              : 'bg-gray-200 text-gray-600'
-                                          }`}>
-                                            {opt.label}
-                                          </span>
-                                          <span className="text-sm text-gray-800">{opt.text}</span>
+                                          <div className="flex items-center gap-3 min-w-0">
+                                            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                                              isCorrect
+                                                ? 'bg-green-500 text-white'
+                                                : isSelected
+                                                ? 'bg-red-500 text-white'
+                                                : 'bg-gray-200 text-gray-600'
+                                            }`}>
+                                              {opt.label}
+                                            </span>
+                                            <span className="text-sm text-gray-800 break-words">{opt.text}</span>
+                                          </div>
                                           {isCorrect && (
-                                            <span className="ml-auto text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                                            <span className="self-start text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full sm:ml-auto sm:self-center">
                                               Correct
                                             </span>
                                           )}
                                           {isSelected && !isCorrect && (
-                                            <span className="ml-auto text-[10px] font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">
+                                            <span className="self-start text-[10px] font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full sm:ml-auto sm:self-center">
                                               Student&apos;s Answer
                                             </span>
                                           )}
                                           {isSelected && isCorrect && (
-                                            <span className="ml-auto text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                                            <span className="self-start text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full sm:ml-auto sm:self-center">
                                               Student&apos;s Answer ✓
                                             </span>
                                           )}
@@ -1032,14 +1037,14 @@ export default function CandidateDetailPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                           </div>
-                          <span className="font-semibold text-gray-900">Schedule Student Interview Meeting</span>
+                          <span className="text-sm font-semibold text-gray-900 sm:text-base">Schedule Student Interview Meeting</span>
                         </div>
                         <svg className={`w-5 h-5 text-gray-400 transition-transform ${showStudentScheduleForm ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
                       {showStudentScheduleForm && (
-                        <form onSubmit={handleScheduleStudentMeeting} className="px-6 pb-6 border-t border-gray-100">
+                        <form onSubmit={handleScheduleStudentMeeting} className="px-4 pb-4 border-t border-gray-100 sm:px-6 sm:pb-6">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                             <div className="md:col-span-2">
                               <label className="block text-xs font-semibold text-gray-600 mb-1">Subject *</label>
@@ -1097,18 +1102,18 @@ export default function CandidateDetailPage() {
                               </select>
                             </div>
                           </div>
-                          <div className="flex gap-3 mt-4">
+                          <div className="flex flex-col gap-2 mt-4 sm:flex-row sm:gap-3">
                             <button
                               type="submit"
                               disabled={schedulingStudent}
-                              className="px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+                              className="w-full px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-50 sm:w-auto"
                             >
                               {schedulingStudent ? 'Scheduling...' : 'Schedule Meeting'}
                             </button>
                             <button
                               type="button"
                               onClick={() => setShowStudentScheduleForm(false)}
-                              className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50"
+                              className="w-full px-5 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 sm:w-auto"
                             >
                               Cancel
                             </button>
@@ -1119,7 +1124,7 @@ export default function CandidateDetailPage() {
 
                     {/* Student Interview Meetings List */}
                     {studentMeetings.length > 0 && (
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6">
                         <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-4">Scheduled Meetings</h4>
                         <div className="space-y-3">
                           {studentMeetings.map((m) => {
@@ -1224,7 +1229,7 @@ export default function CandidateDetailPage() {
                             onClick={() => handleClearStage('student-interview')}
                             disabled={clearingStage === 'student-interview' || !clearances.testCleared}
                             title={!clearances.testCleared ? 'Test must be cleared first' : undefined}
-                            className="px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                            className="w-full rounded-lg px-4 py-2 text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors sm:w-auto"
                           >
                             {clearingStage === 'student-interview' ? 'Clearing...' : '✓ Clear Student Interview'}
                           </button>
@@ -1250,7 +1255,7 @@ export default function CandidateDetailPage() {
                               <p className="text-xs font-semibold text-blue-100 uppercase tracking-wide mb-0.5">Section {sIdx + 1}</p>
                               <h4 className="text-base font-bold text-white">{section.icon} {section.title}</h4>
                             </div>
-                            <div className="text-right">
+                            <div className="text-left sm:text-right">
                               <p className="text-xs text-blue-100 font-medium">Section Score</p>
                               <p className="text-2xl font-extrabold text-white">
                                 {sectionAvg ?? <span className="text-blue-200">—</span>}
@@ -1263,7 +1268,7 @@ export default function CandidateDetailPage() {
                           {/* Questions */}
                           <div className="divide-y divide-gray-100">
                             {section.questions.map((q, qIdx) => (
-                              <div key={qIdx} className="p-5">
+                              <div key={qIdx} className="p-3 sm:p-5">
                                 <div className="flex items-start gap-4">
                                   <span className={`shrink-0 w-7 h-7 rounded-full ${cl.dot} text-white flex items-center justify-center text-xs font-bold mt-0.5`}>
                                     {qIdx + 1}
@@ -1377,14 +1382,14 @@ export default function CandidateDetailPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                           </div>
-                          <span className="font-semibold text-gray-900">Schedule Parent Interview Meeting</span>
+                          <span className="text-sm font-semibold text-gray-900 sm:text-base">Schedule Parent Interview Meeting</span>
                         </div>
                         <svg className={`w-5 h-5 text-gray-400 transition-transform ${showParentScheduleForm ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
                       {showParentScheduleForm && (
-                        <form onSubmit={handleScheduleParentMeeting} className="px-6 pb-6 border-t border-gray-100">
+                        <form onSubmit={handleScheduleParentMeeting} className="px-4 pb-4 border-t border-gray-100 sm:px-6 sm:pb-6">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                             <div className="md:col-span-2">
                               <label className="block text-xs font-semibold text-gray-600 mb-1">Subject *</label>
@@ -1442,18 +1447,18 @@ export default function CandidateDetailPage() {
                               </select>
                             </div>
                           </div>
-                          <div className="flex gap-3 mt-4">
+                          <div className="flex flex-col gap-2 mt-4 sm:flex-row sm:gap-3">
                             <button
                               type="submit"
                               disabled={schedulingParent}
-                              className="px-5 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 disabled:opacity-50"
+                              className="w-full px-5 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 disabled:opacity-50 sm:w-auto"
                             >
                               {schedulingParent ? 'Scheduling...' : 'Schedule Meeting'}
                             </button>
                             <button
                               type="button"
                               onClick={() => setShowParentScheduleForm(false)}
-                              className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50"
+                              className="w-full px-5 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 sm:w-auto"
                             >
                               Cancel
                             </button>
@@ -1464,7 +1469,7 @@ export default function CandidateDetailPage() {
 
                     {/* Parent Interview Meetings List */}
                     {parentMeetings.length > 0 && (
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6">
                         <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-4">Scheduled Meetings</h4>
                         <div className="space-y-3">
                           {parentMeetings.map((m) => {
@@ -1571,7 +1576,7 @@ export default function CandidateDetailPage() {
                             onClick={() => handleClearStage('parent-interview')}
                             disabled={clearingStage === 'parent-interview' || !clearances.studentInterviewCleared}
                             title={!clearances.studentInterviewCleared ? 'Student Interview must be cleared first' : undefined}
-                            className="px-4 py-2 rounded-lg text-sm font-semibold bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                            className="w-full rounded-lg px-4 py-2 text-sm font-semibold bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors sm:w-auto"
                           >
                             {clearingStage === 'parent-interview' ? 'Clearing...' : '✓ Clear Parent Interview'}
                           </button>
@@ -1597,7 +1602,7 @@ export default function CandidateDetailPage() {
                               <p className="text-xs font-semibold text-blue-100 uppercase tracking-wide mb-0.5">Section {sIdx + 1}</p>
                               <h4 className="text-base font-bold text-white">{section.icon} {section.title}</h4>
                             </div>
-                            <div className="text-right">
+                            <div className="text-left sm:text-right">
                               <p className="text-xs text-blue-100 font-medium">Section Score</p>
                               <p className="text-2xl font-extrabold text-white">
                                 {sectionAvg ?? <span className="text-blue-200">—</span>}
@@ -1610,7 +1615,7 @@ export default function CandidateDetailPage() {
                           {/* Questions */}
                           <div className="divide-y divide-gray-100">
                             {section.questions.map((q, qIdx) => (
-                              <div key={qIdx} className="p-5">
+                              <div key={qIdx} className="p-3 sm:p-5">
                                 <div className="flex items-start gap-4">
                                   <span className={`shrink-0 w-7 h-7 rounded-full ${cl.dot} text-white flex items-center justify-center text-xs font-bold mt-0.5`}>
                                     {qIdx + 1}

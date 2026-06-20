@@ -11,6 +11,7 @@ import B2BFollowUpFormPanel from '@/components/B2BFollowUpFormPanel';
 import ScheduleCalendarGrid from '@/components/ScheduleCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import MobileRecordCard from '@/components/MobileRecordCard';
+import EnquiryUrlCopy from '@/components/EnquiryUrlCopy';
 
 // Adapter: map B2B follow-up data to FollowUp shape for calendar/sidebar
 function adaptB2BFollowUps(b2bFollowUps: any[]): FollowUp[] {
@@ -265,35 +266,11 @@ export default function B2BSalesDashboardPage() {
               <div className="hidden text-right lg:block">
                 {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<><p className="text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></>); })()}
               </div>
-              {/* Copy Enquiry URL */}
-              <div className="w-full max-w-lg rounded-xl border border-gray-200 bg-white p-4 shadow-sm lg:w-auto">
-                <div className="mb-2 flex items-center gap-2">
-                  <svg className="h-5 w-5 shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  <h3 className="text-sm font-semibold text-gray-900">B2B Enquiry Form</h3>
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <div className="flex-1 rounded-lg bg-blue-50 px-3 py-2">
-                    <code className="break-all font-mono text-xs text-blue-700">
-                      {`${typeof window !== 'undefined' ? window.location.origin : ''}/b2b-enquiry`}
-                    </code>
-                  </div>
-                  <button
-                    onClick={() => {
-                      const url = `${window.location.origin}/b2b-enquiry`;
-                      navigator.clipboard.writeText(url);
-                      toast.success('Enquiry form URL copied!');
-                    }}
-                    className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-                  >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    Copy URL
-                  </button>
-                </div>
-              </div>
+              <EnquiryUrlCopy
+                label="B2B Enquiry Form"
+                url={typeof window !== 'undefined' ? `${window.location.origin}/b2b-enquiry` : ''}
+                className="w-full lg:w-auto"
+              />
             </div>
           </div>
 

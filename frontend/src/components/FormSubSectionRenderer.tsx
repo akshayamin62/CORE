@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { SubSectionConfig } from '@/config/formConfig';
 import FormFieldRenderer from './FormFieldRenderer';
@@ -16,6 +16,7 @@ interface FormSubSectionRendererProps {
   readOnlyKeys?: string[];
   noDelete?: boolean;
   readOnlyInstances?: number[];
+  compact?: boolean;
 }
 
 export default function FormSubSectionRenderer({
@@ -30,6 +31,7 @@ export default function FormSubSectionRenderer({
   readOnlyKeys,
   noDelete = false,
   readOnlyInstances = [],
+  compact = false,
 }: FormSubSectionRendererProps) {
   const [expandedIndices, setExpandedIndices] = useState<Set<number>>(
     new Set([0])
@@ -60,15 +62,14 @@ export default function FormSubSectionRenderer({
   };
 
   return (
-    <div className="space-y-4">
-      {/* SubSection Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h4 className="text-lg font-semibold text-gray-900">
+    <div className={compact ? 'space-y-3' : 'space-y-4'}>
+      <div className={`flex items-center justify-between ${compact ? 'mb-2' : 'mb-4'}`}>
+        <div className="min-w-0">
+          <h4 className={`font-semibold text-gray-900 ${compact ? 'text-sm sm:text-base' : 'text-lg'}`}>
             {subSection.title}
           </h4>
           {subSection.description && (
-            <p className="text-sm text-gray-800 mt-1">
+            <p className={`mt-0.5 text-gray-600 ${compact ? 'text-xs' : 'text-sm'}`}>
               {subSection.description}
             </p>
           )}
@@ -80,22 +81,13 @@ export default function FormSubSectionRenderer({
               e.preventDefault();
               handleAddInstance();
             }}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-2"
+            className={`shrink-0 rounded-lg bg-blue-600 font-medium text-white transition-colors hover:bg-blue-700 ${compact ? 'px-2.5 py-1.5 text-xs sm:px-3 sm:py-2 sm:text-sm' : 'px-4 py-2 text-sm'} flex items-center gap-1.5`}
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
+            <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Add {subSection.title}
+            <span className="hidden sm:inline">Add {subSection.title}</span>
+            <span className="sm:hidden">Add</span>
           </button>
         )}
       </div>
@@ -109,14 +101,14 @@ export default function FormSubSectionRenderer({
           {/* Instance Header (for repeatable sections) */}
           {subSection.isRepeatable && (
             <div
-              className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
+              className={`flex cursor-pointer items-center justify-between border-b border-gray-200 bg-gray-50 transition-colors hover:bg-gray-100 ${compact ? 'px-3 py-2 sm:px-4 sm:py-3' : 'px-5 py-3'}`}
               onClick={() => toggleExpanded(index)}
             >
-              <div className="flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-lg text-sm font-semibold">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className={`flex items-center justify-center rounded-lg bg-blue-600 font-semibold text-white ${compact ? 'h-7 w-7 text-xs sm:h-8 sm:w-8 sm:text-sm' : 'h-8 w-8 text-sm'}`}>
                   {index + 1}
                 </span>
-                <span className="font-semibold text-gray-900 text-base">
+                <span className={`font-semibold text-gray-900 ${compact ? 'text-sm' : 'text-base'}`}>
                   {subSection.title} #{index + 1}
                 </span>
               </div>
@@ -168,7 +160,7 @@ export default function FormSubSectionRenderer({
 
           {/* Fields */}
           {(!subSection.isRepeatable || expandedIndices.has(index)) && (
-            <div className="p-5 bg-white">
+            <div className={compact ? 'bg-white p-3 sm:p-4' : 'bg-white p-5'}>
               {(() => {
                 const isInstanceReadOnly = readOnly || readOnlyInstances.includes(index);
                 const allSortedFields = [...subSection.fields].sort((a, b) => a.order - b.order);

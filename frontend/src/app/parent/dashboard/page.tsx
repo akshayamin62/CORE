@@ -9,6 +9,13 @@ import TeamMeetCalendarGrid from '@/components/TeamMeetCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
+import PageStatCard from '@/components/PageStatCard';
+import {
+  roleListPagePadding,
+  roleListTitleClass,
+  roleListSubtitleClass,
+  roleListTabStatGridClass,
+} from '@/components/studentDetailResponsive';
 
 interface StudentData {
   _id: string;
@@ -140,54 +147,36 @@ export default function ParentDashboardPage() {
     );
   }
 
+  const today = new Date();
+  const dayOfYear = Math.floor(
+    (today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000
+  );
+
   return (
     <>
       <Toaster position="top-right" />
       <ParentLayout user={user}>
-        <div className="p-8">
+        <div className={roleListPagePadding}>
           {/* Header */}
-          <div className="mb-6 flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Welcome, {user.firstName}</h1>
-              <p className="text-gray-600 mt-1">View your children&apos;s academic progress</p>
+          <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h1 className={roleListTitleClass}>Welcome, {user.firstName}</h1>
+              <p className={roleListSubtitleClass}>View your children&apos;s academic progress</p>
             </div>
-            {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="text-right"><p className="text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></div>); })()}
+            <div className="shrink-0 text-left sm:text-right">
+              <p className="text-lg font-extrabold leading-none text-gray-900 sm:text-2xl md:text-3xl">Day {dayOfYear}</p>
+              <p className="mt-0.5 text-[10px] text-gray-500 sm:text-sm">of {today.getFullYear()}</p>
+            </div>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Children</p>
-                  <p className="text-3xl font-bold text-gray-900">{students.length}</p>
-                </div>
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-purple-100 text-purple-600">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Registrations</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {students.reduce((sum, s) => sum + s.registrationCount, 0)}
-                  </p>
-                </div>
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-blue-100 text-blue-600">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
+          <div className={roleListTabStatGridClass}>
+            <PageStatCard compact title="Total Children" mobileTitle="Children" value={students.length} color="purple" />
+            <PageStatCard compact title="Total Registrations" mobileTitle="Registrations" value={students.reduce((sum, s) => sum + s.registrationCount, 0)} color="blue" />
           </div>
 
           {/* Team Meet Section */}
-          <div className="mt-2">
+          <div className="mt-6 sm:mt-8">
             <TeamMeetCalendarGrid
               teamMeets={teamMeets}
               onTeamMeetSelect={handleTeamMeetSelect}

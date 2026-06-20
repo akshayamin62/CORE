@@ -10,6 +10,7 @@ import { getFullName } from '@/utils/nameHelpers';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import CalendarNavigationBar from '@/components/calendar/CalendarNavigationBar';
 import BigCalendarViewport from '@/components/calendar/BigCalendarViewport';
+import CalendarLegendModal from '@/components/calendar/CalendarLegendModal';
 import {
   getDesktopCalendarFormats,
   getMobileCalendarFormats,
@@ -107,6 +108,39 @@ export default function ScheduleCalendar({
   const [view, setView] = useState<View>('month');
   const [date, setDate] = useState(new Date());
   const isMobile = useIsMobile();
+
+  const followUpLegend = useMemo(
+    () => [
+      {
+        title: 'Follow-up Colors (Lead Stage)',
+        items: [
+          { color: 'bg-blue-500', label: 'New Lead' },
+          { color: 'bg-red-500', label: 'Hot Lead' },
+          { color: 'bg-orange-500', label: 'Warm Lead' },
+          { color: 'bg-cyan-400', label: 'Cold Lead' },
+          { color: 'bg-green-500', label: 'Converted Lead' },
+          { color: 'bg-purple-400', label: 'Missed Follow-up' },
+        ],
+      },
+    ],
+    []
+  );
+
+  const teamMeetLegend = useMemo(
+    () => [
+      {
+        title: 'Team Meet Colors (Status)',
+        items: [
+          { color: 'bg-amber-400', label: 'Pending Confirmation' },
+          { color: 'bg-pink-500', label: 'Confirmed' },
+          { color: 'bg-red-800', label: 'Rejected' },
+          { color: 'bg-slate-400', label: 'Cancelled' },
+          { color: 'bg-teal-500', label: 'Completed' },
+        ],
+      },
+    ],
+    []
+  );
 
   // Convert follow-ups to calendar events
   const followUpEvents: CalendarEvent[] = useMemo(() => {
@@ -271,6 +305,15 @@ export default function ScheduleCalendar({
     }
   }, [onDateSelect]);
 
+  const handleDrillDown = useCallback(
+    (drillDate: Date) => {
+      if (onDateSelect) {
+        onDateSelect(drillDate);
+      }
+    },
+    [onDateSelect]
+  );
+
   // Navigate Previous based on current view
   const handlePrevious = useCallback(() => {
     if (view === 'month') {
@@ -344,98 +387,37 @@ export default function ScheduleCalendar({
             </div>
           </div>
           
-          {/* Combined Legend — desktop only */}
-          <div className="hidden flex-wrap items-center gap-3 lg:flex">
-            {/* FollowUp Legend */}
-            <div className="relative group">
-              <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded-lg cursor-help hover:bg-blue-50 transition-colors">
-                <span className="text-xs text-gray-500 mr-1">📋</span>
-                <span className="w-2 h-2 rounded bg-blue-500"></span>
-                <span className="w-2 h-2 rounded bg-red-500"></span>
-                <span className="w-2 h-2 rounded bg-orange-500"></span>
-                <span className="w-2 h-2 rounded bg-cyan-400"></span>
-                <span className="w-2 h-2 rounded bg-green-500"></span>
-                <span className="w-2 h-2 rounded bg-purple-400"></span>
-                <span className="text-xs text-gray-500 ml-1">Follow-ups</span>
-              </div>
-              {/* Tooltip */}
-              <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <p className="text-xs font-semibold text-gray-700 mb-2">Follow-up Colors (Lead Stage)</p>
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-blue-500"></span>
-                    <span className="text-xs text-gray-600">New Lead</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-red-500"></span>
-                    <span className="text-xs text-gray-600">Hot Lead</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-orange-500"></span>
-                    <span className="text-xs text-gray-600">Warm Lead</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-cyan-400"></span>
-                    <span className="text-xs text-gray-600">Cold Lead</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-green-500"></span>
-                    <span className="text-xs text-gray-600">Converted Lead</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-purple-400"></span>
-                    <span className="text-xs text-gray-600">Missed Follow-up</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* TeamMeet Legend */}
-            <div className="relative group">
-              <div className="flex items-center gap-1 px-2 py-1 bg-gray-50 rounded-lg cursor-help hover:bg-pink-50 transition-colors">
-                <span className="text-xs text-gray-500 mr-1">👥</span>
-                <span className="w-2 h-2 rounded bg-amber-400"></span>
-                <span className="w-2 h-2 rounded bg-pink-500"></span>
-                <span className="w-2 h-2 rounded bg-red-800"></span>
-                <span className="w-2 h-2 rounded bg-slate-400"></span>
-                <span className="w-2 h-2 rounded bg-teal-500"></span>
-                <span className="text-xs text-gray-500 ml-1">Team Meets</span>
-              </div>
-              {/* Tooltip */}
-              <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <p className="text-xs font-semibold text-gray-700 mb-2">Team Meet Colors (Status)</p>
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-amber-400"></span>
-                    <span className="text-xs text-gray-600">Pending Confirmation</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-pink-500"></span>
-                    <span className="text-xs text-gray-600">Confirmed</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-red-800"></span>
-                    <span className="text-xs text-gray-600">Rejected</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-slate-400"></span>
-                    <span className="text-xs text-gray-600">Cancelled</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-teal-500"></span>
-                    <span className="text-xs text-gray-600">Completed</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
+          <div className="flex flex-wrap items-center gap-2 self-end lg:self-auto">
+            <CalendarLegendModal
+              sections={followUpLegend}
+              triggerPrefix="📋"
+              triggerLabel="Follow-ups"
+              triggerDots={[
+                { color: 'bg-blue-500' },
+                { color: 'bg-red-500' },
+                { color: 'bg-orange-500' },
+                { color: 'bg-green-500' },
+              ]}
+              hoverBgClass="hover:bg-blue-50"
+            />
+            <CalendarLegendModal
+              sections={teamMeetLegend}
+              triggerPrefix="👥"
+              triggerLabel="Team Meets"
+              triggerDots={[
+                { color: 'bg-amber-400' },
+                { color: 'bg-pink-500' },
+                { color: 'bg-teal-500' },
+              ]}
+              hoverBgClass="hover:bg-pink-50"
+            />
             {onToggleMinimize && (
               <button
                 onClick={onToggleMinimize}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                className="hidden rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 lg:block"
                 title="Minimize calendar"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                 </svg>
               </button>
@@ -468,7 +450,9 @@ export default function ScheduleCalendar({
           onView={handleViewChange}
           onSelectEvent={handleEventSelect}
           onSelectSlot={!readOnly ? handleSelectSlot : undefined}
+          onDrillDown={isMobile && !readOnly && onDateSelect ? handleDrillDown : undefined}
           selectable={!readOnly && !!onDateSelect}
+          longPressThreshold={isMobile ? 1 : 250}
           eventPropGetter={eventStyleGetter}
           views={['month', 'week', 'day']}
           defaultView="month"

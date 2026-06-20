@@ -10,6 +10,7 @@ import { getFullName } from '@/utils/nameHelpers';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import CalendarNavigationBar from '@/components/calendar/CalendarNavigationBar';
 import BigCalendarViewport from '@/components/calendar/BigCalendarViewport';
+import CalendarLegendModal from '@/components/calendar/CalendarLegendModal';
 import {
   getDesktopCalendarFormats,
   getMobileCalendarFormats,
@@ -102,6 +103,30 @@ export default function OpsScheduleCalendar({
   const [view, setView] = useState<View>('month');
   const [date, setDate] = useState(new Date());
   const isMobile = useIsMobile();
+
+  const opsLegendSections = useMemo(
+    () => [
+      {
+        title: '📋 Task',
+        items: [
+          { color: 'bg-blue-500', label: 'Scheduled' },
+          { color: 'bg-green-500', label: 'Completed' },
+          { color: 'bg-purple-500', label: 'Missed' },
+        ],
+      },
+      {
+        title: '👥 Team Meet',
+        items: [
+          { color: 'bg-amber-400', label: 'Pending Confirmation' },
+          { color: 'bg-pink-500', label: 'Confirmed' },
+          { color: 'bg-red-700', label: 'Reschedule Requested' },
+          { color: 'bg-slate-400', label: 'Cancelled' },
+          { color: 'bg-teal-500', label: 'Completed' },
+        ],
+      },
+    ],
+    []
+  );
 
   // Convert schedules to calendar events
   const events: CalendarEvent[] = useMemo(() => {
@@ -241,6 +266,15 @@ export default function OpsScheduleCalendar({
     }
   }, [onDateSelect]);
 
+  const handleDrillDown = useCallback(
+    (drillDate: Date) => {
+      if (onDateSelect) {
+        onDateSelect(drillDate);
+      }
+    },
+    [onDateSelect]
+  );
+
   // Navigate Previous based on current view
   const handlePrevious = useCallback(() => {
     if (view === 'month') {
@@ -298,7 +332,7 @@ export default function OpsScheduleCalendar({
     <div className={`bg-white ${hideHeader ? '' : 'rounded-xl shadow-sm border border-gray-200'} overflow-hidden`}>
       {/* Calendar Header */}
       {!hideHeader && (
-        <div className="flex flex-col gap-3 border-b border-gray-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between md:px-6 md:py-4">
+        <div className="flex flex-col gap-2 border-b border-gray-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between md:px-6 md:py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-100 md:h-10 md:w-10">
               <svg className="h-5 w-5 text-indigo-600 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -310,68 +344,27 @@ export default function OpsScheduleCalendar({
               <p className="text-xs text-gray-500 md:text-sm">{events.length} events</p>
             </div>
           </div>
-          
-          {/* Legend — desktop only */}
-          <div className="hidden items-center gap-4 md:flex">
-            <div className="relative group">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg cursor-help hover:bg-indigo-50 transition-colors">
-                <span className="text-xs text-gray-500">📋👥</span>
-                <span className="w-2 h-2 rounded bg-blue-500"></span>
-                <span className="w-2 h-2 rounded bg-green-500"></span>
-                <span className="w-2 h-2 rounded bg-pink-500"></span>
-                <span className="w-2 h-2 rounded bg-amber-500"></span>
-                <span className="text-xs text-gray-500">Team Meet</span>
-              </div>
-              {/* Hover Tooltip */}
-              <div className="absolute top-full right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-gray-200 p-3 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <p className="text-xs font-semibold text-gray-700 mb-2">📋 Task</p>
-                <div className="space-y-1.5 mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-blue-500"></span>
-                    <span className="text-xs text-gray-600">Scheduled</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-green-500"></span>
-                    <span className="text-xs text-gray-600">Completed</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-purple-500"></span>
-                    <span className="text-xs text-gray-600">Missed</span>
-                  </div>
-                </div>
-                <p className="text-xs font-semibold text-gray-700 mb-2">👥 Team Meet</p>
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-amber-400"></span>
-                    <span className="text-xs text-gray-600">Pending Confirmation</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-pink-500"></span>
-                    <span className="text-xs text-gray-600">Confirmed</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-red-700"></span>
-                    <span className="text-xs text-gray-600">Reschedule Requested</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-slate-400"></span>
-                    <span className="text-xs text-gray-600">Cancelled</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded bg-teal-500"></span>
-                    <span className="text-xs text-gray-600">Completed</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
+
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <CalendarLegendModal
+              sections={opsLegendSections}
+              triggerPrefix="📋👥"
+              triggerLabel="Legend"
+              triggerDots={[
+                { color: 'bg-blue-500' },
+                { color: 'bg-green-500' },
+                { color: 'bg-pink-500' },
+                { color: 'bg-amber-400' },
+              ]}
+              hoverBgClass="hover:bg-indigo-50"
+            />
             {onToggleMinimize && (
               <button
                 onClick={onToggleMinimize}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                className="hidden rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 md:block"
                 title="Minimize calendar"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                 </svg>
               </button>
@@ -404,7 +397,9 @@ export default function OpsScheduleCalendar({
           onView={handleViewChange}
           onSelectEvent={handleEventSelect}
           onSelectSlot={handleSelectSlot}
+          onDrillDown={isMobile && onDateSelect ? handleDrillDown : undefined}
           selectable={!!onDateSelect}
+          longPressThreshold={isMobile ? 1 : 250}
           eventPropGetter={eventStyleGetter}
           views={['month', 'week', 'day']}
           defaultView="month"

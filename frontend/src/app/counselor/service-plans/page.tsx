@@ -99,7 +99,7 @@ export default function CounselorServicePlansPage() {
   return (
     <CounselorLayout user={user}>
       <Toaster position="top-right" />
-      <div className="p-6 lg:p-8">
+      <div className="p-4 py-4 pb-24 sm:px-6 sm:py-6 md:pb-8 lg:p-8">
         {!selectedService && (
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-900">Service Plans</h1>

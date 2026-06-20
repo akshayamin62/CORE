@@ -8,6 +8,7 @@ import { getServiceFormStructure, PartConfig, SectionConfig } from '@/config/for
 import { getServicePlans } from '@/config/servicePlans';
 import toast, { Toaster } from 'react-hot-toast';
 import FormSectionRenderer from '@/components/FormSectionRenderer';
+import ProfileSectionViewDisplay from '@/components/ProfileSectionViewDisplay';
 import { StudyAbroadLayout, EducationPlanningLayout, CoachingClassesLayout } from '@/components/layouts';
 import ProgramSection from '@/components/ProgramSection';
 import { getFullName } from '@/utils/nameHelpers';
@@ -105,6 +106,8 @@ function MyDetailsContent() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editingProfileSectionKey, setEditingProfileSectionKey] = useState<string | null>(null);
+  const [profileSectionSnapshot, setProfileSectionSnapshot] = useState<any>(null);
   const [registration, setRegistration] = useState<ExtendedRegistration | null>(null);
   const [formStructure, setFormStructure] = useState<{ part: { key: string; title: string; description?: string; order: number }; order: number; sections: SectionConfig[] }[]>([]);
   const [selectedPartIndex, setSelectedPartIndex] = useState(0);
@@ -701,6 +704,8 @@ function MyDetailsContent() {
 
       toast.success('Saved successfully!');
       setErrors({});
+      setEditingProfileSectionKey(null);
+      setProfileSectionSnapshot(null);
       
     } catch (error: any) {
       const message = error.response?.data?.message || 'Failed to save';
@@ -832,11 +837,11 @@ function MyDetailsContent() {
     };
 
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <div className="mx-auto max-w-7xl space-y-6 px-3 py-4 sm:space-y-8 sm:px-6 sm:py-6 lg:px-8">
         {/* Application Stats */}
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Application Overview</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">Application Overview</h2>
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
             {dashboardStatCards.map((card) => {
               const colorMap: Record<string, string> = {
                 blue: 'bg-blue-100 text-blue-600',
@@ -852,17 +857,17 @@ function MyDetailsContent() {
                 <div
                   key={card.title}
                   onClick={() => navigateToApplicationSection(targetSection)}
-                  className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all cursor-pointer hover:border-blue-400 hover:shadow-md"
+                  className="cursor-pointer rounded-xl border-2 border-gray-200 bg-white p-3 shadow-sm transition-all hover:border-blue-400 hover:shadow-md sm:p-5"
                 >
                   <div className="flex items-center justify-between">
-                    <div className={`w-10 h-10 ${colorMap[card.color]} rounded-lg flex items-center justify-center`}>
-                      {card.icon}
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${colorMap[card.color]}`}>
+                      <span className="scale-75 sm:scale-100">{card.icon}</span>
                     </div>
-                    <h3 className="text-3xl font-extrabold text-gray-900">{card.value}</h3>
+                    <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{card.value}</h3>
                   </div>
-                  <div className="flex items-center justify-between mt-3">
-                    <p className="text-sm font-semibold text-gray-700">{card.title}</p>
-                    <p className="text-sm font-semibold text-gray-900">{pct.toFixed(1)}%</p>
+                  <div className="mt-2 flex items-center justify-between sm:mt-3">
+                    <p className="text-[11px] font-semibold text-gray-700 sm:text-sm">{card.title}</p>
+                    <p className="text-[11px] font-semibold text-gray-900 sm:text-sm">{pct.toFixed(1)}%</p>
                   </div>
                 </div>
               );
@@ -976,12 +981,12 @@ function MyDetailsContent() {
       const hasTeam = registration.studentId.adminId || registration.studentId.counselorId || registration.studentId.advisorId || opsUser || (isEducationPlanning && eduplanCoach);
       if (!hasTeam) return null;
       return (
-        <div className="bg-white border-b border-gray-200 mb-6">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Your Support Team</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="mb-4 border-b border-gray-200 bg-white sm:mb-6">
+          <div className="mx-auto max-w-7xl px-3 py-3 sm:px-6 sm:py-4">
+            <h3 className="mb-2 text-xs font-semibold text-gray-900 sm:mb-3 sm:text-sm">Your Support Team</h3>
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-2 lg:grid-cols-5 lg:gap-4">
               {registration.studentId.adminId && (
-                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-2.5 sm:p-3">
                   <p className="text-xs font-medium text-gray-700 mb-1">Admin</p>
                   <p className="text-sm font-semibold text-gray-900">
                     {registration.studentId.adminId.companyName || getFullName(registration.studentId.adminId.userId)}
@@ -1311,23 +1316,66 @@ function MyDetailsContent() {
   const currentPart = formStructure[selectedPartIndex];
   const currentSection = currentPart.sections.sort((a, b) => a.order - b.order)[selectedSectionIndex];
 
+  const startProfileEdit = (sectionKey: string) => {
+    const partKey = currentPart.part.key;
+    setProfileSectionSnapshot(JSON.parse(JSON.stringify(formValues[partKey]?.[sectionKey] || {})));
+    setEditingProfileSectionKey(sectionKey);
+    setErrors({});
+  };
+
+  const cancelProfileEdit = (sectionKey: string) => {
+    if (profileSectionSnapshot) {
+      setFormValues((prev: any) => {
+        const next = JSON.parse(JSON.stringify(prev));
+        if (!next[currentPart.part.key]) next[currentPart.part.key] = {};
+        next[currentPart.part.key][sectionKey] = JSON.parse(JSON.stringify(profileSectionSnapshot));
+        return next;
+      });
+    }
+    setEditingProfileSectionKey(null);
+    setProfileSectionSnapshot(null);
+    setErrors({});
+  };
+
+  const profileSectionActions = (sectionKey: string, canEdit: boolean) => {
+    if (!canEdit) return null;
+    const isEditing = editingProfileSectionKey === sectionKey;
+    return (
+      <div className="flex shrink-0 gap-1.5">
+        {!isEditing ? (
+          <button type="button" onClick={() => startProfileEdit(sectionKey)} className="rounded-md bg-white/20 px-2.5 py-1 text-xs font-semibold text-white hover:bg-white/30 sm:text-sm">Edit</button>
+        ) : (
+          <>
+            <button type="button" onClick={() => cancelProfileEdit(sectionKey)} className="rounded-md bg-white/20 px-2.5 py-1 text-xs font-semibold text-white hover:bg-white/30 sm:text-sm">Cancel</button>
+            <button type="button" onClick={handleSaveSection} disabled={saving} className="rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50 disabled:opacity-50 sm:text-sm">{saving ? 'Saving...' : 'Save'}</button>
+          </>
+        )}
+      </div>
+    );
+  };
+
   const renderFormContent = () => (
     <>
       {/* Section Navigation (Horizontal Tabs) */}
       {currentPart && currentPart.sections && currentPart.sections.length > 0 && (
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="inline-flex bg-gray-100 rounded-lg p-1 border border-gray-200 overflow-x-auto">
+        <div className="border-b border-gray-200 bg-white">
+          <div className="mx-auto max-w-7xl px-3 py-3 sm:px-6 sm:py-4">
+            <div className="-mx-0.5 flex w-full max-w-full gap-1 overflow-x-auto px-0.5 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {[...currentPart.sections]
                 .sort((a, b) => a.order - b.order)
                 .map((section, index) => (
                   <button
                     key={section.key}
-                    onClick={() => setSelectedSectionIndex(index)}
-                    className={`px-4 py-2 rounded-md font-medium transition-all whitespace-nowrap text-sm ${
+                    onClick={() => {
+                      if (editingProfileSectionKey && editingProfileSectionKey !== section.key) {
+                        cancelProfileEdit(editingProfileSectionKey);
+                      }
+                      setSelectedSectionIndex(index);
+                    }}
+                    className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm ${
                       selectedSectionIndex === index
                         ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-gray-700 hover:text-gray-900'
+                        : 'bg-gray-100 text-gray-700 hover:text-gray-900'
                     }`}
                   >
                     {section.title}
@@ -1339,8 +1387,8 @@ function MyDetailsContent() {
       )}
 
       {/* Form Content - Single Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-8">
-        <div className="space-y-5">
+      <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+        <div className="space-y-4 sm:space-y-5">
           {currentSection && (
             <div>
               {currentPart.part.key === 'APPLICATION' && 
@@ -1369,6 +1417,63 @@ function MyDetailsContent() {
                   studentId={registration?.studentId?.toString()}
                   userRole="STUDENT"
                 />
+              ) : currentPart.part.key === 'PROFILE' ? (
+                <>
+                  {(() => {
+                    const isParentalSection = currentSection.title === 'Parental Details';
+                    const parentalReadOnlyInstances = isParentalSection ? initialParentalReadOnlyRef.current : [];
+                    const allParentalSlotsFilled = parentalReadOnlyInstances.length >= 2;
+                    const isEditing = editingProfileSectionKey === currentSection.key;
+                    const canEdit = !(isParentalSection && allParentalSlotsFilled);
+                    const sectionValues = formValues[currentPart.part.key]?.[currentSection.key] || {};
+
+                    return (
+                      <>
+                        {isEditing && canEdit ? (
+                          <FormSectionRenderer
+                            section={currentSection}
+                            values={sectionValues}
+                            onChange={(subSectionId, index, key, value) =>
+                              handleFieldChange(currentPart.part.key, currentSection.key, subSectionId, index, key, value)
+                            }
+                            onAddInstance={(subSectionId) =>
+                              handleAddInstance(currentPart.part.key, currentSection.key, subSectionId)
+                            }
+                            onRemoveInstance={(subSectionId, index) =>
+                              handleRemoveInstance(currentPart.part.key, currentSection.key, subSectionId, index)
+                            }
+                            errors={errors}
+                            readOnly={isParentalSection && allParentalSlotsFilled}
+                            readOnlyKeys={['firstName', 'middleName', 'lastName']}
+                            noDelete={isParentalSection}
+                            readOnlyInstances={isParentalSection ? parentalReadOnlyInstances : []}
+                            compact
+                            headerActions={profileSectionActions(currentSection.key, canEdit)}
+                          />
+                        ) : (
+                          <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+                            <div className="flex items-start justify-between gap-2 border-b border-blue-700 bg-blue-600 px-3 py-2.5 sm:px-6 sm:py-4">
+                              <div className="min-w-0">
+                                <h3 className="text-base font-semibold text-white sm:text-xl">{currentSection.title}</h3>
+                              </div>
+                              {profileSectionActions(currentSection.key, canEdit)}
+                            </div>
+                            <div className="p-3 sm:p-4">
+                              <ProfileSectionViewDisplay section={currentSection} values={sectionValues} />
+                            </div>
+                          </div>
+                        )}
+                        {isParentalSection && parentalReadOnlyInstances.length > 0 && (
+                          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 sm:text-sm">
+                            {allParentalSlotsFilled
+                              ? 'Both parental detail entries are saved. Contact your counselor or admin to make changes.'
+                              : 'Saved parental details cannot be edited. You may add one more parent entry.'}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </>
               ) : (
                 <>
                   {(() => {
@@ -1390,23 +1495,13 @@ function MyDetailsContent() {
                             handleRemoveInstance(currentPart.part.key, currentSection.key, subSectionId, index)
                           }
                           errors={errors}
-                          readOnly={isParentalSection && allParentalSlotsFilled}
-                          readOnlyKeys={currentPart.part.key === 'PROFILE' ? ['firstName', 'middleName', 'lastName'] : undefined}
-                          noDelete={isParentalSection}
-                          readOnlyInstances={isParentalSection ? parentalReadOnlyInstances : []}
+                          compact
                         />
-                        {isParentalSection && parentalReadOnlyInstances.length > 0 && (
-                          <div className="mt-3 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
-                            {allParentalSlotsFilled
-                              ? 'Both parental detail entries are saved. Contact your counselor or admin to make changes.'
-                              : 'Saved parental details cannot be edited. You may add one more parent entry.'}
-                          </div>
-                        )}
-                        <div className="flex justify-end gap-3 mt-5">
+                        <div className="mt-4 flex flex-col gap-2 sm:mt-5 sm:flex-row sm:justify-end sm:gap-3">
                           <button
                             onClick={handleSaveSection}
                             disabled={saving}
-                            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full rounded-lg bg-blue-600 px-6 py-2.5 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                           >
                             {saving ? 'Saving...' : 'Save'}
                           </button>

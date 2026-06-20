@@ -9,7 +9,7 @@ import { getFullName, getInitials } from '@/utils/nameHelpers';
 import ParentLayout from '@/components/ParentLayout';
 import StudentProfileModal from '@/components/StudentProfileModal';
 import AuthImage from '@/components/AuthImage';
-import { studentHeaderRowClass, studentPagePadding } from '@/components/studentDetailResponsive';
+import { studentHeaderRowClass, studentPagePadding, parentMetaGridClass, parentMetaItemClass, parentMetaLabelClass, parentMetaValueClass, registrationCardClass, registrationCardRowClass, registrationMetaRowClass, registrationActionBtnClass, roleListBackBtnClass, roleListTitleClass } from '@/components/studentDetailResponsive';
 
 interface StudentDetails {
   _id: string;
@@ -186,10 +186,10 @@ export default function ParentStudentDetailPage() {
           {/* Back Button */}
           <button
             onClick={() => router.push('/parent/dashboard')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-6 transition-colors"
+            className={roleListBackBtnClass}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Back to Dashboard
           </button>
@@ -201,28 +201,28 @@ export default function ParentStudentDetailPage() {
           ) : student ? (
             <>
               {/* Header */}
-              <div className="mb-8 flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h1 className="text-3xl font-bold text-gray-900">{getFullName(student.userId)}</h1>
-                    <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${
+              <div className={`${studentHeaderRowClass} mb-6 sm:mb-8`}>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <h1 className={roleListTitleClass}>{getFullName(student.userId)}</h1>
+                    <span className={`inline-flex shrink-0 px-2.5 py-0.5 text-xs font-medium rounded-full sm:px-3 sm:py-1 sm:text-sm ${
                       student.userId.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                     }`}>
                       {student.userId.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
-                  <p className="text-gray-600 mt-1">Student Details</p>
+                  <p className="mt-1 text-sm text-gray-600">Student Details</p>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex shrink-0 items-center gap-2 self-start rounded-lg bg-purple-50 px-2.5 py-1.5 text-purple-700 sm:px-3">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
-                  <span className="text-sm font-medium">Read-only access</span>
+                  <span className="text-xs font-medium sm:text-sm">Read-only access</span>
                 </div>
               </div>
 
               {/* Student Info Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+              <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6 sm:p-6">
                 <div className={studentHeaderRowClass}>
                   <div className="flex items-center">
                     <AuthImage
@@ -242,7 +242,7 @@ export default function ParentStudentDetailPage() {
                       <p className="text-gray-600">{student.userId.email}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span
                       className={`px-3 py-1 text-xs font-medium rounded-full ${
                         student.userId.isVerified
@@ -270,62 +270,62 @@ export default function ParentStudentDetailPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-4 border-t border-gray-200">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Mobile Number</p>
-                    <p className="font-medium text-gray-900">
+                <div className={parentMetaGridClass}>
+                  <div className={parentMetaItemClass}>
+                    <p className={parentMetaLabelClass}>Mobile Number</p>
+                    <p className={parentMetaValueClass}>
                       {student.mobileNumber || 'Not provided'}
                     </p>
                   </div>
                   {student.adminId && (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Admin</p>
-                    <p className="font-medium text-gray-900">
+                  <div className={parentMetaItemClass}>
+                    <p className={parentMetaLabelClass}>Admin</p>
+                    <p className={parentMetaValueClass}>
                       {student.adminId?.companyName || getFullName(student.adminId?.userId) || 'Not assigned'}
                     </p>
                     {student.adminId?.userId?.email && (
-                      <p className="text-sm text-gray-500">{student.adminId.userId.email}</p>
+                      <p className="truncate text-xs text-gray-500">{student.adminId.userId.email}</p>
                     )}
                     {student.adminId?.mobileNumber && (
-                      <p className="text-sm text-gray-500">{student.adminId.mobileNumber}</p>
+                      <p className="text-xs text-gray-500">{student.adminId.mobileNumber}</p>
                     )}
                   </div>
                   )}
                   {student.adminId && (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Counselor</p>
-                    <p className="font-medium text-gray-900">
+                  <div className={parentMetaItemClass}>
+                    <p className={parentMetaLabelClass}>Counselor</p>
+                    <p className={parentMetaValueClass}>
                       {getFullName(student.counselorId?.userId) || 'Not assigned'}
                     </p>
                     {student.counselorId?.userId?.email && (
-                      <p className="text-sm text-gray-500">{student.counselorId.userId.email}</p>
+                      <p className="truncate text-xs text-gray-500">{student.counselorId.userId.email}</p>
                     )}
                     {student.counselorId?.mobileNumber && (
-                      <p className="text-sm text-gray-500">{student.counselorId.mobileNumber}</p>
+                      <p className="text-xs text-gray-500">{student.counselorId.mobileNumber}</p>
                     )}
                   </div>
                   )}
                   {student.advisorId && (
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Advisor</p>
-                    <p className="font-medium text-gray-900">
+                  <div className={parentMetaItemClass}>
+                    <p className={parentMetaLabelClass}>Advisor</p>
+                    <p className={parentMetaValueClass}>
                       {student.advisorId?.companyName || 'N/A'}
                     </p>
-                    {student.advisorId?.userId?.email && (
-                      <p className="text-sm text-gray-500">{student.advisorId.userId.email}</p>
+                    {student.advisorId.userId?.email && (
+                      <p className="truncate text-xs text-gray-500">{student.advisorId.userId.email}</p>
                     )}
                   </div>
                   )}
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">Joined Date</p>
-                    <p className="font-medium text-gray-900">
+                  <div className={parentMetaItemClass}>
+                    <p className={parentMetaLabelClass}>Joined Date</p>
+                    <p className={parentMetaValueClass}>
                       {new Date(student.createdAt).toLocaleDateString('en-GB')}
                     </p>
                   </div>
                 </div>
 
                 {/* Source / Intake / Year / Transfer */}
-                <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-gray-200 mt-4">
+                <div className="mt-3 grid grid-cols-2 gap-3 border-t border-gray-200 pt-3 sm:mt-4 sm:flex sm:flex-wrap sm:items-center sm:gap-6 sm:pt-4">
                   <div>
                     <p className="text-sm text-gray-600 mb-1">Source</p>
                     <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${(student as any).referrerId ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>
@@ -364,15 +364,15 @@ export default function ParentStudentDetailPage() {
               </div>
 
               {/* Service Registrations */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Service Registrations</h2>
+              <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+                <h2 className="mb-3 text-base font-semibold text-gray-900 sm:mb-4 sm:text-lg">Service Registrations</h2>
 
                 {registrations && registrations.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {registrations.map((registration) => (
-                      <div key={registration._id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
+                      <div key={registration._id} className={`${registrationCardClass} bg-gray-50`}>
+                        <div className={registrationCardRowClass}>
+                          <div className="min-w-0 flex-1">
                             <h3 className="font-semibold text-gray-900 mb-1">
                               {registration.serviceId.name}
                             </h3>
@@ -389,7 +389,7 @@ export default function ParentStudentDetailPage() {
                             <p className="text-sm text-gray-600 mb-2">
                               {registration.serviceId.shortDescription}
                             </p>
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <div className={registrationMetaRowClass}>
                               <span>Registered: {new Date(registration.createdAt).toLocaleDateString('en-GB')}</span>
                               <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
                                 {registration.status}
@@ -421,7 +421,7 @@ export default function ParentStudentDetailPage() {
                           </div>
                           <button
                             onClick={() => handleViewFormData(registration._id, registration.serviceId?.name)}
-                            className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium inline-flex items-center gap-2"
+                            className={`${registrationActionBtnClass} inline-flex items-center justify-center gap-2`}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -444,10 +444,10 @@ export default function ParentStudentDetailPage() {
               </div>
 
             {/* Student Service Enquiry */}
-            <div className="mt-6">
+            <div className="mt-4 flex flex-col gap-2 sm:mt-6 sm:flex-row sm:flex-wrap">
               <button
                 onClick={() => router.push(`/parent/students/${studentId}/enquiries`)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors shadow-sm"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-purple-700 sm:w-auto sm:px-5"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -457,7 +457,7 @@ export default function ParentStudentDetailPage() {
               {(student.adminId?._id || student.advisorId?._id) && (
                 <button
                   onClick={() => router.push('/service-plans/view?studentId=' + studentId)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:w-auto sm:px-5"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

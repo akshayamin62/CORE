@@ -68,7 +68,7 @@ export function ListPageStatGrid({
 }) {
   const gridClass =
     columns === 3
-      ? 'mb-4 grid grid-cols-3 gap-1.5 sm:gap-3 md:mb-6 md:gap-4'
+      ? 'mb-4 grid grid-cols-2 gap-2 sm:gap-3 md:mb-6 md:grid-cols-3 md:gap-4'
       : 'mb-4 grid grid-cols-2 gap-3 sm:gap-4 md:mb-6';
   return <div className={gridClass}>{children}</div>;
 }

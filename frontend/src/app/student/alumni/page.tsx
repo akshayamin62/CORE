@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import ComingSoon from '@/components/ComingSoon';
+import { roleListPagePadding, roleListBackBtnClass } from '@/components/studentDetailResponsive';
 
 export default function StudentAlumniPage() {
   const router = useRouter();
@@ -29,9 +30,9 @@ export default function StudentAlumniPage() {
   );
 
   return (
-    <div className="p-8">
-      <button onClick={() => router.back()} className="mb-4 inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors">
-        <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+    <div className={roleListPagePadding}>
+      <button type="button" onClick={() => router.back()} className={roleListBackBtnClass}>
+        <svg className="mr-1.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
         Return to Dashboard
       </button>
       <ComingSoon title="Alumni" />

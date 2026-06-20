@@ -6,8 +6,19 @@ import { authAPI, spServiceAPI } from '@/lib/api';
 import { User, USER_ROLE, SPServiceListing, SPEnquiryItem } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import AuthImage from '@/components/AuthImage';
-
-const BACKEND_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api').replace('/api', '');
+import ListPageFilters from '@/components/ListPageFilters';
+import PageStatCard from '@/components/PageStatCard';
+import StudentOuterPageLayout from '@/components/StudentOuterPageLayout';
+import {
+  roleListPagePadding,
+  roleListTitleClass,
+  roleListSubtitleClass,
+  roleListBackBtnClass,
+  roleListTabStatGridClass,
+  roleListStatGridClass,
+  formatSpServicePrice,
+  navigateToStudentApplicationDashboard,
+} from '@/components/studentDetailResponsive';
 
 const statusColors: Record<string, { bg: string; text: string }> = {
   New: { bg: 'bg-blue-100', text: 'text-blue-700' },
@@ -50,7 +61,7 @@ export default function StudentServiceProvidersPage() {
       ]);
       setServices(servicesRes.data.data.services || []);
       setMyEnquiries(enquiriesRes.data.data.enquiries || []);
-    } catch (error: any) {
+    } catch {
       toast.error('Please login to continue');
       router.push('/login');
     } finally {
@@ -71,7 +82,6 @@ export default function StudentServiceProvidersPage() {
       toast.success('Enquiry sent successfully!');
       setEnquiryModal(null);
       setEnquiryMessage('');
-      // Refresh own enquiries list
       const enquiriesRes = await spServiceAPI.getStudentEnquiries();
       setMyEnquiries(enquiriesRes.data.data.enquiries || []);
     } catch (error: any) {
@@ -81,22 +91,19 @@ export default function StudentServiceProvidersPage() {
     }
   };
 
-  // Set of serviceIds the student has already enquired about
   const enquiredServiceIds = new Set(
     myEnquiries.map((e) =>
       typeof e.spServiceId === 'object' ? e.spServiceId._id : e.spServiceId
     )
   );
 
-  // Get unique categories and cities from loaded services
-  const categories = ['All', ...Array.from(new Set(services.map(s => s.category).filter(Boolean)))];
+  const categories = ['All', ...Array.from(new Set(services.map((s) => s.category).filter(Boolean)))];
   const cities = ['All', ...Array.from(new Set(
     services
-      .map(s => typeof s.serviceProviderId === 'object' ? s.serviceProviderId.city : null)
+      .map((s) => (typeof s.serviceProviderId === 'object' ? s.serviceProviderId.city : null))
       .filter((c): c is string => !!c)
   ))];
 
-  // Filter services
   const filteredServices = services.filter((service) => {
     const sp = typeof service.serviceProviderId === 'object' ? service.serviceProviderId : null;
     const matchesCategory = categoryFilter === 'All' || service.category === categoryFilter;
@@ -104,13 +111,19 @@ export default function StudentServiceProvidersPage() {
     const matchesSearch = !searchQuery ||
       service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       service.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (sp?.companyName?.toLowerCase().includes(searchQuery.toLowerCase()));
+      sp?.companyName?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesCity && matchesSearch;
   });
 
+  const clearFilters = () => {
+    setSearchQuery('');
+    setCategoryFilter('All');
+    setCityFilter('All');
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="spinner mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
@@ -124,237 +137,166 @@ export default function StudentServiceProvidersPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <div className="bg-gray-50 min-h-[calc(100vh-5rem)]">
-        <div className="max-w-7xl mx-auto p-6 lg:p-8">
-          <button onClick={() => router.back()} className="mb-4 inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors">
-            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+      <StudentOuterPageLayout user={user}>
+        <div className={`mx-auto max-w-7xl ${roleListPagePadding}`}>
+          <button type="button" onClick={() => navigateToStudentApplicationDashboard(router)} className={roleListBackBtnClass}>
+            <svg className="mr-1.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
             Return to Dashboard
           </button>
-          {/* Header */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Service Providers</h1>
-            <p className="text-gray-500 mt-1">Browse services and send enquiries to service providers</p>
+
+          <div className="mb-4 sm:mb-6">
+            <h1 className={roleListTitleClass}>Service Providers</h1>
+            <p className={roleListSubtitleClass}>Browse services and send enquiries to service providers</p>
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-2 mb-6">
-            <button
+          <div className={roleListTabStatGridClass}>
+            <PageStatCard
+              title="Browse Services"
+              mobileTitle="Browse"
+              value={services.length}
+              color="blue"
+              active={activeTab === 'browse'}
               onClick={() => setActiveTab('browse')}
-              className={`px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
-                activeTab === 'browse'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              Browse Services
-            </button>
-            <button
+            />
+            <PageStatCard
+              title="My Enquiries"
+              mobileTitle="Enquiries"
+              value={myEnquiries.length}
+              color="green"
+              active={activeTab === 'my-services'}
               onClick={() => setActiveTab('my-services')}
-              className={`px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors flex items-center gap-2 ${
-                activeTab === 'my-services'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              My Enquiries
-              {myEnquiries.length > 0 && (
-                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                  activeTab === 'my-services' ? 'bg-white text-blue-600' : 'bg-blue-100 text-blue-600'
-                }`}>
-                  {myEnquiries.length}
-                </span>
-              )}
-            </button>
+            />
           </div>
 
-          {/* ── Browse Services Tab ── */}
           {activeTab === 'browse' && (
             <>
-              {/* Stats */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" />
-                      </svg>
-                    </div>
-                    <span className="text-3xl font-extrabold text-gray-900">{services.length}</span>
-                  </div>
-                  <p className="text-sm font-semibold text-gray-700 mt-3">Total Services</p>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                      </svg>
-                    </div>
-                    <span className="text-3xl font-extrabold text-gray-900">{filteredServices.length}</span>
-                  </div>
-                  <p className="text-sm font-semibold text-gray-700 mt-3">Filtered Results</p>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                      </svg>
-                    </div>
-                    <span className="text-3xl font-extrabold text-gray-900">{new Set(services.map(s => s.category)).size}</span>
-                  </div>
-                  <p className="text-sm font-semibold text-gray-700 mt-3">Categories</p>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <span className="text-3xl font-extrabold text-gray-900">
-                      {new Set(services.map(s => typeof s.serviceProviderId === 'object' ? s.serviceProviderId._id : s.serviceProviderId)).size}
-                    </span>
-                  </div>
-                  <p className="text-sm font-semibold text-gray-700 mt-3">Providers</p>
+              <div className={`${roleListStatGridClass} hidden md:grid`}>
+                <PageStatCard title="Filtered Results" mobileTitle="Results" value={filteredServices.length} color="green" />
+                <PageStatCard title="Categories" mobileTitle="Categories" value={new Set(services.map((s) => s.category)).size} color="purple" />
+                <PageStatCard
+                  title="Providers"
+                  mobileTitle="Providers"
+                  value={new Set(services.map((s) => (typeof s.serviceProviderId === 'object' ? s.serviceProviderId._id : s.serviceProviderId))).size}
+                  color="amber"
+                />
+              </div>
+
+              <div className="mb-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:mb-6">
+                <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-4">
+                  <ListPageFilters
+                    searchQuery={searchQuery}
+                    onSearchChange={setSearchQuery}
+                    searchPlaceholder="Search services or companies..."
+                    desktopColumns={4}
+                    pillFilters={[
+                      {
+                        value: categoryFilter,
+                        onChange: setCategoryFilter,
+                        emptyValue: 'All',
+                        options: categories.map((cat) => ({
+                          value: cat,
+                          label: cat === 'All' ? 'All Categories' : cat,
+                          mobileLabel: cat === 'All' ? 'All Cat.' : cat,
+                        })),
+                      },
+                      {
+                        value: cityFilter,
+                        onChange: setCityFilter,
+                        emptyValue: 'All',
+                        options: cities.map((city) => ({
+                          value: city,
+                          label: city === 'All' ? 'All Cities' : city,
+                          mobileLabel: city === 'All' ? 'All Cities' : city,
+                        })),
+                      },
+                    ]}
+                    onClear={clearFilters}
+                  />
                 </div>
               </div>
 
-              {/* Search & Filters */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1">
-                    <div className="relative">
-                      <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search by service name, description, or company..."
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <select
-                      value={categoryFilter}
-                      onChange={(e) => setCategoryFilter(e.target.value)}
-                      className="w-full md:w-52 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                    >
-                      {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat === 'All' ? 'All Categories' : cat}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <select
-                      value={cityFilter}
-                      onChange={(e) => setCityFilter(e.target.value)}
-                      className="w-full md:w-44 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                    >
-                      {cities.map(city => (
-                        <option key={city} value={city}>{city === 'All' ? 'All Cities' : city}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Service Cards */}
               {filteredServices.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                  <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-12">
+                  <svg className="mx-auto mb-4 h-12 w-12 text-gray-300 sm:h-16 sm:w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No services found</h3>
-                  <p className="text-gray-500">Try adjusting your search or filter criteria.</p>
+                  <h3 className="mb-2 text-base font-semibold text-gray-900 sm:text-lg">No services found</h3>
+                  <p className="text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
                   {filteredServices.map((service) => {
                     const sp = typeof service.serviceProviderId === 'object' ? service.serviceProviderId : null;
                     const alreadyEnquired = enquiredServiceIds.has(service._id);
                     return (
-                      <div key={service._id} className="bg-white rounded-xl shadow-sm border-2 border-gray-200 hover:shadow-md hover:border-blue-300 transition-all overflow-hidden">
+                      <div key={service._id} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:border-blue-300 hover:shadow-md sm:border-2">
                         {service.thumbnail && (
-                          <div className="h-40 w-full overflow-hidden bg-gray-100">
-                            <AuthImage
-                              path={service.thumbnail}
-                              alt={service.title}
-                              className="w-full h-full object-cover"
-                            />
+                          <div className="h-32 w-full overflow-hidden bg-gray-100 sm:h-40">
+                            <AuthImage path={service.thumbnail} alt={service.title} className="h-full w-full object-cover" />
                           </div>
                         )}
-                        <div className="p-6">
-                          {/* Provider info */}
+                        <div className="p-3 sm:p-6">
                           {sp && (
-                            <div className="flex items-center gap-3 mb-4">
+                            <div className="mb-3 flex items-center gap-2.5 sm:mb-4 sm:gap-3">
                               <AuthImage
                                 path={sp.companyLogo}
                                 alt={sp.companyName || ''}
-                                className="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                                className="h-9 w-9 shrink-0 rounded-lg border border-gray-200 object-cover sm:h-10 sm:w-10"
                                 fallback={
-                                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                    <span className="text-blue-600 font-bold text-sm">{sp.companyName?.charAt(0) || 'S'}</span>
+                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 sm:h-10 sm:w-10">
+                                    <span className="text-xs font-bold text-blue-600 sm:text-sm">{sp.companyName?.charAt(0) || 'S'}</span>
                                   </div>
                                 }
                               />
-                              <div>
-                                <p className="font-semibold text-gray-900 text-sm">{sp.companyName || 'Service Provider'}</p>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-gray-900">{sp.companyName || 'Service Provider'}</p>
                                 {(sp.city || sp.state) && (
-                                  <p className="text-xs text-gray-500">{[sp.city, sp.state, sp.country].filter(Boolean).join(', ')}</p>
+                                  <p className="truncate text-xs text-gray-500">{[sp.city, sp.state, sp.country].filter(Boolean).join(', ')}</p>
                                 )}
                               </div>
                             </div>
                           )}
 
-                          {/* Company Website */}
                           {sp?.website && (
                             <a
                               href={sp.website.startsWith('http') ? sp.website : `https://${sp.website}`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 mb-3"
+                              className="mb-2 inline-flex max-w-full items-center gap-1 truncate text-xs text-blue-600 hover:text-blue-800 sm:mb-3"
                             >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                               </svg>
                               {sp.website.replace(/^https?:\/\//, '')}
                             </a>
                           )}
 
-                          {/* Service info */}
-                          <h3 className="text-lg font-bold text-gray-900 mb-2">{service.title}</h3>
-                          <span className="inline-block px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold mb-3">
+                          <h3 className="mb-1.5 text-base font-bold text-gray-900 sm:mb-2 sm:text-lg">{service.title}</h3>
+                          <span className="mb-2 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-800 sm:mb-3 sm:px-2.5 sm:text-xs">
                             {service.category}
                           </span>
-                          <p className="text-sm text-gray-600 mb-4 line-clamp-3">{service.description}</p>
+                          <p className="mb-3 line-clamp-3 text-xs text-gray-600 sm:mb-4 sm:text-sm">{service.description}</p>
 
-                          {/* Price */}
-                          <div className="mb-4">
-                            <p className="text-lg font-bold text-gray-900">
-                              {service.priceType === 'Contact for Price'
-                                ? 'Contact for Price'
-                                : `${service.priceType}: ?${service.price?.toLocaleString()}`}
-                            </p>
-                          </div>
+                          <p className="mb-3 text-base font-bold text-gray-900 sm:mb-4 sm:text-lg">
+                            {formatSpServicePrice(service.priceType, service.price)}
+                          </p>
 
-                          {/* Send Enquiry / Already Sent */}
                           {alreadyEnquired ? (
-                            <div className="w-full py-2.5 bg-green-50 border border-green-200 text-green-700 rounded-lg font-semibold text-sm flex items-center justify-center gap-2 cursor-default">
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="flex w-full cursor-default items-center justify-center gap-2 rounded-lg border border-green-200 bg-green-50 py-2 text-xs font-semibold text-green-700 sm:py-2.5 sm:text-sm">
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                               </svg>
                               Enquiry Sent
                             </div>
                           ) : (
                             <button
+                              type="button"
                               onClick={() => { setEnquiryModal(service); setEnquiryMessage(''); }}
-                              className="w-full py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition-colors flex items-center justify-center gap-2"
+                              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700 sm:py-2.5 sm:text-sm"
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                               </svg>
                               Send Enquiry
@@ -369,113 +311,85 @@ export default function StudentServiceProvidersPage() {
             </>
           )}
 
-          {/* ── My Enquiries Tab ── */}
           {activeTab === 'my-services' && (
             <>
               {myEnquiries.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-                  <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-12">
+                  <svg className="mx-auto mb-4 h-12 w-12 text-gray-300 sm:h-16 sm:w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No enquiries yet</h3>
-                  <p className="text-gray-500 mb-4">Browse services and send an enquiry to get started.</p>
+                  <h3 className="mb-2 text-base font-semibold text-gray-900 sm:text-lg">No enquiries yet</h3>
+                  <p className="mb-4 text-sm text-gray-500">Browse services and send an enquiry to get started.</p>
                   <button
+                    type="button"
                     onClick={() => setActiveTab('browse')}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
                   >
                     Browse Services
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
                   {myEnquiries.map((enquiry) => {
                     const svc = typeof enquiry.spServiceId === 'object' ? enquiry.spServiceId : null;
                     const sp = typeof enquiry.serviceProviderId === 'object' ? enquiry.serviceProviderId : null;
                     const statusColor = statusColors[enquiry.status] || { bg: 'bg-gray-100', text: 'text-gray-700' };
                     return (
-                      <div key={enquiry._id} className="bg-white rounded-xl shadow-sm border-2 border-gray-200 overflow-hidden">
+                      <div key={enquiry._id} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:border-2">
                         {svc?.thumbnail && (
-                          <div className="h-40 w-full overflow-hidden bg-gray-100">
-                            <AuthImage
-                              path={svc.thumbnail}
-                              alt={svc.title || ''}
-                              className="w-full h-full object-cover"
-                            />
+                          <div className="h-32 w-full overflow-hidden bg-gray-100 sm:h-40">
+                            <AuthImage path={svc.thumbnail} alt={svc.title || ''} className="h-full w-full object-cover" />
                           </div>
                         )}
-                        <div className="p-6">
-                          {/* Provider info */}
+                        <div className="p-3 sm:p-6">
                           {sp && (
-                            <div className="flex items-center gap-3 mb-4">
+                            <div className="mb-3 flex items-center gap-2.5 sm:gap-3">
                               <AuthImage
                                 path={sp.companyLogo}
                                 alt={sp.companyName || ''}
-                                className="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                                className="h-9 w-9 shrink-0 rounded-lg border border-gray-200 object-cover sm:h-10 sm:w-10"
                                 fallback={
-                                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                    <span className="text-blue-600 font-bold text-sm">{sp.companyName?.charAt(0) || 'S'}</span>
+                                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 sm:h-10 sm:w-10">
+                                    <span className="text-xs font-bold text-blue-600 sm:text-sm">{sp.companyName?.charAt(0) || 'S'}</span>
                                   </div>
                                 }
                               />
-                              <div>
-                                <p className="font-semibold text-gray-900 text-sm">{sp.companyName || 'Service Provider'}</p>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-gray-900">{sp.companyName || 'Service Provider'}</p>
                                 {(sp.city || sp.state) && (
-                                  <p className="text-xs text-gray-500">{[sp.city, sp.state, sp.country].filter(Boolean).join(', ')}</p>
+                                  <p className="truncate text-xs text-gray-500">{[sp.city, sp.state, sp.country].filter(Boolean).join(', ')}</p>
                                 )}
                               </div>
                             </div>
                           )}
 
-                          {/* Company Website */}
-                          {sp?.website && (
-                            <a
-                              href={sp.website.startsWith('http') ? sp.website : `https://${sp.website}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 mb-3"
-                            >
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                              </svg>
-                              {sp.website.replace(/^https?:\/\//, '')}
-                            </a>
-                          )}
-
-                          {/* Service info */}
-                          <h3 className="text-lg font-bold text-gray-900 mb-2">{svc?.title || 'Service'}</h3>
+                          <h3 className="mb-1.5 text-base font-bold text-gray-900 sm:text-lg">{svc?.title || 'Service'}</h3>
                           {svc?.category && (
-                            <span className="inline-block px-2.5 py-0.5 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold mb-3">
+                            <span className="mb-2 inline-block rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-800 sm:mb-3 sm:text-xs">
                               {svc.category}
                             </span>
                           )}
                           {svc?.description && (
-                            <p className="text-sm text-gray-600 mb-3 line-clamp-3">{svc.description}</p>
+                            <p className="mb-2 line-clamp-2 text-xs text-gray-600 sm:mb-3 sm:text-sm">{svc.description}</p>
                           )}
 
-                          {/* Price */}
                           {svc?.priceType && (
-                            <div className="mb-3">
-                              <p className="text-lg font-bold text-gray-900">
-                                {svc.priceType === 'Contact for Price'
-                                  ? 'Contact for Price'
-                                  : `${svc.priceType}: ?${svc.price?.toLocaleString()}`}
-                              </p>
-                            </div>
+                            <p className="mb-2 text-base font-bold text-gray-900 sm:mb-3">
+                              {formatSpServicePrice(svc.priceType, svc.price)}
+                            </p>
                           )}
 
-                          {/* My message */}
-                          <div className="bg-gray-50 rounded-lg px-3 py-2.5 mb-4">
-                            <p className="text-xs text-gray-400 font-medium mb-1">Your message</p>
-                            <p className="text-sm text-gray-600 italic line-clamp-3">"{enquiry.message}"</p>
+                          <div className="mb-3 rounded-lg bg-gray-50 px-3 py-2 sm:mb-4">
+                            <p className="mb-0.5 text-[10px] font-medium text-gray-400 sm:text-xs">Your message</p>
+                            <p className="line-clamp-3 text-xs italic text-gray-600 sm:text-sm">&ldquo;{enquiry.message}&rdquo;</p>
                           </div>
 
-                          {/* Status + date */}
-                          <div className="flex items-center justify-between">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColor.bg} ${statusColor.text}`}>
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <span className={`inline-flex w-fit rounded-full px-2.5 py-0.5 text-[10px] font-bold sm:px-3 sm:py-1 sm:text-xs ${statusColor.bg} ${statusColor.text}`}>
                               {enquiry.status}
                             </span>
                             {enquiry.createdAt && (
-                              <span className="text-xs text-gray-400">
+                              <span className="text-[10px] text-gray-400 sm:text-xs">
                                 {new Date(enquiry.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                               </span>
                             )}
@@ -489,25 +403,21 @@ export default function StudentServiceProvidersPage() {
             </>
           )}
         </div>
-      </div>
+      </StudentOuterPageLayout>
 
-      {/* Enquiry Modal */}
       {enquiryModal && (
         <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
-          <div className="app-modal-panel bg-white rounded-xl w-full max-w-md p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">Send Enquiry</h3>
-              <button
-                onClick={() => setEnquiryModal(null)}
-                className="p-2 hover:bg-gray-100 rounded-full"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="app-modal-panel w-full max-w-md rounded-t-2xl bg-white p-4 sm:rounded-xl sm:p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-base font-bold text-gray-900 sm:text-lg">Send Enquiry</h3>
+              <button type="button" onClick={() => setEnquiryModal(null)} className="rounded-full p-2 hover:bg-gray-100">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            <p className="text-sm text-gray-600 mb-1">Service: <strong>{enquiryModal.title}</strong></p>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="mb-1 text-sm text-gray-600">Service: <strong>{enquiryModal.title}</strong></p>
+            <p className="mb-4 text-sm text-gray-600">
               Provider: <strong>
                 {typeof enquiryModal.serviceProviderId === 'object'
                   ? enquiryModal.serviceProviderId.companyName
@@ -519,19 +429,21 @@ export default function StudentServiceProvidersPage() {
               value={enquiryMessage}
               onChange={(e) => setEnquiryMessage(e.target.value)}
               placeholder="Write your message or questions about this service..."
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 resize-none mb-4"
+              className="mb-4 w-full resize-none rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 sm:px-4"
             />
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
               <button
+                type="button"
                 onClick={handleSendEnquiry}
                 disabled={sendingEnquiry || !enquiryMessage.trim()}
-                className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50 transition-colors"
+                className="flex-1 rounded-lg bg-blue-600 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
               >
                 {sendingEnquiry ? 'Sending...' : 'Send Enquiry'}
               </button>
               <button
+                type="button"
                 onClick={() => setEnquiryModal(null)}
-                className="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                className="rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 sm:shrink-0"
               >
                 Cancel
               </button>

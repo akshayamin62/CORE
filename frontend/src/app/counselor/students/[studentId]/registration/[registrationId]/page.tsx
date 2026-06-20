@@ -22,6 +22,14 @@ import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
 import CounselorLayout from '@/components/CounselorLayout';
 import { fetchBlobUrl } from '@/lib/useBlobUrl';
+import {
+  studentPagePadding,
+  eduPlanStatGridClass,
+  eduPlanStatCardClass,
+  registrationNavClass,
+  registrationNavBtnClass,
+  roleListBackBtnClass,
+} from '@/components/studentDetailResponsive';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -385,9 +393,13 @@ export default function CounselorStudentFormViewPage() {
     <>
       <Toaster position="top-right" />
       <CounselorLayout user={user}>
-        <div className="p-8">
-          <button onClick={() => router.push(`/counselor/students/${studentId}`)} className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className={studentPagePadding}>
+          <button
+            type="button"
+            onClick={() => router.push(`/counselor/students/${studentId}`)}
+            className={roleListBackBtnClass}
+          >
+            <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             Back to Student Details
@@ -415,16 +427,21 @@ export default function CounselorStudentFormViewPage() {
 
           {/* Education Planning Navigation */}
           {isEducationPlanning && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
-              <div className="flex border-b border-gray-200">
+            <div className="mb-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:mb-6">
+              <div className={registrationNavClass}>
                 {navButtons.map((btn) => (
-                  <button key={btn.key} onClick={() => setActiveView(btn.key)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-4 text-sm font-semibold transition-colors border-b-2 ${activeView === btn.key ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50'}`}>
+                  <button
+                    key={btn.key}
+                    onClick={() => setActiveView(btn.key)}
+                    className={`${registrationNavBtnClass} ${activeView === btn.key ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50'}`}
+                  >
                     {btn.label}
                   </button>
                 ))}
-                <button onClick={() => router.push(`/counselor/students/${studentId}/registration/${registrationId}/activity`)}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-4 text-sm font-semibold transition-colors border-b-2 border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50">
+                <button
+                  onClick={() => router.push(`/counselor/students/${studentId}/registration/${registrationId}/activity`)}
+                  className={`${registrationNavBtnClass} border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50`}
+                >
                   Activity Management
                 </button>
               </div>
@@ -439,15 +456,15 @@ export default function CounselorStudentFormViewPage() {
             const totalCompleted = entries.reduce((s, e) => s + e.completed, 0);
             const overall = totalPlanned > 0 ? Math.round((totalCompleted / totalPlanned) * 50) / 10 : 0;
             return (
-              <div className="mb-6 space-y-8">
+              <div className="mb-4 space-y-6 sm:mb-6 sm:space-y-8">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Activity Overview <span className="text-sm font-normal text-gray-500">(Last 3 Months)</span></h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center text-lg">🔥</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.current ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Current Streak (days)</p></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center text-lg">🏆</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.longest ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Longest Streak (days)</p></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-lg">📅</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.totalDays ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Total Days</p></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-lg">📝</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.wordCount.total ?? 0}</h3></div><div className="flex items-center justify-between mt-3"><p className="text-sm font-semibold text-gray-700">New Words</p><p className="text-xs text-gray-500">{stats?.wordCount.thisMonth ?? 0} this month</p></div></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-lg">⭐</div><h3 className="text-3xl font-extrabold text-gray-900">{overall} / 5</h3></div><div className="flex items-center justify-between mt-3"><p className="text-sm font-semibold text-gray-700">Overall Performance</p><p className="text-xs text-gray-500">{totalCompleted}/{totalPlanned}</p></div></div>
+                  <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">Activity Overview <span className="text-sm font-normal text-gray-500">(Last 3 Months)</span></h2>
+                  <div className={eduPlanStatGridClass}>
+                    <div className={eduPlanStatCardClass}><div className="flex items-center justify-between"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 text-lg text-orange-600 sm:h-10 sm:w-10">🔥</div><h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{stats?.streak.current ?? 0}</h3></div><p className="mt-2 text-[11px] font-semibold text-gray-700 sm:mt-3 sm:text-sm">Current Streak (days)</p></div>
+                    <div className={eduPlanStatCardClass}><div className="flex items-center justify-between"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-100 text-lg text-yellow-600 sm:h-10 sm:w-10">🏆</div><h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{stats?.streak.longest ?? 0}</h3></div><p className="mt-2 text-[11px] font-semibold text-gray-700 sm:mt-3 sm:text-sm">Longest Streak (days)</p></div>
+                    <div className={eduPlanStatCardClass}><div className="flex items-center justify-between"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-lg text-blue-600 sm:h-10 sm:w-10">📅</div><h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{stats?.streak.totalDays ?? 0}</h3></div><p className="mt-2 text-[11px] font-semibold text-gray-700 sm:mt-3 sm:text-sm">Total Days</p></div>
+                    <div className={eduPlanStatCardClass}><div className="flex items-center justify-between"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 text-lg text-green-600 sm:h-10 sm:w-10">📝</div><h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{stats?.wordCount.total ?? 0}</h3></div><div className="mt-2 flex items-center justify-between sm:mt-3"><p className="text-[11px] font-semibold text-gray-700 sm:text-sm">New Words</p><p className="text-[10px] text-gray-500 sm:text-xs">{stats?.wordCount.thisMonth ?? 0} this month</p></div></div>
+                    <div className={eduPlanStatCardClass}><div className="flex items-center justify-between"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 text-lg text-purple-600 sm:h-10 sm:w-10">⭐</div><h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{overall} / 5</h3></div><div className="mt-2 flex items-center justify-between sm:mt-3"><p className="text-[11px] font-semibold text-gray-700 sm:text-sm">Overall Performance</p><p className="text-[10px] text-gray-500 sm:text-xs">{totalCompleted}/{totalPlanned}</p></div></div>
                   </div>
                 </div>
                 <div>
@@ -582,15 +599,15 @@ export default function CounselorStudentFormViewPage() {
           {/* Study Abroad Dashboard (read-only, matching student side) */}
           {isStudyAbroad && activeView === 'dashboard' && (() => {
             const dashboardStatCards = [
-              { title: 'Suggested Program', value: programStats.suggested, color: 'blue' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg> },
-              { title: 'Selected Program', value: programStats.selected, color: 'cyan' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-              { title: 'Shortlisted Application', value: programStats.shortlisted, color: 'blue' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg> },
-              { title: 'In Progress', value: programStats.inProgress, color: 'orange' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-              { title: 'Applied', value: programStats.applied, color: 'blue' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> },
-              { title: 'Offer Received', value: programStats.offerReceived, color: 'green' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg> },
-              { title: 'Offer Accepted', value: programStats.offerAccepted, color: 'green' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg> },
-              { title: 'Offer Rejected', value: programStats.rejected, color: 'red' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> },
-              { title: 'Application Closed', value: programStats.closed, color: 'gray' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg> },
+              { title: 'Suggested Program', mobileTitle: 'Suggested', value: programStats.suggested, color: 'blue' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg> },
+              { title: 'Selected Program', mobileTitle: 'Selected', value: programStats.selected, color: 'cyan' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+              { title: 'Shortlisted Application', mobileTitle: 'Shortlisted', value: programStats.shortlisted, color: 'blue' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg> },
+              { title: 'In Progress', mobileTitle: 'In Progress', value: programStats.inProgress, color: 'orange' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+              { title: 'Applied', mobileTitle: 'Applied', value: programStats.applied, color: 'blue' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> },
+              { title: 'Offer Received', mobileTitle: 'Offer Rcvd', value: programStats.offerReceived, color: 'green' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg> },
+              { title: 'Offer Accepted', mobileTitle: 'Accepted', value: programStats.offerAccepted, color: 'green' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg> },
+              { title: 'Offer Rejected', mobileTitle: 'Rejected', value: programStats.rejected, color: 'red' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg> },
+              { title: 'Application Closed', mobileTitle: 'Closed', value: programStats.closed, color: 'gray' as const, icon: <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg> },
             ];
             const totalPrograms = programStats.suggested + programStats.selected;
             const navigateToApplicationSection = (sectionTitle: 'Apply to Program' | 'Applied Program') => {
@@ -603,11 +620,10 @@ export default function CounselorStudentFormViewPage() {
               setActiveView('form');
             };
             return (
-              <div className="mb-6 space-y-8">
-                {/* Application Stats */}
+              <div className="mb-4 space-y-6 sm:mb-6 sm:space-y-8">
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Application Overview</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                  <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">Application Overview</h2>
+                  <div className={eduPlanStatGridClass}>
                     {dashboardStatCards.map((card) => {
                       const colorMap: Record<string, string> = {
                         blue: 'bg-blue-100 text-blue-600', cyan: 'bg-cyan-100 text-cyan-600',
@@ -620,17 +636,20 @@ export default function CounselorStudentFormViewPage() {
                         <div
                           key={card.title}
                           onClick={() => navigateToApplicationSection(targetSection)}
-                          className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all cursor-pointer hover:border-blue-400 hover:shadow-md"
+                          className={`${eduPlanStatCardClass} cursor-pointer transition-all hover:border-blue-400 hover:shadow-md active:scale-[0.98]`}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className={`w-10 h-10 ${colorMap[card.color]} rounded-lg flex items-center justify-center`}>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg sm:h-10 sm:w-10 ${colorMap[card.color]} [&>svg]:h-4 [&>svg]:w-4 sm:[&>svg]:h-6 sm:[&>svg]:w-6`}>
                               {card.icon}
                             </div>
-                            <h3 className="text-3xl font-extrabold text-gray-900">{card.value}</h3>
+                            <h3 className="text-xl font-extrabold text-gray-900 sm:text-3xl">{card.value}</h3>
                           </div>
-                          <div className="flex items-center justify-between mt-3">
-                            <p className="text-sm font-semibold text-gray-700">{card.title}</p>
-                            <p className="text-sm font-semibold text-gray-900">{pct.toFixed(1)}%</p>
+                          <div className="mt-2 flex items-start justify-between gap-2 sm:mt-3 sm:items-center">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[10px] font-semibold leading-tight break-words text-gray-700 sm:hidden">{card.mobileTitle}</p>
+                              <p className="hidden text-[11px] font-semibold text-gray-700 sm:block sm:text-sm">{card.title}</p>
+                            </div>
+                            <p className="shrink-0 text-[10px] font-semibold text-gray-900 sm:text-sm">{pct.toFixed(1)}%</p>
                           </div>
                         </div>
                       );

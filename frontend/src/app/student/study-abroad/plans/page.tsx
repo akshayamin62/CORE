@@ -5,8 +5,16 @@ import { useRouter } from 'next/navigation';
 import { authAPI, serviceAPI, servicePlanAPI, paymentAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
+import StudentOuterPageLayout from '@/components/StudentOuterPageLayout';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
 import toast, { Toaster } from 'react-hot-toast';
+import {
+  roleListPagePadding,
+  roleListBackBtnClass,
+  roleListTitleClass,
+  roleListSubtitleClass,
+  navigateToStudentApplicationDashboard,
+} from '@/components/studentDetailResponsive';
 
 const PLAN_HIERARCHY: Record<string, number> = { PRO: 0, PREMIUM: 1, PLATINUM: 2 };
 
@@ -232,30 +240,30 @@ export default function StudentStudyAbroadPlansPage() {
           </div>
         </div>
       )}
-      <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-[calc(100vh-5rem)]">
-        {/* Header */}
-        <div className="px-6 lg:px-8 py-8">
-          <button onClick={() => router.back()} className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            Back
+      <StudentOuterPageLayout user={user}>
+      <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-b from-slate-50 via-white to-slate-50">
+        <div className={`${roleListPagePadding} pb-4 sm:pb-6`}>
+          <button type="button" onClick={() => navigateToStudentApplicationDashboard(router)} className={roleListBackBtnClass}>
+            <svg className="mr-1.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Return to Dashboard
           </button>
-          <h1 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">Study Abroad Plans</h1>
-          <p className="text-gray-500 mt-1 max-w-2xl">
+          <h1 className={roleListTitleClass}>Study Abroad Plans</h1>
+          <p className={`${roleListSubtitleClass} max-w-2xl`}>
             {currentPlanTier
               ? `You are on the ${currentPlanTier} plan. Upgrade to unlock more features.`
               : 'Choose the plan that fits your journey. Each plan includes expert guidance at every step.'}
           </p>
-        </div>
 
-        <div className="p-6 lg:p-8">
           {/* Installment plan notice */}
-          <div className="mb-6 flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl px-5 py-3">
-            <svg className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 sm:mt-6 sm:gap-3 sm:px-5 sm:py-3">
+            <svg className="mt-0.5 h-5 w-5 shrink-0 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <p className="text-sm text-blue-700">Your payments are split into <strong>3 installments (50% / 30% / 20%)</strong>.{gstPercentage > 0 ? <> All prices are exclusive of <strong>{gstPercentage}% GST</strong>.</> : null} First 50% is due at registration.</p>
           </div>
 
           {/* Plan Cards */}
-          <div className={`grid gap-6 mb-10 ${plans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
+          <div className={`mt-4 grid gap-4 sm:gap-6 md:mt-6 ${plans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
             {plans.map((plan) => {
               const isCurrent = currentPlanTier === plan.key;
               const canUpgrade = isUpgrade(plan.key);
@@ -271,7 +279,7 @@ export default function StudentStudyAbroadPlansPage() {
                       Current Plan
                     </div>
                   )}
-                  <div className="p-7">
+                  <div className="p-4 sm:p-7">
                     <div className="mb-1">
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isCurrent ? 'bg-white/20 text-white' : `${plan.badgeBg} text-white`}`}>{plan.name}</span>
                     </div>
@@ -281,7 +289,7 @@ export default function StudentStudyAbroadPlansPage() {
                           {discounts?.[plan.key] ? (
                             <>
                               <p className={`text-lg line-through ${isCurrent ? 'text-blue-300' : 'text-gray-400'}`}>₹{pricing[plan.key].toLocaleString('en-IN')}</p>
-                              <p className={`text-4xl font-extrabold ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{(pricing[plan.key] - discounts[plan.key].calculatedAmount).toLocaleString('en-IN')}</p>
+                              <p className={`text-2xl font-extrabold sm:text-4xl ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{(pricing[plan.key] - discounts[plan.key].calculatedAmount).toLocaleString('en-IN')}</p>
                               <p className={`text-xs font-semibold mt-1 ${isCurrent ? 'text-blue-200' : 'text-gray-600'}`}>
                                 {discounts[plan.key].type === 'percentage' ? `${discounts[plan.key].value}% off` : `₹${discounts[plan.key].calculatedAmount.toLocaleString('en-IN')} off`}
                               </p>
@@ -290,7 +298,7 @@ export default function StudentStudyAbroadPlansPage() {
                               )}
                             </>
                           ) : (
-                            <p className={`text-4xl font-extrabold ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{pricing[plan.key].toLocaleString('en-IN')}</p>
+                            <p className={`text-2xl font-extrabold sm:text-4xl ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{pricing[plan.key].toLocaleString('en-IN')}</p>
                           )}
                           <p className={`text-xs mt-1 ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>{gstPercentage > 0 ? `+ ${gstPercentage}% GST applicable` : 'No GST applicable'}</p>
                         {canUpgrade && priceDiff != null && priceDiff > 0 && (
@@ -343,16 +351,13 @@ export default function StudentStudyAbroadPlansPage() {
 
           {/* Features Comparison */}
           {features.length > 0 && (
-            <div>
-              {/* <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Plan Features Comparison</h2>
-                <p className="text-sm text-gray-500 mt-1">See what&apos;s included in each plan tier.</p>
-              </div> */}
+            <div className="mt-4 md:mt-8">
               <ServicePlanDetailsView features={features} pricing={pricing} plans={plans} serviceName="Study Abroad" showPricing={false} gstRate={gstPercentage} currentPlanTier={currentPlanTier} onRegister={handleRegister} onUpgrade={handleUpgrade} registeringPlan={registering} />
             </div>
           )}
         </div>
       </div>
+      </StudentOuterPageLayout>
     </>
   );
 }

@@ -15,6 +15,11 @@ import LeadMobileList, {
   LEAD_SERVICE_FILTER_OPTIONS,
   LEAD_STAGE_FILTER_OPTIONS,
 } from '@/components/LeadMobileList';
+import LeadStageStatCard, { leadStageStatGridClass } from '@/components/LeadStageStatCard';
+import {
+  roleListTitleClass,
+  roleListSubtitleClass,
+} from '@/components/studentDetailResponsive';
 import { MobileRecordMenuItem } from '@/components/MobileRecordCard';
 
 export default function CounselorLeadsPage() {
@@ -171,21 +176,21 @@ export default function CounselorLeadsPage() {
       <CounselorLayout user={user}>
         <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Lead Management</h1>
-              <p className="text-gray-600 mt-1">Manage and track your enquiry leads</p>
+          <div className="mb-4 flex flex-col gap-4 sm:mb-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <h1 className={roleListTitleClass}>Lead Management</h1>
+              <p className={roleListSubtitleClass}>Manage and track your enquiry leads</p>
             </div>
 
             {enquiryFormUrl && (
-              <EnquiryUrlCopy label="Your Enquiry Form URL" url={enquiryFormUrl} />
+              <EnquiryUrlCopy label="Your Enquiry Form URL" url={enquiryFormUrl} className="w-full lg:max-w-lg" />
             )}
           </div>
 
-          {/* Stats Cards - Clickable */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mb-6">
-            <StatCard
+          <div className={leadStageStatGridClass}>
+            <LeadStageStatCard
               title="Total Leads"
+              mobileTitle="Total"
               value={totalLeads}
               icon={
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,7 +202,7 @@ export default function CounselorLeadsPage() {
               isActive={selectedStageCard === 'all'}
               showPercentage={false}
             />
-            <StatCard
+            <LeadStageStatCard
               title="New"
               value={newLeads}
               icon={
@@ -210,7 +215,7 @@ export default function CounselorLeadsPage() {
               isActive={selectedStageCard === LEAD_STAGE.NEW}
               percentage={totalLeads > 0 ? (newLeads / totalLeads) * 100 : 0}
             />
-            <StatCard
+            <LeadStageStatCard
               title="Hot"
               value={hotLeads}
               icon={
@@ -223,7 +228,7 @@ export default function CounselorLeadsPage() {
               isActive={selectedStageCard === LEAD_STAGE.HOT}
               percentage={totalLeads > 0 ? (hotLeads / totalLeads) * 100 : 0}
             />
-            <StatCard
+            <LeadStageStatCard
               title="Warm"
               value={warmLeads}
               icon={
@@ -236,7 +241,7 @@ export default function CounselorLeadsPage() {
               isActive={selectedStageCard === LEAD_STAGE.WARM}
               percentage={totalLeads > 0 ? (warmLeads / totalLeads) * 100 : 0}
             />
-            <StatCard
+            <LeadStageStatCard
               title="Cold"
               value={coldLeads}
               icon={
@@ -249,7 +254,7 @@ export default function CounselorLeadsPage() {
               isActive={selectedStageCard === LEAD_STAGE.COLD}
               percentage={totalLeads > 0 ? (coldLeads / totalLeads) * 100 : 0}
             />
-            <StatCard
+            <LeadStageStatCard
               title="Converted"
               value={convertedLeads}
               icon={
@@ -262,7 +267,7 @@ export default function CounselorLeadsPage() {
               isActive={selectedStageCard === LEAD_STAGE.CONVERTED}
               percentage={totalLeads > 0 ? (convertedLeads / totalLeads) * 100 : 0}
             />
-            <StatCard
+            <LeadStageStatCard
               title="Closed"
               value={closedLeads}
               icon={
@@ -278,7 +283,8 @@ export default function CounselorLeadsPage() {
           </div>
 
           {/* Search and Filters */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 md:p-4 mb-6">
+          <div className="mb-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:mb-6">
+            <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-4">
             <div className="md:hidden">
               <ListPageFilters
                 searchQuery={searchQuery}
@@ -357,6 +363,7 @@ export default function CounselorLeadsPage() {
                   Clear All
                 </button>
               </div>
+            </div>
             </div>
             </div>
           </div>
@@ -477,52 +484,5 @@ export default function CounselorLeadsPage() {
         </div>
       </CounselorLayout>
     </>
-  );
-}
-
-// Stat Card Component
-interface StatCardProps {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-  color: 'blue' | 'green' | 'red' | 'orange' | 'cyan' | 'gray';
-  onClick?: () => void;
-  isActive?: boolean;
-  percentage?: number;
-  showPercentage?: boolean;
-}
-
-function StatCard({ title, value, icon, color, onClick, isActive, percentage, showPercentage = true }: StatCardProps) {
-  const colorClasses = {
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-green-100 text-green-600',
-    red: 'bg-red-100 text-red-600',
-    orange: 'bg-orange-100 text-orange-600',
-    cyan: 'bg-cyan-100 text-cyan-600',
-    gray: 'bg-gray-200 text-gray-600',
-  };
-
-  return (
-    <div 
-      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md' : ''
-      } ${
-        isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
-      }`}
-      onClick={onClick}
-    >
-      <div className="flex items-center justify-between">
-        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
-          {icon}
-        </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
-      </div>
-      <div className="flex items-center justify-between mt-3">
-        <p className="text-sm font-semibold text-gray-700">{title}</p>
-        {showPercentage && percentage !== undefined && (
-          <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
-        )}
-      </div>
-    </div>
   );
 }

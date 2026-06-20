@@ -10,6 +10,15 @@ import AuthImage from '@/components/AuthImage';
 import ListPageFilters from '@/components/ListPageFilters';
 import ParentMobileList from '@/components/ParentMobileList';
 import PageStatCard from '@/components/PageStatCard';
+import StudentOuterPageLayout from '@/components/StudentOuterPageLayout';
+import {
+  roleListPagePadding,
+  roleListTitleClass,
+  roleListSubtitleClass,
+  roleListBackBtnClass,
+  roleListSingleStatGridClass,
+  navigateToStudentApplicationDashboard,
+} from '@/components/studentDetailResponsive';
 
 interface ParentData {
   _id: string;
@@ -60,17 +69,18 @@ export default function StudentParentsPage() {
   return (
     <>
       <Toaster position="top-right" />
-        <div className="p-4 sm:p-6 md:p-8">
-          <button onClick={() => router.back()} className="mb-4 inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors">
-            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+      <StudentOuterPageLayout user={user}>
+        <div className={roleListPagePadding}>
+          <button type="button" onClick={() => navigateToStudentApplicationDashboard(router)} className={roleListBackBtnClass}>
+            <svg className="mr-1.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             Return to Dashboard
           </button>
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">My Parents</h1>
-            <p className="mt-1 text-gray-600">View your linked parents</p>
+          <div className="mb-4 sm:mb-6">
+            <h1 className={roleListTitleClass}>My Parents</h1>
+            <p className={roleListSubtitleClass}>View your linked parents</p>
           </div>
 
-          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 md:gap-6">
+          <div className={roleListSingleStatGridClass}>
             <PageStatCard title="Total Parents" value={parents.length} color="purple" />
           </div>
 
@@ -143,6 +153,7 @@ export default function StudentParentsPage() {
             </div>
           </div>
         </div>
+      </StudentOuterPageLayout>
     </>
   );
 }

@@ -1,3 +1,6 @@
+import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { serviceAPI } from '@/lib/api';
+
 /** Shared responsive class strings for student detail pages (mobile-first, desktop unchanged). */
 
 export const studentPagePadding = 'px-4 py-4 pb-24 sm:px-6 sm:py-6 md:pb-8 lg:p-8';
@@ -81,3 +84,57 @@ export const parentLinkedStudentRowClass =
 
 export const parentLinkedStudentBtnClass =
   'w-full shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-center text-xs font-medium text-white transition-colors hover:bg-blue-700 sm:w-auto sm:py-1.5';
+
+/** List / browse pages for student & parent roles */
+export const roleListPagePadding = studentPagePadding;
+
+export const roleListTitleClass = 'text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl';
+
+export const roleListSubtitleClass = 'mt-1 text-sm text-gray-600 sm:text-base';
+
+export const roleListBackBtnClass =
+  'mb-3 inline-flex items-center text-sm text-gray-600 transition-colors hover:text-gray-900 sm:mb-4';
+
+export const roleListStatGridClass = 'mb-4 grid grid-cols-2 gap-2 sm:gap-3 md:mb-6 md:grid-cols-4 md:gap-4';
+
+/** Single stat card row — matches admin/super-admin parents list pages */
+export const roleListSingleStatGridClass =
+  'mb-4 grid grid-cols-1 gap-3 sm:mb-6 sm:grid-cols-2 sm:gap-4 md:gap-6';
+
+/** Tab-style stat cards (Browse / Enquiries, etc.) */
+export const roleListTabStatGridClass =
+  'mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4';
+
+export const roleListTabRowClass = 'mb-4 flex gap-2 sm:mb-6';
+
+export function formatSpServicePrice(priceType?: string, price?: number): string {
+  if (!priceType || priceType === 'Contact for Price') return 'Contact for Price';
+  const amount = price != null ? price.toLocaleString('en-IN') : '0';
+  return `${priceType}: ₹${amount}`;
+}
+
+/** Return to the student's registration dashboard (Application Overview), not the service picker. */
+export async function navigateToStudentApplicationDashboard(router: AppRouterInstance) {
+  if (typeof window !== 'undefined') {
+    const activeId = sessionStorage.getItem('activeRegistrationId');
+    if (activeId) {
+      router.push(`/student/registration/${activeId}`);
+      return;
+    }
+  }
+  try {
+    const res = await serviceAPI.getMyServices();
+    const regs = res.data.data.registrations || [];
+    if (regs.length > 0) {
+      const regId = regs[0]._id;
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('activeRegistrationId', regId);
+      }
+      router.push(`/student/registration/${regId}`);
+      return;
+    }
+  } catch {
+    /* fall through */
+  }
+  router.push('/dashboard');
+}

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { SubSectionConfig } from '@/config/formConfig';
@@ -10,6 +10,8 @@ interface TestSubSectionRendererProps {
   onChange: (index: number, key: string, value: any) => void;
   errors?: { [key: string]: string }[];
   isAdminEdit?: boolean;
+  readOnly?: boolean;
+  compact?: boolean;
 }
 
 export default function TestSubSectionRenderer({
@@ -18,6 +20,8 @@ export default function TestSubSectionRenderer({
   onChange,
   errors = [],
   isAdminEdit = false,
+  readOnly = false,
+  compact = false,
 }: TestSubSectionRendererProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -27,15 +31,13 @@ export default function TestSubSectionRenderer({
   const hasTakenValue = instanceValues?.[firstField?.key];
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:border-blue-400 transition-all">
-      {/* Test Header - Always Visible */}
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:border-blue-400">
       <div
-        className="flex items-center justify-between px-6 py-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-all border-b border-gray-200"
+        className={`flex cursor-pointer items-center justify-between border-b border-gray-200 bg-gray-50 transition-all hover:bg-gray-100 ${compact ? 'px-3 py-3 sm:px-6 sm:py-4' : 'px-6 py-4'}`}
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <div className="flex items-center gap-4">
-          {/* Test Icon */}
-          <div className={`flex items-center justify-center w-10 h-10 rounded-lg transition-all ${
+        <div className="flex min-w-0 items-center gap-2.5 sm:gap-4">
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all sm:h-10 sm:w-10 ${
             isExpanded 
               ? 'bg-blue-600' 
               : 'bg-gray-400'
@@ -99,7 +101,7 @@ export default function TestSubSectionRenderer({
 
       {/* Test Fields - Shown when expanded */}
       {isExpanded && (
-        <div className="p-6 bg-white">
+        <div className={`bg-white ${compact ? 'p-3 sm:p-6' : 'p-6'}`}>
           {(() => {
             const sortedFields = subSection.fields.sort((a, b) => a.order - b.order);
             const renderedFields: React.ReactElement[] = [];
@@ -118,6 +120,7 @@ export default function TestSubSectionRenderer({
                       onChange={(key, value) => onChange(0, key, value)}
                       error={errors[0]?.[field.key]}
                       isAdminEdit={isAdminEdit}
+                      readOnly={readOnly}
                     />
                   </div>
                 );
@@ -133,6 +136,7 @@ export default function TestSubSectionRenderer({
                       onChange={(key, value) => onChange(0, key, value)}
                       error={errors[0]?.[field.key]}
                       isAdminEdit={isAdminEdit}
+                      readOnly={readOnly}
                     />
                   </div>
                 );

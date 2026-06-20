@@ -8,7 +8,9 @@ import { SectionConfig } from '@/config/formConfig';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import FormSectionRenderer from '@/components/FormSectionRenderer';
+import ProfileSectionViewDisplay from '@/components/ProfileSectionViewDisplay';
 import AuthImage from '@/components/AuthImage';
+import { roleListPagePadding, roleListTitleClass, roleListSubtitleClass } from '@/components/studentDetailResponsive';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -22,6 +24,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<any>({});
   const [uploadingPic, setUploadingPic] = useState(false);
+  const [editingSectionKey, setEditingSectionKey] = useState<string | null>(null);
+  const [sectionSnapshot, setSectionSnapshot] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -71,6 +75,8 @@ export default function ProfilePage() {
         });
       });
       setFormValues(values);
+      setEditingSectionKey(null);
+      setSectionSnapshot(null);
     } catch (error: any) {
       console.error('Failed to fetch student profile data:', error);
     }
@@ -231,11 +237,67 @@ export default function ProfilePage() {
       await formAnswerAPI.saveStudentProfile({ [sectionId]: sectionAnswers });
       toast.success('Saved successfully!');
       setErrors({});
+      setEditingSectionKey(null);
+      setSectionSnapshot(null);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to save');
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleStartEdit = (sectionKey: string) => {
+    setSectionSnapshot(JSON.parse(JSON.stringify(formValues[sectionKey] || {})));
+    setEditingSectionKey(sectionKey);
+    setErrors({});
+  };
+
+  const handleCancelEdit = (sectionKey: string) => {
+    if (sectionSnapshot) {
+      setFormValues((prev: any) => ({
+        ...prev,
+        [sectionKey]: JSON.parse(JSON.stringify(sectionSnapshot)),
+      }));
+    }
+    setEditingSectionKey(null);
+    setSectionSnapshot(null);
+    setErrors({});
+  };
+
+  const sectionEditActions = (sectionKey: string, canEdit: boolean) => {
+    if (!canEdit) return null;
+    const isEditing = editingSectionKey === sectionKey;
+    return (
+      <div className="flex shrink-0 gap-1.5">
+        {!isEditing ? (
+          <button
+            type="button"
+            onClick={() => handleStartEdit(sectionKey)}
+            className="rounded-md bg-white/20 px-2.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-white/30 sm:px-3 sm:text-sm"
+          >
+            Edit
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => handleCancelEdit(sectionKey)}
+              className="rounded-md bg-white/20 px-2.5 py-1 text-xs font-semibold text-white transition-colors hover:bg-white/30 sm:px-3 sm:text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSaveSection(sectionKey)}
+              disabled={saving}
+              className="rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-50 disabled:opacity-50 sm:px-3 sm:text-sm"
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+          </>
+        )}
+      </div>
+    );
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -265,47 +327,42 @@ export default function ProfilePage() {
     const currentSection = formSections[selectedSectionIndex];
 
     const isParentalSection = currentSection?.title === 'Parental Details';
+    const isEditing = editingSectionKey === currentSection.key;
+    const canEditSection = !isParentalSection;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+      <div className="min-h-screen bg-gray-50">
         <Toaster position="top-right" />
 
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 right-20 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl animate-float"></div>
-          <div className="absolute bottom-20 left-20 w-96 h-96 bg-cyan-400/10 rounded-full blur-3xl animate-float" style={{animationDelay: '1.5s'}}></div>
-        </div>
-
-        <div className="relative mx-auto max-w-5xl px-4 py-4 pb-24 sm:px-6 sm:py-8 lg:px-8">
-          {/* Header */}
-          <div className="mb-5 animate-fade-in sm:mb-8">
-            <h1 className="mb-1 text-2xl font-bold text-gray-900 sm:text-4xl md:text-5xl">My Profile</h1>
-            <p className="text-sm text-gray-600 sm:text-lg">View and manage your profile information</p>
+        <div className={`relative mx-auto max-w-5xl ${roleListPagePadding}`}>
+          <div className="mb-4 sm:mb-6">
+            <h1 className={roleListTitleClass}>My Profile</h1>
+            <p className={roleListSubtitleClass}>View and manage your profile information</p>
           </div>
 
-          {/* Profile Card Header */}
-          <div className="mb-6 animate-fade-in rounded-2xl border border-gray-100 bg-white shadow-xl">
-            <div className="rounded-t-2xl bg-gradient-to-r from-blue-600 to-cyan-600 p-4 sm:p-6">
-              <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
+          <div className="mb-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:mb-6">
+            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-3 sm:p-5">
+              <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
                 <div className="relative shrink-0">
                   {user?.profilePicture ? (
-                    <AuthImage path={user.profilePicture} alt="Profile" className="h-16 w-16 rounded-2xl object-cover shadow-xl sm:h-20 sm:w-20" />
+                    <AuthImage path={user.profilePicture} alt="Profile" className="h-14 w-14 rounded-xl object-cover shadow-md sm:h-16 sm:w-16" />
                   ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 text-2xl font-bold text-white shadow-xl sm:h-20 sm:w-20">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/20 text-xl font-bold text-white shadow-md sm:h-16 sm:w-16">
                       {getInitials(user)}
                     </div>
                   )}
                   <input type="file" ref={fileInputRef} accept="image/*" onChange={handleProfilePicUpload} className="hidden" />
-                  {uploadingPic && <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/60"><div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" /></div>}
+                  {uploadingPic && <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/60"><div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" /></div>}
                 </div>
-                <div className="min-w-0 text-center sm:ml-2 sm:text-left">
-                  <h2 className="mb-1 truncate text-xl font-bold text-white sm:text-2xl">{getFullName(user)}</h2>
-                  <p className="truncate text-sm text-blue-100 sm:text-base">{user?.email}</p>
-                  <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
-                    <button onClick={() => fileInputRef.current?.click()} disabled={uploadingPic} className="px-3 py-1 text-xs font-medium bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors">
+                <div className="min-w-0 flex-1 text-center sm:text-left">
+                  <h2 className="truncate text-lg font-bold text-white sm:text-xl">{getFullName(user)}</h2>
+                  <p className="truncate text-xs text-blue-100 sm:text-sm">{user?.email}</p>
+                  <div className="mt-2 flex flex-wrap justify-center gap-2 sm:justify-start">
+                    <button onClick={() => fileInputRef.current?.click()} disabled={uploadingPic} className="rounded-lg bg-white/20 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-white/30">
                       {user?.profilePicture ? 'Change Photo' : 'Upload Photo'}
                     </button>
                     {user?.profilePicture && (
-                      <button onClick={handleRemoveProfilePic} disabled={uploadingPic} className="px-3 py-1 text-xs font-medium bg-red-500/30 hover:bg-red-500/50 text-white rounded-lg transition-colors">
+                      <button onClick={handleRemoveProfilePic} disabled={uploadingPic} className="rounded-lg bg-red-500/30 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-red-500/50">
                         Remove
                       </button>
                     )}
@@ -315,16 +372,21 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Section Tabs */}
-          <div className="-mx-1 mb-5 flex gap-2 overflow-x-auto pb-1 sm:mb-6 sm:flex-wrap">
+          <div className="-mx-0.5 mb-4 flex gap-1.5 overflow-x-auto px-0.5 pb-0.5 sm:mb-6 sm:flex-wrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {formSections.map((section, idx) => (
               <button
                 key={section.key}
-                onClick={() => setSelectedSectionIndex(idx)}
-                className={`shrink-0 rounded-lg px-3 py-2 text-xs font-medium transition-all sm:px-4 sm:text-sm ${
+                type="button"
+                onClick={() => {
+                  if (editingSectionKey && editingSectionKey !== section.key) {
+                    handleCancelEdit(editingSectionKey);
+                  }
+                  setSelectedSectionIndex(idx);
+                }}
+                className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm ${
                   idx === selectedSectionIndex
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                 }`}
               >
                 {section.title}
@@ -332,40 +394,48 @@ export default function ProfilePage() {
             ))}
           </div>
 
-          {/* Form Section */}
           {currentSection && (
-            <div className="animate-fade-in">
-              <FormSectionRenderer
-                section={currentSection}
-                values={formValues[currentSection.key] || {}}
-                onChange={isParentalSection ? () => {} : (subSectionId, index, key, value) =>
-                  handleFieldChange(currentSection.key, subSectionId, index, key, value)
-                }
-                onAddInstance={isParentalSection ? () => {} : (subSectionId) =>
-                  handleAddInstance(currentSection.key, subSectionId)
-                }
-                onRemoveInstance={isParentalSection ? () => {} : (subSectionId, index) =>
-                  handleRemoveInstance(currentSection.key, subSectionId, index)
-                }
-                errors={errors}
-                readOnly={isParentalSection}
-                readOnlyKeys={['firstName', 'middleName', 'lastName']}
-                noDelete={isParentalSection}
-              />
-              {isParentalSection && (
-                <div className="mt-3 px-4 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
-                  Parental details can only be edited by Super Admin
+            <div>
+              {isEditing && canEditSection ? (
+                <FormSectionRenderer
+                  section={currentSection}
+                  values={formValues[currentSection.key] || {}}
+                  onChange={(subSectionId, index, key, value) =>
+                    handleFieldChange(currentSection.key, subSectionId, index, key, value)
+                  }
+                  onAddInstance={(subSectionId) =>
+                    handleAddInstance(currentSection.key, subSectionId)
+                  }
+                  onRemoveInstance={(subSectionId, index) =>
+                    handleRemoveInstance(currentSection.key, subSectionId, index)
+                  }
+                  errors={errors}
+                  readOnlyKeys={['firstName', 'middleName', 'lastName']}
+                  compact
+                  headerActions={sectionEditActions(currentSection.key, canEditSection)}
+                />
+              ) : (
+                <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+                  <div className="flex items-start justify-between gap-2 border-b border-blue-700 bg-blue-600 px-3 py-2.5 sm:px-6 sm:py-4">
+                    <div className="min-w-0">
+                      <h3 className="text-base font-semibold text-white sm:text-xl">{currentSection.title}</h3>
+                      {currentSection.description && (
+                        <p className="mt-0.5 text-xs text-blue-100 sm:text-sm">{currentSection.description}</p>
+                      )}
+                    </div>
+                    {sectionEditActions(currentSection.key, canEditSection)}
+                  </div>
+                  <div className="p-3 sm:p-4">
+                    <ProfileSectionViewDisplay
+                      section={currentSection}
+                      values={formValues[currentSection.key] || {}}
+                    />
+                  </div>
                 </div>
               )}
-              {!isParentalSection && (
-                <div className="mt-4 flex justify-end">
-                  <button
-                    onClick={() => handleSaveSection(currentSection.key)}
-                    disabled={saving}
-                    className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium transition-colors"
-                  >
-                    {saving ? 'Saving...' : 'Save'}
-                  </button>
+              {isParentalSection && (
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 sm:text-sm">
+                  Parental details can only be edited by Super Admin
                 </div>
               )}
             </div>

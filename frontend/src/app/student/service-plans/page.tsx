@@ -6,6 +6,12 @@ import { authAPI, servicePlanAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import { COACHING_CLASSES_SUMMARY } from '@/config/servicePlans';
+import {
+  roleListPagePadding,
+  roleListTitleClass,
+  roleListSubtitleClass,
+  roleListBackBtnClass,
+} from '@/components/studentDetailResponsive';
 
 const allServices = [
   {
@@ -138,18 +144,18 @@ export default function StudentServicePlansPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <div className="p-6 lg:p-8">
-        <button onClick={() => router.back()} className="mb-4 inline-flex items-center text-sm text-gray-600 hover:text-gray-900 transition-colors">
-          <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+      <div className={roleListPagePadding}>
+        <button type="button" onClick={() => router.back()} className={roleListBackBtnClass}>
+          <svg className="mr-1.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
           Return to Dashboard
         </button>
 
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Service Plans</h1>
-          <p className="text-gray-500 mt-1">Browse our services and choose the one that fits your goals.</p>
+        <div className="mb-4 sm:mb-8">
+          <h1 className={roleListTitleClass}>Service Plans</h1>
+          <p className={roleListSubtitleClass}>Browse our services and choose the one that fits your goals.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
           {allServices.filter(s => !unavailableSlugs.has(s.slug)).map((service) => {
             const servicePricing = pricingByService[service.slug];
             const serviceDiscounts = discountsByService[service.slug];
@@ -172,12 +178,12 @@ export default function StudentServicePlansPage() {
                 }
                 router.push(service.plansPage);
               }}
-              className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-100 overflow-hidden transition-all duration-300 hover:-translate-y-1 text-left"
+              className="group relative overflow-hidden rounded-2xl border border-gray-100 bg-white text-left shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
             >
               <div className={`h-1.5 bg-gradient-to-r ${service.color}`} />
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`w-12 h-12 ${service.iconBg} ${service.iconColor} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+              <div className="p-4 sm:p-6">
+                <div className="mb-3 flex items-start justify-between sm:mb-4">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl sm:h-12 sm:w-12 ${service.iconBg} ${service.iconColor} transition-transform duration-300 group-hover:scale-110`}>
                     {service.icon}
                   </div>
                   {isComingSoon && (

@@ -278,7 +278,7 @@ export default function SuperAdminActivitiesPage() {
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Pointer Category <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {[
                 { value: "2", label: "Pointer 2", sublabel: "Spike in one area", icon: "🏆" },
                 { value: "3", label: "Pointer 3", sublabel: "Leadership & Initiative", icon: "🔬" },
@@ -298,7 +298,7 @@ export default function SuperAdminActivitiesPage() {
                   <span className={`text-xs font-bold ${formData.pointerNo === option.value ? "text-blue-700" : "text-gray-700"}`}>
                     {option.label}
                   </span>
-                  <span className={`text-[10px] mt-0.5 ${formData.pointerNo === option.value ? "text-blue-500" : "text-gray-400"}`}>
+                  <span className={`text-[10px] mt-0.5 break-words leading-snug text-center ${formData.pointerNo === option.value ? "text-blue-500" : "text-gray-400"}`}>
                     {option.sublabel}
                   </span>
                 </button>
@@ -668,10 +668,11 @@ export default function SuperAdminActivitiesPage() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:mb-8 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           {[
             {
               label: "All Activities",
+              mobileLabel: "All",
               count: activityCounts.all,
               pointer: null,
               color: "blue",
@@ -679,6 +680,7 @@ export default function SuperAdminActivitiesPage() {
             },
             {
               label: "Spike in one area",
+              mobileLabel: "Spike in one area",
               count: activityCounts[2],
               pointer: 2,
               color: "violet",
@@ -686,6 +688,7 @@ export default function SuperAdminActivitiesPage() {
             },
             {
               label: "Leadership & Initiative",
+              mobileLabel: "Leadership",
               count: activityCounts[3],
               pointer: 3,
               color: "cyan",
@@ -693,6 +696,7 @@ export default function SuperAdminActivitiesPage() {
             },
             {
               label: "Global & Social Impact",
+              mobileLabel: "Global Impact",
               count: activityCounts[4],
               pointer: 4,
               color: "emerald",
@@ -746,7 +750,7 @@ export default function SuperAdminActivitiesPage() {
                 onClick={() =>
                   setFilterPointer(isActive ? null : stat.pointer)
                 }
-                className={`relative p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                className={`relative rounded-xl border-2 p-3 text-left transition-all duration-200 sm:p-4 ${
                   isActive
                     ? `${c.activeBg} ${c.border} shadow-md`
                     : `bg-white border-gray-100 hover:${c.border} hover:shadow-sm`
@@ -770,11 +774,12 @@ export default function SuperAdminActivitiesPage() {
                   {stat.count}
                 </p>
                 <p
-                  className={`text-xs font-semibold mt-0.5 ${
+                  className={`mt-0.5 text-xs font-semibold leading-snug break-words sm:truncate ${
                     isActive ? c.text : "text-gray-500"
                   }`}
                 >
-                  {stat.label}
+                  <span className="sm:hidden">{stat.mobileLabel}</span>
+                  <span className="hidden sm:inline">{stat.label}</span>
                 </p>
               </button>
             );
@@ -840,8 +845,8 @@ export default function SuperAdminActivitiesPage() {
 
         {/* Activities List */}
         <div className="bg-white rounded-2xl shadow-lg border border-blue-50 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <h2 className="text-base font-bold text-white flex items-center gap-2 break-words sm:text-lg">
               <svg
                 className="w-5 h-5"
                 fill="none"
@@ -960,9 +965,9 @@ export default function SuperAdminActivitiesPage() {
                 return (
                   <div
                     key={activity._id}
-                    className="p-5 hover:bg-blue-50/30 transition-colors group"
+                    className="p-3 hover:bg-blue-50/30 transition-colors group sm:p-5"
                   >
-                    <div className="flex items-start gap-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
                       {/* Number Badge */}
                       <div className="flex-shrink-0 w-9 h-9 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center">
                         <span className="text-sm font-bold text-blue-600">
@@ -972,10 +977,10 @@ export default function SuperAdminActivitiesPage() {
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <h3 className="text-base font-bold text-gray-900 truncate">
+                              <h3 className="text-base font-bold text-gray-900 break-words">
                                 {activity.title}
                               </h3>
                               <span
@@ -990,7 +995,7 @@ export default function SuperAdminActivitiesPage() {
                             <p className="text-sm text-gray-600 line-clamp-2 mb-2">
                               {activity.description}
                             </p>
-                            <div className="flex items-center gap-4 text-xs text-gray-400">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-gray-400">
                               {activity.documentName && (
                                 <span className="flex items-center gap-1">
                                   <svg
@@ -1047,7 +1052,7 @@ export default function SuperAdminActivitiesPage() {
                           </div>
 
                           {/* View, Edit & Delete Buttons */}
-                          <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                          <div className="flex items-center gap-1 flex-shrink-0 opacity-100 transition-all duration-200 sm:opacity-0 sm:group-hover:opacity-100">
                             {activity.documentUrl && (
                               <button
                                 onClick={() => setViewingActivity(activity)}

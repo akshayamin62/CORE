@@ -11,6 +11,10 @@ import AuthImage from '@/components/AuthImage';
 import ListPageFilters from '@/components/ListPageFilters';
 import ParentMobileList from '@/components/ParentMobileList';
 import PageStatCard from '@/components/PageStatCard';
+import {
+  roleListTitleClass,
+  roleListSubtitleClass,
+} from '@/components/studentDetailResponsive';
 
 interface ParentData {
   _id: string;
@@ -64,13 +68,13 @@ export default function CounselorParentsPage() {
       <Toaster position="top-right" />
       <CounselorLayout user={user}>
         <div className="p-4 sm:p-6 md:p-8">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Parents</h1>
-            <p className="mt-1 text-gray-600">View parents of your students</p>
+          <div className="mb-4 sm:mb-6">
+            <h1 className={roleListTitleClass}>Parents</h1>
+            <p className={roleListSubtitleClass}>View parents of your students</p>
           </div>
 
           <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 md:gap-6">
-            <PageStatCard title="Total Parents" value={parents.length} color="purple" />
+            <PageStatCard compact title="Total Parents" mobileTitle="Total" value={parents.length} color="purple" />
           </div>
 
           <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">

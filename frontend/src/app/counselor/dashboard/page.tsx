@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI, leadAPI, followUpAPI, teamMeetAPI } from '@/lib/api';
-import { User, USER_ROLE, LEAD_STAGE, FollowUp, FollowUpSummary, FOLLOWUP_STATUS, TeamMeet, TEAMMEET_STATUS, SERVICE_TYPE } from '@/types';
+import { User, USER_ROLE, LEAD_STAGE, FollowUp, FollowUpSummary, FOLLOWUP_STATUS, TeamMeet, TEAMMEET_STATUS } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import ScheduleCalendarGrid from '@/components/ScheduleCalendarGrid';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
@@ -12,8 +12,10 @@ import LeadDetailPanel from '@/components/LeadDetailPanel';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import { getFullName } from '@/utils/nameHelpers';
 import CounselorLayout from '@/components/CounselorLayout';
+import EnquiryUrlCopy from '@/components/EnquiryUrlCopy';
 import ListPageFilters from '@/components/ListPageFilters';
 import LeadMobileList, { LEAD_STAGE_FILTER_OPTIONS, LEAD_SERVICE_FILTER_OPTIONS, getLeadStageColor, getLeadServiceColor } from '@/components/LeadMobileList';
+import LeadStageStatCard, { leadStageStatGridClass } from '@/components/LeadStageStatCard';
 
 interface DashboardStats {
   totalLeads: number;
@@ -131,30 +133,7 @@ export default function CounselorDashboardPage() {
     }
   };
 
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success('URL copied to clipboard!');
-    } catch (error) {
-      console.error('Failed to copy:', error);
-      toast.error('Failed to copy URL');
-    }
-  };
-
-  const getServiceColor = (service: string) => {
-    switch (service) {
-      case SERVICE_TYPE.CAREER_FOCUS_STUDY_ABROAD:
-        return 'bg-indigo-100 text-indigo-800';
-      case SERVICE_TYPE.IVY_LEAGUE_ADMISSION:
-        return 'bg-amber-100 text-amber-800';
-      case SERVICE_TYPE.EDUCATION_PLANNING:
-        return 'bg-teal-100 text-teal-800';
-      case SERVICE_TYPE.COACHING_CLASSES:
-        return 'bg-rose-100 text-rose-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
+  const getServiceColor = getLeadServiceColor;
 
   const getFilteredLeads = () => {
     if (!selectedStage) return [];
@@ -321,44 +300,27 @@ export default function CounselorDashboardPage() {
       <CounselorLayout user={user}>
         <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-8 flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{getFullName(user)}</h1>
-            </div>
-            <div className="flex flex-col items-end gap-4">
-              {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="text-right"><p className="text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></div>); })()}
-              {/* Copy Enquiry URL */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 max-w-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                </svg>
-                <h3 className="font-semibold text-gray-900 text-sm">Enquiry Form</h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-blue-50 rounded-lg px-3 py-2">
-                  <code className="text-xs text-blue-700 font-mono break-all">
-                    {stats?.adminEnquiryUrl || 'Loading...'}
-                  </code>
+          <div className="mb-4 flex items-center justify-between gap-3 sm:mb-6 md:mb-8">
+            <h1 className="min-w-0 flex-1 truncate text-lg font-bold text-gray-900 sm:text-2xl md:text-3xl">{getFullName(user)}</h1>
+            {(() => {
+              const t = new Date();
+              const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000);
+              return (
+                <div className="shrink-0 text-right">
+                  <p className="text-lg font-extrabold leading-none text-gray-900 sm:text-2xl md:text-3xl">Day {d}</p>
+                  <p className="mt-0.5 text-[10px] text-gray-500 sm:text-sm">of {t.getFullYear()}</p>
                 </div>
-                <button
-                  onClick={() => stats?.adminEnquiryUrl && copyToClipboard(stats.adminEnquiryUrl)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Copy URL
-                </button>
-              </div>
-            </div>
-            </div>
+              );
+            })()}
           </div>
 
+          <EnquiryUrlCopy url={stats?.adminEnquiryUrl || 'Loading...'} className="mb-5 w-full sm:mb-6 md:mb-8" />
+
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4 mb-8">
-            <StatCard
+          <div className={leadStageStatGridClass}>
+            <LeadStageStatCard
               title="Total Leads"
+              mobileTitle="Total"
               value={stats?.totalLeads.toString() || '0'}
               icon={
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -370,7 +332,7 @@ export default function CounselorDashboardPage() {
               isActive={selectedStage === 'all'}
               showPercentage={false}
             />
-            <StatCard
+            <LeadStageStatCard
               title="New"
               value={stats?.newLeads.toString() || '0'}
               icon={
@@ -383,7 +345,7 @@ export default function CounselorDashboardPage() {
               isActive={selectedStage === LEAD_STAGE.NEW}
               percentage={stats && stats.totalLeads > 0 ? (stats.newLeads / stats.totalLeads) * 100 : 0}
             />
-            <StatCard
+            <LeadStageStatCard
               title="Hot"
               value={stats?.hotLeads.toString() || '0'}
               icon={
@@ -396,7 +358,7 @@ export default function CounselorDashboardPage() {
               isActive={selectedStage === LEAD_STAGE.HOT}
               percentage={stats && stats.totalLeads > 0 ? (stats.hotLeads / stats.totalLeads) * 100 : 0}
             />
-            <StatCard
+            <LeadStageStatCard
               title="Warm"
               value={stats?.warmLeads.toString() || '0'}
               icon={
@@ -409,7 +371,7 @@ export default function CounselorDashboardPage() {
               isActive={selectedStage === LEAD_STAGE.WARM}
               percentage={stats && stats.totalLeads > 0 ? (stats.warmLeads / stats.totalLeads) * 100 : 0}
             />
-            <StatCard
+            <LeadStageStatCard
               title="Cold"
               value={stats?.coldLeads.toString() || '0'}
               icon={
@@ -422,7 +384,7 @@ export default function CounselorDashboardPage() {
               isActive={selectedStage === LEAD_STAGE.COLD}
               percentage={stats && stats.totalLeads > 0 ? (stats.coldLeads / stats.totalLeads) * 100 : 0}
             />
-            <StatCard
+            <LeadStageStatCard
               title="Converted"
               value={stats?.convertedLeads.toString() || '0'}
               icon={
@@ -435,7 +397,7 @@ export default function CounselorDashboardPage() {
               isActive={selectedStage === LEAD_STAGE.CONVERTED}
               percentage={stats && stats.totalLeads > 0 ? (stats.convertedLeads / stats.totalLeads) * 100 : 0}
             />
-            <StatCard
+            <LeadStageStatCard
               title="Closed"
               value={stats?.closedLeads.toString() || '0'}
               icon={
@@ -478,7 +440,7 @@ export default function CounselorDashboardPage() {
 
           {/* Combined Calendar and Sidebar Section */}
           {!calendarCollapsed && (
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
               {selectedLeadId ? (
                 // Lead Detail Panel View
                 <LeadDetailPanel
@@ -505,20 +467,20 @@ export default function CounselorDashboardPage() {
 
           {/* Leads Table */}
           {selectedStage && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900">
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+              <div className="border-b border-gray-200 p-3 sm:p-4 md:p-6">
+                <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">
                       {selectedStage === 'all' ? 'All Leads' : `${selectedStage} Leads`}
                     </h2>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="mt-0.5 text-sm text-gray-600">
                       {getFilteredLeads().length} lead(s) found
                     </p>
                   </div>
                   <button
                     onClick={handleCloseLeadsTable}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium transition-colors flex items-center gap-2"
+                    className="flex shrink-0 items-center gap-2 self-end px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 sm:self-auto sm:px-4"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -716,52 +678,5 @@ export default function CounselorDashboardPage() {
         currentUserId={user?.id || user?._id}
       />
     </>
-  );
-}
-
-// Stat Card Component
-interface StatCardProps {
-  title: string;
-  value: string;
-  icon: React.ReactNode;
-  color: 'blue' | 'green' | 'red' | 'orange' | 'cyan' | 'gray';
-  onClick?: () => void;
-  isActive?: boolean;
-  percentage?: number;
-  showPercentage?: boolean;
-}
-
-function StatCard({ title, value, icon, color, onClick, isActive, percentage, showPercentage = true }: StatCardProps) {
-  const colorClasses = {
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-green-100 text-green-600',
-    red: 'bg-red-100 text-red-600',
-    orange: 'bg-orange-100 text-orange-600',
-    cyan: 'bg-cyan-100 text-cyan-600',
-    gray: 'bg-gray-200 text-gray-600',
-  };
-
-  return (
-    <div 
-      className={`bg-white rounded-xl shadow-sm border-2 p-5 transition-all ${
-        onClick ? 'cursor-pointer hover:shadow-md' : ''
-      } ${
-        isActive ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
-      }`}
-      onClick={onClick}
-    >
-      <div className="flex items-center justify-between">
-        <div className={`w-10 h-10 ${colorClasses[color]} rounded-lg flex items-center justify-center`}>
-          {icon}
-        </div>
-        <h3 className="text-3xl font-extrabold text-gray-900">{value}</h3>
-      </div>
-      <div className="flex items-center justify-between mt-3">
-        <p className="text-sm font-semibold text-gray-700">{title}</p>
-        {showPercentage && percentage !== undefined && (
-          <p className="text-sm font-semibold text-gray-900">{percentage.toFixed(1)}%</p>
-        )}
-      </div>
-    </div>
   );
 }

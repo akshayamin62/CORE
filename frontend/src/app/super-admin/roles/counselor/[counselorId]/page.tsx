@@ -13,6 +13,7 @@ import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import ScheduleCalendarGrid from '@/components/ScheduleCalendarGrid';
 import { getFullName } from '@/utils/nameHelpers';
 import ListPageFilters from '@/components/ListPageFilters';
+import EnquiryUrlCopy from '@/components/EnquiryUrlCopy';
 import LeadMobileList, {
   getLeadServiceColor,
   getLeadStageColor,
@@ -158,16 +159,6 @@ export default function SuperAdminCounselorDashboardPage() {
       console.error('Error fetching counselor detail:', error);
       toast.error(error.response?.data?.message || 'Failed to fetch counselor details');
       router.push('/super-admin/roles/counselor');
-    }
-  };
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success('URL copied to clipboard!');
-    } catch (error) {
-      console.error('Failed to copy:', error);
-      toast.error('Failed to copy URL');
     }
   };
 
@@ -355,28 +346,7 @@ export default function SuperAdminCounselorDashboardPage() {
             </div>
           </DetailInfoCard>
 
-          <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6">
-            <div className="mb-2 flex items-center gap-2">
-              <svg className="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-              </svg>
-              <h3 className="text-sm font-semibold text-gray-900">Enquiry Form</h3>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="min-w-0 flex-1 rounded-lg bg-green-50 px-3 py-2">
-                <code className="break-all font-mono text-xs text-green-700">
-                  {stats?.adminEnquiryUrl || 'Loading...'}
-                </code>
-              </div>
-              <button
-                type="button"
-                onClick={() => stats?.adminEnquiryUrl && copyToClipboard(stats.adminEnquiryUrl)}
-                className="inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-green-700"
-              >
-                Copy URL
-              </button>
-            </div>
-          </div>
+          <EnquiryUrlCopy url={stats?.adminEnquiryUrl || 'Loading...'} className="mb-4 sm:mb-6" />
 
           {/* Stats Cards */}
           <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:mb-8 lg:grid-cols-3 xl:grid-cols-7">

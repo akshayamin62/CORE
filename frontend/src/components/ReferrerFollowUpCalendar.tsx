@@ -9,6 +9,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import CalendarNavigationBar from '@/components/calendar/CalendarNavigationBar';
 import BigCalendarViewport from '@/components/calendar/BigCalendarViewport';
+import CalendarLegendModal from '@/components/calendar/CalendarLegendModal';
 import {
   getDesktopCalendarFormats,
   getMobileCalendarFormats,
@@ -70,6 +71,24 @@ export default function ReferrerFollowUpCalendar({
   const [view, setView] = useState<View>('month');
   const [date, setDate] = useState(new Date());
   const isMobile = useIsMobile();
+
+  const referrerLegend = useMemo(
+    () => [
+      {
+        title: 'Referrer Stage Colors',
+        items: [
+          { color: 'bg-blue-500', label: 'New' },
+          { color: 'bg-red-500', label: 'Hot' },
+          { color: 'bg-orange-500', label: 'Warm' },
+          { color: 'bg-cyan-400', label: 'Cold' },
+          { color: 'bg-green-500', label: 'Converted' },
+          { color: 'bg-gray-400', label: 'Closed' },
+          { color: 'bg-purple-500', label: 'Missed Follow-up' },
+        ],
+      },
+    ],
+    []
+  );
 
   const events: CalendarEvent[] = useMemo(() => {
     return followUps.map((followUp) => {
@@ -137,6 +156,17 @@ export default function ReferrerFollowUpCalendar({
               <p className="text-xs text-gray-500 md:text-sm">{events.length} follow-ups scheduled</p>
             </div>
           </div>
+          <CalendarLegendModal
+            sections={referrerLegend}
+            triggerPrefix="📞"
+            triggerLabel="Stages"
+            triggerDots={[
+              { color: 'bg-blue-500' },
+              { color: 'bg-red-500' },
+              { color: 'bg-green-500' },
+            ]}
+            hoverBgClass="hover:bg-indigo-50"
+          />
         </div>
       )}
 

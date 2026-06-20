@@ -111,7 +111,7 @@ export default function CoachingClassDetailPage() {
   if (!plan) {
     return (
       <CoachingClassesLayout user={user} serviceName="Coaching Classes">
-        <div className="p-6 lg:p-8">
+        <div className="px-4 py-4 pb-24 sm:px-6 sm:py-6 md:pb-8 lg:p-8">
           <button onClick={() => router.back()} className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             Back
@@ -136,17 +136,17 @@ export default function CoachingClassDetailPage() {
     <CoachingClassesLayout user={user} serviceName="Coaching Classes">
       <Toaster position="top-right" />
       <div className="bg-gradient-to-b from-slate-50 via-white to-slate-50 min-h-[calc(100vh-5rem)]">
-        <div className="px-6 lg:px-8 py-8">
-          <button onClick={() => router.push('/student/coaching-classes/plans')} className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors font-medium">
+        <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+          <button onClick={() => router.push('/student/coaching-classes/plans')} className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 transition-colors hover:text-gray-900 sm:mb-4">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             Back to All Classes
           </button>
         </div>
 
-        <div className="px-6 lg:px-8 pb-10 max-w-3xl">
+        <div className="max-w-3xl px-4 pb-10 sm:px-6 lg:px-8">
           {/* Plan Header Card */}
-          <div className={`rounded-2xl border-2 overflow-hidden shadow-lg ${plan.borderColor} bg-white`}>
-            <div className={`${plan.headerGradient} px-8 py-8 text-white relative overflow-hidden`}>
+          <div className={`overflow-hidden rounded-2xl border-2 shadow-lg ${plan.borderColor} bg-white`}>
+            <div className={`relative overflow-hidden px-4 py-5 text-white sm:px-8 sm:py-8 ${plan.headerGradient}`}>
               <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full" />
               <h1 className="text-3xl font-extrabold tracking-tight">{plan.name}</h1>
               {price != null ? (

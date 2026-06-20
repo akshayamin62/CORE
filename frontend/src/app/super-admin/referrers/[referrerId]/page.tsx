@@ -24,6 +24,7 @@ import LeadMobileList, {
   LEAD_STAGE_FILTER_OPTIONS,
 } from '@/components/LeadMobileList';
 import PageStatCard from '@/components/PageStatCard';
+import EnquiryUrlCopy from '@/components/EnquiryUrlCopy';
 
 interface LeadData {
   _id: string;
@@ -221,13 +222,6 @@ export default function SuperAdminReferrerDetailPage() {
   const getStageColor = getLeadStageColor;
   const getServiceColor = getLeadServiceColor;
 
-  const copyReferralLink = () => {
-    if (!dashboard) return;
-    const link = `${window.location.origin}/referral/${dashboard.referrer.referralSlug}`;
-    navigator.clipboard.writeText(link);
-    toast.success('Referral link copied!');
-  };
-
   const handleAddNote = async () => {
     if (!newNote.trim() || !noteDate) return;
     setAddingNote(true);
@@ -395,13 +389,15 @@ export default function SuperAdminReferrerDetailPage() {
                 <span className="text-gray-900">—</span>
               )}
             </div>
-            <button
-              type="button"
-              onClick={copyReferralLink}
-              className="w-full rounded-lg bg-blue-100 px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-200 sm:w-auto"
-            >
-              Copy Referral Link
-            </button>
+            <EnquiryUrlCopy
+              label="Referral Link"
+              url={
+                dashboard.referrer.referralSlug && typeof window !== 'undefined'
+                  ? `${window.location.origin}/referral/${dashboard.referrer.referralSlug}`
+                  : 'Loading...'
+              }
+              className="w-full"
+            />
           </DetailInfoCard>
 
           <div className="mb-4 hidden gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6 sm:p-6 md:grid md:grid-cols-2 lg:grid-cols-3">
@@ -432,9 +428,10 @@ export default function SuperAdminReferrerDetailPage() {
           </div>
 
           <ListPageStatGrid columns={3}>
-            <PageStatCard title="Total Leads" mobileTitle="Leads" value={allLeads.length} color="blue" />
-            <PageStatCard title="Students" mobileTitle="Students" value={dashboard.totalStudents} color="green" />
+            <PageStatCard compact title="Total Leads" mobileTitle="Leads" value={allLeads.length} color="blue" />
+            <PageStatCard compact title="Students" mobileTitle="Students" value={dashboard.totalStudents} color="green" />
             <PageStatCard
+              compact
               title="Converted"
               mobileTitle="Converted"
               value={dashboard.stageCounts?.[LEAD_STAGE.CONVERTED] || 0}
