@@ -708,6 +708,13 @@ export const leadAPI = {
   
   updateLeadStage: (leadId: string, stage: string) => 
     api.patch(`/leads/${leadId}/stage`, { stage }),
+
+  addLeadNote: (leadId: string, data: { text: string; noteDate: string }) =>
+    api.post(`/leads/${leadId}/notes`, data),
+  updateLeadNote: (leadId: string, noteId: string, data: { text: string; noteDate: string }) =>
+    api.patch(`/leads/${leadId}/notes/${noteId}`, data),
+  deleteLeadNote: (leadId: string, noteId: string) =>
+    api.delete(`/leads/${leadId}/notes/${noteId}`),
   
   // Super Admin endpoints
   getAllLeads: (params?: {
@@ -1238,6 +1245,13 @@ export const b2bAPI = {
     api.post(`/b2b/leads/${leadId}/assign-ops`, { b2bOpsId }),
   updateLeadStage: (leadId: string, stage: string) =>
     api.patch(`/b2b/leads/${leadId}/stage`, { stage }),
+
+  addB2BLeadNote: (leadId: string, data: { text: string; noteDate: string }) =>
+    api.post(`/b2b/leads/${leadId}/notes`, data),
+  updateB2BLeadNote: (leadId: string, noteId: string, data: { text: string; noteDate: string }) =>
+    api.patch(`/b2b/leads/${leadId}/notes/${noteId}`, data),
+  deleteB2BLeadNote: (leadId: string, noteId: string) =>
+    api.delete(`/b2b/leads/${leadId}/notes/${noteId}`),
 
   // Super Admin - Staff
   getSalesStaff: () => api.get('/b2b/sales-staff'),

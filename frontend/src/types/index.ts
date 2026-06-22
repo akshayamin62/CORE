@@ -424,6 +424,15 @@ export interface LeadParentDetail {
   occupation: string;
 }
 
+export interface EntityNote {
+  _id: string;
+  text: string;
+  noteDate: string;
+  createdByRole: string;
+  createdByName?: string;
+  createdAt: string;
+}
+
 export interface Lead {
   _id: string;
   adminId: {
@@ -459,6 +468,7 @@ export interface Lead {
   source?: string;
   conversionRequestId?: string;
   conversionStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  notes?: EntityNote[];
   createdAt: string;
   updatedAt: string;
 }

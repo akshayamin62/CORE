@@ -8,6 +8,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { format } from 'date-fns';
 import FollowUpCalendarGrid from '@/components/FollowUpCalendarGrid';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
+import EntityNotesPanel from '@/components/EntityNotesPanel';
 import CounselorLayout from '@/components/CounselorLayout';
 import {
   leadContactGridClass,
@@ -691,6 +692,21 @@ export default function CounselorLeadDetailPage() {
           onFollowUpSelect={handleFollowUpClick}
           leadName={lead.name}
         />
+
+        {lead && (
+          <EntityNotesPanel
+            entityId={leadId}
+            notes={Array.isArray(lead.notes) ? lead.notes : []}
+            currentRole={USER_ROLE.COUNSELOR}
+            onNotesChange={(notes) => setLead((prev) => (prev ? { ...prev, notes } : prev))}
+            api={{
+              addNote: leadAPI.addLeadNote,
+              updateNote: leadAPI.updateLeadNote,
+              deleteNote: leadAPI.deleteLeadNote,
+            }}
+            className="mt-6"
+          />
+        )}
 
         {/* Follow-Ups History Section - Full Width */}
         <div className="mt-6">

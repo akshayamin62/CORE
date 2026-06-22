@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
+import { IEntityNote, entityNotesSchemaDefinition } from "../utils/entityNotes";
 
 export enum B2B_LEAD_TYPE {
   FRANCHISE = "Franchise",
@@ -34,6 +35,7 @@ export interface IB2BLead extends Document {
   conversionStatus?: "PENDING" | "APPROVED" | "REJECTED" | "DOCUMENT_VERIFICATION";
   createdAdminId?: mongoose.Types.ObjectId;
   createdAdvisorId?: mongoose.Types.ObjectId;
+  notes: IEntityNote[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -89,9 +91,16 @@ const b2bLeadSchema = new Schema<IB2BLead>(
       ref: "Advisor",
       default: null,
     },
+    notes: entityNotesSchemaDefinition,
   },
   { timestamps: true }
 );
+
+b2bLeadSchema.post('init', function (this: IB2BLead) {
+  if (!Array.isArray(this.notes)) {
+    this.notes = [];
+  }
+});
 
 b2bLeadSchema.index({ stage: 1 });
 b2bLeadSchema.index({ assignedB2BSalesId: 1, stage: 1 });

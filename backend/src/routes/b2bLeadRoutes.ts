@@ -20,6 +20,11 @@ import {
   getB2BStaffFollowUpsForSA,
   getB2BStaffFollowUpSummaryForSA,
 } from "../controllers/b2bFollowUpController";
+import {
+  addB2BLeadNote,
+  updateB2BLeadNote,
+  deleteB2BLeadNote,
+} from "../controllers/b2bLeadNotesController";
 
 const router = express.Router();
 
@@ -134,6 +139,26 @@ router.patch(
   authenticate,
   authorize([USER_ROLE.SUPER_ADMIN, USER_ROLE.B2B_SALES]),
   updateB2BLeadStage
+);
+
+// B2B lead notes (Super Admin, B2B Sales)
+router.post(
+  "/leads/:leadId/notes",
+  authenticate,
+  authorize([USER_ROLE.SUPER_ADMIN, USER_ROLE.B2B_SALES]),
+  addB2BLeadNote
+);
+router.patch(
+  "/leads/:leadId/notes/:noteId",
+  authenticate,
+  authorize([USER_ROLE.SUPER_ADMIN, USER_ROLE.B2B_SALES]),
+  updateB2BLeadNote
+);
+router.delete(
+  "/leads/:leadId/notes/:noteId",
+  authenticate,
+  authorize([USER_ROLE.SUPER_ADMIN, USER_ROLE.B2B_SALES]),
+  deleteB2BLeadNote
 );
 
 // ============= B2B SALES ROUTES =============

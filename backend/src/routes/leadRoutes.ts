@@ -12,6 +12,11 @@ import {
   getCounselorEnquiryFormUrl,
   getAllLeads,
 } from "../controllers/leadController";
+import {
+  addLeadNote,
+  updateLeadNote,
+  deleteLeadNote,
+} from "../controllers/leadNotesController";
 import { authenticate } from "../middleware/auth";
 import { authorize } from "../middleware/authorize";
 import { USER_ROLE } from "../types/roles";
@@ -113,6 +118,26 @@ router.patch(
   authenticate,
   authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.ADVISOR]),
   updateLeadStage
+);
+
+// Lead notes (Admin, Counselor, Super Admin)
+router.post(
+  "/leads/:leadId/notes",
+  authenticate,
+  authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN]),
+  addLeadNote
+);
+router.patch(
+  "/leads/:leadId/notes/:noteId",
+  authenticate,
+  authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN]),
+  updateLeadNote
+);
+router.delete(
+  "/leads/:leadId/notes/:noteId",
+  authenticate,
+  authorize([USER_ROLE.ADMIN, USER_ROLE.COUNSELOR, USER_ROLE.SUPER_ADMIN]),
+  deleteLeadNote
 );
 
 // ============= SUPER ADMIN ROUTES =============

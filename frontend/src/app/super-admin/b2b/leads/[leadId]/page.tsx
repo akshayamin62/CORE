@@ -9,6 +9,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { format } from 'date-fns';
 import FollowUpCalendarGrid from '@/components/FollowUpCalendarGrid';
 import B2BFollowUpFormPanel from '@/components/B2BFollowUpFormPanel';
+import EntityNotesPanel from '@/components/EntityNotesPanel';
 
 // Adapter: map B2B follow-up data to FollowUp shape for calendar/sidebar components
 function adaptB2BFollowUps(b2bFollowUps: any[]): FollowUp[] {
@@ -397,15 +398,6 @@ export default function SuperAdminB2BLeadDetailPage() {
                   </div>
                 )}
               </div>
-              {lead.notes && (
-                <>
-                  <hr className="my-4 border-gray-200" />
-                  <div>
-                    <label className="block text-xs font-bold text-gray-500 mb-1">Notes</label>
-                    <p className="text-gray-900 text-sm whitespace-pre-wrap">{lead.notes}</p>
-                  </div>
-                </>
-              )}
             </div>
 
             {/* Right Column - Stage, Type, Actions */}
@@ -476,6 +468,21 @@ export default function SuperAdminB2BLeadDetailPage() {
             basePath="/super-admin/b2b/leads"
             showLeadLink={false}
           />
+
+          {lead && (
+            <EntityNotesPanel
+              entityId={leadId}
+              notes={Array.isArray(lead.notes) ? lead.notes : []}
+              currentRole={USER_ROLE.SUPER_ADMIN}
+              onNotesChange={(notes) => setLead((prev: any) => (prev ? { ...prev, notes } : prev))}
+              api={{
+                addNote: b2bAPI.addB2BLeadNote,
+                updateNote: b2bAPI.updateB2BLeadNote,
+                deleteNote: b2bAPI.deleteB2BLeadNote,
+              }}
+              className="mt-6"
+            />
+          )}
 
           {/* Follow-Up History */}
           <div className="mt-6">

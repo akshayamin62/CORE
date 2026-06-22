@@ -9,6 +9,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { format } from 'date-fns';
 import FollowUpCalendarGrid from '@/components/FollowUpCalendarGrid';
 import FollowUpFormPanel from '@/components/FollowUpFormPanel';
+import EntityNotesPanel from '@/components/EntityNotesPanel';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import {
   leadContactGridClass,
@@ -528,6 +529,20 @@ export default function AdminLeadDetailPage() {
             leadName={lead.name}
             basePath="/admin/leads"
           />
+
+          {lead && (
+            <EntityNotesPanel
+              entityId={leadId}
+              notes={Array.isArray(lead.notes) ? lead.notes : []}
+              currentRole={USER_ROLE.ADMIN}
+              onNotesChange={(notes) => setLead((prev) => (prev ? { ...prev, notes } : prev))}
+              api={{
+                addNote: leadAPI.addLeadNote,
+                updateNote: leadAPI.updateLeadNote,
+                deleteNote: leadAPI.deleteLeadNote,
+              }}
+            />
+          )}
 
           {/* Follow-Ups History Section - Full Width */}
           <div className="mb-6">

@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
+import { IEntityNote, entityNotesSchemaDefinition } from "../utils/entityNotes";
 
 export enum SERVICE_TYPE {
   EDUCATION_PLANNING = "Education Planning",
@@ -44,6 +45,7 @@ export interface ILead extends Document {
   source: string;
   conversionRequestId?: mongoose.Types.ObjectId;
   conversionStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  notes: IEntityNote[];
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -141,9 +143,16 @@ const leadSchema = new Schema<ILead>(
       enum: ['PENDING', 'APPROVED', 'REJECTED'],
       default: null,
     },
+    notes: entityNotesSchemaDefinition,
   },
   { timestamps: true }
 );
+
+leadSchema.post('init', function (this: ILead) {
+  if (!Array.isArray(this.notes)) {
+    this.notes = [];
+  }
+});
 
 // Index for faster queries
 leadSchema.index({ adminId: 1, stage: 1 });
