@@ -367,8 +367,10 @@ export const servicePlanAPI = {
     api.put(`/service-plans/${serviceSlug}/admin/pricing`, { gstPercentage }),
   getBasePricingForAdmin: (serviceSlug: string) => api.get(`/service-plans/${serviceSlug}/admin/base-pricing`),
   // Get any admin's pricing by adminId (for viewing plans from any role)
-  getAdminPricingById: (serviceSlug: string, adminId: string) =>
-    api.get(`/service-plans/${serviceSlug}/admin/${adminId}/pricing`),
+  getAdminPricingById: (serviceSlug: string, adminId: string, studentId?: string) =>
+    api.get(`/service-plans/${serviceSlug}/admin/${adminId}/pricing`, {
+      params: studentId ? { studentId } : undefined,
+    }),
   // Super Admin
   getSuperAdminPricing: (serviceSlug: string) => api.get(`/service-plans/${serviceSlug}/super-admin/pricing`),
   setSuperAdminPricing: (serviceSlug: string, prices: Record<string, number>) =>

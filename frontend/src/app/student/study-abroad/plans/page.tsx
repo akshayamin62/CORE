@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { authAPI, serviceAPI, servicePlanAPI, paymentAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
+import PlanPriceBlock from '@/components/PlanPriceBlock';
 import StudentOuterPageLayout from '@/components/StudentOuterPageLayout';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
+import { RegistrationPricingSnapshot, UpgradePreviewTier } from '@/utils/registrationPricing';
 import toast, { Toaster } from 'react-hot-toast';
 import {
   roleListPagePadding,
@@ -27,6 +29,8 @@ export default function StudentStudyAbroadPlansPage() {
   const [gstPercentage, setGstPercentage] = useState<number>(18);
   const [registering, setRegistering] = useState<string | null>(null);
   const [currentPlanTier, setCurrentPlanTier] = useState<string | null>(null);
+  const [registration, setRegistration] = useState<RegistrationPricingSnapshot | null>(null);
+  const [upgradePreview, setUpgradePreview] = useState<Record<string, UpgradePreviewTier> | null>(null);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
 
   const plans = getServicePlans('study-abroad');
@@ -63,14 +67,20 @@ export default function StudentStudyAbroadPlansPage() {
       if (p) setPricing(p);
       if (pricingRes.data.data.discounts) setDiscounts(pricingRes.data.data.discounts);
       if (typeof pricingRes.data.data.gstPercentage === 'number') setGstPercentage(pricingRes.data.data.gstPercentage);
+      if (pricingRes.data.data.registration) {
+        setRegistration(pricingRes.data.data.registration);
+        setCurrentPlanTier(pricingRes.data.data.registration.planTier);
+      }
+      if (pricingRes.data.data.upgradePreview) {
+        setUpgradePreview(pricingRes.data.data.upgradePreview);
+      }
 
-      // Find current Study Abroad registration
       const regs = servicesRes.data.data.registrations || [];
       const saReg = regs.find((r: any) => {
         const svc = typeof r.serviceId === 'object' ? r.serviceId : null;
         return svc && (svc.slug === 'study-abroad');
       });
-      if (saReg?.planTier) setCurrentPlanTier(saReg.planTier);
+      if (saReg?.planTier && !pricingRes.data.data.registration) setCurrentPlanTier(saReg.planTier);
     } catch (error: any) {
       console.error('Failed to load plan data:', error);
     }
@@ -144,10 +154,23 @@ export default function StudentStudyAbroadPlansPage() {
   };
 
   const handleUpgrade = async (planKey: string) => {
+    const preview = upgradePreview?.[planKey];
+    if (preview && preview.upgradeCharge <= 0) {
+      toast.error('No additional payment required for this upgrade');
+      return;
+    }
+
     setRegistering(planKey);
     try {
       const orderRes = await paymentAPI.createUpgradeOrder('study-abroad', planKey);
       const orderData = orderRes.data.data;
+
+      if (preview && Math.abs(orderData.amountInr - preview.upgradeCharge) > 1) {
+        toast.error(
+          `Payment amount mismatch (expected ₹${preview.upgradeCharge.toLocaleString('en-IN')}). Please refresh the page and try again.`
+        );
+        return;
+      }
 
       if (!window.Razorpay) {
         toast.error('Payment gateway is loading. Please try again.');
@@ -203,18 +226,6 @@ export default function StudentStudyAbroadPlansPage() {
     }
   };
 
-  const getUpgradePriceDiff = (planKey: string): number | null => {
-    if (!currentPlanTier || !pricing) return null;
-    const currentBase = pricing[currentPlanTier];
-    const targetBase = pricing[planKey];
-    if (currentBase == null || targetBase == null) return null;
-    const currentDiscount = discounts?.[currentPlanTier]?.calculatedAmount || 0;
-    const targetDiscount = discounts?.[planKey]?.calculatedAmount || 0;
-    const currentNet = currentBase - currentDiscount;
-    const targetNet = targetBase - targetDiscount;
-    return targetNet - currentNet;
-  };
-
   const isUpgrade = (planKey: string): boolean => {
     if (!currentPlanTier) return false;
     return (PLAN_HIERARCHY[planKey] ?? -1) > (PLAN_HIERARCHY[currentPlanTier] ?? -1);
@@ -267,7 +278,6 @@ export default function StudentStudyAbroadPlansPage() {
             {plans.map((plan) => {
               const isCurrent = currentPlanTier === plan.key;
               const canUpgrade = isUpgrade(plan.key);
-              const priceDiff = getUpgradePriceDiff(plan.key);
               const isLowerPlan = currentPlanTier ? (PLAN_HIERARCHY[plan.key] ?? -1) < (PLAN_HIERARCHY[currentPlanTier] ?? -1) : false;
 
               return (
@@ -284,34 +294,18 @@ export default function StudentStudyAbroadPlansPage() {
                       <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${isCurrent ? 'bg-white/20 text-white' : `${plan.badgeBg} text-white`}`}>{plan.name}</span>
                     </div>
                     {plan.subtitle && <p className={`text-xs uppercase font-semibold tracking-wide mb-4 ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>{plan.subtitle}</p>}
-                    {pricing?.[plan.key] != null ? (
-                      <div className="mb-5">
-                          {discounts?.[plan.key] ? (
-                            <>
-                              <p className={`text-lg line-through ${isCurrent ? 'text-blue-300' : 'text-gray-400'}`}>₹{pricing[plan.key].toLocaleString('en-IN')}</p>
-                              <p className={`text-2xl font-extrabold sm:text-4xl ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{(pricing[plan.key] - discounts[plan.key].calculatedAmount).toLocaleString('en-IN')}</p>
-                              <p className={`text-xs font-semibold mt-1 ${isCurrent ? 'text-blue-200' : 'text-gray-600'}`}>
-                                {discounts[plan.key].type === 'percentage' ? `${discounts[plan.key].value}% off` : `₹${discounts[plan.key].calculatedAmount.toLocaleString('en-IN')} off`}
-                              </p>
-                              {discounts[plan.key].reason && (
-                                <p className={`text-xs mt-0.5 italic ${isCurrent ? 'text-blue-200' : 'text-gray-500'}`}>&ldquo;{discounts[plan.key].reason}&rdquo;</p>
-                              )}
-                            </>
-                          ) : (
-                            <p className={`text-2xl font-extrabold sm:text-4xl ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{pricing[plan.key].toLocaleString('en-IN')}</p>
-                          )}
-                          <p className={`text-xs mt-1 ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>{gstPercentage > 0 ? `+ ${gstPercentage}% GST applicable` : 'No GST applicable'}</p>
-                        {canUpgrade && priceDiff != null && priceDiff > 0 && (
-                          <p className="text-sm text-emerald-600 font-semibold mt-2">
-                            +₹{priceDiff.toLocaleString('en-IN')} upgrade difference
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="mb-5">
-                        <p className={`text-lg font-medium ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>Price not set</p>
-                      </div>
-                    )}
+                    <PlanPriceBlock
+                      planKey={plan.key}
+                      isCurrent={isCurrent}
+                      canUpgrade={canUpgrade}
+                      pricing={pricing}
+                      discounts={discounts}
+                      gstPercentage={gstPercentage}
+                      registration={registration}
+                      upgradePreview={upgradePreview}
+                      variant={isCurrent ? 'dark' : 'light'}
+                      priceSize="md"
+                    />
 
                     {/* Button logic */}
                     {isCurrent ? (

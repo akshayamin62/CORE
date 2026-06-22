@@ -16,6 +16,11 @@ import StudentPlanDiscount from '../models/StudentPlanDiscount';
 import Parent from '../models/Parent';
 import Referrer from '../models/Referrer';
 import { buildInstallmentSchedule, createProformaInvoice } from '../services/paymentService';
+import {
+  buildRegistrationSnapshot,
+  buildUpgradePreviewMap,
+} from '../utils/registrationPricing';
+import { normalizePricesMap, resolveServicePricingOwner } from '../utils/pricingContext';
 
 // Get pricing for the student's admin for a specific service
 export const getPricingForStudent = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -37,39 +42,28 @@ export const getPricingForStudent = async (req: AuthRequest, res: Response): Pro
     } else {
       const student = await Student.findOne({ userId }).lean();
       if (!student) { res.status(404).json({ success: false, message: 'Student not found' }); return; }
-      
-      if (student.adminId && student.advisorId) {
-        // Transferred student: check if this service was registered via advisor
-        const service = await Service.findOne({ slug: serviceSlug }).lean();
-        const advisorReg = service ? await StudentServiceRegistration.findOne({
-          studentId: student._id,
-          serviceId: service._id,
-          registeredViaAdvisorId: { $exists: true, $ne: null },
-        }).lean() : null;
 
-        if (advisorReg) {
-          // Service was registered under advisor → use advisor pricing
-          advisorId = student.advisorId;
-        } else {
-          // Service registered under admin (or not yet registered) → use admin pricing
-          adminId = student.adminId;
-        }
-      } else if (student.adminId) {
-        adminId = student.adminId;
-      } else if (student.advisorId) {
-        // Student belongs to advisor (pre-transfer)
-        advisorId = student.advisorId;
-        const advisor = await Advisor.findById(advisorId).lean();
+      const service = await Service.findOne({ slug: serviceSlug }).lean();
+      const pricingOwner = service
+        ? await resolveServicePricingOwner(student, service._id)
+        : null;
+
+      if (!pricingOwner) {
+        res.status(404).json({ success: false, message: 'Student is not linked to any admin or advisor' });
+        return;
+      }
+
+      if (pricingOwner.advisorId && !pricingOwner.adminId) {
+        const advisor = await Advisor.findById(pricingOwner.advisorId).lean();
         if (!advisor) { res.status(404).json({ success: false, message: 'Advisor not found' }); return; }
-        // Check if this service is in advisor's allowed services
         if (!advisor.allowedServices.includes(serviceSlug)) {
           res.json({ success: true, data: { pricing: null, message: 'This service is not available through your Advisor. Contact your advisor for more options.' } });
           return;
         }
-      } else {
-        res.status(404).json({ success: false, message: 'Student is not linked to any admin or advisor' });
-        return;
       }
+
+      adminId = pricingOwner.adminId;
+      advisorId = pricingOwner.advisorId;
     }
 
     const pricingQuery = adminId
@@ -83,6 +77,9 @@ export const getPricingForStudent = async (req: AuthRequest, res: Response): Pro
 
     // Fetch student-specific discounts for this service
     let discountMap: Record<string, { type: string; value: number; calculatedAmount: number; reason?: string }> | null = null;
+    let registrationSnapshot = null;
+    let upgradePreview: Record<string, unknown> | null = null;
+
     if (userRole === USER_ROLE.STUDENT) {
       const student = await Student.findOne({ userId }).lean();
       if (student) {
@@ -102,6 +99,25 @@ export const getPricingForStudent = async (req: AuthRequest, res: Response): Pro
             };
           }
         }
+
+        const service = await Service.findOne({ slug: serviceSlug }).lean();
+        if (service) {
+          const registration = await StudentServiceRegistration.findOne({
+            studentId: student._id,
+            serviceId: service._id,
+          }).lean();
+          if (registration?.planTier) {
+            const catalogGst = typeof pricing.gstPercentage === 'number' ? pricing.gstPercentage : 18;
+            registrationSnapshot = buildRegistrationSnapshot(registration, catalogGst);
+            const pricesObj = normalizePricesMap(pricing.prices);
+            upgradePreview = buildUpgradePreviewMap(
+              registration,
+              pricesObj,
+              discountMap,
+              catalogGst
+            );
+          }
+        }
       }
     }
 
@@ -111,6 +127,8 @@ export const getPricingForStudent = async (req: AuthRequest, res: Response): Pro
         pricing: pricing.prices,
         discounts: discountMap,
         gstPercentage: typeof pricing.gstPercentage === 'number' ? pricing.gstPercentage : 18,
+        registration: registrationSnapshot,
+        upgradePreview,
       },
     });
   } catch (error: any) {
@@ -451,6 +469,7 @@ export const getBasePricingForAdmin = async (req: AuthRequest, res: Response): P
 export const getAdminPricingByAdminId = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { serviceSlug, adminId } = req.params;
+    const { studentId } = req.query;
 
     // Try directly as Admin._id first (used by student detail pages)
     let pricing = await ServicePricing.findOne({ adminId, serviceSlug }).lean();
@@ -474,11 +493,58 @@ export const getAdminPricingByAdminId = async (req: AuthRequest, res: Response):
       }
     }
 
+    const catalogGst = pricing && typeof pricing.gstPercentage === 'number' ? pricing.gstPercentage : 18;
+
+    let discountMap: Record<string, { type: string; value: number; calculatedAmount: number; reason?: string }> | null = null;
+    let registrationSnapshot = null;
+    let upgradePreview: Record<string, unknown> | null = null;
+
+    if (studentId && typeof studentId === 'string' && pricing) {
+      const student = await Student.findById(studentId).lean();
+      const service = await Service.findOne({ slug: serviceSlug }).lean();
+      if (student && service) {
+        const discounts = await StudentPlanDiscount.find({
+          studentId: student._id,
+          serviceSlug,
+          isActive: true,
+        }).lean();
+        if (discounts.length > 0) {
+          discountMap = {};
+          for (const d of discounts) {
+            discountMap[d.planTier] = {
+              type: d.type,
+              value: d.value,
+              calculatedAmount: d.calculatedAmount,
+              reason: d.reason,
+            };
+          }
+        }
+
+        const registration = await StudentServiceRegistration.findOne({
+          studentId: student._id,
+          serviceId: service._id,
+        }).lean();
+        if (registration?.planTier) {
+          registrationSnapshot = buildRegistrationSnapshot(registration, catalogGst);
+          const pricesObj = pricing.prices as unknown as Record<string, number>;
+          upgradePreview = buildUpgradePreviewMap(
+            registration,
+            pricesObj,
+            discountMap,
+            catalogGst
+          );
+        }
+      }
+    }
+
     res.json({
       success: true,
       data: {
         pricing: pricing ? pricing.prices : null,
-        gstPercentage: pricing && typeof pricing.gstPercentage === 'number' ? pricing.gstPercentage : 18,
+        discounts: discountMap,
+        gstPercentage: catalogGst,
+        registration: registrationSnapshot,
+        upgradePreview,
       },
     });
   } catch (error: any) {

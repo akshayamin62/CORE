@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { authAPI, serviceAPI, servicePlanAPI, studentPlanDiscountAPI } from '@/lib/api';
 import { User, Service, USER_ROLE } from '@/types';
 import ServicePlanDetailsView from '@/components/ServicePlanDetailsView';
+import PlanPriceBlock from '@/components/PlanPriceBlock';
 import CoachingClassCards, { ClassTiming } from '@/components/CoachingClassCards';
+import { RegistrationPricingSnapshot, UpgradePreviewTier } from '@/utils/registrationPricing';
 import { getServicePlans, getServiceFeatures } from '@/config/servicePlans';
 import ParentLayout from '@/components/ParentLayout';
 import PageStatCard from '@/components/PageStatCard';
@@ -52,6 +54,9 @@ function ServicePlansViewContent() {
   const [savingDiscount, setSavingDiscount] = useState(false);
   const [advisorOwnedServiceSlugs, setAdvisorOwnedServiceSlugs] = useState<string[]>([]);
   const [isTransferredStudent, setIsTransferredStudent] = useState(false);
+  const [registration, setRegistration] = useState<RegistrationPricingSnapshot | null>(null);
+  const [upgradePreview, setUpgradePreview] = useState<Record<string, UpgradePreviewTier> | null>(null);
+  const [pricingGstRate, setPricingGstRate] = useState(18);
   const isAdmin = user?.role === USER_ROLE.ADMIN || user?.role === USER_ROLE.ADVISOR || user?.role === 'admin';
 
   // Discount management restrictions for transferred students:
@@ -119,6 +124,8 @@ function ServicePlansViewContent() {
     setLoadingPlans(true);
     setPricing(null);
     setDiscountForm(null);
+    setRegistration(null);
+    setUpgradePreview(null);
 
     try {
       let p: Record<string, number> | null = null;
@@ -129,8 +136,24 @@ function ServicePlansViewContent() {
 
       if (pricingId) {
         try {
-          const pricingRes = await servicePlanAPI.getAdminPricingById(slug, pricingId);
+          const pricingRes = await servicePlanAPI.getAdminPricingById(
+            slug,
+            pricingId,
+            studentId || undefined
+          );
           p = pricingRes.data.data.pricing || null;
+          if (pricingRes.data.data.discounts) {
+            setPlanDiscounts((prev) => ({ ...prev, [slug]: pricingRes.data.data.discounts }));
+          }
+          if (typeof pricingRes.data.data.gstPercentage === 'number') {
+            setPricingGstRate(pricingRes.data.data.gstPercentage);
+          }
+          if (pricingRes.data.data.registration) {
+            setRegistration(pricingRes.data.data.registration);
+          }
+          if (pricingRes.data.data.upgradePreview) {
+            setUpgradePreview(pricingRes.data.data.upgradePreview);
+          }
         } catch {
           // Will fall through to own-pricing fallback
         }
@@ -194,9 +217,19 @@ function ServicePlansViewContent() {
   };
 
   const getDiscountedPrice = (slug: string, planKey: string, originalPrice: number): number | null => {
+    if (registration && registration.planTier === planKey && selectedService === slug) {
+      return registration.lockedNetBase;
+    }
     const disc = planDiscounts[slug]?.[planKey];
     if (!disc) return null;
     return originalPrice - disc.calculatedAmount;
+  };
+
+  const PLAN_HIERARCHY: Record<string, number> = { PRO: 0, PREMIUM: 1, PLATINUM: 2 };
+  const isUpgradeTier = (planKey: string) => {
+    if (!studentPlanTiers[selectedService!] || !registration) return false;
+    const current = studentPlanTiers[selectedService!];
+    return (PLAN_HIERARCHY[planKey] ?? -1) > (PLAN_HIERARCHY[current] ?? -1);
   };
 
   if (loading || !user) {
@@ -466,13 +499,8 @@ function ServicePlansViewContent() {
                         {plans.map((plan) => {
                           const currentTier = studentPlanTiers[selectedService!];
                           const isCurrent = currentTier === plan.key;
-                          const PLAN_HIERARCHY: Record<string, number> = { PRO: 0, PREMIUM: 1, PLATINUM: 2 };
-                          const isUpgradePlan = (PLAN_HIERARCHY[plan.key] ?? -1) > (PLAN_HIERARCHY[currentTier] ?? -1);
+                          const isUpgradePlan = isUpgradeTier(plan.key);
                           const isLowerPlan = (PLAN_HIERARCHY[plan.key] ?? -1) < (PLAN_HIERARCHY[currentTier] ?? -1);
-                          const priceDiff = pricing && pricing[plan.key] != null && pricing[currentTier] != null
-                            ? pricing[plan.key] - pricing[currentTier] : null;
-                          const disc = planDiscounts[selectedService!]?.[plan.key];
-                          const discountedPrice = pricing?.[plan.key] != null && disc ? pricing[plan.key] - disc.calculatedAmount : null;
 
                           return (
                             <div key={plan.key} className={`relative rounded-2xl shadow-sm border ${isCurrent ? 'bg-blue-600 border-blue-600' : 'bg-white border-slate-200'} overflow-hidden`}>
@@ -488,26 +516,18 @@ function ServicePlansViewContent() {
                                   <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${isCurrent ? 'bg-white/20 text-white' : `${plan.badgeBg} text-white`}`}>{plan.name}</span>
                                 </div>
                                 {plan.subtitle && <p className={`mb-3 text-xs font-semibold uppercase tracking-wide sm:mb-4 ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>{plan.subtitle}</p>}
-                                {pricing?.[plan.key] != null ? (
-                                  <div className="mb-4 sm:mb-5">
-                                    {discountedPrice != null ? (
-                                      <>
-                                        <p className={`text-lg line-through ${isCurrent ? 'text-blue-300' : 'text-gray-400'}`}>₹{pricing[plan.key].toLocaleString('en-IN')}</p>
-                                        <p className={`text-2xl font-extrabold sm:text-3xl md:text-4xl ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{discountedPrice.toLocaleString('en-IN')}</p>
-                                        <p className={`mt-1 text-xs font-semibold ${isCurrent ? 'text-blue-200' : 'text-gray-600'}`}>
-                                          {disc.type === 'percentage' ? `${disc.value}% off` : `₹${disc.calculatedAmount.toLocaleString('en-IN')} off`}
-                                        </p>
-                                      </>
-                                    ) : (
-                                      <p className={`text-2xl font-extrabold sm:text-3xl md:text-4xl ${isCurrent ? 'text-white' : 'text-gray-900'}`}>₹{pricing[plan.key].toLocaleString('en-IN')}</p>
-                                    )}
-                                    {isUpgradePlan && priceDiff != null && priceDiff > 0 && (
-                                      <p className={`mt-2 text-sm font-semibold ${isCurrent ? 'text-blue-200' : 'text-emerald-600'}`}>+₹{priceDiff.toLocaleString('en-IN')} upgrade difference</p>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div className="mb-4 sm:mb-5"><p className={`text-sm font-medium ${isCurrent ? 'text-blue-200' : 'text-gray-400'}`}>Price not set</p></div>
-                                )}
+                                <PlanPriceBlock
+                                  planKey={plan.key}
+                                  isCurrent={isCurrent}
+                                  canUpgrade={isUpgradePlan}
+                                  pricing={pricing}
+                                  discounts={planDiscounts[selectedService!]}
+                                  gstPercentage={pricingGstRate}
+                                  registration={registration}
+                                  upgradePreview={upgradePreview}
+                                  variant={isCurrent ? 'dark' : 'light'}
+                                  priceSize="md"
+                                />
                                 {isCurrent ? (
                                   <span className="inline-block w-full rounded-full bg-white py-2.5 text-center text-sm font-bold text-blue-600 sm:py-3">Current Plan</span>
                                 ) : isUpgradePlan ? (

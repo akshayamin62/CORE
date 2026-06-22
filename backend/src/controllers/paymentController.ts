@@ -29,6 +29,13 @@ import {
 } from '../services/paymentService';
 import { LedgerEntryType } from '../models/Ledger';
 import Ledger from '../models/Ledger';
+import {
+  calcNetPayable,
+  computeUpgradePreview,
+  getLockedNetBase,
+  getNewTierNetBase,
+} from '../utils/registrationPricing';
+import { normalizePricesMap, resolveServicePricingOwner } from '../utils/pricingContext';
 
 // Verify requesting user is connected to the student
 const verifyStudentAccess = async (userId: string, role: string, studentId: string): Promise<boolean> => {
@@ -1248,7 +1255,7 @@ export const createUpgradeOrder = async (req: AuthRequest, res: Response): Promi
     const registration = await StudentServiceRegistration.findOne({
       studentId: student._id,
       serviceId: service._id,
-    });
+    }).lean();
     if (!registration) {
       return res.status(404).json({ success: false, message: 'No registration found for this service' });
     }
@@ -1258,70 +1265,53 @@ export const createUpgradeOrder = async (req: AuthRequest, res: Response): Promi
 
     const oldPlanTier = registration.planTier!;
 
-    // Get pricing for both plans (and the configured GST rate for this admin/advisor)
-    let newBasePrice = 0;
-    let oldBasePrice = 0;
-    // Prefer the rate snapshotted on the registration (consistency); else use configured.
-    let GST_RATE = registration.gstRate ?? DEFAULT_GST_RATE;
-    const pricingQuery = student.adminId
-      ? { adminId: student.adminId, serviceSlug }
-      : student.advisorId
-        ? { advisorId: student.advisorId, serviceSlug }
-        : null;
-    if (pricingQuery) {
-      const pricing = await ServicePricing.findOne(pricingQuery).lean();
+    let catalogGstRate = registration.gstRate ?? DEFAULT_GST_RATE;
+    const pricingOwner = await resolveServicePricingOwner(student, service._id);
+
+    let livePrices: Record<string, number> = {};
+    if (pricingOwner) {
+      const pricing = await ServicePricing.findOne({ ...pricingOwner, serviceSlug }).lean();
       if (pricing?.prices) {
-        const pricesObj = pricing.prices as unknown as Record<string, number>;
-        newBasePrice = pricesObj[newPlanTier] || 0;
-        oldBasePrice = pricesObj[oldPlanTier] || 0;
+        livePrices = normalizePricesMap(pricing.prices);
       }
-      if (registration.gstRate == null && typeof pricing?.gstPercentage === 'number') {
-        GST_RATE = pricing.gstPercentage;
+      if (typeof pricing?.gstPercentage === 'number') {
+        catalogGstRate = pricing.gstPercentage;
       }
     }
-    if (newBasePrice <= 0) {
-      return res.status(400).json({ success: false, message: 'Pricing not available for new plan' });
+
+    const newPlanDiscounts = await StudentPlanDiscount.find({
+      studentId: student._id,
+      serviceSlug,
+      isActive: true,
+    }).lean();
+    const discountMap: Record<string, { calculatedAmount: number }> = {};
+    for (const d of newPlanDiscounts) {
+      discountMap[d.planTier] = { calculatedAmount: d.calculatedAmount };
     }
-    if (oldBasePrice >= newBasePrice) {
+
+    const upgradePreview = computeUpgradePreview(
+      registration,
+      livePrices,
+      discountMap,
+      newPlanTier,
+      catalogGstRate
+    );
+    if (!upgradePreview) {
       return res.status(400).json({ success: false, message: 'Can only upgrade to a higher plan' });
     }
 
-    // Apply discount for new plan
-    let newDiscountAmt = 0;
-    const planDiscount = await StudentPlanDiscount.findOne({
-      studentId: student._id, serviceSlug, planTier: newPlanTier, isActive: true,
-    }).lean();
-    if (planDiscount && planDiscount.calculatedAmount > 0) newDiscountAmt = planDiscount.calculatedAmount;
+    const newBasePrice = livePrices[newPlanTier] || 0;
+    const newDiscountAmt = discountMap[newPlanTier]?.calculatedAmount ?? 0;
+    const newNetBase = getNewTierNetBase(livePrices, discountMap, newPlanTier);
+    const newNetPayable = upgradePreview.newNetPayable;
+    const lockedNetBase = getLockedNetBase(registration);
+    const lockedGstRate = registration.gstRate ?? catalogGstRate;
+    const oldNetPayable = calcNetPayable(lockedNetBase, lockedGstRate);
+    const upgradeDifference = upgradePreview.upgradeCharge;
+    const percentPaid = upgradePreview.percentPaid;
 
-    const newNetBase = Math.max(0, newBasePrice - newDiscountAmt);
-    const newGst = Math.round(newNetBase * GST_RATE / 100);
-    const newNetPayable = newNetBase + newGst;
-
-    // Old plan net payable — apply old plan's discount (same logic as registration) for accurate diff
-    let oldDiscountAmt = 0;
-    const oldPlanDiscount = await StudentPlanDiscount.findOne({
-      studentId: student._id, serviceSlug, planTier: oldPlanTier, isActive: true,
-    }).lean();
-    if (oldPlanDiscount && oldPlanDiscount.calculatedAmount > 0) oldDiscountAmt = oldPlanDiscount.calculatedAmount;
-
-    const oldNetBase = Math.max(0, oldBasePrice - oldDiscountAmt);
-    const oldGst = Math.round(oldNetBase * GST_RATE / 100);
-    const oldNetPayable = oldNetBase + oldGst;
-
-    // Calculate upgrade difference
-    let upgradeDifference: number;
-    if (registration.paymentModel === 'installment' && registration.installmentPlan?.schedule?.length) {
-      // Installment-based: use percentage paid approach
-      const regularPaid = registration.installmentPlan.schedule.filter(
-        (s) => s.status === 'paid' && (!s.label || !s.label.startsWith('Upgrade'))
-      );
-      const percentPaid = regularPaid.reduce((sum, s) => sum + s.percentage, 0);
-      const alreadyPaid = registration.totalPaid || 0;
-      const newPlanAtSamePercent = Math.round(newNetPayable * percentPaid / 100);
-      upgradeDifference = Math.max(0, newPlanAtSamePercent - alreadyPaid);
-    } else {
-      // One-time payment: charge new plan cost minus already paid
-      upgradeDifference = Math.max(0, newNetPayable - (registration.totalPaid || 0));
+    if (newBasePrice <= 0) {
+      return res.status(400).json({ success: false, message: 'Pricing not available for new plan' });
     }
 
     if (upgradeDifference <= 0) {
@@ -1341,11 +1331,15 @@ export const createUpgradeOrder = async (req: AuthRequest, res: Response): Promi
         newPlanTier,
         type: 'upgrade',
         upgradeDifference: String(upgradeDifference),
+        upgradeBaseDiff: String(upgradePreview.upgradeBaseDiff),
+        upgradeGstAmount: String(upgradePreview.upgradeGstAmount),
+        percentPaid: String(percentPaid),
+        lockedOldNetPayable: String(oldNetPayable),
         newNetPayable: String(newNetPayable),
         oldNetPayable: String(oldNetPayable),
         newBasePrice: String(newBasePrice),
         newDiscountAmt: String(newDiscountAmt),
-        gstRate: String(GST_RATE),
+        gstRate: String(catalogGstRate),
       },
     });
 
@@ -1373,6 +1367,9 @@ export const createUpgradeOrder = async (req: AuthRequest, res: Response): Promi
         paymentId: payment._id,
         keyId: process.env.RAZORPAY_KEY_ID,
         upgradeDifference,
+        upgradeBaseDiff: upgradePreview.upgradeBaseDiff,
+        upgradeGstAmount: upgradePreview.upgradeGstAmount,
+        percentPaid,
         newNetPayable,
         oldPlanTier,
         newPlanTier,
