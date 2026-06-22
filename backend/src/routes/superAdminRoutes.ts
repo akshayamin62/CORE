@@ -61,6 +61,12 @@ import {
   updateReferrerNoteForSuperAdmin,
   deleteReferrerNoteForSuperAdmin,
 } from "../controllers/referrerController";
+import {
+  getAdminReferrerFollowUpsForSuperAdmin,
+  getAdminReferrerFollowUpSummaryForSuperAdmin,
+  getReferrerFollowUpHistoryForSuperAdmin,
+  getReferrerFollowUpByIdForSuperAdmin,
+} from "../controllers/referrerFollowUpController";
 
 const router = Router();
 
@@ -225,6 +231,46 @@ router.get("/admins/:adminId/students", getAdminStudentsForSuperAdmin);
  * @access  Super Admin only
  */
 router.get("/admins/:adminId/team-meets", getAdminTeamMeetsForSuperAdmin);
+
+/**
+ * @route   GET /api/super-admin/admins/:adminId/referrer-follow-ups/summary
+ * @desc    Get admin's referrer follow-up summary (today, missed, upcoming)
+ * @access  Super Admin only
+ */
+router.get(
+  "/admins/:adminId/referrer-follow-ups/summary",
+  getAdminReferrerFollowUpSummaryForSuperAdmin
+);
+
+/**
+ * @route   GET /api/super-admin/admins/:adminId/referrer-follow-ups
+ * @desc    Get all referrer follow-ups for an admin
+ * @access  Super Admin only
+ */
+router.get(
+  "/admins/:adminId/referrer-follow-ups",
+  getAdminReferrerFollowUpsForSuperAdmin
+);
+
+/**
+ * @route   GET /api/super-admin/referrer-follow-ups/referrer/:referrerId
+ * @desc    Get referrer follow-up history
+ * @access  Super Admin only
+ */
+router.get(
+  "/referrer-follow-ups/referrer/:referrerId",
+  getReferrerFollowUpHistoryForSuperAdmin
+);
+
+/**
+ * @route   GET /api/super-admin/referrer-follow-ups/:followUpId
+ * @desc    Get referrer follow-up by id
+ * @access  Super Admin only
+ */
+router.get(
+  "/referrer-follow-ups/:followUpId",
+  getReferrerFollowUpByIdForSuperAdmin
+);
 
 // ============= ALL LEADS ROUTE =============
 

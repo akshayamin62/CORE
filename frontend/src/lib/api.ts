@@ -276,6 +276,20 @@ export const superAdminAPI = {
   deleteReferrerNote: (referrerId: string, noteId: string) =>
     api.delete(`/super-admin/referrer/${referrerId}/notes/${noteId}`),
 
+  getAdminReferrerFollowUps: (
+    adminId: string,
+    params?: { startDate?: string; endDate?: string; status?: string }
+  ) => api.get(`/super-admin/admins/${adminId}/referrer-follow-ups`, { params }),
+
+  getAdminReferrerFollowUpSummary: (adminId: string) =>
+    api.get(`/super-admin/admins/${adminId}/referrer-follow-ups/summary`),
+
+  getReferrerFollowUpHistory: (referrerId: string) =>
+    api.get(`/super-admin/referrer-follow-ups/referrer/${referrerId}`),
+
+  getReferrerFollowUpById: (followUpId: string) =>
+    api.get(`/super-admin/referrer-follow-ups/${followUpId}`),
+
   // Advisor management
   getAdvisors: () => api.get('/super-admin/advisors'),
   getAdvisorDetails: (id: string) => api.get(`/super-admin/advisors/${id}`),

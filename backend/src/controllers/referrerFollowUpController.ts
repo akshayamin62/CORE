@@ -10,6 +10,7 @@ import { createZohoMeeting } from "../utils/zohoMeeting";
 import { sendMeetingScheduledEmail } from "../utils/email";
 import { getFollowUpWhatsAppMeetingInfo } from "../utils/meetingTypeLabels";
 import { sendWhatsAppGeneralNotification } from "../utils/whatsapp";
+import { USER_ROLE } from "../types/roles";
 
 const getDayBounds = (date: Date) => {
   const start = new Date(date);
@@ -667,6 +668,194 @@ export const updateReferrerFollowUp = async (
     return res.status(500).json({
       success: false,
       message: "Failed to update follow-up",
+    });
+  }
+};
+
+async function validateAdminUser(adminId: string) {
+  return User.findOne({ _id: adminId, role: USER_ROLE.ADMIN });
+}
+
+export const getAdminReferrerFollowUpsForSuperAdmin = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { adminId } = req.params;
+    const { startDate, endDate, status } = req.query;
+
+    const adminUser = await validateAdminUser(adminId);
+    if (!adminUser) {
+      return res.status(404).json({ success: false, message: "Admin not found" });
+    }
+
+    const filter: Record<string, unknown> = { adminId };
+
+    if (startDate && endDate) {
+      filter.scheduledDate = {
+        $gte: new Date(startDate as string),
+        $lte: new Date(endDate as string),
+      };
+    }
+    if (status) filter.status = status;
+
+    const followUps = await ReferrerFollowUp.find(filter)
+      .populate(referrerPopulate)
+      .sort({ scheduledDate: 1, scheduledTime: 1 });
+
+    return res.json({ success: true, data: { followUps } });
+  } catch (error) {
+    console.error("Get admin referrer follow-ups for super admin error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch referrer follow-ups",
+    });
+  }
+};
+
+export const getAdminReferrerFollowUpSummaryForSuperAdmin = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { adminId } = req.params;
+
+    const adminUser = await validateAdminUser(adminId);
+    if (!adminUser) {
+      return res.status(404).json({ success: false, message: "Admin not found" });
+    }
+
+    const today = new Date();
+    const { start: todayStart, end: todayEnd } = getDayBounds(today);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const { start: tomorrowStart, end: tomorrowEnd } = getDayBounds(tomorrow);
+
+    const baseFilter = { adminId };
+
+    const [todayFollowUps, missedFollowUps, upcomingFollowUps] =
+      await Promise.all([
+        ReferrerFollowUp.find({
+          ...baseFilter,
+          scheduledDate: { $gte: todayStart, $lte: todayEnd },
+        })
+          .populate(referrerPopulate)
+          .sort({ scheduledTime: 1 }),
+        ReferrerFollowUp.find({
+          ...baseFilter,
+          scheduledDate: { $lt: todayStart },
+          status: FOLLOWUP_STATUS.SCHEDULED,
+        })
+          .populate(referrerPopulate)
+          .sort({ scheduledDate: -1 }),
+        ReferrerFollowUp.find({
+          ...baseFilter,
+          scheduledDate: { $gte: tomorrowStart, $lte: tomorrowEnd },
+          status: FOLLOWUP_STATUS.SCHEDULED,
+        })
+          .populate(referrerPopulate)
+          .sort({ scheduledTime: 1 }),
+      ]);
+
+    return res.json({
+      success: true,
+      data: {
+        today: todayFollowUps,
+        missed: missedFollowUps,
+        upcoming: upcomingFollowUps,
+        counts: {
+          today: todayFollowUps.length,
+          missed: missedFollowUps.length,
+          upcoming: upcomingFollowUps.length,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Get referrer follow-up summary for super admin error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch referrer follow-up summary",
+    });
+  }
+};
+
+export const getReferrerFollowUpHistoryForSuperAdmin = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { referrerId } = req.params;
+
+    const referrer = await Referrer.findById(referrerId);
+    if (!referrer) {
+      return res.status(404).json({
+        success: false,
+        message: "Referrer not found",
+      });
+    }
+
+    const followUps = await ReferrerFollowUp.find({ referrerId })
+      .populate(referrerPopulate)
+      .sort({ followUpNumber: 1 });
+
+    return res.json({ success: true, data: { followUps } });
+  } catch (error) {
+    console.error("Get referrer follow-up history for super admin error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch referrer follow-up history",
+    });
+  }
+};
+
+export const getReferrerFollowUpByIdForSuperAdmin = async (
+  req: AuthRequest,
+  res: Response
+): Promise<Response> => {
+  try {
+    const { followUpId } = req.params;
+
+    const followUp = await ReferrerFollowUp.findById(followUpId).populate(
+      referrerPopulate
+    );
+
+    if (!followUp) {
+      return res.status(404).json({
+        success: false,
+        message: "Follow-up not found",
+      });
+    }
+
+    const totalFollowUpsForReferrer = await ReferrerFollowUp.countDocuments({
+      referrerId: followUp.referrerId,
+    });
+
+    let nextFollowUpInfo = null;
+    if (followUp.followUpNumber < totalFollowUpsForReferrer) {
+      const nextFollowUp = await ReferrerFollowUp.findOne({
+        referrerId: followUp.referrerId,
+        followUpNumber: followUp.followUpNumber + 1,
+      }).select("scheduledDate scheduledTime duration followUpNumber meetingType");
+      if (nextFollowUp) {
+        nextFollowUpInfo = {
+          scheduledDate: nextFollowUp.scheduledDate,
+          scheduledTime: nextFollowUp.scheduledTime,
+          duration: nextFollowUp.duration,
+          followUpNumber: nextFollowUp.followUpNumber,
+          meetingType: nextFollowUp.meetingType,
+        };
+      }
+    }
+
+    return res.json({
+      success: true,
+      data: { followUp, totalFollowUpsForReferrer, nextFollowUpInfo },
+    });
+  } catch (error) {
+    console.error("Get referrer follow-up by id for super admin error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch follow-up",
     });
   }
 };

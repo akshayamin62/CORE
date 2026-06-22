@@ -3,11 +3,13 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { authAPI, superAdminAPI } from '@/lib/api';
-import { User, USER_ROLE, TeamMeet, TEAMMEET_STATUS } from '@/types';
+import { User, USER_ROLE, TeamMeet, TEAMMEET_STATUS, ReferrerFollowUp, ReferrerFollowUpSummary } from '@/types';
 import SuperAdminLayout from '@/components/SuperAdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import TeamMeetCalendarGrid from '@/components/TeamMeetCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
+import ReferrerFollowUpFormPanel from '@/components/ReferrerFollowUpFormPanel';
+import { getReferrerIdFromFollowUp } from '@/utils/referrerFollowUpHelpers';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
 import SuperAdminRoleDetailFrame, {
@@ -57,6 +59,11 @@ export default function SuperAdminAdminDashboardPage() {
   const [teamMeetPanelMode, setTeamMeetPanelMode] = useState<'create' | 'view' | 'respond'>('view');
   const [origin, setOrigin] = useState('');
 
+  const [referrerFollowUps, setReferrerFollowUps] = useState<ReferrerFollowUp[]>([]);
+  const [referrerFollowUpSummary, setReferrerFollowUpSummary] = useState<ReferrerFollowUpSummary | null>(null);
+  const [selectedReferrerFollowUp, setSelectedReferrerFollowUp] = useState<ReferrerFollowUp | null>(null);
+  const [showReferrerFollowUpPanel, setShowReferrerFollowUpPanel] = useState(false);
+
   useEffect(() => {
     setOrigin(window.location.origin);
   }, []);
@@ -69,6 +76,7 @@ export default function SuperAdminAdminDashboardPage() {
     if (currentUser && currentUser.role === USER_ROLE.SUPER_ADMIN) {
       fetchDashboardData();
       fetchTeamMeets();
+      fetchReferrerFollowUps();
     }
   }, [currentUser, adminId]);
 
@@ -113,6 +121,19 @@ export default function SuperAdminAdminDashboardPage() {
     }
   }, [adminId]);
 
+  const fetchReferrerFollowUps = useCallback(async () => {
+    try {
+      const [followUpsRes, summaryRes] = await Promise.all([
+        superAdminAPI.getAdminReferrerFollowUps(adminId),
+        superAdminAPI.getAdminReferrerFollowUpSummary(adminId),
+      ]);
+      setReferrerFollowUps(followUpsRes.data.data.followUps || []);
+      setReferrerFollowUpSummary(summaryRes.data.data);
+    } catch (error) {
+      console.error('Error fetching referrer follow-ups:', error);
+    }
+  }, [adminId]);
+
   const handleTeamMeetSelect = (teamMeet: TeamMeet) => {
     setSelectedTeamMeet(teamMeet);
     setTeamMeetPanelMode('view');
@@ -122,6 +143,16 @@ export default function SuperAdminAdminDashboardPage() {
   const handleTeamMeetPanelClose = () => {
     setShowTeamMeetPanel(false);
     setSelectedTeamMeet(null);
+  };
+
+  const handleReferrerFollowUpSelect = (followUp: ReferrerFollowUp) => {
+    setSelectedReferrerFollowUp(followUp);
+    setShowReferrerFollowUpPanel(true);
+  };
+
+  const handleReferrerFollowUpPanelClose = () => {
+    setShowReferrerFollowUpPanel(false);
+    setSelectedReferrerFollowUp(null);
   };
 
   if (loading && !currentUser) {
@@ -339,8 +370,14 @@ export default function SuperAdminAdminDashboardPage() {
               <div className="mt-6 sm:mt-8">
                 <TeamMeetCalendarGrid
                   teamMeets={teamMeets}
+                  referrerFollowUps={referrerFollowUps}
+                  referrerFollowUpsToday={referrerFollowUpSummary?.today || []}
+                  referrerFollowUpsMissed={referrerFollowUpSummary?.missed || []}
+                  referrerFollowUpsUpcoming={referrerFollowUpSummary?.upcoming || []}
                   onTeamMeetSelect={handleTeamMeetSelect}
+                  onReferrerFollowUpSelect={handleReferrerFollowUpSelect}
                   currentUserId={adminId}
+                  referrerBasePath="/super-admin/referrers"
                 />
               </div>
             </>
@@ -357,6 +394,16 @@ export default function SuperAdminAdminDashboardPage() {
         mode={teamMeetPanelMode}
         currentUserId={adminId}
         readOnly={true}
+      />
+      <ReferrerFollowUpFormPanel
+        mode="update"
+        followUp={selectedReferrerFollowUp}
+        referrerId={selectedReferrerFollowUp ? (getReferrerIdFromFollowUp(selectedReferrerFollowUp) || '') : ''}
+        isOpen={showReferrerFollowUpPanel}
+        onClose={handleReferrerFollowUpPanelClose}
+        onSave={() => {}}
+        readOnly
+        getFollowUpById={superAdminAPI.getReferrerFollowUpById}
       />
     </>
   );

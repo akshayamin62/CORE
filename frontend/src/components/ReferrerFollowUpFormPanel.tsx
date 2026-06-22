@@ -24,6 +24,8 @@ interface ReferrerFollowUpFormPanelProps {
   onClose: () => void;
   onSave: () => void;
   selectedDate?: Date;
+  readOnly?: boolean;
+  getFollowUpById?: (followUpId: string) => ReturnType<typeof adminAPI.getReferrerFollowUpById>;
 }
 
 export default function ReferrerFollowUpFormPanel({
@@ -36,6 +38,8 @@ export default function ReferrerFollowUpFormPanel({
   onClose,
   onSave,
   selectedDate,
+  readOnly = false,
+  getFollowUpById,
 }: ReferrerFollowUpFormPanelProps) {
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
@@ -80,7 +84,8 @@ export default function ReferrerFollowUpFormPanel({
     if (!followUp) return;
     setLoading(true);
     try {
-      const response = await adminAPI.getReferrerFollowUpById(followUp._id);
+      const fetchFn = getFollowUpById || adminAPI.getReferrerFollowUpById.bind(adminAPI);
+      const response = await fetchFn(followUp._id);
       const data = response.data.data.followUp as ReferrerFollowUp;
       setFollowUpData(data);
       setTotalFollowUps(response.data.data.totalFollowUpsForReferrer || 1);
@@ -186,7 +191,7 @@ export default function ReferrerFollowUpFormPanel({
   const isReferrerConverted = currentStage === REFERRER_STAGE.CONVERTED;
   const currentFollowUpNumber = followUpData?.followUpNumber || 1;
   const isNotLatestFollowUp = currentFollowUpNumber < totalFollowUps;
-  const isFullyLocked = isNotLatestFollowUp;
+  const isFullyLocked = isNotLatestFollowUp || readOnly;
   const isStageLocked = isFullyLocked || isReferrerConverted;
   const isStatusLocked = isFullyLocked || isReferrerConverted;
   const displayName = referrerName || getReferrerDisplayName(referrer);
@@ -340,14 +345,16 @@ export default function ReferrerFollowUpFormPanel({
                 </div>
               )}
 
-              {isFullyLocked && (
+              {(isFullyLocked || readOnly) && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                   <div className="flex items-center gap-2 text-amber-800">
                     <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                     <span className="text-xs font-medium">
-                      This follow-up is locked. A newer follow-up has been scheduled.
+                      {readOnly
+                        ? 'View only mode. Follow-ups cannot be edited from this page.'
+                        : 'This follow-up is locked. A newer follow-up has been scheduled.'}
                     </span>
                   </div>
                 </div>
@@ -496,15 +503,17 @@ export default function ReferrerFollowUpFormPanel({
           ) : null}
         </div>
 
-        <div className="shrink-0 border-t border-gray-200 px-4 py-3">
-          <button
-            onClick={mode === 'create' ? handleCreate : handleUpdate}
-            disabled={saving || (mode === 'update' && (loading || isFullyLocked))}
-            className="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-          >
-            {saving ? 'Saving...' : mode === 'create' ? 'Schedule Follow-Up' : 'Save Changes'}
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="shrink-0 border-t border-gray-200 px-4 py-3">
+            <button
+              onClick={mode === 'create' ? handleCreate : handleUpdate}
+              disabled={saving || (mode === 'update' && (loading || isFullyLocked))}
+              className="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            >
+              {saving ? 'Saving...' : mode === 'create' ? 'Schedule Follow-Up' : 'Save Changes'}
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
