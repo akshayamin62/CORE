@@ -117,7 +117,7 @@ function MyDetailsContent() {
   const [errors, setErrors] = useState<any>({});
   const initialParentalReadOnlyRef = useRef<number[]>([]);
   const [brainographyDoc, setBrainographyDoc] = useState<BrainographyDoc | null>(null);
-  const [currentUser, setCurrentUser] = useState<{ firstName?: string; middleName?: string; lastName?: string; email: string; profilePicture?: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<{ id?: string; _id?: string; firstName?: string; middleName?: string; lastName?: string; email: string; profilePicture?: string } | null>(null);
 
   // Coaching classes pricing (for coaching service registrations)
   const [coachingPricing, setCoachingPricing] = useState<Record<string, number> | null>(null);
@@ -716,25 +716,32 @@ function MyDetailsContent() {
     }
   };
 
-  // ─── TeamMeet Handlers (Study Abroad Dashboard) ───
+  // ─── TeamMeet Handlers ───
   const currentUserId = (() => {
-    // Derive from registration data - find student userId
-    if (registration?.studentId && typeof registration.studentId === 'object') {
-      // We don't have userId directly on registration; use localStorage
-    }
+    if (currentUser?.id) return String(currentUser.id);
+    if (currentUser?._id) return String(currentUser._id);
     try {
       const token = localStorage.getItem('token');
       if (token) {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        return payload.id || payload._id || payload.userId;
+        return String(payload.id || payload._id || payload.userId || '');
       }
     } catch {}
-    return undefined;
+    return '';
   })();
+
+  const getTeamMeetUserId = (user: { _id?: string; id?: string } | string | undefined) => {
+    if (!user) return '';
+    if (typeof user === 'string') return user;
+    return String(user.id || user._id || '');
+  };
 
   const handleTeamMeetSelect = (teamMeet: TeamMeet) => {
     setSelectedTeamMeet(teamMeet);
-    if (teamMeet.requestedTo._id === currentUserId && teamMeet.status === TEAMMEET_STATUS.PENDING_CONFIRMATION) {
+    if (
+      getTeamMeetUserId(teamMeet.requestedTo) === currentUserId &&
+      teamMeet.status === TEAMMEET_STATUS.PENDING_CONFIRMATION
+    ) {
       setTeamMeetPanelMode('respond');
     } else {
       setTeamMeetPanelMode('view');
@@ -879,17 +886,18 @@ function MyDetailsContent() {
         {/* Schedule Calendar Section (Combined OPS Tasks + Team Meet) */}
         <div>
           <OpsCalendarGrid
-                    title="Schedule"
-                    subtitle="Student meetings and tasks"
-                    schedules={opsTasks}
-                    teamMeets={teamMeets}
-                    currentUserId={currentUserId}
-                    sidebar="teamMeet"
-                    onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
-                    onDateSelect={() => {}}
-                    onTeamMeetSelect={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
-                    onTeamMeetClick={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
-                  />
+            title="Schedule"
+            subtitle="Student meetings and tasks"
+            schedules={opsTasks}
+            teamMeets={teamMeets}
+            currentUserId={currentUserId}
+            sidebar="teamMeet"
+            onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
+            onDateSelect={handleTeamMeetDateSelect}
+            onTeamMeetSelect={handleTeamMeetSelect}
+            onTeamMeetClick={handleTeamMeetSelect}
+            onScheduleTeamMeet={handleScheduleTeamMeet}
+          />
         </div>
       </div>
     );
@@ -956,17 +964,18 @@ function MyDetailsContent() {
         {/* Schedule Calendar Section */}
         <div>
           <OpsCalendarGrid
-                    title="Schedule"
-                    subtitle="Student meetings and tasks"
-                    schedules={opsTasks}
-                    teamMeets={teamMeets}
-                    currentUserId={currentUserId}
-                    sidebar="teamMeet"
-                    onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
-                    onDateSelect={() => {}}
-                    onTeamMeetSelect={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
-                    onTeamMeetClick={(tm) => { setSelectedTeamMeet(tm); setTeamMeetPanelMode('view'); setShowTeamMeetPanel(true); }}
-                  />
+            title="Schedule"
+            subtitle="Student meetings and tasks"
+            schedules={opsTasks}
+            teamMeets={teamMeets}
+            currentUserId={currentUserId}
+            sidebar="teamMeet"
+            onScheduleSelect={(schedule) => { setSelectedOpsTask(schedule); setShowOpsTaskPanel(true); }}
+            onDateSelect={handleTeamMeetDateSelect}
+            onTeamMeetSelect={handleTeamMeetSelect}
+            onTeamMeetClick={handleTeamMeetSelect}
+            onScheduleTeamMeet={handleScheduleTeamMeet}
+          />
         </div>
       </div>
     );

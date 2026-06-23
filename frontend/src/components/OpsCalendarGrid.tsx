@@ -77,6 +77,7 @@ export default function OpsCalendarGrid({
             <TeamMeetSidebar
               teamMeets={teamMeets}
               onTeamMeetClick={onTeamMeetClick ?? onTeamMeetSelect}
+              onScheduleClick={onScheduleTeamMeet}
               currentUserId={currentUserId}
             />
           )}
