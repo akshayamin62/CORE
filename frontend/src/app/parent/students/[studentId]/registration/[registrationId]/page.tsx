@@ -10,6 +10,7 @@ import FormPartsNavigation from '@/components/FormPartsNavigation';
 import FormSectionsNavigation from '@/components/FormSectionsNavigation';
 import StudentFormHeader from '@/components/StudentFormHeader';
 import ProgramSection from '@/components/ProgramSection';
+import RegistrationApplicationSection from '@/components/RegistrationApplicationSection';
 import OpsCalendarGrid from '@/components/OpsCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
@@ -588,13 +589,13 @@ export default function ParentStudentRegistrationPage() {
               {currentSection && currentPart && (
                 <div className="mb-6">
                   {currentPart.key === 'APPLICATION' && (currentSection.title === 'Apply to Program' || currentSection.title === 'Applied Program') ? (
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
-                      <div className="bg-indigo-600 px-6 py-4 -mx-6 -mt-6 mb-6 border-b border-indigo-700">
-                        <h3 className="text-xl font-semibold text-white">{currentSection.title}</h3>
-                        {currentSection.description && <p className="text-indigo-100 text-sm mt-1">{currentSection.description}</p>}
-                      </div>
+                    <RegistrationApplicationSection
+                      title={currentSection.title}
+                      description={currentSection.description}
+                      headerTone="indigo"
+                    >
                       <ProgramSection studentId={studentId} sectionType={currentSection.title === 'Apply to Program' ? 'available' : 'applied'} registrationId={registrationId} userRole="PARENT" isReadOnly={true} />
-                    </div>
+                    </RegistrationApplicationSection>
                   ) : (
                     <FormSectionRenderer
                       section={currentSection}

@@ -63,9 +63,9 @@ export default function FormSubSectionRenderer({
 
   return (
     <div className={compact ? 'space-y-3' : 'space-y-4'}>
-      <div className={`flex items-center justify-between ${compact ? 'mb-2' : 'mb-4'}`}>
+      <div className={`flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between ${compact ? 'mb-2' : 'mb-4'}`}>
         <div className="min-w-0">
-          <h4 className={`font-semibold text-gray-900 ${compact ? 'text-sm sm:text-base' : 'text-lg'}`}>
+          <h4 className={`font-semibold text-gray-900 ${compact ? 'text-sm sm:text-base' : 'text-base sm:text-lg'}`}>
             {subSection.title}
           </h4>
           {subSection.description && (
@@ -160,7 +160,7 @@ export default function FormSubSectionRenderer({
 
           {/* Fields */}
           {(!subSection.isRepeatable || expandedIndices.has(index)) && (
-            <div className={compact ? 'bg-white p-3 sm:p-4' : 'bg-white p-5'}>
+            <div className={compact ? 'bg-white p-3 sm:p-4' : 'bg-white p-3 sm:p-5'}>
               {(() => {
                 const isInstanceReadOnly = readOnly || readOnlyInstances.includes(index);
                 const allSortedFields = [...subSection.fields].sort((a, b) => a.order - b.order);

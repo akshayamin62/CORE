@@ -11,6 +11,7 @@ import FormPartsNavigation from '@/components/FormPartsNavigation';
 import FormSectionsNavigation from '@/components/FormSectionsNavigation';
 import StudentFormHeader from '@/components/StudentFormHeader';
 import ProgramSection from '@/components/ProgramSection';
+import RegistrationApplicationSection from '@/components/RegistrationApplicationSection';
 import OpsCalendarGrid from '@/components/OpsCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
@@ -692,13 +693,12 @@ export default function AdvisorStudentFormViewPage() {
               {currentSection && currentPart && (
                 <div className="mb-6">
                   {currentPart.key === 'APPLICATION' && (currentSection.title === 'Apply to Program' || currentSection.title === 'Applied Program') ? (
-                    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
-                      <div className="-mx-4 -mt-4 mb-4 border-b border-blue-700 bg-blue-600 px-4 py-3 sm:-mx-6 sm:-mt-6 sm:px-6 sm:py-4">
-                        <h3 className="text-lg font-semibold text-white sm:text-xl">{currentSection.title}</h3>
-                        {currentSection.description && <p className="mt-1 text-sm text-indigo-100">{currentSection.description}</p>}
-                      </div>
+                    <RegistrationApplicationSection
+                      title={currentSection.title}
+                      description={currentSection.description}
+                    >
                       <ProgramSection studentId={studentId} sectionType={currentSection.title === 'Apply to Program' ? 'available' : 'applied'} registrationId={registrationId} userRole={!isOwnRegistration ? "REFERRER" : "ADVISOR"} isReadOnly={!isOwnRegistration} />
-                    </div>
+                    </RegistrationApplicationSection>
                   ) : (
                     <FormSectionRenderer
                       section={currentSection}

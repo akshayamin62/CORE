@@ -63,6 +63,54 @@ export const registrationNavClass =
 export const registrationNavBtnClass =
   'shrink-0 flex items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-3 text-xs font-semibold transition-colors sm:px-4 sm:py-4 sm:text-sm';
 
+/** Study Abroad application sections (Apply / Applied Program) */
+export const registrationApplicationShellClass =
+  'w-full min-w-0 overflow-hidden rounded-lg border border-gray-200 bg-white max-md:rounded-none max-md:border-x-0 md:rounded-lg';
+
+export const registrationApplicationHeaderClass =
+  'border-b border-blue-700 bg-blue-600 px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-4';
+
+export const registrationApplicationHeaderIndigoClass =
+  'border-b border-indigo-700 bg-indigo-600 px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-4';
+
+export const registrationApplicationTitleClass =
+  'text-base font-semibold text-white sm:text-xl';
+
+export const registrationApplicationDescriptionClass =
+  'mt-1 text-xs text-blue-100 sm:text-sm';
+
+export const registrationApplicationDescriptionIndigoClass =
+  'mt-1 text-xs text-indigo-100 sm:text-sm';
+
+export const registrationApplicationBodyClass = 'w-full min-w-0 px-0 py-2 sm:p-4 md:p-6';
+
+/** Applied programs + chat — flush horizontal padding on mobile */
+export const programSectionAppliedShellClass =
+  'rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-6';
+
+export const programSectionAppliedShellChatOpenClass =
+  'max-md:rounded-none max-md:border-0 max-md:p-0 max-md:shadow-none md:rounded-xl md:border md:border-gray-200 md:bg-white md:p-6 md:shadow-sm';
+
+export const programChatPanelClass = 'w-full min-w-0 max-w-full overflow-hidden md:w-1/2';
+
+export const programChatListWhenOpenClass =
+  'max-md:max-h-[26vh] max-md:overflow-y-auto max-md:overscroll-contain max-md:border-b max-md:border-gray-200';
+
+/** Program chat panel root — overflow-safe on mobile, fixed height on desktop */
+export const programChatRootClass =
+  'relative grid w-full min-w-0 max-w-full grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-none bg-white shadow-sm ring-1 ring-gray-200 max-md:border-y max-md:border-gray-200 md:h-[600px] md:rounded-lg md:shadow-lg md:ring-0';
+
+export const programChatRootMobileExpandedClass =
+  'h-[min(calc(100dvh-9rem),520px)] max-md:h-[min(calc(100dvh-9rem),520px)]';
+
+export const programChatRootMobileDefaultClass =
+  'h-[min(calc(100dvh-10rem),480px)] max-md:h-[min(calc(100dvh-10rem),480px)]';
+
+export const programChatMessagesClass =
+  'min-h-0 space-y-2 overflow-x-hidden overflow-y-auto overscroll-contain bg-gray-50 px-2 py-3 sm:space-y-3 sm:px-3 md:space-y-4 md:p-6';
+
+export const programChatBubbleMaxClass = 'max-w-[88%] min-w-0 sm:max-w-[85%] md:max-w-md';
+
 export const activityCalendarPopupClass =
   'absolute right-0 top-full z-50 mt-2 w-[min(420px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl animate-fadeIn';
 
