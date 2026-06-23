@@ -11,6 +11,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import CalendarNavigationBar from '@/components/calendar/CalendarNavigationBar';
 import BigCalendarViewport from '@/components/calendar/BigCalendarViewport';
 import CalendarLegendModal from '@/components/calendar/CalendarLegendModal';
+import CalendarLegendToolbar from '@/components/calendar/CalendarLegendToolbar';
 import {
   getDesktopCalendarFormats,
   getMobileCalendarFormats,
@@ -192,6 +193,34 @@ export default function ScheduleCalendar({
 
   // Combine all events
   const events = useMemo(() => [...followUpEvents, ...teamMeetEvents], [followUpEvents, teamMeetEvents]);
+
+  const legendControls = (
+    <>
+      <CalendarLegendModal
+        sections={followUpLegend}
+        triggerPrefix="📋"
+        triggerLabel="Follow-ups"
+        triggerDots={[
+          { color: 'bg-blue-500' },
+          { color: 'bg-red-500' },
+          { color: 'bg-orange-500' },
+          { color: 'bg-green-500' },
+        ]}
+        hoverBgClass="hover:bg-blue-50"
+      />
+      <CalendarLegendModal
+        sections={teamMeetLegend}
+        triggerPrefix="👥"
+        triggerLabel="Team Meets"
+        triggerDots={[
+          { color: 'bg-amber-400' },
+          { color: 'bg-pink-500' },
+          { color: 'bg-teal-500' },
+        ]}
+        hoverBgClass="hover:bg-pink-50"
+      />
+    </>
+  );
 
   // Custom event styling based on type and status
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
@@ -388,29 +417,7 @@ export default function ScheduleCalendar({
           </div>
           
           <div className="flex flex-wrap items-center gap-2 self-end lg:self-auto">
-            <CalendarLegendModal
-              sections={followUpLegend}
-              triggerPrefix="📋"
-              triggerLabel="Follow-ups"
-              triggerDots={[
-                { color: 'bg-blue-500' },
-                { color: 'bg-red-500' },
-                { color: 'bg-orange-500' },
-                { color: 'bg-green-500' },
-              ]}
-              hoverBgClass="hover:bg-blue-50"
-            />
-            <CalendarLegendModal
-              sections={teamMeetLegend}
-              triggerPrefix="👥"
-              triggerLabel="Team Meets"
-              triggerDots={[
-                { color: 'bg-amber-400' },
-                { color: 'bg-pink-500' },
-                { color: 'bg-teal-500' },
-              ]}
-              hoverBgClass="hover:bg-pink-50"
-            />
+            {legendControls}
             {onToggleMinimize && (
               <button
                 onClick={onToggleMinimize}
@@ -424,6 +431,10 @@ export default function ScheduleCalendar({
             )}
           </div>
         </div>
+      )}
+
+      {hideHeader && (
+        <CalendarLegendToolbar>{legendControls}</CalendarLegendToolbar>
       )}
 
       <CalendarNavigationBar

@@ -11,6 +11,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import CalendarNavigationBar from '@/components/calendar/CalendarNavigationBar';
 import BigCalendarViewport from '@/components/calendar/BigCalendarViewport';
 import CalendarLegendModal from '@/components/calendar/CalendarLegendModal';
+import CalendarLegendToolbar from '@/components/calendar/CalendarLegendToolbar';
 import {
   getDesktopCalendarFormats,
   getMobileCalendarFormats,
@@ -128,7 +129,6 @@ export default function OpsScheduleCalendar({
     []
   );
 
-  // Convert schedules to calendar events
   const events: CalendarEvent[] = useMemo(() => {
     const scheduleEvents: CalendarEvent[] = schedules.map((schedule) => {
       const student = schedule.studentId as OpsScheduleStudent;
@@ -175,6 +175,21 @@ export default function OpsScheduleCalendar({
 
     return [...scheduleEvents, ...teamMeetEvents];
   }, [schedules, teamMeets, currentUserId]);
+
+  const legendControls = (
+    <CalendarLegendModal
+      sections={opsLegendSections}
+      triggerPrefix="📋👥"
+      triggerLabel="Legend"
+      triggerDots={[
+        { color: 'bg-blue-500' },
+        { color: 'bg-green-500' },
+        { color: 'bg-pink-500' },
+        { color: 'bg-amber-400' },
+      ]}
+      hoverBgClass="hover:bg-indigo-50"
+    />
+  );
 
   // Custom event styling based on status
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
@@ -346,18 +361,7 @@ export default function OpsScheduleCalendar({
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-auto">
-            <CalendarLegendModal
-              sections={opsLegendSections}
-              triggerPrefix="📋👥"
-              triggerLabel="Legend"
-              triggerDots={[
-                { color: 'bg-blue-500' },
-                { color: 'bg-green-500' },
-                { color: 'bg-pink-500' },
-                { color: 'bg-amber-400' },
-              ]}
-              hoverBgClass="hover:bg-indigo-50"
-            />
+            {legendControls}
             {onToggleMinimize && (
               <button
                 onClick={onToggleMinimize}
@@ -371,6 +375,10 @@ export default function OpsScheduleCalendar({
             )}
           </div>
         </div>
+      )}
+
+      {hideHeader && (
+        <CalendarLegendToolbar>{legendControls}</CalendarLegendToolbar>
       )}
 
       <CalendarNavigationBar

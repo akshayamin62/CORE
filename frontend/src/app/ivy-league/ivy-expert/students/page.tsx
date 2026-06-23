@@ -5,6 +5,22 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import AuthImage from '@/components/AuthImage';
+import PageStatCard from '@/components/PageStatCard';
+import ListPageFilters from '@/components/ListPageFilters';
+import MobileRecordCard from '@/components/MobileRecordCard';
+import {
+  roleListTitleClass,
+  roleListSubtitleClass,
+  roleListBackBtnClass,
+  roleListStatGridClass,
+} from '@/components/studentDetailResponsive';
+
+const TEST_STATUS_OPTIONS = [
+  { value: '', label: 'All Test Status' },
+  { value: 'not-started', label: 'Not Started' },
+  { value: 'in-progress', label: 'In Progress' },
+  { value: 'completed', label: 'Completed' },
+];
 
 interface IvyStudentItem {
   userId: string;
@@ -90,105 +106,91 @@ function IvyStudentsContent() {
   if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="mb-6">
+    <div className="p-4 pb-24 sm:p-6 md:p-8 md:pb-8">
+      <div className="mb-4 sm:mb-6">
         <button
           onClick={() => router.push('/ivy-league/ivy-expert')}
-          className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 mb-3 transition-colors"
+          className={roleListBackBtnClass}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Back to Dashboard
         </button>
-        <h1 className="text-3xl font-bold text-gray-900">Ivy Students</h1>
-        <p className="text-gray-600 mt-1">Students under your Ivy League guidance</p>
+        <h1 className={roleListTitleClass}>Ivy Students</h1>
+        <p className={roleListSubtitleClass}>Students under your Ivy League guidance</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => { setSearchQuery(''); setStatusFilter(''); }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Total Students</p>
-              <p className="text-3xl font-bold text-gray-900">{total}</p>
-            </div>
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-green-100 text-green-600">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => { setSearchQuery(''); setStatusFilter('completed'); }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Test Completed</p>
-              <p className="text-3xl font-bold text-gray-900">{completed}</p>
-            </div>
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-brand-100 text-brand-600">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => { setSearchQuery(''); setStatusFilter('not-started'); }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Not Started</p>
-              <p className="text-3xl font-bold text-gray-900">{notStarted}</p>
-            </div>
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-100 text-gray-600">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
+      <div className={roleListStatGridClass}>
+        <PageStatCard compact title="Total Students" mobileTitle="Total" value={total} color="green" onClick={() => { setSearchQuery(''); setStatusFilter(''); }} active={!statusFilter && !searchQuery} />
+        <PageStatCard compact title="Test Completed" mobileTitle="Completed" value={completed} color="blue" onClick={() => { setSearchQuery(''); setStatusFilter('completed'); }} active={statusFilter === 'completed'} />
+        <PageStatCard compact title="Not Started" mobileTitle="Not Started" value={notStarted} color="gray" onClick={() => { setSearchQuery(''); setStatusFilter('not-started'); }} active={statusFilter === 'not-started'} />
       </div>
 
-      {/* Search & Filter + Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200 bg-gray-50">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input
-              type="text"
-              placeholder="Search by name, email or school..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent text-gray-900"
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-4">
+          <ListPageFilters
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            searchPlaceholder="Search by name, email or school..."
+            pillFilters={[{
+              value: statusFilter,
+              onChange: setStatusFilter,
+              emptyValue: '',
+              options: TEST_STATUS_OPTIONS.map((o) => ({
+                value: o.value,
+                label: o.label,
+                mobileLabel: o.value === 'not-started' ? 'Not Started' : o.value === 'in-progress' ? 'In Progress' : o.value === 'completed' ? 'Completed' : 'All',
+              })),
+            }]}
+            onClear={() => { setSearchQuery(''); setStatusFilter(''); }}
+          />
+        </div>
+
+        <div className="divide-y divide-gray-200 md:hidden">
+          {filteredStudents.length > 0 ? filteredStudents.map((s) => (
+            <MobileRecordCard
+              key={s.userId}
+              avatar={
+                <AuthImage
+                  path={s.profilePicture}
+                  alt=""
+                  className="h-9 w-9 rounded-full object-cover"
+                  fallback={
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100">
+                      <span className="text-xs font-semibold text-green-600">
+                        {s.firstName?.charAt(0)?.toUpperCase() || ''}{s.lastName?.charAt(0)?.toUpperCase() || ''}
+                      </span>
+                    </div>
+                  }
+                />
+              }
+              title={getStudentName(s)}
+              subtitle={s.email}
+              badges={getTestStatusBadge(s.testStatus)}
+              fields={[
+                { label: 'School', value: s.schoolName || '—', colSpan: 2 },
+                { label: 'Grade', value: s.currentGrade || '—' },
+                {
+                  label: 'Score',
+                  value: s.testStatus === 'completed' && s.totalScore != null ? `${s.totalScore} / ${s.maxScore ?? 120}` : '—',
+                },
+                { label: 'Joined', value: s.createdAt ? new Date(s.createdAt).toLocaleDateString('en-GB') : 'N/A', colSpan: 2 },
+              ]}
+              menuItems={[
+                { label: 'View Details', onClick: () => router.push(`/ivy-league/ivy-expert/${s.studentId}?serviceId=${s.studentIvyServiceId}`) },
+                { label: 'View Report', onClick: () => router.push(`/ivy-league/ivy-expert/student-report/${s.userId}`) },
+              ]}
             />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-transparent text-gray-900"
-            >
-              <option value="">All Test Status</option>
-              <option value="not-started">Not Started</option>
-              <option value="in-progress">In Progress</option>
-              <option value="completed">Completed</option>
-            </select>
-            <button
-              onClick={() => { setSearchQuery(''); setStatusFilter(''); }}
-              className="px-4 py-2.5 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              Clear Filters
-            </button>
-          </div>
+          )) : (
+            <div className="px-4 py-12 text-center">
+              <p className="text-sm font-medium text-gray-900">No students found</p>
+              <p className="mt-1 text-xs text-gray-500">{searchQuery || statusFilter ? 'Try adjusting your filters' : 'Students will appear once candidates are converted'}</p>
+            </div>
+          )}
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -275,8 +277,8 @@ function IvyStudentsContent() {
         </div>
 
         {myStudents.length > 0 && (
-          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-            <p className="text-sm text-gray-600">
+          <div className="border-t border-gray-200 bg-gray-50 px-4 py-3 sm:px-6 sm:py-4">
+            <p className="text-xs text-gray-600 sm:text-sm">
               Showing {filteredStudents.length} of {myStudents.length} students
             </p>
           </div>

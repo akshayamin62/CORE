@@ -11,6 +11,8 @@ import { getReferrerDisplayName } from '@/utils/referrerFollowUpHelpers';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import CalendarNavigationBar from '@/components/calendar/CalendarNavigationBar';
 import BigCalendarViewport from '@/components/calendar/BigCalendarViewport';
+import CalendarLegendModal from '@/components/calendar/CalendarLegendModal';
+import CalendarLegendToolbar from '@/components/calendar/CalendarLegendToolbar';
 import {
   getDesktopCalendarFormats,
   getMobileCalendarFormats,
@@ -68,14 +70,21 @@ const getStatusColor = (status: TEAMMEET_STATUS) => {
   }
 };
 
-const STATUS_LEGEND = [
+const TEAM_MEET_LEGEND_ITEMS = [
   { color: 'bg-amber-400', label: 'Pending Confirmation' },
   { color: 'bg-pink-500', label: 'Confirmed' },
   { color: 'bg-red-800', label: 'Reschedule Requested' },
   { color: 'bg-slate-400', label: 'Cancelled' },
   { color: 'bg-teal-500', label: 'Completed' },
   { color: '', label: 'Invited', style: { backgroundColor: '#D97706' } as const },
+];
+
+const REFERRER_LEGEND_ITEMS = [
   { color: 'bg-indigo-500', label: 'Referrer Follow-Up' },
+  { color: 'bg-red-500', label: 'Hot Referrer' },
+  { color: 'bg-orange-500', label: 'Warm Referrer' },
+  { color: 'bg-cyan-400', label: 'Cold Referrer' },
+  { color: 'bg-green-500', label: 'Converted Referrer' },
 ];
 
 const getReferrerStageColor = (stage: REFERRER_STAGE | string) => {
@@ -97,22 +106,6 @@ const getReferrerStageColor = (stage: REFERRER_STAGE | string) => {
   }
 };
 
-function StatusLegendContent() {
-  return (
-    <div className="space-y-1.5">
-      {STATUS_LEGEND.map((item) => (
-        <div key={item.label} className="flex items-center gap-2">
-          <span
-            className={`h-3 w-3 rounded ${item.color}`}
-            style={item.style}
-          />
-          <span className="text-xs text-gray-600">{item.label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default function TeamMeetCalendar({
   teamMeets,
   referrerFollowUps = [],
@@ -127,8 +120,35 @@ export default function TeamMeetCalendar({
 }: TeamMeetCalendarProps) {
   const [view, setView] = useState<View>('month');
   const [date, setDate] = useState(new Date());
-  const [showLegendModal, setShowLegendModal] = useState(false);
   const isMobile = useIsMobile();
+
+  const legendControls = (
+    <>
+      <CalendarLegendModal
+        sections={[{ title: 'Team Meet Status Colors', items: TEAM_MEET_LEGEND_ITEMS }]}
+        triggerPrefix="👥"
+        triggerLabel="Team Meet"
+        triggerDots={TEAM_MEET_LEGEND_ITEMS.slice(0, 4).map((item) => ({
+          color: item.color,
+          style: item.style,
+        }))}
+        hoverBgClass="hover:bg-pink-50"
+      />
+      {referrerFollowUps.length > 0 && (
+        <CalendarLegendModal
+          sections={[{ title: 'Referrer Follow-Up Colors', items: REFERRER_LEGEND_ITEMS }]}
+          triggerPrefix="🤝"
+          triggerLabel="Referrer"
+          triggerDots={[
+            { color: 'bg-indigo-500' },
+            { color: 'bg-red-500' },
+            { color: 'bg-green-500' },
+          ]}
+          hoverBgClass="hover:bg-indigo-50"
+        />
+      )}
+    </>
+  );
 
   const events: CalendarEvent[] = useMemo(() => {
     const teamMeetEvents: CalendarEvent[] = teamMeets.map((teamMeet) => {
@@ -361,31 +381,7 @@ export default function TeamMeetCalendar({
           </div>
           
           <div className="flex items-center gap-2 md:gap-4">
-            <div className="relative group">
-              <button
-                type="button"
-                onClick={() => {
-                  if (isMobile) setShowLegendModal(true);
-                }}
-                className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-1.5 transition-colors hover:bg-pink-50 md:cursor-help"
-                aria-label="Team Meet status colors"
-              >
-                <span className="text-xs text-gray-500">👥</span>
-                {STATUS_LEGEND.map((item) => (
-                  <span
-                    key={item.label}
-                    className={`h-2 w-2 rounded ${item.color}`}
-                    style={item.style}
-                  />
-                ))}
-                <span className="text-xs text-gray-500">Team Meet</span>
-              </button>
-              {/* Desktop hover tooltip */}
-              <div className="absolute right-0 top-full z-50 mt-2 hidden w-48 rounded-lg border border-gray-200 bg-white p-3 opacity-0 shadow-lg transition-all duration-200 invisible group-hover:visible group-hover:opacity-100 md:block">
-                <p className="mb-2 text-xs font-semibold text-gray-700">Team Meet Status Colors</p>
-                <StatusLegendContent />
-              </div>
-            </div>
+            {legendControls}
             
             {onToggleMinimize && (
               <button
@@ -400,6 +396,10 @@ export default function TeamMeetCalendar({
             )}
           </div>
         </div>
+      )}
+
+      {hideHeader && (
+        <CalendarLegendToolbar>{legendControls}</CalendarLegendToolbar>
       )}
 
       <CalendarNavigationBar
@@ -438,28 +438,6 @@ export default function TeamMeetCalendar({
           formats={calendarFormats}
         />
       </BigCalendarViewport>
-
-      {showLegendModal && (
-        <>
-          <button
-            type="button"
-            className="fixed inset-0 z-[60] bg-black/30 md:hidden"
-            aria-label="Close legend"
-            onClick={() => setShowLegendModal(false)}
-          />
-          <div className="fixed left-1/2 top-1/2 z-[61] w-[calc(100%-2rem)] max-w-xs -translate-x-1/2 -translate-y-1/2 rounded-lg border border-gray-200 bg-white p-4 shadow-xl md:hidden">
-            <p className="mb-3 text-sm font-semibold text-gray-800">Team Meet Status Colors</p>
-            <StatusLegendContent />
-            <button
-              type="button"
-              onClick={() => setShowLegendModal(false)}
-              className="mt-4 w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Close
-            </button>
-          </div>
-        </>
-      )}
     </div>
   );
 }
