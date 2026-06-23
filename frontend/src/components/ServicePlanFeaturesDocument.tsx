@@ -25,29 +25,29 @@ function PlanValueBadge({ val }: { val: string }) {
   const text = planValueText(val);
   if (isIncluded(val)) {
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700">
-        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-100">
-          <svg className="h-2.5 w-2.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <span className="inline-flex max-w-full items-start gap-1 text-[10px] font-semibold text-blue-700 sm:text-[11px]">
+        <span className="mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-blue-100 sm:h-4 sm:w-4">
+          <svg className="h-2 w-2 text-blue-600 sm:h-2.5 sm:w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
           </svg>
         </span>
-        <span className="leading-tight">{text}</span>
+        <span className="min-w-0 break-words text-left leading-tight">{text}</span>
       </span>
     );
   }
   if (isExcluded(val)) {
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] text-gray-400">
-        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-red-50">
-          <svg className="h-2.5 w-2.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <span className="inline-flex max-w-full items-start gap-1 text-[10px] text-gray-400 sm:text-[11px]">
+        <span className="mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-red-50 sm:h-4 sm:w-4">
+          <svg className="h-2 w-2 text-red-400 sm:h-2.5 sm:w-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </span>
-        <span>{text}</span>
+        <span className="min-w-0 break-words text-left leading-tight">{text}</span>
       </span>
     );
   }
-  return <span className="text-[11px] font-medium leading-snug text-gray-800">{text}</span>;
+  return <span className="max-w-full break-words text-[10px] font-medium leading-snug text-gray-800 sm:text-[11px]">{text}</span>;
 }
 
 function useViewOnlyProtection(enabled: boolean) {
@@ -107,21 +107,21 @@ export default function ServicePlanFeaturesDocument({
       onContextMenu={(e) => e.preventDefault()}
       style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
     >
-      <div className="shrink-0 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700 px-3 py-3 sm:px-4">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-white">{serviceName} Plan Comparison</p>
-            <p className="text-[10px] text-blue-100">{features.length} features · scroll to read</p>
+      <div className="app-modal-safe-header shrink-0 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700 px-3 pb-3 pt-3 sm:px-4">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold leading-snug text-white sm:text-base">{serviceName} Plan Comparison</p>
+            <p className="mt-0.5 text-[10px] text-blue-100 sm:text-xs">{features.length} features · scroll to read</p>
           </div>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="shrink-0 rounded-lg bg-white/20 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/30"
+            className="mt-0.5 shrink-0 rounded-lg bg-white/20 px-3 py-2 text-xs font-semibold text-white hover:bg-white/30"
           >
             Close
           </button>
         </div>
-        <div className="mt-2 flex gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
           {plans.map((plan) => (
             <span
               key={plan.key}
@@ -136,23 +136,23 @@ export default function ServicePlanFeaturesDocument({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 px-3 py-3 pb-6">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 px-2.5 py-3 pb-4 sm:px-3">
         <div className="space-y-2.5">
           {features.map((feat, idx) => (
             <article
               key={`${feat.area}-${idx}`}
               className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
             >
-              <div className="border-b border-gray-100 bg-gray-50/80 px-3 py-2">
-                <h3 className="text-sm font-bold leading-snug text-gray-900">{feat.area}</h3>
+              <div className="border-b border-gray-100 bg-gray-50/80 px-2.5 py-2 sm:px-3">
+                <h3 className="text-xs font-bold leading-snug text-gray-900 sm:text-sm">{feat.area}</h3>
                 {feat.description && (
-                  <p className="mt-0.5 text-xs leading-relaxed text-gray-500">{feat.description}</p>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-gray-500 sm:text-xs">{feat.description}</p>
                 )}
               </div>
               <div className="grid grid-cols-3 divide-x divide-gray-100">
                 {plans.map((plan) => (
-                  <div key={plan.key} className="px-2 py-2.5">
-                    <p className={`mb-1 text-center text-[9px] font-bold uppercase tracking-wider ${
+                  <div key={plan.key} className="min-w-0 px-1.5 py-2 sm:px-2 sm:py-2.5">
+                    <p className={`mb-1 truncate text-center text-[8px] font-bold uppercase tracking-wide sm:text-[9px] ${
                       currentPlanTier === plan.key ? 'text-blue-600' : 'text-gray-400'
                     }`}>
                       {plan.name}
@@ -168,14 +168,14 @@ export default function ServicePlanFeaturesDocument({
         </div>
 
         {serviceName === 'Study Abroad' && (
-          <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[10px] leading-relaxed text-amber-900">
+          <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2.5 text-[10px] leading-relaxed text-amber-900 sm:px-3">
             <strong>Note:</strong> Additional fees apply for extra country searches (₹7,500), university searches (₹500), and applications (₹3,500) beyond plan limits.
           </p>
         )}
       </div>
 
-      <div className="shrink-0 border-t border-gray-200 bg-white px-3 py-2 text-center">
-        <p className="text-[10px] font-medium text-gray-500">View only — for your reference while choosing a plan</p>
+      <div className="app-modal-safe-footer shrink-0 border-t border-gray-200 bg-white px-3 py-2 text-center">
+        <p className="text-[10px] font-medium text-gray-500 sm:text-xs">View only — for your reference while choosing a plan</p>
       </div>
     </div>
   ) : null;

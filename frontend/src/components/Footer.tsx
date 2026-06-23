@@ -1,47 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useIsMobile } from '@/hooks/useIsMobile';
-
-const MOBILE_DASHBOARD_PREFIXES = [
-  '/super-admin',
-  '/admin',
-  '/ops',
-  '/counselor',
-  '/advisor',
-  '/parent',
-  '/student',
-  '/referrer',
-  '/service-provider',
-  '/eduplan-coach',
-  '/ivy-expert',
-  '/b2b-sales',
-  '/b2b-ops',
-  '/education-planning',
-  '/study-abroad',
-  '/coaching-classes',
-  '/ivy-league',
-  '/service-plans',
-  '/dashboard',
-];
 
 export default function Footer() {
-  const pathname = usePathname();
-  const isMobile = useIsMobile();
   const currentYear = new Date().getFullYear();
-  const hideOnMobile = MOBILE_DASHBOARD_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-
-  if (hideOnMobile && isMobile) {
-    return null;
-  }
 
   return (
-    <footer
-      className={`relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-300${
-        hideOnMobile ? ' max-md:hidden' : ''
-      }`}
-    >
+    <footer className="relative hidden md:block bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-300">
       {/* Decorative Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
@@ -54,7 +19,6 @@ export default function Footer() {
           <div className="col-span-1 md:col-span-2 animate-fade-in">
             <div className="flex items-center mb-4 group">
               <div className="relative">
-                {/* <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg blur opacity-30 group-hover:opacity-50 transition duration-300"></div> */}
                 <img 
                   src="/logo2.png" 
                   alt="CORE Logo" 
@@ -176,5 +140,3 @@ export default function Footer() {
     </footer>
   );
 }
-
-

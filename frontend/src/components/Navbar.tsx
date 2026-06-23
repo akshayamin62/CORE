@@ -63,7 +63,7 @@ export default function Navbar() {
   const showLoggedIn = mounted && isLoggedIn;
 
   return (
-    <nav className="bg-white sticky top-0 z-50 shadow-md border-b border-gray-200">
+    <nav className="app-mobile-safe-top bg-white sticky top-0 z-50 shadow-md border-b border-gray-200 md:pt-0" suppressHydrationWarning>
       <div className="max-w-7xl mx-auto px-4 sm:px-1 lg:px-1">
         <div className="flex justify-between h-20 animate-fade-in">
           {/* Logo and Brand */}

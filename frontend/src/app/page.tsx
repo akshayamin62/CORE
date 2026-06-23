@@ -175,6 +175,15 @@ export default function Home() {
 
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [slidesPerView, setSlidesPerView] = useState(1);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 768px)');
+    const updateSlidesPerView = () => setSlidesPerView(mediaQuery.matches ? 3 : 1);
+    updateSlidesPerView();
+    mediaQuery.addEventListener('change', updateSlidesPerView);
+    return () => mediaQuery.removeEventListener('change', updateSlidesPerView);
+  }, []);
 
   useEffect(() => {
     checkAuth();
@@ -316,26 +325,26 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900">
+    <div className="min-h-screen bg-white font-sans text-slate-900 overflow-x-hidden">
       <Toaster position="top-right" />
 
       {/* Hero Section */}
-      <section className="relative pt-37 pb-30 px-6 bg-gradient-to-b from-[#d0e5f5] to-[#e8f3fa] overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-100/30 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-50/40 rounded-full blur-3xl"></div>
+      <section className="relative pt-20 pb-12 sm:pt-24 sm:pb-16 md:pt-32 md:pb-24 px-4 sm:px-6 bg-gradient-to-b from-[#d0e5f5] to-[#e8f3fa] overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 sm:w-[500px] sm:h-[500px] bg-blue-100/30 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 sm:w-[400px] sm:h-[400px] bg-blue-50/40 rounded-full blur-3xl"></div>
 
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative z-10">
-          <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-8 lg:gap-12 items-center relative z-10">
+          <motion.div initial={false} animate="visible" variants={staggerContainer}>
             <motion.h1 
               variants={fadeInUp} 
-              className="text-5xl lg:text-5xl font-black text-[#0e5080] leading-[1.1] mb-8"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-[#0e5080] leading-tight mb-5 sm:mb-8 break-words"
             >
-              Plan your study-abroad, build your profile, and get mentored by Ivy League alumni<br />
+              Plan your study-abroad, build your profile, and get mentored by Ivy League alumni
             </motion.h1>
 
             <motion.p 
               variants={fadeInUp} 
-              className="text-xl text-slate-500 mb-10 max-w-lg leading-relaxed"
+              className="text-sm sm:text-base md:text-lg lg:text-xl text-slate-500 mb-6 sm:mb-10 max-w-lg leading-relaxed"
             >
               <span className="font-bold text-[#0e5080]">CORE</span> – Centralized Operation & Readiness Eco-system
               <br />
@@ -346,9 +355,9 @@ export default function Home() {
           </motion.div>
 
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={false}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative z-10 mb-20"
+            className="relative z-10 mt-4 lg:mt-0 lg:mb-20"
           >
             <div>
               <img 
@@ -362,87 +371,87 @@ export default function Home() {
       </section>
 
       {/* What is CORE Section */}
-      <section className="py-24 px-6 max-w-7xl mx-auto border-t border-slate-100">
+      <section className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 max-w-7xl mx-auto border-t border-slate-100">
         {/* Centered Heading - Matching Other Sections */}
         <motion.div
-          initial="hidden"
+          initial={false}
           whileInView="visible"
           viewport={{ once: true }}
           variants={staggerContainer}
-          className="text-center mb-16"
+          className="text-center mb-8 sm:mb-12 md:mb-16"
         >
-          <motion.h2 variants={fadeInUp} className="text-4xl lg:text-5xl font-black text-slate-900 mb-6">
+          <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 mb-4 sm:mb-6">
             What is <span className="text-[#0876b8]">CORE?</span>
           </motion.h2>
         </motion.div>
 
         {/* Two Column Layout - Content and Cards */}
         <motion.div
-          initial="hidden"
+          initial={false}
           whileInView="visible"
           viewport={{ once: true }}
           variants={staggerContainer}
-          className="grid lg:grid-cols-2 gap-16 items-center mt-12"
+          className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start lg:items-center mt-6 sm:mt-12"
         >
           {/* Left Side - Three Pillars Content */}
           <div>
             <motion.div variants={fadeInUp}>
-              <p className="text-xl text-slate-600 leading-relaxed max-w-4xl mx-auto">
+              <p className="text-base sm:text-lg md:text-xl text-slate-600 leading-relaxed max-w-4xl mx-auto">
                 <span className="font-bold text-[#0e5080]">CORE</span> - A <span className="font-bold text-[#0876b8]">career and admissions readiness ecosystem</span> designed for students pursuing top-tier global universities and future-focused careers.
               </p>
               <br /><br />
-              <h3 className="text-3xl font-black text-[#0876b8] mb-4 border-[#6aacd4]">
+              <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-[#0876b8] mb-3 sm:mb-4 border-[#6aacd4]">
                 Three Pillars of Excellence
               </h3>
-              <p className="text-lg text-slate-600 leading-relaxed pl-4 border-l-4">
+              <p className="text-sm sm:text-base md:text-lg text-slate-600 leading-relaxed pl-3 sm:pl-4 border-l-4">
                 Whether you're aiming for the Ivy League, Oxbridge, or top programs in Canada, Europe, Middle East or South-East Asia - CORE keeps every piece of your journey <span className="font-bold text-[#0876b8]">aligned</span>, <span className="font-bold text-[#0876b8]">strategic</span>, and <span className="font-bold text-[#0876b8]">transparent</span>.
               </p>
             </motion.div>
           </div>
           
-          {/* Right Side - Overlapping Stacked Cards */}
-          <div className="relative h-[450px]">
+          {/* Right Side - Stacked on mobile, overlapping on desktop */}
+          <div className="flex flex-col gap-4 md:relative md:h-[450px]">
             {/* Card 1 - Personalized Planning */}
             <motion.div 
-              initial={{ opacity: 0, x: 20 }}
+              initial={false}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              className="absolute top-0 right-0 w-72 bg-white rounded-2xl p-6 shadow-xl border border-slate-100 hover:shadow-2xl hover:z-50 transition-all z-30"
+              className="md:absolute md:top-0 md:right-0 w-full md:w-72 bg-white rounded-2xl p-4 sm:p-6 shadow-xl border border-slate-100 hover:shadow-2xl md:hover:z-50 transition-all z-30"
             >
-              <Layout className="text-[#0876b8] mb-3" size={28} />
-              <h4 className="font-bold text-lg mb-2">Personalized Planning</h4>
-              <p className="text-s text-slate-500 leading-relaxed">
+              <Layout className="text-[#0876b8] mb-3" size={24} />
+              <h4 className="font-bold text-base sm:text-lg mb-2">Personalized Planning</h4>
+              <p className="text-sm text-slate-500 leading-relaxed">
                 Custom educational roadmaps built for your specific trajectory.
               </p>
             </motion.div>
 
             {/* Card 2 - Expert Services */}
             <motion.div 
-              initial={{ opacity: 0, x: 20 }}
+              initial={false}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3, duration: 0.5 }}
-              className="absolute top-32 right-12 w-72 bg-white rounded-2xl p-6 shadow-xl border border-slate-100 hover:shadow-2xl hover:z-50 transition-all z-20"
+              className="md:absolute md:top-32 md:right-12 w-full md:w-72 bg-white rounded-2xl p-4 sm:p-6 shadow-xl border border-slate-100 hover:shadow-2xl md:hover:z-50 transition-all z-20"
             >
-              <Users className="text-[#3991c6] mb-3" size={28} />
-              <h4 className="font-bold text-lg mb-2">Expert Services</h4>
-              <p className="text-s text-slate-500 leading-relaxed">
+              <Users className="text-[#3991c6] mb-3" size={24} />
+              <h4 className="font-bold text-base sm:text-lg mb-2">Expert Services</h4>
+              <p className="text-sm text-slate-500 leading-relaxed">
                 Curated resources from top-tier educational consultants.
               </p>
             </motion.div>
 
             {/* Card 3 - Alumni Mentorship */}
             <motion.div 
-              initial={{ opacity: 0, x: 20 }}
+              initial={false}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.4, duration: 0.5 }}
-              className="absolute top-64 right-24 w-72 bg-white rounded-2xl p-6 shadow-xl border border-slate-100 hover:shadow-2xl hover:z-50 transition-all z-10"
+              className="md:absolute md:top-64 md:right-24 w-full md:w-72 bg-white rounded-2xl p-4 sm:p-6 shadow-xl border border-slate-100 hover:shadow-2xl md:hover:z-50 transition-all z-10"
             >
-              <GraduationCap className="text-[#6aacd4] mb-3" size={28} />
-              <h4 className="font-bold text-lg mb-2">Alumni Mentorship</h4>
-              <p className="text-s text-slate-500 leading-relaxed">
+              <GraduationCap className="text-[#6aacd4] mb-3" size={24} />
+              <h4 className="font-bold text-base sm:text-lg mb-2">Alumni Mentorship</h4>
+              <p className="text-sm text-slate-500 leading-relaxed">
                 Connect with those who have already succeeded in your field.
               </p>
             </motion.div>
@@ -451,21 +460,21 @@ export default function Home() {
       </section>
 
       {/* How CORE Works - Stakeholder Bento Grid */}
-      <section className="py-24 px-6 bg-[#f8fafc]">
+      <section className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 bg-[#f8fafc]">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            initial="hidden"
+            initial={false}
             whileInView="visible"
             viewport={{ once: true }}
             variants={staggerContainer}
-            className="text-center mb-16"
+            className="text-center mb-8 sm:mb-12 md:mb-16"
           >
 
-            <motion.h2 variants={fadeInUp} className="text-4xl font-black text-slate-900 mb-4">
+            <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 mb-3 sm:mb-4">
               How <span className="text-[#0876b8]">it</span> Works?
             </motion.h2>
             
-            <motion.p variants={fadeInUp} className="text-slate-500 text-xl">
+            <motion.p variants={fadeInUp} className="text-slate-500 text-base sm:text-lg md:text-xl px-2">
               Tailored experiences for every member of the educational journey
             </motion.p>
           </motion.div>
@@ -473,16 +482,16 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-6">
             {/* Large Featured Card - Students */}
             <motion.div
-              initial="hidden"
+              initial={false}
               whileInView="visible"
               viewport={{ once: true }}
               variants={scaleIn}
-              className="md:col-span-2 bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all group"
+              className="md:col-span-2 bg-white p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all group"
             >
               <div className="w-20 h-20 bg-gradient-to-br from-[#6aacd4] to-[#2083bf] rounded-2xl flex items-center justify-center mb-8 shadow-xl group-hover:scale-110 transition-transform">
                 <Users className="text-white" size={36} />
               </div>
-              <h3 className="text-3xl font-black mb-6">{stakeholderData[0].title}</h3>
+              <h3 className="text-xl sm:text-2xl md:text-3xl font-black mb-4 sm:mb-6">{stakeholderData[0].title}</h3>
               <ul className="space-y-3 mb-10">
                 {stakeholderData[0].items.map((item, i) => (
                   <li key={i} className="flex items-start gap-3 text-slate-600">
@@ -508,12 +517,12 @@ export default function Home() {
                 return (
                   <motion.div
                     key={index}
-                    initial="hidden"
+                    initial={false}
                     whileInView="visible"
                     viewport={{ once: true }}
                     variants={scaleIn}
                     transition={{ delay: index * 0.1 }}
-                    className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all"
+                    className="bg-white p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all"
                   >
                     <div className="w-20 h-20 bg-gradient-to-br from-[#6aacd4] to-[#2083bf] rounded-2xl flex items-center justify-center mb-6 shadow-xl">
                       <Icon className="text-white" size={36} />
@@ -535,7 +544,7 @@ export default function Home() {
 
           {/* Remaining Stakeholders */}
           <motion.div
-            initial="hidden"
+            initial={false}
             whileInView="visible"
             viewport={{ once: true }}
             variants={staggerContainer}
@@ -547,7 +556,7 @@ export default function Home() {
                 <motion.div
                   key={index}
                   variants={scaleIn}
-                  className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all"
+                  className="bg-white p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all"
                 >
                   <div className="w-20 h-20 bg-gradient-to-br from-[#6aacd4] to-[#2083bf] rounded-2xl flex items-center justify-center mb-6 shadow-xl">
                     <Icon className="text-white" size={36} />
@@ -569,21 +578,21 @@ export default function Home() {
       </section>
 
       {/* Why CORE is Different */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
+      <section className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 max-w-7xl mx-auto">
         <motion.div
-          initial="hidden"
+          initial={false}
           whileInView="visible"
           viewport={{ once: true }}
           variants={staggerContainer}
-          className="text-center mb-16"
+          className="text-center mb-8 sm:mb-12 md:mb-16"
         >
-          <motion.h2 variants={fadeInUp} className="text-4xl font-black text-slate-900 mb-4">
+          <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 mb-3 sm:mb-4">
             Why CORE is <span className="text-[#0876b8]">Different</span>?
           </motion.h2>
         </motion.div>
 
         <motion.div
-          initial="hidden"
+          initial={false}
           whileInView="visible"
           viewport={{ once: true }}
           variants={staggerContainer}
@@ -595,7 +604,7 @@ export default function Home() {
               <motion.div
                 key={i}
                 variants={scaleIn}
-                className="p-10 rounded-[2.5rem] bg-slate-50/50 border border-slate-100 text-center hover:bg-white hover:shadow-xl transition-all"
+                className="p-6 sm:p-8 md:p-10 rounded-2xl sm:rounded-[2.5rem] bg-slate-50/50 border border-slate-100 text-center hover:bg-white hover:shadow-xl transition-all"
               >
                 <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-[#6aacd4] to-[#2083bf] flex items-center justify-center shadow-xl mb-6">
                   <Icon className="text-white" size={36} />
@@ -609,24 +618,24 @@ export default function Home() {
       </section>
 
       {/* What You'll Get Features */}
-      <section className="py-24 px-6 bg-[#f8fafc]">
+      <section className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 bg-[#f8fafc]">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            initial="hidden"
+            initial={false}
             whileInView="visible"
             viewport={{ once: true }}
             variants={staggerContainer}
-            className="text-center mb-16"
+            className="text-center mb-8 sm:mb-12 md:mb-16"
           >
             
-            <motion.h2 variants={fadeInUp} className="text-4xl font-black text-slate-900 mb-4">
+            <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 mb-3 sm:mb-4">
               What You'll <span className="text-[#0876b8]">Get Here</span>?
             </motion.h2>
           </motion.div>
 
           {/* Features Grid - First 3 items */}
           <motion.div
-            initial="hidden"
+            initial={false}
             whileInView="visible"
             viewport={{ once: true }}
             variants={staggerContainer}
@@ -638,7 +647,7 @@ export default function Home() {
                 <motion.div
                   key={index}
                   variants={scaleIn}
-                  className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all"
+                  className="bg-white p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all"
                 >
                   <div className="w-20 h-20 bg-gradient-to-br from-[#6aacd4] to-[#2083bf] rounded-2xl flex items-center justify-center mb-6 shadow-xl">
                     <Icon className="text-white" size={36} />
@@ -652,11 +661,11 @@ export default function Home() {
 
 {/* Last 2 items - Centered */}
 <motion.div
-  initial="hidden"
+  initial={false}
   whileInView="visible"
   viewport={{ once: true }}
   variants={staggerContainer}
-  className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto"
+  className="grid md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto"
 >
   {features.slice(3, 5).map((feature, index) => {
     const Icon = feature.icon;
@@ -664,7 +673,7 @@ export default function Home() {
       <motion.div
         key={index + 3}
         variants={scaleIn}
-        className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all"
+        className="bg-white p-5 sm:p-6 md:p-8 rounded-2xl sm:rounded-[2.5rem] shadow-sm border border-slate-100 hover:shadow-xl transition-all"
       >
         <div className="w-20 h-20 bg-gradient-to-br from-[#6aacd4] to-[#2083bf] rounded-2xl flex items-center justify-center mb-6 shadow-xl">
           <Icon className="text-white" size={36} />
@@ -679,21 +688,21 @@ export default function Home() {
       </section>
 
       {/* Results Section */}
-      <section className="py-24 px-6 max-w-6xl mx-auto">
+      <section className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 max-w-6xl mx-auto">
         <motion.div
-          initial="hidden"
+          initial={false}
           whileInView="visible"
           viewport={{ once: true }}
           variants={staggerContainer}
-          className="text-center mb-16"
+          className="text-center mb-8 sm:mb-12 md:mb-16"
         >
-          <motion.h2 variants={fadeInUp} className="text-4xl font-black text-slate-900 mb-4">
+          <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 mb-3 sm:mb-4">
             Results You Can <span className="text-[#0876b8]">Expect</span>
           </motion.h2>
         </motion.div>
 
         <motion.div
-          initial="hidden"
+          initial={false}
           whileInView="visible"
           viewport={{ once: true }}
           variants={staggerContainer}
@@ -720,17 +729,17 @@ export default function Home() {
 
       {/* Services Grid */}
       {services.length > 0 && (
-        <section className="py-24 px-6 bg-gradient-to-b from-white to-blue-50/30 overflow-hidden">
+        <section className="py-12 sm:py-16 md:py-24 px-4 sm:px-6 bg-gradient-to-b from-white to-blue-50/30 overflow-hidden">
           <div className="max-w-7xl mx-auto">
             {/* Heading Section */}
             <motion.div
-              initial="hidden"
+              initial={false}
               whileInView="visible"
               viewport={{ once: true }}
               variants={staggerContainer}
-              className="text-center mb-16"
+              className="text-center mb-8 sm:mb-12 md:mb-16"
             >  
-              <motion.h2 variants={fadeInUp} className="text-4xl lg:text-5xl font-black text-slate-900 mb-4">
+              <motion.h2 variants={fadeInUp} className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 mb-3 sm:mb-4">
                 Explore Our <span className="text-[#0876b8]">Services</span>
               </motion.h2>
               
@@ -762,7 +771,7 @@ export default function Home() {
                   <div 
                     className="flex transition-transform duration-700 ease-in-out"
                     style={{ 
-                      transform: `translateX(-${((currentSlide % services.length) + services.length) * (100 / 3)}%)`,
+                      transform: `translateX(-${((currentSlide % services.length) + services.length) * (100 / slidesPerView)}%)`,
                     }}
                   >
                     {/* Render services 3 times for seamless infinite loop */}
@@ -929,7 +938,7 @@ export default function Home() {
                 {/* Navigation Arrows */}
                 <button
                   onClick={() => setCurrentSlide((prev) => prev - 1)}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-14 h-14 bg-white rounded-full shadow-xl flex items-center justify-center text-[#0876b8] hover:bg-[#0876b8] hover:text-white transition-all duration-300 hover:scale-110 z-10"
+                  className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-full shadow-xl items-center justify-center text-[#0876b8] hover:bg-[#0876b8] hover:text-white transition-all duration-300 hover:scale-110 z-10"
                   aria-label="Previous slide"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -939,7 +948,7 @@ export default function Home() {
 
                 <button
                   onClick={() => setCurrentSlide((prev) => prev + 1)}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-14 h-14 bg-white rounded-full shadow-xl flex items-center justify-center text-[#0876b8] hover:bg-[#0876b8] hover:text-white transition-all duration-300 hover:scale-110 z-10"
+                  className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-full shadow-xl items-center justify-center text-[#0876b8] hover:bg-[#0876b8] hover:text-white transition-all duration-300 hover:scale-110 z-10"
                   aria-label="Next slide"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -949,7 +958,7 @@ export default function Home() {
 
                 {/* View All Services Link */}
                 <motion.div
-                  initial="hidden"
+                  initial={false}
                   whileInView="visible"
                   viewport={{ once: true }}
                   variants={fadeInUp}
@@ -963,34 +972,34 @@ export default function Home() {
       )}
 
       {/* Final CTA */}
-      <section className="py-24 px-6">
+      <section className="py-12 sm:py-16 md:py-24 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            initial="hidden"
+            initial={false}
             whileInView="visible"
             viewport={{ once: true }}
             variants={scaleIn}
-            className="bg-gradient-to-r from-[#0876b8] to-[#2083bf] rounded-[3rem] p-16 text-center text-white shadow-2xl relative overflow-hidden"
+            className="bg-gradient-to-r from-[#0876b8] to-[#2083bf] rounded-2xl sm:rounded-[3rem] p-8 sm:p-12 md:p-16 text-center text-white shadow-2xl relative overflow-hidden"
           >
             <div className="relative z-10">
-              <h2 className="text-5xl font-black mb-8">
-                Ready to join the <br /> eco-system?
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-5 sm:mb-8">
+                Ready to join the <br className="hidden sm:block" /> eco-system?
               </h2>
-              <p className="text-white/80 text-lg mb-12 max-w-2xl mx-auto">
+              <p className="text-white/80 text-sm sm:text-base md:text-lg mb-8 sm:mb-12 max-w-2xl mx-auto">
                 Start your journey with CORE today and unlock access to premium resources, global mentors, and a community dedicated to your success.
               </p>
               
               {!isLoggedIn && (
-                <div className="flex flex-wrap justify-center gap-4">
+                <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
                   <Link 
                     href="/signup" 
-                    className="px-10 py-5 bg-white text-[#0876b8] rounded-full font-bold hover:scale-105 transition-all shadow-lg"
+                    className="px-6 sm:px-10 py-3 sm:py-5 bg-white text-[#0876b8] rounded-full font-bold hover:scale-105 transition-all shadow-lg text-sm sm:text-base"
                   >
                     Sign Up
                   </Link>
                   <Link 
                     href="/login" 
-                    className="px-10 py-5 border-2 border-white/20 backdrop-blur-sm rounded-full font-bold hover:bg-white/10 transition-all"
+                    className="px-6 sm:px-10 py-3 sm:py-5 border-2 border-white/20 backdrop-blur-sm rounded-full font-bold hover:bg-white/10 transition-all text-sm sm:text-base"
                   >
                     Sign In
                   </Link>

@@ -4,11 +4,18 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:mobile": "next dev -H 0.0.0.0",
+    "dev:mobile": "node scripts/dev-mobile.mjs",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "cap:sync": "npx cap sync android",
+    "cap:open": "npx cap open android",
+    "cap:android": "npx cap run android",
+    "cap:prepare": "npm run cap:sync"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
     "@types/react-big-calendar": "^1.16.3",
     "axios": "^1.13.2",
     "country-state-city": "^3.2.1",
