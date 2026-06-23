@@ -10,7 +10,7 @@ import { getFullName } from '@/utils/nameHelpers';
 
 // Format role for display: "SUPER_ADMIN" → "Super Admin", "EDUPLAN_COACH" → "Eduplan Coach"
 const formatRole = (role: string) =>
-  role
+  (role || '')
     .toLowerCase()
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -124,7 +124,11 @@ export default function TeamMeetFormPanel({
         setMeetingType(teamMeet.meetingType);
         setDescription(teamMeet.description || '');
         setNotes(teamMeet.notes || '');
-        setRequestedTo(teamMeet.requestedTo._id);
+        setRequestedTo(
+          typeof teamMeet.requestedTo === 'string'
+            ? teamMeet.requestedTo
+            : String(teamMeet.requestedTo._id || (teamMeet.requestedTo as { id?: string }).id || '')
+        );
       } else if (mode === 'create') {
         // Reset form for create mode
         setSubject('');
@@ -372,7 +376,7 @@ export default function TeamMeetFormPanel({
       {isOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-[45] bg-black/30 md:hidden"
+          className="fixed inset-0 z-[65] bg-black/30 md:hidden"
           aria-label="Close meeting panel"
           onClick={onClose}
         />
@@ -380,7 +384,7 @@ export default function TeamMeetFormPanel({
 
       {/* Slide-in Panel from Left */}
       <div 
-        className={`fixed z-[55] flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl transition-all duration-300 ease-in-out
+        className={`fixed z-[70] flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl transition-all duration-300 ease-in-out
           left-4 right-4 top-28 bottom-[calc(7.25rem+env(safe-area-inset-bottom,0px))]
           md:left-4 md:right-auto md:top-[140px] md:bottom-auto md:w-[400px] md:max-h-[calc(100vh-180px)]
           ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-[120%] opacity-0 pointer-events-none md:-translate-x-full'}`}
