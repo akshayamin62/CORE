@@ -606,7 +606,7 @@ async function generateReportWithAgents(
             { role: 'user', content: sectionPrompt },
           ],
           temperature: 0.7,
-          max_tokens: 100,
+          max_tokens: 8000,
           // max_completion_tokens: 15000
         });
 
