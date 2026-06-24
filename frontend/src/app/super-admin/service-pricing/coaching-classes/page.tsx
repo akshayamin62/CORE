@@ -120,6 +120,7 @@ export default function SuperAdminCoachingClassesPricingPage() {
               onEditBatch={handleEditBatch}
               onDeleteBatch={handleDeleteBatch}
               onPriceEdit={handlePriceEdit}
+              showGstNote={false}
             />
       </ServicePricingPageFrame>
     </SuperAdminLayout>

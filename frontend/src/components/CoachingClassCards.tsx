@@ -53,9 +53,10 @@ interface CoachingClassCardsProps {
   discounts?: Record<string, { type: string; value: number; calculatedAmount: number; reason?: string }>;
   // Tax (GST) percentage to display (defaults to 18)
   gstRate?: number;
+  showGstNote?: boolean;
 }
 
-export default function CoachingClassCards({ plans, pricing, renderAction, currentPlanKey, registeredClasses, batches, onAddBatch, onEditBatch, onDeleteBatch, onPriceEdit, basePricing, discounts, gstRate = 18 }: CoachingClassCardsProps) {
+export default function CoachingClassCards({ plans, pricing, renderAction, currentPlanKey, registeredClasses, batches, onAddBatch, onEditBatch, onDeleteBatch, onPriceEdit, basePricing, discounts, gstRate = 18, showGstNote = true }: CoachingClassCardsProps) {
   const [batchModal, setBatchModal] = useState<{ planKey: string; planName: string } | null>(null);
   const [editingPrice, setEditingPrice] = useState<string | null>(null);
   const [priceValue, setPriceValue] = useState('');
@@ -178,7 +179,9 @@ export default function CoachingClassCards({ plans, pricing, renderAction, curre
                       }
                     </p>
                   )}
-                  <p className="text-xs text-gray-400 mt-1">{gstRate > 0 ? `+ ${gstRate}% GST applicable` : 'No GST applicable'}</p>
+                  {showGstNote && (
+                    <p className="text-xs text-gray-400 mt-1">{gstRate > 0 ? `+ ${gstRate}% GST applicable` : 'No GST applicable'}</p>
+                  )}
                 </div>
               ) : (
                 <div className="mb-5">
