@@ -9,6 +9,12 @@ import ProgramFormModal from './ProgramFormModal';
 import ProgramChatView from './ProgramChatView';
 import { getFullName } from '@/utils/nameHelpers';
 import { classifyUniversity } from '@/utils/universityClassification';
+import {
+  programChatListWhenOpenClass,
+  programChatPanelClass,
+  programSectionAppliedShellChatOpenClass,
+  programSectionAppliedShellClass,
+} from '@/components/studentDetailResponsive';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -100,6 +106,16 @@ export default function ProgramSection({
   // For chat feature
   const [selectedChatProgram, setSelectedChatProgram] = useState<Program | null>(null);
   const [selectedChatType, setSelectedChatType] = useState<'open' | 'private' | 'notes'>('open');
+
+  useEffect(() => {
+    if (!selectedChatProgram) return;
+    const panel = document.getElementById('program-chat-panel');
+    if (!panel) return;
+    const isMobile = window.matchMedia('(max-width: 767px)').matches;
+    if (isMobile) {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [selectedChatProgram, selectedChatType]);
   
   // For student selecting programs
   const [expandedPrograms, setExpandedPrograms] = useState<Set<string>>(new Set());
@@ -487,8 +503,8 @@ export default function ProgramSection({
   // Render available programs
   if (sectionType === 'available') {
     return (
-      <div className="space-y-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+      <div className="w-full min-w-0 overflow-hidden space-y-4">
+        <div className="w-full min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-base font-semibold text-gray-900 sm:text-lg">Available Programs</h3>
             {canAddPrograms && (
@@ -738,13 +754,31 @@ export default function ProgramSection({
   // Render applied programs
   return (
   <>
-    <div className="space-y-4">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6">
-        <h3 className="text-base font-semibold text-gray-900 mb-3 sm:text-lg sm:mb-4">Applied Programs</h3>
+    <div className="w-full min-w-0 overflow-hidden space-y-4">
+      <div
+        className={
+          selectedChatProgram
+            ? programSectionAppliedShellChatOpenClass
+            : programSectionAppliedShellClass
+        }
+      >
+        <h3
+          className={`mb-3 px-3 text-base font-semibold text-gray-900 sm:mb-4 sm:px-0 sm:text-lg md:mb-4 ${
+            selectedChatProgram ? 'max-md:hidden' : ''
+          }`}
+        >
+          Applied Programs
+        </h3>
         {programs.length > 0 ? (
-          <div className={`flex flex-col gap-4 ${selectedChatProgram ? 'md:flex-row' : ''}`}>
+          <div className={`flex w-full min-w-0 max-md:flex-col gap-4 ${selectedChatProgram ? 'md:flex-row' : ''}`}>
             {/* Programs List */}
-            <div className={`space-y-4 w-full ${selectedChatProgram ? 'md:w-1/2 md:overflow-y-auto md:max-h-[600px]' : ''}`}>
+            <div
+              className={`w-full min-w-0 space-y-4 px-3 sm:px-0 ${
+                selectedChatProgram
+                  ? `max-md:hidden ${programChatListWhenOpenClass} md:w-1/2 md:max-h-[600px] md:overflow-y-auto`
+                  : ''
+              }`}
+            >
               {programs.map((program, index) => (
                 <div key={program._id} className={selectedChatProgram?._id === program._id ? 'bg-gray-200 rounded-lg p-2' : ''}>
                   {canEditApplied && editingProgram === program._id ? (
@@ -949,15 +983,16 @@ export default function ProgramSection({
               ))}
             </div>
 
-            {/* Chat View */}
+            {/* Chat View — full width in page on mobile, side panel on desktop */}
             {selectedChatProgram && (
-              <div className="w-full md:w-1/2">
+              <div className={programChatPanelClass} id="program-chat-panel">
                 <ProgramChatView
                   program={selectedChatProgram}
                   onClose={() => setSelectedChatProgram(null)}
                   userRole={userRole}
                   isReadOnly={false}
                   chatType={selectedChatType}
+                  mobileExpanded
                 />
               </div>
             )}

@@ -11,6 +11,7 @@ import FormSectionRenderer from '@/components/FormSectionRenderer';
 import ProfileSectionViewDisplay from '@/components/ProfileSectionViewDisplay';
 import { StudyAbroadLayout, EducationPlanningLayout, CoachingClassesLayout } from '@/components/layouts';
 import ProgramSection from '@/components/ProgramSection';
+import RegistrationApplicationSection from '@/components/RegistrationApplicationSection';
 import { getFullName } from '@/utils/nameHelpers';
 import axios from 'axios';
 import BrainographyDataDisplay, { BrainographyDataType } from '@/components/BrainographyDataDisplay';
@@ -1402,12 +1403,17 @@ function MyDetailsContent() {
             <div>
               {currentPart.part.key === 'APPLICATION' && 
                (currentSection.title === 'Apply to Program' || currentSection.title === 'Applied Program') ? (
-                <ProgramSection
-                  sectionType={currentSection.title === 'Apply to Program' ? 'available' : 'applied'}
-                  studentId={registration?.studentId?._id || ''}
-                  registrationId={registrationId}
-                  userRole="STUDENT"
-                />
+                <RegistrationApplicationSection
+                  title={currentSection.title}
+                  description={currentSection.description}
+                >
+                  <ProgramSection
+                    sectionType={currentSection.title === 'Apply to Program' ? 'available' : 'applied'}
+                    studentId={registration?.studentId?._id || ''}
+                    registrationId={registrationId}
+                    userRole="STUDENT"
+                  />
+                </RegistrationApplicationSection>
               ) : currentPart.part.key === 'DOCUMENT' ? (
                 <FormSectionRenderer
                   section={currentSection}

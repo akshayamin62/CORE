@@ -94,7 +94,7 @@ export default function ProfileSectionViewDisplay({ section, values }: ProfileSe
                       {!hasData ? (
                         <p className="text-sm italic text-gray-400">No information added yet</p>
                       ) : (
-                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
+                        <div className={`grid grid-cols-1 gap-2 sm:gap-3 ${section.key === 'workExperience' ? '' : 'sm:grid-cols-2'}`}>
                           {visibleFields.map((field) => {
                             const raw = inst[field.key];
                             if (raw == null || raw === '') return null;

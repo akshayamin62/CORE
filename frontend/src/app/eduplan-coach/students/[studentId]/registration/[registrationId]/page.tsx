@@ -12,6 +12,7 @@ import FormSectionsNavigation from '@/components/FormSectionsNavigation';
 import FormSaveButtons from '@/components/FormSaveButtons';
 import StudentFormHeader from '@/components/StudentFormHeader';
 import ProgramSection from '@/components/ProgramSection';
+import RegistrationApplicationSection from '@/components/RegistrationApplicationSection';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
 import axios from 'axios';
@@ -800,13 +801,12 @@ export default function EduplanCoachStudentFormEditPage() {
               {currentSection && currentPart && (
                 <div className="mb-6">
                   {currentPart.key === 'APPLICATION' && (currentSection.title === 'Apply to Program' || currentSection.title === 'Applied Program') ? (
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
-                      <div className="bg-blue-600 px-6 py-4 -mx-6 -mt-6 mb-6 border-b border-blue-700">
-                        <h3 className="text-xl font-semibold text-white">{currentSection.title}</h3>
-                        {currentSection.description && <p className="text-blue-100 text-sm mt-1">{currentSection.description}</p>}
-                      </div>
+                    <RegistrationApplicationSection
+                      title={currentSection.title}
+                      description={currentSection.description}
+                    >
                       <ProgramSection studentId={studentId} sectionType={currentSection.title === 'Apply to Program' ? 'available' : 'applied'} registrationId={registrationId} userRole="EDUPLAN_COACH" />
-                    </div>
+                    </RegistrationApplicationSection>
                   ) : (() => {
                     const isParentalSection = currentPart.key === 'PROFILE' && currentSection.title === 'Parental Details';
                     const parentalReadOnlyInstances = isParentalSection ? initialParentalReadOnlyRef.current : [];
