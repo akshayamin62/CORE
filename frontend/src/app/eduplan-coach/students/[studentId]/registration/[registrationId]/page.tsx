@@ -24,6 +24,21 @@ import OpsCalendarGrid from '@/components/OpsCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
 import { fetchBlobUrl } from '@/lib/useBlobUrl';
+import EducationPlanningNav from '@/components/EducationPlanningNav';
+import EducationPlanningStatCards from '@/components/EducationPlanningStatCards';
+import {
+  studentPagePadding,
+  roleListBackBtnClass,
+  eduPlanDashboardSectionClass,
+  eduPlanOverviewHeadingClass,
+  brainographyShellClass,
+  brainographyHeaderRowClass,
+  brainographyFileRowClass,
+  brainographyFileInfoClass,
+  brainographyFileMetaClass,
+  brainographyFileActionsClass,
+  eduPlanPortfolioRowClass,
+} from '@/components/studentDetailResponsive';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -599,8 +614,8 @@ export default function EduplanCoachStudentFormEditPage() {
     <>
       <Toaster position="top-right" />
       <EduplanCoachLayout user={user}>
-        <div className="p-8">
-          <button onClick={() => router.push(`/eduplan-coach/students/${studentId}`)} className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+        <div className={studentPagePadding}>
+          <button onClick={() => router.push(`/eduplan-coach/students/${studentId}`)} className={roleListBackBtnClass}>
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -620,40 +635,24 @@ export default function EduplanCoachStudentFormEditPage() {
           )}
 
           {isEducationPlanning && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
-              <div className="flex border-b border-gray-200">
-                {navButtons.map((btn) => (
-                  <button key={btn.key} onClick={() => setActiveView(btn.key)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-4 text-sm font-semibold transition-colors border-b-2 ${activeView === btn.key ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50'}`}>
-                    {btn.label}
-                  </button>
-                ))}
-                <button onClick={() => router.push(`/eduplan-coach/students/${studentId}/registration/${registrationId}/activity`)}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-4 text-sm font-semibold transition-colors border-b-2 border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                  Activity Management
-                </button>
-              </div>
-            </div>
+            <EducationPlanningNav
+              buttons={navButtons}
+              activeKey={activeView}
+              onSelect={(key) => setActiveView(key as ActiveView)}
+              onActivityClick={() =>
+                router.push(`/eduplan-coach/students/${studentId}/registration/${registrationId}/activity`)
+              }
+            />
           )}
 
           {/* Education Planning Dashboard */}
-          {isEducationPlanning && activeView === 'dashboard' && (() => {
-            const stats = eduPlanStats;
-            const entries = stats ? Object.values(stats.domainBalance) : [];
-            const totalPlanned = entries.reduce((s, e) => s + e.planned, 0);
-            const totalCompleted = entries.reduce((s, e) => s + e.completed, 0);
-            const overall = totalPlanned > 0 ? Math.round((totalCompleted / totalPlanned) * 50) / 10 : 0;
-            return (
-              <div className="mb-6 space-y-8">
+          {isEducationPlanning && activeView === 'dashboard' && (
+              <div className={eduPlanDashboardSectionClass}>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Activity Overview <span className="text-sm font-normal text-gray-500">(Last 3 Months)</span></h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center text-lg">🔥</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.current ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Current Streak (days)</p></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center text-lg">🏆</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.longest ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Longest Streak (days)</p></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-lg">📅</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.totalDays ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Total Days</p></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-lg">📝</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.wordCount.total ?? 0}</h3></div><div className="flex items-center justify-between mt-3"><p className="text-sm font-semibold text-gray-700">New Words</p><p className="text-xs text-gray-500">{stats?.wordCount.thisMonth ?? 0} this month</p></div></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-lg">⭐</div><h3 className="text-3xl font-extrabold text-gray-900">{overall} / 5</h3></div><div className="flex items-center justify-between mt-3"><p className="text-sm font-semibold text-gray-700">Overall Performance</p><p className="text-xs text-gray-500">{totalCompleted}/{totalPlanned}</p></div></div>
-                  </div>
+                  <h2 className={eduPlanOverviewHeadingClass}>
+                    Activity Overview <span className="text-sm font-normal text-gray-500">(Last 3 Months)</span>
+                  </h2>
+                  <EducationPlanningStatCards stats={eduPlanStats} />
                 </div>
                 <div>
                   <OpsCalendarGrid
@@ -670,8 +669,7 @@ export default function EduplanCoachStudentFormEditPage() {
                   />
                 </div>
               </div>
-            );
-          })()}
+          )}
 
           {isEducationPlanning && activeView === 'analytics' && (
             <div className="mb-6">
@@ -681,37 +679,36 @@ export default function EduplanCoachStudentFormEditPage() {
 
           {isEducationPlanning && activeView === 'brainography' && (
             <>
-              <div className="bg-white rounded-xl shadow-sm border border-blue-200 p-6 mb-6">
-                <div className="flex items-center justify-between mb-4">
+              <div className={brainographyShellClass}>
+                <div className={brainographyHeaderRowClass}>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
                       <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <h3 className="text-lg font-semibold text-gray-900">Brainography Report</h3>
                       <p className="text-sm text-gray-500">Upload the brainography report for this student</p>
                     </div>
                   </div>
                 </div>
                 {brainographyDoc ? (
-                  <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <div className={brainographyFileRowClass}>
+                      <div className={brainographyFileInfoClass}>
+                        <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
                           <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                           </svg>
                         </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">{brainographyDoc.fileName}</p>
-                          <p className="text-xs text-gray-500">
+                        <div className="min-w-0">
+                          <p className={brainographyFileMetaClass}>{brainographyDoc.fileName}</p>
+                          <p className="text-xs text-gray-500 break-words">
                             {(brainographyDoc.fileSize / 1024).toFixed(1)} KB | Uploaded: {new Date(brainographyDoc.uploadedAt).toLocaleDateString('en-GB')} | Version: {brainographyDoc.version}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className={brainographyFileActionsClass}>
                         <button onClick={handleBrainographyView} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">View</button>
                         <button onClick={handleBrainographyDownload} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">Download</button>
                         <label className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium cursor-pointer">
@@ -719,7 +716,6 @@ export default function EduplanCoachStudentFormEditPage() {
                           <input ref={fileInputRef} type="file" className="hidden" onChange={handleBrainographyUpload} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
                         </label>
                       </div>
-                    </div>
                   </div>
                 ) : (
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
@@ -737,7 +733,7 @@ export default function EduplanCoachStudentFormEditPage() {
                   <div className="mt-4">
                     <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Generated Reports</p>
                     <div className="flex flex-wrap gap-3">
-                      {portfolios.map((p) => (<div key={p._id} className="flex-1 min-w-[260px]"><PortfolioRow portfolio={p} onDownload={handlePortfolioDownload} /></div>))}
+                      {portfolios.map((p) => (<div key={p._id} className={eduPlanPortfolioRowClass}><PortfolioRow portfolio={p} onDownload={handlePortfolioDownload} /></div>))}
                     </div>
                   </div>
                 )}

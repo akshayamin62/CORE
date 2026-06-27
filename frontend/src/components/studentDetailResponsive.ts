@@ -57,6 +57,41 @@ export const eduPlanStatGridClass =
 export const eduPlanStatCardClass =
   'rounded-xl border-2 border-gray-200 bg-white p-3.5 shadow-sm sm:p-5';
 
+export const eduPlanNavShellClass =
+  'mb-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:mb-6';
+
+export const eduPlanDashboardSectionClass = 'mb-4 space-y-6 sm:mb-6 sm:space-y-8';
+
+export const eduPlanOverviewHeadingClass =
+  'mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl';
+
+export const brainographyShellClass =
+  'mb-4 rounded-xl border border-blue-200 bg-white p-4 shadow-sm sm:mb-6 sm:p-6';
+
+export const brainographyHeaderRowClass =
+  'mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between';
+
+export const brainographyFileRowClass =
+  'flex flex-col gap-3 border border-gray-200 rounded-lg bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4';
+
+export const brainographyFileInfoClass = 'flex min-w-0 items-center gap-3';
+
+export const brainographyFileMetaClass = 'min-w-0 truncate text-sm font-medium text-gray-900';
+
+export const brainographyFileActionsClass = 'flex flex-wrap gap-2 shrink-0';
+
+export const eduPlanPortfolioRowClass = 'w-full min-w-0 sm:flex-1 sm:min-w-[260px]';
+
+/** Activity planner accomplishments — card stack on mobile, grid on md+ */
+export const activityPlannerHeaderClass =
+  'hidden gap-1.5 px-0.5 text-xs font-semibold uppercase text-gray-400 md:grid md:grid-cols-[80px_1fr_100px_1fr]';
+
+export const activityPlannerRowClass =
+  'rounded-lg border border-gray-100 bg-gray-50/80 p-3 md:grid md:grid-cols-[80px_1fr_100px_1fr] md:gap-1.5 md:border-0 md:bg-transparent md:p-0';
+
+export const activityPlannerMobileLabelClass =
+  'mb-1 block text-xs font-semibold uppercase text-gray-400 md:hidden';
+
 export const registrationNavClass =
   'flex overflow-x-auto border-b border-gray-200 scrollbar-none';
 

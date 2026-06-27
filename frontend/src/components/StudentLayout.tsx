@@ -188,6 +188,35 @@ export default function StudentLayout({
   const outerRegPath = outerReg ? `/student/registration/${outerReg._id}` : '';
   const headerTitle = isOuterNav && outerService ? outerService.name : serviceName;
 
+  const outerServiceNavItems =
+    outerService?.slug === 'education-planning'
+      ? [...eduPlanItems, { key: 'payment', label: 'Payment', icon: Icon.payment }]
+      : studyAbroadItems;
+
+  const handleOuterServiceNav = (key: string) => {
+    if (!outerRegPath) return;
+    if (key === 'payment') {
+      router.push('/student/payment');
+      return;
+    }
+    if (key === 'my-activity') {
+      router.push(`${outerRegPath}/activity`);
+      return;
+    }
+    router.push(outerRegPath);
+  };
+
+  const isOuterServiceItemActive = (key: string) => {
+    if (key === 'payment') return pathname === '/student/payment';
+    if (key === 'my-activity') return pathname.includes('/activity');
+    return pathname === outerRegPath;
+  };
+
+  const outerServiceMenuLabel =
+    outerService?.name && outerService.name.length <= 14
+      ? outerService.name
+      : 'Application';
+
   // ─── Reusable nav button renderer ───
   const navBtn = (key: string, label: string, icon: React.ReactNode, active: boolean, onClick: () => void) => (
     <div key={key} className="mb-1">
@@ -212,9 +241,14 @@ export default function StudentLayout({
     // OUTER PAGES: show nav items from fetched registration
     if (isOuterNav) {
       if (!outerReg) return null;
-      const items = outerService?.slug === 'education-planning' ? eduPlanItems : studyAbroadItems;
-      return items.map(item =>
-        navBtn(item.key, item.label, item.icon, false, () => router.push(outerRegPath))
+      return outerServiceNavItems.map((item) =>
+        navBtn(
+          item.key,
+          item.label,
+          item.icon,
+          isOuterServiceItemActive(item.key),
+          () => handleOuterServiceNav(item.key)
+        )
       );
     }
 
@@ -265,13 +299,27 @@ export default function StudentLayout({
     ...(isCoachingClasses
       ? []
       : isOuterNav && outerReg
-        ? (outerService?.slug === 'education-planning' ? eduPlanItems : studyAbroadItems).map((item) => ({
-            id: item.key,
-            label: item.label,
-            icon: item.icon,
-            isActive: false,
-            onClick: () => router.push(outerRegPath),
-          }))
+        ? (() => {
+            const serviceChildren = outerServiceNavItems.map((item) => ({
+              id: item.key,
+              label: item.label,
+              icon: item.icon,
+              isActive: isOuterServiceItemActive(item.key),
+              onClick: () => handleOuterServiceNav(item.key),
+            }));
+            const activeServiceChild = serviceChildren.find((child) => child.isActive);
+
+            return [
+              {
+                id: 'outer-service-menu',
+                label: activeServiceChild?.label ?? outerServiceMenuLabel,
+                icon: activeServiceChild?.icon ?? Icon.application,
+                isActive: serviceChildren.some((child) => child.isActive),
+                onClick: () => {},
+                children: serviceChildren,
+              },
+            ];
+          })()
         : isEducationPlanning
           ? [
               ...eduPlanItems.map((item) => ({
@@ -325,7 +373,9 @@ export default function StudentLayout({
       id: item.key,
       label: item.label,
       icon: item.icon,
-      isActive: pathname === item.path,
+      isActive:
+        pathname === item.path ||
+        (item.path !== '/student/service-plans' && pathname.startsWith(`${item.path}/`)),
       onClick: () => router.push(item.path),
     })),
   ]);
@@ -362,7 +412,14 @@ export default function StudentLayout({
           {/* Always: Parents, Alumni, Service Providers */}
           <div>
             {(isCoachingClasses ? commonItems.filter(i => i.key === 'service-plans') : commonItems).map(item =>
-              navBtn(item.key, item.label, item.icon, pathname === item.path, () => router.push(item.path))
+              navBtn(
+                item.key,
+                item.label,
+                item.icon,
+                pathname === item.path ||
+                  (item.path !== '/student/service-plans' && pathname.startsWith(`${item.path}/`)),
+                () => router.push(item.path)
+              )
             )}
           </div>
         </nav>

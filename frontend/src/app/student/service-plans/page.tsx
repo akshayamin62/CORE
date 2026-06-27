@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { authAPI, servicePlanAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
+import StudentOuterPageLayout from '@/components/StudentOuterPageLayout';
 import { COACHING_CLASSES_SUMMARY } from '@/config/servicePlans';
 import {
   roleListPagePadding,
@@ -142,7 +143,7 @@ export default function StudentServicePlansPage() {
   }
 
   return (
-    <>
+    <StudentOuterPageLayout user={user}>
       <Toaster position="top-right" />
       <div className={roleListPagePadding}>
         <button type="button" onClick={() => router.back()} className={roleListBackBtnClass}>
@@ -216,6 +217,6 @@ export default function StudentServicePlansPage() {
           })}
         </div>
       </div>
-    </>
+    </StudentOuterPageLayout>
   );
 }

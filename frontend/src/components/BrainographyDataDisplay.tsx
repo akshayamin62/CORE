@@ -63,7 +63,7 @@ function PercentageBar({ name, percentage, rawPercentage, color }: { name: strin
   return (
     <div className="mb-3">
       <div className="flex justify-between items-center mb-1.5">
-        <span className="text-sm font-medium text-gray-700">{name}</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-gray-700">{name}</span>
         <span className={`text-sm font-bold ${color.text}`}>{displayPct}%</span>
       </div>
       <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
@@ -193,7 +193,7 @@ export default function BrainographyDataDisplay({ data, canEdit, onUpdate }: Pro
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 space-y-6 sm:p-6 sm:space-y-6">
         {/* Student Info Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <InfoCard

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { roleListPagePadding } from '@/components/studentDetailResponsive';
 import { authAPI, teamMeetAPI } from '@/lib/api';
 import { User, USER_ROLE, TeamMeet, TEAMMEET_STATUS } from '@/types';
 import EduplanCoachLayout from '@/components/EduplanCoachLayout';
@@ -129,7 +130,7 @@ export default function EduplanCoachDashboardPage() {
     <>
       <Toaster position="top-right" />
       <EduplanCoachLayout user={user}>
-        <div className="p-8">
+        <div className={roleListPagePadding}>
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">{getFullName(user)}</h1>

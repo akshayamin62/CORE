@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import EduplanCoachLayout from '@/components/EduplanCoachLayout';
+import { roleListPagePadding } from '@/components/studentDetailResponsive';
 import ComingSoon from '@/components/ComingSoon';
 
 export default function EduplanCoachAlumniPage() {
@@ -31,7 +32,7 @@ export default function EduplanCoachAlumniPage() {
 
   return (
     <EduplanCoachLayout user={user}>
-      <div className="p-8">
+      <div className={roleListPagePadding}>
         <ComingSoon title="Alumni" />
       </div>
     </EduplanCoachLayout>

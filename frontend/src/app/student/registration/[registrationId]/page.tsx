@@ -10,6 +10,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import FormSectionRenderer from '@/components/FormSectionRenderer';
 import ProfileSectionViewDisplay from '@/components/ProfileSectionViewDisplay';
 import { StudyAbroadLayout, EducationPlanningLayout, CoachingClassesLayout } from '@/components/layouts';
+import EducationPlanningStatCards from '@/components/EducationPlanningStatCards';
+import { eduPlanOverviewHeadingClass } from '@/components/studentDetailResponsive';
 import ProgramSection from '@/components/ProgramSection';
 import RegistrationApplicationSection from '@/components/RegistrationApplicationSection';
 import { getFullName } from '@/utils/nameHelpers';
@@ -906,59 +908,15 @@ function MyDetailsContent() {
   /* ─── Education Planning Dashboard Renderer ─── */
   const renderEduPlanDashboard = () => {
     const stats = eduPlanStats;
-    const entries = stats ? Object.values(stats.domainBalance) : [];
-    const totalPlanned = entries.reduce((s, e) => s + e.planned, 0);
-    const totalCompleted = entries.reduce((s, e) => s + e.completed, 0);
-    const overall = totalPlanned > 0 ? Math.round((totalCompleted / totalPlanned) * 50) / 10 : 0;
 
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 sm:space-y-8 sm:px-6 sm:py-6 lg:px-8">
         {/* Activity Stats */}
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Activity Overview <span className="text-sm font-normal text-gray-500">(Last 3 Months)</span></h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center text-lg">🔥</div>
-                <h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.current ?? 0}</h3>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Current Streak (days)</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center text-lg">🏆</div>
-                <h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.longest ?? 0}</h3>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Longest Streak (days)</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-lg">📅</div>
-                <h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.totalDays ?? 0}</h3>
-              </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">Total Days</p>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-lg">📝</div>
-                <h3 className="text-3xl font-extrabold text-gray-900">{stats?.wordCount.total ?? 0}</h3>
-              </div>
-              <div className="flex items-center justify-between mt-3">
-                <p className="text-sm font-semibold text-gray-700">New Words</p>
-                <p className="text-xs text-gray-500">{stats?.wordCount.thisMonth ?? 0} this month</p>
-              </div>
-            </div>
-            <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5 transition-all">
-              <div className="flex items-center justify-between">
-                <div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-lg">⭐</div>
-                <h3 className="text-3xl font-extrabold text-gray-900">{overall} / 5</h3>
-              </div>
-              <div className="flex items-center justify-between mt-3">
-                <p className="text-sm font-semibold text-gray-700">Overall Performance</p>
-                <p className="text-xs text-gray-500">{totalCompleted}/{totalPlanned}</p>
-              </div>
-            </div>
-          </div>
+          <h2 className={eduPlanOverviewHeadingClass}>
+            Activity Overview <span className="text-sm font-normal text-gray-500">(Last 3 Months)</span>
+          </h2>
+          <EducationPlanningStatCards stats={stats} />
         </div>
 
         {/* Schedule Calendar Section */}

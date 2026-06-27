@@ -23,6 +23,14 @@ import BrainographyDataDisplay, { BrainographyDataType } from '@/components/Brai
 import PortfolioSection, { PortfolioItem, PortfolioRow, usePortfolioDownload } from '@/components/PortfolioSection';
 import ActivityAnalyticsDashboard from '@/components/ActivityAnalyticsDashboard';
 import { fetchBlobUrl } from '@/lib/useBlobUrl';
+import EducationPlanningNav from '@/components/EducationPlanningNav';
+import EducationPlanningStatCards from '@/components/EducationPlanningStatCards';
+import {
+  studentPagePadding,
+  roleListBackBtnClass,
+  eduPlanDashboardSectionClass,
+  eduPlanOverviewHeadingClass,
+} from '@/components/studentDetailResponsive';
 
 const BRAINOGRAPHY_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -322,8 +330,8 @@ export default function ReferrerStudentRegistrationPage() {
     <>
       <Toaster position="top-right" />
       <ReferrerLayout user={user}>
-        <div className="p-8">
-          <button onClick={() => router.push(`/referrer/students/${studentId}`)} className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+        <div className={studentPagePadding}>
+          <button onClick={() => router.push(`/referrer/students/${studentId}`)} className={roleListBackBtnClass}>
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -352,44 +360,27 @@ export default function ReferrerStudentRegistrationPage() {
 
           {/* Education Planning Navigation */}
           {isEducationPlanning && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 overflow-hidden">
-              <div className="flex border-b border-gray-200">
-                {([
-                  { key: 'dashboard' as ActiveView, label: 'Dashboard' },
-                  { key: 'analytics' as ActiveView, label: 'Activity Analysis' },
-                  { key: 'payment' as ActiveView, label: 'Payment' },
-                ] as const).map((btn) => (
-                  <button key={btn.key} onClick={() => setActiveView(btn.key)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-4 text-sm font-semibold transition-colors border-b-2 ${activeView === btn.key ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50'}`}>
-                    {btn.label}
-                  </button>
-                ))}
-                <button onClick={() => router.push(`/referrer/students/${studentId}/registration/${registrationId}/activity`)}
-                  className="flex-1 flex items-center justify-center gap-1.5 px-4 py-4 text-sm font-semibold transition-colors border-b-2 border-transparent text-gray-700 hover:text-gray-900 hover:bg-gray-50">
-                  Activity Management
-                </button>
-              </div>
-            </div>
+            <EducationPlanningNav
+              buttons={[
+                { key: 'dashboard', label: 'Dashboard' },
+                { key: 'analytics', label: 'Activity Analysis' },
+                { key: 'payment', label: 'Payment' },
+              ]}
+              activeKey={activeView}
+              onSelect={(key) => setActiveView(key as ActiveView)}
+              onActivityClick={() =>
+                router.push(`/referrer/students/${studentId}/registration/${registrationId}/activity`)
+              }
+            />
           )}
 
-          {/* Education Planning Dashboard */}
-          {isEducationPlanning && activeView === 'dashboard' && (() => {
-            const stats = eduPlanStats;
-            const entries = stats ? Object.values(stats.domainBalance) : [];
-            const totalPlanned = entries.reduce((s, e) => s + e.planned, 0);
-            const totalCompleted = entries.reduce((s, e) => s + e.completed, 0);
-            const overall = totalPlanned > 0 ? Math.round((totalCompleted / totalPlanned) * 50) / 10 : 0;
-            return (
-              <div className="mb-6 space-y-8">
+          {isEducationPlanning && activeView === 'dashboard' && (
+              <div className={eduPlanDashboardSectionClass}>
                 <div>
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Activity Overview <span className="text-sm font-normal text-gray-500">(Last 3 Months)</span></h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center text-lg">🔥</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.current ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Current Streak (days)</p></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center text-lg">🏆</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.longest ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Longest Streak (days)</p></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-lg">📅</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.streak.totalDays ?? 0}</h3></div><p className="text-sm font-semibold text-gray-700 mt-3">Total Days</p></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-lg">📝</div><h3 className="text-3xl font-extrabold text-gray-900">{stats?.wordCount.total ?? 0}</h3></div><div className="flex items-center justify-between mt-3"><p className="text-sm font-semibold text-gray-700">New Words</p><p className="text-xs text-gray-500">{stats?.wordCount.thisMonth ?? 0} this month</p></div></div>
-                    <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-5"><div className="flex items-center justify-between"><div className="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-lg">⭐</div><h3 className="text-3xl font-extrabold text-gray-900">{overall} / 5</h3></div><div className="flex items-center justify-between mt-3"><p className="text-sm font-semibold text-gray-700">Overall Performance</p><p className="text-xs text-gray-500">{totalCompleted}/{totalPlanned}</p></div></div>
-                  </div>
+                  <h2 className={eduPlanOverviewHeadingClass}>
+                    Activity Overview <span className="text-sm font-normal text-gray-500">(Last 3 Months)</span>
+                  </h2>
+                  <EducationPlanningStatCards stats={eduPlanStats} />
                 </div>
                 <div>
                   <OpsCalendarGrid
@@ -406,8 +397,7 @@ export default function ReferrerStudentRegistrationPage() {
                   />
                 </div>
               </div>
-            );
-          })()}
+          )}
 
           {/* Activity Analytics */}
           {isEducationPlanning && activeView === 'analytics' && (

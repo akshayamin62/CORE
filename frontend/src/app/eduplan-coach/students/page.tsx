@@ -9,6 +9,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import { roleListPagePadding } from '@/components/studentDetailResponsive';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -150,7 +151,7 @@ export default function EduplanCoachStudentsPage() {
     <>
       <Toaster position="top-right" />
       <EduplanCoachLayout user={user}>
-        <div className="p-8">
+        <div className={roleListPagePadding}>
           {/* Header */}
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900">All Students</h1>

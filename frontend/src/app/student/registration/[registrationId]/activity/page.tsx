@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef, Suspense } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { activityAPI } from '@/lib/api';
+import { activityAPI, authAPI } from '@/lib/api';
+import { User, USER_ROLE } from '@/types';
+import StudentOuterPageLayout from '@/components/StudentOuterPageLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
 import {
@@ -557,7 +559,7 @@ function ActivityContent() {
 
             {/* Calendar dropdown */}
             {calOpen && (
-              <div className="absolute right-0 top-full mt-2 w-[420px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 animate-fadeIn overflow-hidden">
+              <div className="absolute right-0 top-full mt-2 w-[min(420px,calc(100vw-2rem))] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 animate-fadeIn overflow-hidden">
                 {/* Cal nav */}
                 <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50">
                   <div className="flex items-center justify-between mb-1.5">
@@ -1224,16 +1226,61 @@ function ActivityContent() {
 }
 
 export default function ActivityPage() {
-  return (
-    <Suspense fallback={
+  const router = useRouter();
+  const params = useParams();
+  const registrationId = params.registrationId as string;
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
+    authAPI
+      .getProfile()
+      .then((res) => {
+        const userData = res.data.data.user;
+        if (userData.role !== USER_ROLE.STUDENT) {
+          router.push('/');
+          return;
+        }
+        setUser(userData);
+        if (typeof window !== 'undefined' && registrationId) {
+          sessionStorage.setItem('activeRegistrationId', registrationId);
+        }
+      })
+      .catch(() => router.push('/login'))
+      .finally(() => setLoading(false));
+  }, [router, registrationId]);
+
+  if (loading || !user) {
+    return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="w-8 h-8 border-3 border-brand-200 border-t-brand-600 rounded-full animate-spin mx-auto mb-3" />
           <p className="text-gray-500 text-sm">Loading Activity...</p>
         </div>
       </div>
-    }>
-      <ActivityContent />
-    </Suspense>
+    );
+  }
+
+  return (
+    <StudentOuterPageLayout user={user}>
+      <Suspense
+        fallback={
+          <div className="min-h-[50vh] flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <div className="w-8 h-8 border-3 border-brand-200 border-t-brand-600 rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-gray-500 text-sm">Loading Activity...</p>
+            </div>
+          </div>
+        }
+      >
+        <ActivityContent />
+      </Suspense>
+    </StudentOuterPageLayout>
   );
 }

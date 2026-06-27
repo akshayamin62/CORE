@@ -8,6 +8,7 @@ import EduplanCoachLayout from '@/components/EduplanCoachLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import { roleListPagePadding } from '@/components/studentDetailResponsive';
 
 interface ParentDetail {
   _id: string;
@@ -55,7 +56,7 @@ export default function EduplanCoachParentDetailPage() {
 
   if (!parent) return (
     <EduplanCoachLayout user={user}>
-      <div className="p-8">
+      <div className={roleListPagePadding}>
         <p className="text-gray-600 mb-4">Parent not found.</p>
         <button onClick={() => router.back()} className="text-blue-600 hover:underline">Go Back</button>
       </div>
@@ -66,7 +67,7 @@ export default function EduplanCoachParentDetailPage() {
     <>
       <Toaster position="top-right" />
       <EduplanCoachLayout user={user}>
-        <div className="p-8">
+        <div className={roleListPagePadding}>
           <button onClick={() => router.back()} className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             Back to Parents

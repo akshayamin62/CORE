@@ -405,7 +405,7 @@ function ActivityContent() {
               </button>
 
               {calOpen && (
-                <div className="absolute right-0 top-full mt-2 w-[420px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 animate-fadeIn overflow-hidden">
+                <div className="absolute right-0 top-full mt-2 w-[min(420px,calc(100vw-2rem))] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 animate-fadeIn overflow-hidden">
                   {/* Cal nav */}
                   <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50">
                     <div className="flex items-center justify-between mb-1.5">
@@ -706,12 +706,12 @@ function ActivityContent() {
                                 <span className="font-semibold text-gray-700 text-sm uppercase tracking-wide">{domainName}</span>
                                 <span className="text-xs text-gray-400">{domainRows.filter(d => d.row.completed === 'Completed').length}/{domainRows.length} completed</span>
                               </div>
-                              <div className="p-3 space-y-1.5">
-                                <div className="grid grid-cols-[80px_1fr_100px_1fr] gap-1.5 text-xs font-semibold text-gray-400 uppercase px-0.5">
+                              <div className="overflow-x-auto p-3 space-y-1.5">
+                                <div className="grid min-w-[32rem] grid-cols-[80px_1fr_100px_1fr] gap-1.5 text-xs font-semibold text-gray-400 uppercase px-0.5">
                                   <span>Session</span><span>Activity</span><span>Status</span><span>Experience</span>
                                 </div>
                                 {domainRows.map(({ sIdx, rIdx, row }) => (
-                                  <div key={`${sIdx}-${rIdx}`} className="grid grid-cols-[80px_1fr_100px_1fr] gap-1.5">
+                                  <div key={`${sIdx}-${rIdx}`} className="grid min-w-[32rem] grid-cols-[80px_1fr_100px_1fr] gap-1.5">
                                     <span className="px-5 py-1.5 text-xs text-gray-500 flex items-center gap-1">
                                       <span>{SESSION_ICONS[planner.plans[sIdx].session]}</span>
                                     </span>

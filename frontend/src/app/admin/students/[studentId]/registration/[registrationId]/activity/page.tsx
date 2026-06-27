@@ -407,7 +407,7 @@ function ActivityContent() {
               </button>
 
               {calOpen && (
-                <div className="absolute right-0 top-full mt-2 w-[420px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 animate-fadeIn overflow-hidden">
+                <div className="absolute right-0 top-full mt-2 w-[min(420px,calc(100vw-2rem))] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 animate-fadeIn overflow-hidden">
                   {/* Cal nav */}
                   <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50">
                     <div className="flex items-center justify-between mb-1.5">

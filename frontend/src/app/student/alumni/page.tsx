@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import ComingSoon from '@/components/ComingSoon';
+import StudentOuterPageLayout from '@/components/StudentOuterPageLayout';
 import { roleListPagePadding, roleListBackBtnClass } from '@/components/studentDetailResponsive';
 
 export default function StudentAlumniPage() {
@@ -30,12 +31,14 @@ export default function StudentAlumniPage() {
   );
 
   return (
-    <div className={roleListPagePadding}>
-      <button type="button" onClick={() => router.back()} className={roleListBackBtnClass}>
-        <svg className="mr-1.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-        Return to Dashboard
-      </button>
-      <ComingSoon title="Alumni" />
-    </div>
+    <StudentOuterPageLayout user={user}>
+      <div className={roleListPagePadding}>
+        <button type="button" onClick={() => router.back()} className={roleListBackBtnClass}>
+          <svg className="mr-1.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+          Return to Dashboard
+        </button>
+        <ComingSoon title="Alumni" />
+      </div>
+    </StudentOuterPageLayout>
   );
 }

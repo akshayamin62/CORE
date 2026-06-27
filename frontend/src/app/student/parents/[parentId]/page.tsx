@@ -7,6 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import StudentOuterPageLayout from '@/components/StudentOuterPageLayout';
 import {
   studentPagePadding,
   studentCardClass,
@@ -68,13 +69,15 @@ export default function StudentParentDetailPage() {
   );
 
   if (!parent) return (
-    <div className={studentPagePadding}>
-      <button type="button" onClick={() => router.back()} className={roleListBackBtnClass}>
-        <svg className="mr-1.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-        Return to Dashboard
-      </button>
-      <p className="text-gray-600 mb-4">Parent not found.</p>
-    </div>
+    <StudentOuterPageLayout user={user}>
+      <div className={studentPagePadding}>
+        <button type="button" onClick={() => router.back()} className={roleListBackBtnClass}>
+          <svg className="mr-1.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+          Return to Dashboard
+        </button>
+        <p className="text-gray-600 mb-4">Parent not found.</p>
+      </div>
+    </StudentOuterPageLayout>
   );
 
   const metaFields = [
@@ -87,7 +90,7 @@ export default function StudentParentDetailPage() {
   ];
 
   return (
-    <>
+    <StudentOuterPageLayout user={user}>
       <Toaster position="top-right" />
       <div className={studentPagePadding}>
         <button type="button" onClick={() => router.back()} className={roleListBackBtnClass}>
@@ -161,6 +164,6 @@ export default function StudentParentDetailPage() {
           )}
         </div>
       </div>
-    </>
+    </StudentOuterPageLayout>
   );
 }

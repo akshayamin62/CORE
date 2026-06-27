@@ -202,7 +202,7 @@ export default function PortfolioSection({
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="space-y-4 p-4 sm:space-y-6 sm:p-6">
         {/* Limit info banner */}
         {reportLimit && remainingTopics !== null && remainingTopics <= 0 && (
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 flex items-start gap-3">

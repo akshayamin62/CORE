@@ -7,7 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import EduplanCoachLayout from '@/components/EduplanCoachLayout';
 import StudentProfileModal from '@/components/StudentProfileModal';
 import AuthImage from '@/components/AuthImage';
-import { studentHeaderRowClass, studentPagePadding } from '@/components/studentDetailResponsive';
+import { studentHeaderRowClass, studentPagePadding, studentMetaGridClass } from '@/components/studentDetailResponsive';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
@@ -243,7 +243,7 @@ export default function EduplanCoachStudentDetailPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-4 border-t border-gray-200">
+            <div className={`${studentMetaGridClass} pt-4`}>
               <div>
                 <p className="text-sm text-gray-600 mb-1">Mobile Number</p>
                 <p className="font-medium text-gray-900">
