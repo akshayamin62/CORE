@@ -1,6 +1,10 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import mongoose from 'mongoose';
+import {
+  isValidMeetingDuration,
+  MEETING_DURATION_ERROR_MESSAGE,
+} from '../constants/meetingDurations';
 import IvyParentInterviewSchedule, {
   IVY_PARENT_INTERVIEW_STATUS,
   IVY_INTERVIEW_MEETING_MODE,
@@ -43,8 +47,8 @@ export const createParentInterviewSchedule = async (
     }
 
     const parsedDuration = parseInt(duration, 10);
-    if (![15, 30, 45, 60].includes(parsedDuration)) {
-      res.status(400).json({ success: false, message: 'Duration must be 15, 30, 45, or 60 minutes' });
+    if (!isValidMeetingDuration(parsedDuration)) {
+      res.status(400).json({ success: false, message: MEETING_DURATION_ERROR_MESSAGE });
       return;
     }
 

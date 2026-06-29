@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
+import { MEETING_DURATION_MINUTES } from "../constants/meetingDurations";
 import { LEAD_STAGE } from "./Lead";
 
 export enum FOLLOWUP_STATUS {
@@ -40,7 +41,7 @@ export interface IFollowUp extends Document {
   advisorId?: mongoose.Types.ObjectId; // Reference to Advisor document (when Advisor does follow-ups)
   scheduledDate: Date;
   scheduledTime: string; // Format: "HH:mm"
-  duration: number; // Duration in minutes (15, 30, 45, 60)
+  duration: number; // Duration in minutes (5, 15, 30, 45, 60)
   meetingType: MEETING_TYPE; // Online or Face to Face
   zohoMeetingKey?: string; // Zoho meeting session key
   zohoMeetingUrl?: string; // Zoho meeting join URL
@@ -92,7 +93,7 @@ const followUpSchema = new Schema<IFollowUp>(
     duration: {
       type: Number,
       required: true,
-      enum: [15, 30, 45, 60],
+      enum: [...MEETING_DURATION_MINUTES],
       default: 30,
     },
     meetingType: {

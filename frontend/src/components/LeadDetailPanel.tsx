@@ -6,6 +6,7 @@ import { followUpAPI, leadAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { getFullName } from '@/utils/nameHelpers';
+import MeetingDurationOptions from '@/components/MeetingDurationOptions';
 
 interface LeadDetailPanelProps {
   leadId: string;
@@ -330,10 +331,7 @@ export default function LeadDetailPanel({
                 onChange={(e) => setScheduleDuration(parseInt(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value={15}>15 minutes</option>
-                <option value={30}>30 minutes</option>
-                <option value={45}>45 minutes</option>
-                <option value={60}>60 minutes</option>
+                <MeetingDurationOptions labelStyle="long" />
               </select>
             </div>
 

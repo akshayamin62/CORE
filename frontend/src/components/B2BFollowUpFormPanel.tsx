@@ -5,6 +5,7 @@ import { FOLLOWUP_STATUS, MEETING_TYPE, B2B_LEAD_STAGE } from '@/types';
 import { b2bAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+import MeetingDurationOptions from '@/components/MeetingDurationOptions';
 
 interface B2BFollowUpFormPanelProps {
   followUp: any | null;
@@ -459,10 +460,7 @@ export default function B2BFollowUpFormPanel({
                             onChange={(e) => setNextDuration(parseInt(e.target.value))}
                             className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
-                            <option value={15}>15 min</option>
-                            <option value={30}>30 min</option>
-                            <option value={45}>45 min</option>
-                            <option value={60}>60 min</option>
+                            <MeetingDurationOptions />
                           </select>
                         </div>
                         <div>

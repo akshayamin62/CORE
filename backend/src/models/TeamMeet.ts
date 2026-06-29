@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
+import { MEETING_DURATION_MINUTES } from "../constants/meetingDurations";
 
 // TeamMeet Status Enum
 export enum TEAMMEET_STATUS {
@@ -20,7 +21,7 @@ export interface ITeamMeet extends Document {
   subject: string;
   scheduledDate: Date;
   scheduledTime: string; // Format: "HH:mm"
-  duration: number; // 15, 30, 45, 60 minutes
+  duration: number; // 5, 15, 30, 45, 60 minutes
   meetingType: TEAMMEET_TYPE;
   zohoMeetingKey?: string; // Zoho meeting session key
   zohoMeetingUrl?: string; // Zoho meeting join URL
@@ -63,7 +64,7 @@ const teamMeetSchema = new Schema<ITeamMeet>(
     duration: {
       type: Number,
       required: true,
-      enum: [15, 30, 45, 60],
+      enum: [...MEETING_DURATION_MINUTES],
       default: 30,
     },
     meetingType: {

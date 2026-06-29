@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
+import { MEETING_DURATION_MINUTES } from "../constants/meetingDurations";
 import { FOLLOWUP_STATUS, MEETING_TYPE } from "./FollowUp";
 import { REFERRER_STAGE } from "./Referrer";
 
@@ -52,7 +53,7 @@ const referrerFollowUpSchema = new Schema<IReferrerFollowUp>(
     duration: {
       type: Number,
       required: true,
-      enum: [15, 30, 45, 60],
+      enum: [...MEETING_DURATION_MINUTES],
       default: 30,
     },
     meetingType: {

@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
+import { MEETING_DURATION_MINUTES } from "../constants/meetingDurations";
 import { B2B_LEAD_STAGE } from "./B2BLead";
 import { FOLLOWUP_STATUS, MEETING_TYPE } from "./FollowUp";
 
@@ -49,7 +50,7 @@ const b2bFollowUpSchema = new Schema<IB2BFollowUp>(
     duration: {
       type: Number,
       required: true,
-      enum: [15, 30, 45, 60],
+      enum: [...MEETING_DURATION_MINUTES],
       default: 30,
     },
     meetingType: {

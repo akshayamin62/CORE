@@ -1,4 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose';
+import { MEETING_DURATION_MINUTES } from '../../constants/meetingDurations';
 
 export enum IVY_PARENT_INTERVIEW_STATUS {
   SCHEDULED = 'scheduled',
@@ -16,7 +17,7 @@ export interface IIvyParentInterviewSchedule extends Document {
   subject: string;
   scheduledDate: Date;
   scheduledTime: string; // HH:mm
-  duration: number; // 15 | 30 | 45 | 60
+  duration: number; // 5 | 15 | 30 | 45 | 60
   meetingMode: IVY_INTERVIEW_MEETING_MODE;
   meetLink?: string; // for online meetings (manual)
   zohoMeetingKey?: string;
@@ -59,7 +60,7 @@ const ivyParentInterviewScheduleSchema = new Schema<IIvyParentInterviewSchedule>
     duration: {
       type: Number,
       required: true,
-      enum: [15, 30, 45, 60],
+      enum: [...MEETING_DURATION_MINUTES],
       default: 30,
     },
     meetingMode: {

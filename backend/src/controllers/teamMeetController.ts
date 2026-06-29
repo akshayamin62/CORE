@@ -2,6 +2,10 @@ import { Response } from "express";
 import { AuthRequest } from "../types/auth";
 import path from "path";
 import fs from "fs";
+import {
+  isValidMeetingDuration,
+  MEETING_DURATION_ERROR_MESSAGE,
+} from "../constants/meetingDurations";
 import TeamMeet, { TEAMMEET_STATUS, TEAMMEET_TYPE } from "../models/TeamMeet";
 import FollowUp, { } from "../models/FollowUp";
 import User from "../models/User";
@@ -275,10 +279,10 @@ export const createTeamMeet = async (
     const parsedDuration = parseInt(duration as any, 10);
 
     // Validate duration
-    if (![15, 30, 45, 60].includes(parsedDuration)) {
+    if (!isValidMeetingDuration(parsedDuration)) {
       return res.status(400).json({
         success: false,
-        message: "Duration must be 15, 30, 45, or 60 minutes",
+        message: MEETING_DURATION_ERROR_MESSAGE,
       });
     }
 

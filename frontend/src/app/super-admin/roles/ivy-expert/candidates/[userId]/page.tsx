@@ -9,6 +9,7 @@ import SuperAdminRoleDetailFrame from '@/components/SuperAdminRoleDetailFrame';
 import toast, { Toaster } from 'react-hot-toast';
 import axios from 'axios';
 import AuthImage from '@/components/AuthImage';
+import MeetingDurationOptions from '@/components/MeetingDurationOptions';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell,
@@ -1084,10 +1085,7 @@ export default function CandidateDetailPage() {
                                 onChange={(e) => setStudentMeetForm((f) => ({ ...f, duration: Number(e.target.value) }))}
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-green-500 focus:border-green-500"
                               >
-                                <option value={15}>15 minutes</option>
-                                <option value={30}>30 minutes</option>
-                                <option value={45}>45 minutes</option>
-                                <option value={60}>60 minutes</option>
+                                <MeetingDurationOptions labelStyle="long" />
                               </select>
                             </div>
                             <div>
@@ -1429,10 +1427,7 @@ export default function CandidateDetailPage() {
                                 onChange={(e) => setParentMeetForm((f) => ({ ...f, duration: Number(e.target.value) }))}
                                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-purple-500 focus:border-purple-500"
                               >
-                                <option value={15}>15 minutes</option>
-                                <option value={30}>30 minutes</option>
-                                <option value={45}>45 minutes</option>
-                                <option value={60}>60 minutes</option>
+                                <MeetingDurationOptions labelStyle="long" />
                               </select>
                             </div>
                             <div>

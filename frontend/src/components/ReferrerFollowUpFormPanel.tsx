@@ -13,6 +13,7 @@ import { adminAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 import { getReferrerDisplayName } from '@/utils/referrerFollowUpHelpers';
+import MeetingDurationOptions from '@/components/MeetingDurationOptions';
 
 interface ReferrerFollowUpFormPanelProps {
   mode: 'create' | 'update';
@@ -255,10 +256,7 @@ export default function ReferrerFollowUpFormPanel({
                     onChange={(e) => setDuration(parseInt(e.target.value))}
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   >
-                    <option value={15}>15 min</option>
-                    <option value={30}>30 min</option>
-                    <option value={45}>45 min</option>
-                    <option value={60}>60 min</option>
+                    <MeetingDurationOptions />
                   </select>
                 </div>
                 <div>
@@ -477,10 +475,7 @@ export default function ReferrerFollowUpFormPanel({
                           onChange={(e) => setNextDuration(parseInt(e.target.value))}
                           className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
                         >
-                          <option value={15}>15 min</option>
-                          <option value={30}>30 min</option>
-                          <option value={45}>45 min</option>
-                          <option value={60}>60 min</option>
+                          <MeetingDurationOptions />
                         </select>
                       </div>
                       <div>

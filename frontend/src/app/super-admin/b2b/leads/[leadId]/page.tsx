@@ -9,6 +9,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import { format } from 'date-fns';
 import FollowUpCalendarGrid from '@/components/FollowUpCalendarGrid';
 import B2BFollowUpFormPanel from '@/components/B2BFollowUpFormPanel';
+import MeetingDurationOptions from '@/components/MeetingDurationOptions';
 import EntityNotesPanel from '@/components/EntityNotesPanel';
 
 // Adapter: map B2B follow-up data to FollowUp shape for calendar/sidebar components
@@ -510,7 +511,7 @@ export default function SuperAdminB2BLeadDetailPage() {
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Duration</label>
                       <select value={newFollowUp.duration} onChange={(e) => { setNewFollowUp({ ...newFollowUp, duration: parseInt(e.target.value) }); setAvailabilityStatus(null); }} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value={15}>15 min</option><option value={30}>30 min</option><option value={45}>45 min</option><option value={60}>60 min</option>
+                        <MeetingDurationOptions />
                       </select>
                     </div>
                     <div>
