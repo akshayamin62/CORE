@@ -110,12 +110,33 @@ export function buildCallbackMobileNavItems(
     children?: MobileNavChild[];
   }>
 ): MobileNavItem[] {
-  return items.map((item) => ({
-    id: item.id,
-    label: item.label,
-    icon: item.icon,
-    isActive: item.isActive,
-    onClick: item.onClick,
-    children: item.children,
-  }));
+  return reorderPaymentAfterServiceProviders(
+    items.map((item) => ({
+      id: item.id,
+      label: item.label,
+      icon: item.icon,
+      isActive: item.isActive,
+      onClick: item.onClick,
+      children: item.children,
+    }))
+  );
+}
+
+/** Mobile-only: keep Payment immediately after Service Providers (rightmost common tab). */
+export function reorderPaymentAfterServiceProviders(items: MobileNavItem[]): MobileNavItem[] {
+  const paymentIndex = items.findIndex(
+    (item) => item.id === 'payment' || item.label.trim().toLowerCase() === 'payment'
+  );
+  if (paymentIndex === -1) return items;
+
+  const paymentItem = items[paymentIndex];
+  const withoutPayment = items.filter((_, index) => index !== paymentIndex);
+  const serviceProvidersIndex = withoutPayment.findIndex((item) => item.id === 'service-providers');
+  const insertAt = serviceProvidersIndex === -1 ? withoutPayment.length : serviceProvidersIndex + 1;
+
+  return [
+    ...withoutPayment.slice(0, insertAt),
+    paymentItem,
+    ...withoutPayment.slice(insertAt),
+  ];
 }

@@ -212,10 +212,9 @@ export default function StudentLayout({
     return pathname === outerRegPath;
   };
 
-  const outerServiceMenuLabel =
-    outerService?.name && outerService.name.length <= 14
-      ? outerService.name
-      : 'Application';
+  const isCommonPathActive = (path: string) =>
+    pathname === path ||
+    (path !== '/student/service-plans' && pathname.startsWith(`${path}/`));
 
   // ─── Reusable nav button renderer ───
   const navBtn = (key: string, label: string, icon: React.ReactNode, active: boolean, onClick: () => void) => (
@@ -299,27 +298,13 @@ export default function StudentLayout({
     ...(isCoachingClasses
       ? []
       : isOuterNav && outerReg
-        ? (() => {
-            const serviceChildren = outerServiceNavItems.map((item) => ({
-              id: item.key,
-              label: item.label,
-              icon: item.icon,
-              isActive: isOuterServiceItemActive(item.key),
-              onClick: () => handleOuterServiceNav(item.key),
-            }));
-            const activeServiceChild = serviceChildren.find((child) => child.isActive);
-
-            return [
-              {
-                id: 'outer-service-menu',
-                label: activeServiceChild?.label ?? outerServiceMenuLabel,
-                icon: activeServiceChild?.icon ?? Icon.application,
-                isActive: serviceChildren.some((child) => child.isActive),
-                onClick: () => {},
-                children: serviceChildren,
-              },
-            ];
-          })()
+        ? outerServiceNavItems.map((item) => ({
+            id: item.key,
+            label: item.label,
+            icon: item.icon,
+            isActive: isOuterServiceItemActive(item.key),
+            onClick: () => handleOuterServiceNav(item.key),
+          }))
         : isEducationPlanning
           ? [
               ...eduPlanItems.map((item) => ({
@@ -373,9 +358,7 @@ export default function StudentLayout({
       id: item.key,
       label: item.label,
       icon: item.icon,
-      isActive:
-        pathname === item.path ||
-        (item.path !== '/student/service-plans' && pathname.startsWith(`${item.path}/`)),
+      isActive: isCommonPathActive(item.path),
       onClick: () => router.push(item.path),
     })),
   ]);

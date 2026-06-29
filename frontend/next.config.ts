@@ -41,6 +41,7 @@ function collectAllowedDevOrigins(): string[] {
 const allowedDevOrigins = collectAllowedDevOrigins();
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   turbopack: {
     root: path.resolve(__dirname),
   },

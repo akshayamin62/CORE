@@ -66,8 +66,9 @@ export default function MobileBottomNav({ items, visibleCount = VISIBLE_COUNT }:
   const [indicatorLeft, setIndicatorLeft] = useState(0);
 
   const canScroll = items.length > visibleCount;
+  const slotWidthPercent = 100 / visibleCount;
   const trackWidthPercent = canScroll ? (items.length / visibleCount) * 100 : 100;
-  const itemWidthPercent = 100 / items.length;
+  const itemWidthPercent = canScroll ? slotWidthPercent * (100 / trackWidthPercent) : 100 / items.length;
 
   const activeIndex = items.findIndex((item) => item.isActive);
 
@@ -231,7 +232,7 @@ export default function MobileBottomNav({ items, visibleCount = VISIBLE_COUNT }:
                         scrollSnapAlign: 'center',
                         minHeight: 44,
                       }}
-                      className="relative flex h-full max-h-full shrink-0 flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 py-2 touch-manipulation transition-transform duration-200 active:scale-95"
+                      className="relative flex h-full max-h-full shrink-0 flex-col items-center justify-center gap-0.5 px-1 py-2 touch-manipulation transition-transform duration-200 active:scale-95"
                       aria-current={item.isActive ? 'page' : undefined}
                       aria-label={item.label}
                       aria-haspopup={hasChildren ? 'menu' : undefined}
