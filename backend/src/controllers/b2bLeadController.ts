@@ -14,13 +14,27 @@ import { sendWhatsAppEnquiryWelcome, sendWhatsAppGeneral4LineNotification } from
  */
 export const submitB2BEnquiry = async (req: Request, res: Response): Promise<Response> => {
   try {
-    const { firstName, middleName, lastName, email, mobileNumber, country, state, city, type } = req.body;
+    const { firstName, middleName, lastName, email, mobileNumber, country, state, city, qualification, currentRole, type } = req.body;
 
     // Validation
     if (!firstName || !lastName || !email || !mobileNumber || !type) {
       return res.status(400).json({
         success: false,
         message: "All fields are required: firstName, lastName, email, mobileNumber, type",
+      });
+    }
+
+    if (!qualification?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Qualification is required",
+      });
+    }
+
+    if (!currentRole?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Current role is required",
       });
     }
 
@@ -68,6 +82,8 @@ export const submitB2BEnquiry = async (req: Request, res: Response): Promise<Res
       country: country?.trim() || undefined,
       state: state?.trim() || undefined,
       city: city?.trim() || undefined,
+      qualification: qualification.trim(),
+      currentRole: currentRole.trim(),
       type: type as B2B_LEAD_TYPE,
       stage: B2B_LEAD_STAGE.NEW,
       source: "B2B Enquiry Form",

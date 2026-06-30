@@ -352,6 +352,14 @@ export default function B2BSalesLeadDetailPage() {
                   <p className="text-gray-900 font-medium">{lead.city || 'N/A'}</p>
                 </div>
                 <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Qualification</label>
+                  <p className="text-gray-900 font-medium">{lead.qualification || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1">Current Role</label>
+                  <p className="text-gray-900 font-medium">{lead.currentRole || 'N/A'}</p>
+                </div>
+                <div>
                   <label className="block text-xs font-bold text-gray-500 mb-1">Submitted On</label>
                   <p className="text-gray-900">{new Date(lead.createdAt).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                 </div>

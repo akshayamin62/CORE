@@ -1231,6 +1231,8 @@ export const b2bAPI = {
     country?: string;
     state?: string;
     city: string;
+    qualification: string;
+    currentRole: string;
     type: string;
   }) => api.post('/b2b/public/enquiry', data),
 
