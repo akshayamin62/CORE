@@ -7,6 +7,9 @@ import { referrerRegistrationAPI } from '@/lib/api';
 import toast, { Toaster } from 'react-hot-toast';
 import AuthImage from '@/components/AuthImage';
 
+const INDIA_ISO_CODE = 'IN';
+const INDIA_COUNTRY_NAME = Country.getCountryByCode(INDIA_ISO_CODE)?.name || 'India';
+
 interface AdminInfo {
   adminName: string;
   companyName: string;
@@ -29,26 +32,18 @@ export default function BecomeReferrerPage() {
     lastName: '',
     email: '',
     mobileNumber: '',
-    country: '',
+    country: INDIA_COUNTRY_NAME,
     state: '',
     city: '',
     qualification: '',
     currentRole: '',
   });
 
-  const [countries, setCountries] = useState<any[]>([]);
-  const [states, setStates] = useState<any[]>([]);
+  const [states, setStates] = useState(() => State.getStatesOfCountry(INDIA_ISO_CODE) || []);
   const [cities, setCities] = useState<any[]>([]);
 
   useEffect(() => {
     fetchAdminInfo();
-    // load countries list
-    try {
-      const all = Country.getAllCountries();
-      setCountries(all || []);
-    } catch (err) {
-      setCountries([]);
-    }
   }, [adminSlug]);
 
   const fetchAdminInfo = async () => {
@@ -108,30 +103,12 @@ export default function BecomeReferrerPage() {
     }
   };
 
-  const handleCountryChange = (isoCode: string) => {
-    const c = countries.find((c) => c.isoCode === isoCode);
-    setFormData({ ...formData, country: c ? c.name : '' , state: '', city: '' });
-    if (isoCode) {
-      const st = State.getStatesOfCountry(isoCode) || [];
-      setStates(st);
-      setCities([]);
-    } else {
-      setStates([]);
-      setCities([]);
-    }
-  };
-
   const handleStateChange = (stateIso: string) => {
     const s = states.find((s) => s.isoCode === stateIso);
     setFormData({ ...formData, state: s ? s.name : '', city: '' });
-    if (stateIso && countries.length) {
-      const countryIso = countries.find((c) => c.name === formData.country)?.isoCode;
-      if (countryIso) {
-        const ct = City.getCitiesOfState(countryIso, stateIso) || [];
-        setCities(ct);
-      } else {
-        setCities([]);
-      }
+    if (stateIso) {
+      const ct = City.getCitiesOfState(INDIA_ISO_CODE, stateIso) || [];
+      setCities(ct);
     } else {
       setCities([]);
     }
@@ -289,28 +266,14 @@ export default function BecomeReferrerPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                  <select
-                    value={countries.find(c => c.name === formData.country)?.isoCode || ''}
-                    onChange={(e) => handleCountryChange(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">Select country</option>
-                    {countries.map((c) => (
-                      <option key={c.isoCode} value={c.isoCode}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">State <span className="text-red-500">*</span></label>
                   <select
                     value={states.find(s => s.name === formData.state)?.isoCode || ''}
                     onChange={(e) => handleStateChange(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled={!states.length}
+                    required
                   >
                     <option value="">Select state</option>
                     {states.map((s) => (
@@ -320,20 +283,34 @@ export default function BecomeReferrerPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
-                  <select
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled={!cities.length}
-                  >
-                    <option value="">Select city</option>
-                    {cities.map((c) => (
-                      <option key={c.name} value={c.name}>{c.name}</option>
-                    ))}
-                  </select>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">City <span className="text-red-500">*</span></label>
+                  {cities.length > 0 ? (
+                    <select
+                      value={formData.city}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      disabled={!formData.state}
+                      required
+                    >
+                      <option value="">Select city</option>
+                      {cities.map((c) => (
+                        <option key={c.name} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={formData.city}
+                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter your city"
+                      disabled={!formData.state}
+                      required
+                    />
+                  )}
                 </div>
               </div>
+              <p className="text-xs text-gray-500">Country: {INDIA_COUNTRY_NAME}</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>

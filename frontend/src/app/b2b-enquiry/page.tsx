@@ -6,6 +6,9 @@ import { B2B_LEAD_TYPE } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import { Country, State, City } from 'country-state-city';
 
+const INDIA_ISO_CODE = 'IN';
+const INDIA_COUNTRY_NAME = Country.getCountryByCode(INDIA_ISO_CODE)?.name || 'India';
+
 export default function B2BEnquiryPage() {
   const [formData, setFormData] = useState({
     firstName: '',
@@ -13,8 +16,8 @@ export default function B2BEnquiryPage() {
     lastName: '',
     email: '',
     mobileNumber: '',
-    country: '',
-    countryCode: '',
+    country: INDIA_COUNTRY_NAME,
+    countryCode: INDIA_ISO_CODE,
     state: '',
     stateCode: '',
     city: '',
@@ -182,48 +185,29 @@ export default function B2BEnquiryPage() {
               </div>
             </div>
 
-            {/* Country + State + City in one row */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Country *</label>
-                <select
-                  name="country"
-                  value={formData.countryCode}
-                  onChange={(e) => {
-                    const selected = Country.getAllCountries().find(c => c.isoCode === e.target.value);
-                    setFormData({ ...formData, country: selected?.name || '', countryCode: e.target.value, state: '', stateCode: '', city: '' });
-                  }}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
-                  required
-                >
-                  <option value="">Select country</option>
-                  {Country.getAllCountries().map((c) => (
-                    <option key={c.isoCode} value={c.isoCode}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
+            {/* State + City (country fixed to India) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">State / Province *</label>
                 <select
                   name="state"
                   value={formData.stateCode}
                   onChange={(e) => {
-                    const selected = State.getStatesOfCountry(formData.countryCode).find(s => s.isoCode === e.target.value);
+                    const selected = State.getStatesOfCountry(INDIA_ISO_CODE).find(s => s.isoCode === e.target.value);
                     setFormData({ ...formData, state: selected?.name || '', stateCode: e.target.value, city: '' });
                   }}
-                  disabled={!formData.countryCode}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
                   required
                 >
                   <option value="">Select state</option>
-                  {State.getStatesOfCountry(formData.countryCode).map((s) => (
+                  {State.getStatesOfCountry(INDIA_ISO_CODE).map((s) => (
                     <option key={s.isoCode} value={s.isoCode}>{s.name}</option>
                   ))}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
-                {City.getCitiesOfState(formData.countryCode, formData.stateCode).length > 0 ? (
+                {City.getCitiesOfState(INDIA_ISO_CODE, formData.stateCode).length > 0 ? (
                   <select
                     name="city"
                     value={formData.city}
@@ -233,7 +217,7 @@ export default function B2BEnquiryPage() {
                     required
                   >
                     <option value="">Select city</option>
-                    {City.getCitiesOfState(formData.countryCode, formData.stateCode).map((c, i) => (
+                    {City.getCitiesOfState(INDIA_ISO_CODE, formData.stateCode).map((c, i) => (
                       <option key={i} value={c.name}>{c.name}</option>
                     ))}
                   </select>
@@ -244,12 +228,14 @@ export default function B2BEnquiryPage() {
                     value={formData.city}
                     onChange={handleChange}
                     placeholder="Enter your city"
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    disabled={!formData.stateCode}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     required
                   />
                 )}
               </div>
             </div>
+            <p className="text-xs text-gray-500">Country: {INDIA_COUNTRY_NAME}</p>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Partnership Type *</label>
