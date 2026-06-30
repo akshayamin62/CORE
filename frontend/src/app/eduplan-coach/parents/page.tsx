@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { authAPI, parentAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import EduplanCoachLayout from '@/components/EduplanCoachLayout';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
 import ListPageFilters from '@/components/ListPageFilters';
@@ -61,7 +61,6 @@ export default function EduplanCoachParentsPage() {
 
   return (
     <>
-      <Toaster position="top-right" />
       <EduplanCoachLayout user={user}>
         <div className="p-4 sm:p-6 md:p-8">
           <div className="mb-6">

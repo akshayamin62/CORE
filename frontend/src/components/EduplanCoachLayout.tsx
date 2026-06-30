@@ -5,6 +5,7 @@ import { User } from '@/types';
 import { useState } from 'react';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
+import NativeAwareToaster from '@/components/NativeAwareToaster';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { buildPathMobileNavItems } from '@/utils/mobileNavHelpers';
 
@@ -94,7 +95,7 @@ export default function EduplanCoachLayout({ children, user }: EduplanCoachLayou
   });
 
   return (
-    <div className="flex min-h-[calc(100vh-6.25rem)] bg-gray-50">
+    <div className="flex min-h-[calc(100dvh-3.5rem)] w-full min-w-0 max-w-full overflow-x-hidden bg-gray-50 md:min-h-[calc(100vh-6.25rem)]">
       {/* Sidebar */}
       <aside
         className={`${
@@ -219,9 +220,10 @@ export default function EduplanCoachLayout({ children, user }: EduplanCoachLayou
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-x-hidden overflow-y-auto pb-24 md:pb-0">{children}</main>
+      <main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto app-main-mobile-pb">{children}</main>
 
       <MobileBottomNav items={mobileNavItems} />
+      <NativeAwareToaster />
     </div>
   );
 }

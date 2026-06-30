@@ -3,7 +3,7 @@ import { serviceAPI } from '@/lib/api';
 
 /** Shared responsive class strings for student detail pages (mobile-first, desktop unchanged). */
 
-export const studentPagePadding = 'px-4 py-4 pb-24 sm:px-6 sm:py-6 md:pb-8 lg:p-8';
+export const studentPagePadding = 'px-4 py-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:px-6 sm:py-6 md:pb-8 lg:p-8';
 
 export const studentCardClass =
   'mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6 sm:p-6';
@@ -76,9 +76,14 @@ export const brainographyFileRowClass =
 
 export const brainographyFileInfoClass = 'flex min-w-0 items-center gap-3';
 
-export const brainographyFileMetaClass = 'min-w-0 truncate text-sm font-medium text-gray-900';
+export const brainographyFileMetaClass =
+  'min-w-0 break-all text-sm font-medium text-gray-900 sm:truncate';
 
-export const brainographyFileActionsClass = 'flex flex-wrap gap-2 shrink-0';
+export const brainographyFileActionsClass =
+  'grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:shrink-0 [&>button]:w-full [&>label]:w-full sm:[&>button]:w-auto sm:[&>label]:w-auto [&>button]:justify-center [&>label]:justify-center [&>label]:inline-flex [&>label]:items-center';
+
+export const brainographyActionBtnClass =
+  'rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-700 sm:py-1.5';
 
 export const eduPlanPortfolioRowClass = 'w-full min-w-0 sm:flex-1 sm:min-w-[260px]';
 
@@ -146,8 +151,11 @@ export const programChatMessagesClass =
 
 export const programChatBubbleMaxClass = 'max-w-[88%] min-w-0 sm:max-w-[85%] md:max-w-md';
 
-export const activityCalendarPopupClass =
+export const activityCalendarDropdownClass =
   'absolute right-0 top-full z-50 mt-2 w-[min(420px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl animate-fadeIn';
+
+export const activityCalendarPopupClass =
+  'absolute right-0 top-full z-50 mt-2 w-[min(420px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl animate-fadeIn max-md:fixed max-md:inset-x-3 max-md:left-3 max-md:right-3 max-md:top-[calc(5rem+env(safe-area-inset-top,28px)+0.5rem)] max-md:bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px)+0.5rem)] max-md:mt-0 max-md:flex max-md:w-auto max-md:max-w-none max-md:flex-col';
 
 /** Parent detail pages — compact 2-col meta on mobile */
 export const parentMetaGridClass =

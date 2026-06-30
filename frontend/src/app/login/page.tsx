@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI } from '@/lib/api';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -49,7 +49,7 @@ export default function LoginPage() {
     setResending(true);
     try {
       await authAPI.resendOTP({ email, purpose: 'login' });
-      toast.success('A new OTP has been sent to your email.');
+      toast.success('A new OTP has been sent to your email.', { id: 'otp-sent' });
       startResendTimer();
     } catch (error: any) {
       const message = error.response?.data?.message || 'Failed to resend OTP.';
@@ -109,7 +109,7 @@ export default function LoginPage() {
         captchaAnswer
       });
       const message = response.data.message || 'OTP sent to your email!';
-      toast.success(message, { duration: 4000 });
+      toast.success(message, { id: 'otp-sent', duration: 4000 });
       setStep('verify');
       startResendTimer();
     } catch (error: any) {
@@ -159,9 +159,7 @@ export default function LoginPage() {
 
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-cyan-50 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <Toaster position="top-right" />
-      
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-cyan-50 py-12 px-4 pb-24 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl animate-float"></div>

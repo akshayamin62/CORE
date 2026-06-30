@@ -214,7 +214,7 @@ function IvyExpertLayoutContent({ children }: { children: React.ReactNode }) {
         return (
             <div className="flex bg-[#FBFBFE] min-h-screen">
                 <IvyExpertSidebar />
-                <main className="flex-1 min-h-screen overflow-x-hidden pb-24 md:pb-0">
+                <main className="flex-1 min-h-screen overflow-x-hidden app-main-mobile-pb">
                     {children}
                 </main>
             </div>

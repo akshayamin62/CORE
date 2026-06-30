@@ -7,8 +7,18 @@ import { User, USER_ROLE } from '@/types';
 import EduplanCoachLayout from '@/components/EduplanCoachLayout';
 import StudentProfileModal from '@/components/StudentProfileModal';
 import AuthImage from '@/components/AuthImage';
-import { studentHeaderRowClass, studentPagePadding, studentMetaGridClass } from '@/components/studentDetailResponsive';
-import toast, { Toaster } from 'react-hot-toast';
+import {
+  studentHeaderRowClass,
+  studentPagePadding,
+  studentMetaGridClass,
+  studentCardClass,
+  registrationCardClass,
+  registrationCardRowClass,
+  registrationMetaRowClass,
+  registrationActionBtnClass,
+  roleListBackBtnClass,
+} from '@/components/studentDetailResponsive';
+import toast from 'react-hot-toast';
 import axios from 'axios';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 
@@ -180,13 +190,12 @@ export default function EduplanCoachStudentDetailPage() {
 
   return (
     <>
-      <Toaster position="top-right" />
       <EduplanCoachLayout user={user}>
         <div className={studentPagePadding}>
           {/* Back Button */}
           <button
             onClick={() => router.push('/eduplan-coach/students')}
-            className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            className={roleListBackBtnClass}
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -195,7 +204,7 @@ export default function EduplanCoachStudentDetailPage() {
           </button>
 
           {/* Student Info Card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+          <div className={`${studentCardClass} mb-4 sm:mb-6`}>
             <div className={studentHeaderRowClass}>
               <div className="flex items-center">
                 <AuthImage
@@ -298,7 +307,7 @@ export default function EduplanCoachStudentDetailPage() {
             </div>
 
             {/* Source / Intake / Year / Transfer */}
-            <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-gray-200 mt-4">
+            <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-gray-200 pt-4 sm:gap-6">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Source</p>
                 <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${(student as any).referrerId ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>
@@ -337,43 +346,40 @@ export default function EduplanCoachStudentDetailPage() {
           </div>
 
           {/* Service Registrations */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <div className={studentCardClass}>
+            <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">
               Service Registrations ({educationPlanningRegistrations.length})
             </h2>
 
             {educationPlanningRegistrations.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {educationPlanningRegistrations.map((registration) => (
-                  <div
-                    key={registration._id}
-                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1">
+                  <div key={registration._id} className={registrationCardClass}>
+                    <div className={registrationCardRowClass}>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="mb-1 font-semibold text-gray-900">
                           {registration.serviceId.name}
                           {registration.planTier && (
-                            <span className="ml-2 px-2 py-0.5 bg-purple-100 text-purple-800 rounded text-xs font-medium">
+                            <span className="ml-2 rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800">
                               {registration.planTier}
                             </span>
                           )}
                         </h3>
-                        <p className="text-sm text-gray-600 mb-2">
+                        <p className="mb-2 text-sm text-gray-600">
                           {registration.serviceId.shortDescription}
                         </p>
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <div className={registrationMetaRowClass}>
                           <span>Registered: {new Date(registration.createdAt).toLocaleDateString('en-GB')}</span>
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
+                          <span className="rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
                             {registration.status}
                           </span>
                         </div>
                       </div>
                       <button
                         onClick={() => handleViewFormData(registration._id)}
-                        className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        className={`${registrationActionBtnClass} whitespace-nowrap`}
                       >
-                        View/Edit Form
+                        View / Edit Form
                       </button>
                     </div>
                   </div>
@@ -401,10 +407,10 @@ export default function EduplanCoachStudentDetailPage() {
 
           {/* Service Plans */}
           {student && (student.adminId?._id || student.advisorId?._id) && (
-            <div className="mt-6">
+            <div className="mt-4 sm:mt-6">
               <button
                 onClick={() => router.push('/service-plans/view?studentId=' + studentId)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:w-auto"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

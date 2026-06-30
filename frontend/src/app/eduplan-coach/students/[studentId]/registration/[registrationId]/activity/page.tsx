@@ -5,7 +5,10 @@ import { useRouter, useParams } from 'next/navigation';
 import { authAPI, activityAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import EduplanCoachLayout from '@/components/EduplanCoachLayout';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
+import ActivityCalendarModal from '@/components/ActivityCalendarModal';
+import { activityCalendarDropdownClass, studentPagePadding } from '@/components/studentDetailResponsive';
+import { useCompactViewport } from '@/lib/useCompactViewport';
 import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
 import {
   format,
@@ -162,6 +165,7 @@ function ActivityContent() {
   const [summaries, setSummaries] = useState<DaySummary[]>([]);
   const [calOpen, setCalOpen] = useState(false);
   const calRef = useRef<HTMLDivElement>(null);
+  const compactViewport = useCompactViewport();
 
   const [focus, setFocus] = useState<MonthlyFocusData>({ ...emptyFocus });
   const [focusLoaded, setFocusLoaded] = useState(false);
@@ -204,14 +208,15 @@ function ActivityContent() {
     })();
   }, [router]);
 
-  /* ── Close calendar on outside click ── */
+  /* ── Close calendar on outside click (desktop dropdown only) ── */
   useEffect(() => {
+    if (compactViewport || !calOpen) return;
     const handler = (e: MouseEvent) => {
       if (calRef.current && !calRef.current.contains(e.target as Node)) setCalOpen(false);
     };
-    if (calOpen) document.addEventListener('mousedown', handler);
+    document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [calOpen]);
+  }, [calOpen, compactViewport]);
 
   /* ── Calendar events ── */
   const calEvents: CalendarEvent[] = useMemo(() => {
@@ -375,99 +380,107 @@ function ActivityContent() {
     );
   }
 
+  const calendarPanel = (
+    <>
+      <div className="border-b border-gray-100 bg-gray-50 px-3 py-2.5">
+        <div className="mb-1.5 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <button type="button" onClick={() => handleCalNav('PREV')}
+              className="flex h-7 w-7 items-center justify-center rounded border border-gray-200 bg-white text-sm font-bold text-gray-600 hover:bg-gray-50">‹</button>
+            <span className="min-w-[120px] text-center text-sm font-bold text-gray-800">{MONTHS[getMonth(calDate)]} {getYear(calDate)}</span>
+            <button type="button" onClick={() => handleCalNav('NEXT')}
+              className="flex h-7 w-7 items-center justify-center rounded border border-gray-200 bg-white text-sm font-bold text-gray-600 hover:bg-gray-50">›</button>
+          </div>
+          <div className="flex items-center gap-1">
+            {(['month', 'week', 'day'] as View[]).map((v) => (
+              <button key={v} type="button" onClick={() => setCalView(v)}
+                className={`rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${calView === v ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+                {v.charAt(0).toUpperCase() + v.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <select value={getMonth(calDate)} onChange={(e) => handleMonthChange(Number(e.target.value))}
+            className="flex-1 rounded border border-gray-200 bg-white px-1.5 py-0.5 text-xs">
+            {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
+          </select>
+          <select value={getYear(calDate)} onChange={(e) => handleYearChange(Number(e.target.value))}
+            className="w-16 rounded border border-gray-200 bg-white px-1.5 py-0.5 text-xs">
+            {years.map((y) => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <button type="button" onClick={() => handleCalNav('TODAY')}
+            className="rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-600 hover:bg-blue-100">Today</button>
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto p-2" style={{ height: compactViewport ? '100%' : calView === 'month' ? 340 : 380, minHeight: compactViewport ? 280 : undefined }}>
+        <Calendar
+          localizer={localizer} events={calEvents}
+          startAccessor="start" endAccessor="end"
+          view={calView} date={calDate}
+          onNavigate={handleNavigate} onView={(v) => setCalView(v)}
+          onSelectEvent={(event) => { setSelectedDate(event.id); setCalOpen(false); }}
+          onSelectSlot={({ start }) => { setSelectedDate(toYMD(start)); setCalOpen(false); }}
+          selectable
+          eventPropGetter={eventStyleGetter}
+          views={['month', 'week', 'day']} defaultView="month" popup
+          style={{ height: '100%' }} toolbar={false}
+          formats={{
+            timeGutterFormat: (date: Date) => format(date, 'HH:mm'),
+            eventTimeRangeFormat: ({ start: s, end: e }: { start: Date; end: Date }) =>
+              `${format(s, 'HH:mm')} - ${format(e, 'HH:mm')}`,
+          }}
+        />
+      </div>
+      <div className="flex shrink-0 items-center justify-center gap-4 border-t border-gray-100 px-3 py-2 text-[11px] text-gray-500">
+        <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-500" />Completed</span>
+        <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-amber-400" />In Progress</span>
+      </div>
+    </>
+  );
+
   return (
     <EduplanCoachLayout user={user!}>
-      <Toaster position="top-right" />
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 p-4 md:p-6 animate-fadeIn">
+      <div className={`min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 animate-fadeIn ${studentPagePadding}`}>
         {/* Top Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.push(`/eduplan-coach/students/${studentId}/registration/${registrationId}`)}
-              className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-all hover:shadow-sm active:scale-95">
+        <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <button type="button" onClick={() => router.push(`/eduplan-coach/students/${studentId}/registration/${registrationId}`)}
+              className="shrink-0 rounded-lg border border-gray-200 bg-white p-2 transition-all hover:bg-gray-50 hover:shadow-sm active:scale-95">
               <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             </button>
-            <div>
-              <h1 className="text-xl font-bold text-gray-800">Activity Management</h1>
-              <p className="text-xs text-gray-400">Read-only view &middot; {selectedDate ? format(new Date(selectedDate + 'T12:00:00'), 'EEEE, MMMM d, yyyy') : 'No date selected'}</p>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-gray-800 sm:text-xl">Activity Management</h1>
+              <p className="truncate text-xs text-gray-400">{selectedDate ? format(new Date(selectedDate + 'T12:00:00'), 'EEEE, MMM d, yyyy') : 'No date selected'}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-semibold border border-blue-200">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600">
               👁 Read Only
             </span>
             <div className="relative" ref={calRef}>
-              <button onClick={() => setCalOpen(!calOpen)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${calOpen ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+              <button
+                type="button"
+                onClick={() => setCalOpen((open) => !open)}
+                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${calOpen ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                 Calendar
               </button>
 
-              {calOpen && (
-                <div className="absolute right-0 top-full mt-2 w-[min(420px,calc(100vw-2rem))] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 animate-fadeIn overflow-hidden">
-                  {/* Cal nav */}
-                  <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-1.5">
-                        <button onClick={() => handleCalNav('PREV')}
-                          className="w-7 h-7 flex items-center justify-center text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 text-sm font-bold">‹</button>
-                        <span className="text-sm font-bold text-gray-800 min-w-[120px] text-center">{MONTHS[getMonth(calDate)]} {getYear(calDate)}</span>
-                        <button onClick={() => handleCalNav('NEXT')}
-                          className="w-7 h-7 flex items-center justify-center text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 text-sm font-bold">›</button>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {(['month', 'week', 'day'] as View[]).map((v) => (
-                          <button key={v} onClick={() => setCalView(v)}
-                            className={`px-2 py-0.5 text-[11px] font-medium rounded transition-colors ${calView === v ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
-                            {v.charAt(0).toUpperCase() + v.slice(1)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <select value={getMonth(calDate)} onChange={(e) => handleMonthChange(Number(e.target.value))}
-                        className="flex-1 px-1.5 py-0.5 text-xs border border-gray-200 rounded bg-white">
-                        {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
-                      </select>
-                      <select value={getYear(calDate)} onChange={(e) => handleYearChange(Number(e.target.value))}
-                        className="w-16 px-1.5 py-0.5 text-xs border border-gray-200 rounded bg-white">
-                        {years.map((y) => <option key={y} value={y}>{y}</option>)}
-                      </select>
-                      <button onClick={() => handleCalNav('TODAY')}
-                        className="px-2 py-0.5 text-[11px] font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded hover:bg-blue-100">Today</button>
-                    </div>
-                  </div>
-                  {/* Cal body */}
-                  <div className="p-2" style={{ height: calView === 'month' ? 340 : 380 }}>
-                    <Calendar
-                      localizer={localizer} events={calEvents}
-                      startAccessor="start" endAccessor="end"
-                      view={calView} date={calDate}
-                      onNavigate={handleNavigate} onView={(v) => setCalView(v)}
-                      onSelectEvent={(event) => { setSelectedDate(event.id); setCalOpen(false); }}
-                      onSelectSlot={({ start }) => { setSelectedDate(toYMD(start)); setCalOpen(false); }}
-                      selectable
-                      eventPropGetter={eventStyleGetter}
-                      views={['month', 'week', 'day']} defaultView="month" popup
-                      style={{ height: '100%' }} toolbar={false}
-                      formats={{
-                        timeGutterFormat: (date: Date) => format(date, 'HH:mm'),
-                        eventTimeRangeFormat: ({ start: s, end: e }: { start: Date; end: Date }) =>
-                          `${format(s, 'HH:mm')} - ${format(e, 'HH:mm')}`,
-                      }}
-                    />
-                  </div>
-                  {/* Legend */}
-                  <div className="flex items-center justify-center gap-4 px-3 py-2 border-t border-gray-100 text-[11px] text-gray-500">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" />Completed</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-400" />In Progress</span>
-                  </div>
+              {calOpen && !compactViewport && (
+                <div className={`${activityCalendarDropdownClass} flex flex-col`}>
+                  {calendarPanel}
                 </div>
               )}
             </div>
           </div>
         </div>
+
+        <ActivityCalendarModal open={compactViewport && calOpen} onClose={() => setCalOpen(false)}>
+          <div className="flex min-h-0 flex-1 flex-col">{calendarPanel}</div>
+        </ActivityCalendarModal>
 
         {/* Main Content */}
         <div className="flex flex-col lg:flex-row gap-4">
