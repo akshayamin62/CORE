@@ -248,7 +248,7 @@ export default function StudyAbroadLayout({
         )}
       </aside>
 
-      <main className="flex-1 overflow-x-hidden pb-24 md:pb-0">{children}</main>
+      <main className="flex-1 overflow-x-hidden app-main-mobile-pb">{children}</main>
 
       <MobileBottomNav items={mobileNavItems} />
     </div>

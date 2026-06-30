@@ -13,7 +13,7 @@ import FormSaveButtons from '@/components/FormSaveButtons';
 import StudentFormHeader from '@/components/StudentFormHeader';
 import ProgramSection from '@/components/ProgramSection';
 import RegistrationApplicationSection from '@/components/RegistrationApplicationSection';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { getFullName } from '@/utils/nameHelpers';
 import axios from 'axios';
 import PaymentSection from '@/components/PaymentSection';
@@ -23,7 +23,14 @@ import ActivityAnalyticsDashboard from '@/components/ActivityAnalyticsDashboard'
 import OpsCalendarGrid from '@/components/OpsCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
-import { fetchBlobUrl } from '@/lib/useBlobUrl';
+import { getApiUrl } from '@/lib/apiConfig';
+import {
+  fetchAuthorizedBlob,
+  runFileAction,
+  saveBlobOnDevice,
+  viewBlobOnDevice,
+} from '@/lib/fileActions';
+import { useMobileFileViewer } from '@/components/MobileFileViewer';
 import EducationPlanningNav from '@/components/EducationPlanningNav';
 import EducationPlanningStatCards from '@/components/EducationPlanningStatCards';
 import {
@@ -37,10 +44,11 @@ import {
   brainographyFileInfoClass,
   brainographyFileMetaClass,
   brainographyFileActionsClass,
+  brainographyActionBtnClass,
   eduPlanPortfolioRowClass,
 } from '@/components/studentDetailResponsive';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = getApiUrl();
 
 interface BrainographyDoc {
   _id: string;
@@ -65,6 +73,7 @@ export default function EduplanCoachStudentFormEditPage() {
   const params = useParams();
   const studentId = params?.studentId as string;
   const registrationId = params?.registrationId as string;
+  const { openInAppViewer } = useMobileFileViewer();
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,6 +92,7 @@ export default function EduplanCoachStudentFormEditPage() {
   const initialParentalReadOnlyRef = useRef<number[]>([]);
 
   const [brainographyDoc, setBrainographyDoc] = useState<BrainographyDoc | null>(null);
+  const [fileActionBusy, setFileActionBusy] = useState(false);
   const [uploadingBrainography, setUploadingBrainography] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -311,34 +321,38 @@ export default function EduplanCoachStudentFormEditPage() {
   };
 
   const handleBrainographyView = async () => {
-    if (!brainographyDoc) return;
+    if (!brainographyDoc || fileActionBusy) return;
+    setFileActionBusy(true);
     try {
-      const path = brainographyDoc.filePath.startsWith('/') ? brainographyDoc.filePath : `/${brainographyDoc.filePath}`;
-      const blobUrl = await fetchBlobUrl(path);
-      window.open(blobUrl, '_blank');
-    } catch {
-      toast.error('Failed to load document');
+      await runFileAction(
+        'Opening document…',
+        'Document opened',
+        async () => {
+          const blob = await fetchAuthorizedBlob(`/brainography/${registrationId}/download`);
+          viewBlobOnDevice(blob, brainographyDoc.fileName, openInAppViewer);
+        },
+        { openInAppViewer },
+      );
+    } finally {
+      setFileActionBusy(false);
     }
   };
 
   const handleBrainographyDownload = async () => {
-    if (!brainographyDoc) return;
+    if (!brainographyDoc || fileActionBusy) return;
+    setFileActionBusy(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/brainography/${registrationId}/download`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', brainographyDoc.fileName);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch {
-      toast.error('Failed to download brainography report');
+      await runFileAction(
+        'Preparing download…',
+        'File ready — tap Save or Share',
+        async () => {
+          const blob = await fetchAuthorizedBlob(`/brainography/${registrationId}/download`);
+          await saveBlobOnDevice(blob, brainographyDoc.fileName, openInAppViewer);
+        },
+        { openInAppViewer },
+      );
+    } finally {
+      setFileActionBusy(false);
     }
   };
 
@@ -612,7 +626,6 @@ export default function EduplanCoachStudentFormEditPage() {
 
   return (
     <>
-      <Toaster position="top-right" />
       <EduplanCoachLayout user={user}>
         <div className={studentPagePadding}>
           <button onClick={() => router.push(`/eduplan-coach/students/${studentId}`)} className={roleListBackBtnClass}>
@@ -709,9 +722,13 @@ export default function EduplanCoachStudentFormEditPage() {
                         </div>
                       </div>
                       <div className={brainographyFileActionsClass}>
-                        <button onClick={handleBrainographyView} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">View</button>
-                        <button onClick={handleBrainographyDownload} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">Download</button>
-                        <label className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium cursor-pointer">
+                        <button type="button" disabled={fileActionBusy} onClick={handleBrainographyView} className={`${brainographyActionBtnClass} disabled:opacity-60`}>
+                          {fileActionBusy ? 'Please wait…' : 'View'}
+                        </button>
+                        <button type="button" disabled={fileActionBusy} onClick={handleBrainographyDownload} className={`${brainographyActionBtnClass} disabled:opacity-60`}>
+                          {fileActionBusy ? 'Please wait…' : 'Download'}
+                        </button>
+                        <label className={`${brainographyActionBtnClass} cursor-pointer`}>
                           Re-upload
                           <input ref={fileInputRef} type="file" className="hidden" onChange={handleBrainographyUpload} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
                         </label>

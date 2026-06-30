@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import VisitorTracker from "@/components/VisitorTracker";
+import MobileAppProviders from "@/components/MobileAppProviders";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className="overflow-x-hidden" suppressHydrationWarning>
       <head>
         <meta
           name="viewport"
@@ -46,11 +47,12 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen overflow-x-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex w-full max-w-full min-w-0 flex-col min-h-screen overflow-x-hidden`}
       >
         <VisitorTracker />
+        <MobileAppProviders />
         <Navbar />
-        <main className="grow">
+        <main className="grow min-w-0 w-full max-w-full overflow-x-hidden pt-[calc(5rem+env(safe-area-inset-top,28px))] md:pt-20">
           {children}
         </main>
         <Footer />

@@ -4,15 +4,10 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-/** Read CAPACITOR_SERVER_URL from env or .env.capacitor.local */
-export function getCapacitorServerUrl() {
-  const fromEnv = process.env.CAPACITOR_SERVER_URL?.trim();
-  if (fromEnv) return fromEnv;
+function readUrlFromFile(filePath) {
+  if (!existsSync(filePath)) return undefined;
 
-  const envFile = join(root, '.env.capacitor.local');
-  if (!existsSync(envFile)) return undefined;
-
-  for (const line of readFileSync(envFile, 'utf8').split('\n')) {
+  for (const line of readFileSync(filePath, 'utf8').split('\n')) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith('#')) continue;
     const [key, ...rest] = trimmed.split('=');
@@ -21,4 +16,29 @@ export function getCapacitorServerUrl() {
     }
   }
   return undefined;
+}
+
+/**
+ * Capacitor server URL for the native shell WebView.
+ *
+ * - dev (default): `.env.capacitor.local` → LAN IP for USB/Wi‑Fi testing
+ * - production: `.env.capacitor.production.local` → HTTPS deployed app (Play Store)
+ *
+ * Override anytime with CAPACITOR_SERVER_URL env var.
+ */
+export function getCapacitorServerUrl() {
+  const fromEnv = process.env.CAPACITOR_SERVER_URL?.trim();
+  if (fromEnv) return fromEnv;
+
+  const mode = process.env.CAPACITOR_MODE || 'dev';
+  const envFile =
+    mode === 'production'
+      ? join(root, '.env.capacitor.production.local')
+      : join(root, '.env.capacitor.local');
+
+  return readUrlFromFile(envFile);
+}
+
+export function getCapacitorMode() {
+  return process.env.CAPACITOR_MODE || 'dev';
 }

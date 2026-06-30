@@ -168,7 +168,7 @@ export default function ParentLayout({ children, user }: ParentLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-x-hidden overflow-y-auto pb-24 md:pb-0">
+      <main className="flex-1 overflow-x-hidden overflow-y-auto app-main-mobile-pb">
         {children}
       </main>
 

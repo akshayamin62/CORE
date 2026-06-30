@@ -5,7 +5,8 @@ import { useRouter, useParams } from 'next/navigation';
 import { activityAPI, authAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import StudentOuterPageLayout from '@/components/StudentOuterPageLayout';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
+import { activityCalendarPopupClass } from '@/components/studentDetailResponsive';
 import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
 import {
   format,
@@ -528,7 +529,6 @@ function ActivityContent() {
   /* ═══════ RENDER ═══════ */
   return (
     <div className="min-h-screen bg-gray-50">
-      <Toaster position="top-right" />
 
       {/* ── Top bar ── */}
       <div className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
@@ -559,7 +559,7 @@ function ActivityContent() {
 
             {/* Calendar dropdown */}
             {calOpen && (
-              <div className="absolute right-0 top-full mt-2 w-[min(420px,calc(100vw-2rem))] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 animate-fadeIn overflow-hidden">
+              <div className={activityCalendarPopupClass}>
                 {/* Cal nav */}
                 <div className="px-3 py-2.5 border-b border-gray-100 bg-gray-50">
                   <div className="flex items-center justify-between mb-1.5">
@@ -593,7 +593,7 @@ function ActivityContent() {
                   </div>
                 </div>
                 {/* Cal body */}
-                <div className="p-2" style={{ height: calView === 'month' ? 340 : 380 }}>
+                <div className="min-h-0 flex-1 overflow-y-auto p-2 max-md:overflow-y-auto" style={{ height: calView === 'month' ? 340 : 380 }}>
                   <Calendar
                     localizer={localizer} events={calEvents}
                     startAccessor="start" endAccessor="end"

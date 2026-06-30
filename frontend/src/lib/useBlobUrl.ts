@@ -2,22 +2,27 @@
 
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { BACKEND_URL } from '@/lib/ivyApi';
+import { getBackendUrl } from '@/lib/apiConfig';
 
-/**
- * Dedicated axios instance for fetching files from the backend.
- * Uses BACKEND_URL (e.g. http://localhost:5000) as base — NOT ivyApi
- * which has baseURL .../api/ivy and would prepend that to /uploads/... paths.
- */
-const fileApi = axios.create({
-  baseURL: BACKEND_URL,
-  timeout: 60000,
-});
+async function fetchFileBlob(path: string, responseType: 'blob' | 'arraybuffer' = 'blob') {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  return axios.get(path, {
+    baseURL: getBackendUrl(),
+    timeout: 60000,
+    responseType,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+}
+
+/** Axios instance for file fetches — baseURL resolved at request time for mobile/Capacitor */
+export const fileApi = axios.create({ timeout: 60000 });
 
 fileApi.interceptors.request.use((config) => {
+  config.baseURL = getBackendUrl();
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
     if (token) {
+      config.headers = config.headers ?? {};
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
@@ -26,10 +31,6 @@ fileApi.interceptors.request.use((config) => {
 
 /**
  * Fetches a file from the backend as an authenticated blob and returns a local object URL.
- * This avoids cross-origin iframe/img issues on hosted deployments where X-Frame-Options blocks direct loading.
- *
- * @param path - The backend file path (e.g. `/uploads/abc/file.pdf`)
- * @returns { blobUrl, loading, error }
  */
 export function useBlobUrl(path: string | null) {
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
@@ -49,7 +50,7 @@ export function useBlobUrl(path: string | null) {
       setLoading(true);
       setError(false);
       try {
-        const res = await fileApi.get(path, { responseType: 'blob' });
+        const res = await fetchFileBlob(path);
         if (!cancelled) {
           const url = URL.createObjectURL(res.data);
           objectUrls.push(url);
@@ -66,21 +67,14 @@ export function useBlobUrl(path: string | null) {
 
     return () => {
       cancelled = true;
-      objectUrls.forEach(u => URL.revokeObjectURL(u));
+      objectUrls.forEach((u) => URL.revokeObjectURL(u));
     };
   }, [path]);
 
   return { blobUrl, loading, error };
 }
 
-/**
- * One-shot function to fetch a file as a blob URL.
- * Use this for imperative calls (e.g. onClick handlers) rather than in render.
- */
 export async function fetchBlobUrl(path: string): Promise<string> {
-  const res = await fileApi.get(path, { responseType: 'blob' });
+  const res = await fetchFileBlob(path);
   return URL.createObjectURL(res.data);
 }
-
-/** Exported for direct use in download functions */
-export { fileApi };

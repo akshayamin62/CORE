@@ -63,14 +63,13 @@ export default function Navbar() {
   const showLoggedIn = mounted && isLoggedIn;
 
   return (
-    <nav className="app-mobile-safe-top bg-white sticky top-0 z-50 shadow-md border-b border-gray-200 md:pt-0" suppressHydrationWarning>
+    <nav className="app-mobile-safe-top fixed top-0 left-0 right-0 z-50 bg-white shadow-md border-b border-gray-200 md:pt-0" suppressHydrationWarning>
       <div className="max-w-7xl mx-auto px-4 sm:px-1 lg:px-1">
         <div className="flex justify-between h-20 animate-fade-in">
           {/* Logo and Brand */}
-          <div className="flex items-center">
+          <div className="flex items-center shrink-0">
             <Link href="/" className="flex items-center group">
               <div className="relative">
-                {/* <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-300"></div> */}
                 <img 
                   src="/logo1.png" 
                   alt="CORE Logo" 

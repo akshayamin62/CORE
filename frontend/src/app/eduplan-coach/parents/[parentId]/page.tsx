@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { authAPI, parentAPI } from '@/lib/api';
 import { User, USER_ROLE } from '@/types';
 import EduplanCoachLayout from '@/components/EduplanCoachLayout';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
 import { roleListPagePadding } from '@/components/studentDetailResponsive';
@@ -65,7 +65,6 @@ export default function EduplanCoachParentDetailPage() {
 
   return (
     <>
-      <Toaster position="top-right" />
       <EduplanCoachLayout user={user}>
         <div className={roleListPagePadding}>
           <button onClick={() => router.back()} className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors">

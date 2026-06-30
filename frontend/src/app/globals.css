@@ -41,6 +41,60 @@ body {
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Mobile / Capacitor: keep content inside viewport on all phone sizes */
+@media (max-width: 767px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  img,
+  video,
+  canvas,
+  iframe {
+    max-width: 100%;
+  }
+
+  /* Role layouts with bottom nav — extra clearance for safe area */
+  .app-mobile-bottom-clear {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .app-main-mobile-pb {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (min-width: 768px) {
+  .app-main-mobile-pb {
+    padding-bottom: 0;
+  }
+}
+
+/* react-hot-toast — native app: below fixed navbar, full width, swipe to dismiss */
+.app-toaster-host {
+  z-index: 99999 !important;
+  pointer-events: none;
+}
+
+.app-toaster-host > div {
+  pointer-events: auto;
+  max-width: 100%;
+}
+
+.app-toast-item {
+  max-width: 100% !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.45 !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.18) !important;
 }
 
 /* Capacitor / mobile: keep header below status bar (battery, time) */

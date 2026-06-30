@@ -272,7 +272,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             <Suspense fallback={<div className="w-72 bg-white border-r animate-pulse"></div>}>
                 <StudentSidebar />
             </Suspense>
-            <main className="flex-1 min-h-screen overflow-x-hidden pb-24 md:pb-0">
+            <main className="flex-1 min-h-screen overflow-x-hidden app-main-mobile-pb">
                 {children}
             </main>
         </div>

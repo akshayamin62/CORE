@@ -6,6 +6,14 @@ import { authAPI, spServiceAPI } from '@/lib/api';
 import { User, USER_ROLE, SPEnquiryItem } from '@/types';
 import ServiceProviderLayout from '@/components/ServiceProviderLayout';
 import toast, { Toaster } from 'react-hot-toast';
+import {
+  roleListPagePadding,
+  roleListTitleClass,
+  roleListSubtitleClass,
+  roleListStatGridClass,
+} from '@/components/studentDetailResponsive';
+import ListPageFilters from '@/components/ListPageFilters';
+import PageStatCard from '@/components/PageStatCard';
 
 export default function SPStudentsPage() {
   const router = useRouter();
@@ -89,15 +97,20 @@ export default function SPStudentsPage() {
   return (
     <ServiceProviderLayout user={user}>
       <Toaster position="top-right" />
-      <div className="p-6 lg:p-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Students</h1>
-          <p className="text-gray-500 mt-1">Student enquiries from your service listings</p>
+      <div className={roleListPagePadding}>
+        <div className="mb-4 sm:mb-6">
+          <h1 className={roleListTitleClass}>Students</h1>
+          <p className={roleListSubtitleClass}>Student enquiries from your service listings</p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        {/* Stats — compact on mobile, original layout on md+ */}
+        <div className={`${roleListStatGridClass} md:hidden`}>
+          <PageStatCard compact title="Total Enquiries" mobileTitle="Total" value={enquiries.length} color="blue" onClick={() => setStatusFilter('All')} />
+          <PageStatCard compact title="New" mobileTitle="New" value={newCount} color="blue" onClick={() => setStatusFilter(statusFilter === 'New' ? 'All' : 'New')} />
+          <PageStatCard compact title="Contacted" mobileTitle="Contacted" value={contactedCount} color="yellow" onClick={() => setStatusFilter(statusFilter === 'Contacted' ? 'All' : 'Contacted')} />
+          <PageStatCard compact title="Converted" mobileTitle="Converted" value={convertedCount} color="green" onClick={() => setStatusFilter(statusFilter === 'Converted' ? 'All' : 'Converted')} />
+        </div>
+        <div className="mb-6 hidden grid-cols-2 gap-4 md:grid md:grid-cols-5">
           {[
             { label: 'Total Enquiries', count: enquiries.length, filter: 'All', activeColor: 'border-blue-500 bg-blue-50', iconBg: 'bg-blue-100 text-blue-600', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /> },
             { label: 'New', count: newCount, filter: 'New', activeColor: 'border-blue-500 bg-blue-50', iconBg: 'bg-blue-100 text-blue-600', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /> },
@@ -108,72 +121,132 @@ export default function SPStudentsPage() {
             <button
               key={stat.filter}
               onClick={() => setStatusFilter(statusFilter === stat.filter ? 'All' : stat.filter)}
-              className={`bg-white rounded-xl shadow-sm border-2 p-4 text-left transition-all hover:shadow-md ${
+              className={`rounded-xl border-2 bg-white p-4 text-left shadow-sm transition-all hover:shadow-md ${
                 statusFilter === stat.filter ? stat.activeColor : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               <div className="flex items-center justify-between">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.iconBg}`}>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${stat.iconBg}`}>
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     {stat.icon}
                   </svg>
                 </div>
                 <span className="text-3xl font-extrabold text-gray-900">{stat.count}</span>
               </div>
-              <p className="text-sm font-semibold text-gray-700 mt-3">{stat.label}</p>
+              <p className="mt-3 text-sm font-semibold text-gray-700">{stat.label}</p>
             </button>
           ))}
         </div>
 
-        {/* Search & Filter */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by student name, email, service, or message..."
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-              />
-            </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 text-sm font-medium bg-white"
-            >
-              <option value="All">All Status</option>
-              <option value="New">New</option>
-              <option value="Contacted">Contacted</option>
-              <option value="Closed">Closed</option>
-              <option value="Converted">Converted</option>
-            </select>
-            {(statusFilter !== 'All' || searchQuery) && (
-              <button
-                onClick={() => { setStatusFilter('All'); setSearchQuery(''); }}
-                className="px-4 py-2.5 border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50 text-sm font-medium whitespace-nowrap"
-              >
-                Clear Filters
-              </button>
-            )}
+        <div className="mb-4 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm sm:mb-6">
+          <div className="border-b border-gray-200 bg-gray-50 p-3 sm:p-4 md:hidden">
+            <ListPageFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              searchPlaceholder="Search by student, email, service, or message..."
+              pillFilters={[
+                {
+                  value: statusFilter === 'All' ? '' : statusFilter,
+                  onChange: (v) => setStatusFilter(v || 'All'),
+                  options: [
+                    { value: '', label: 'All Status', mobileLabel: 'All' },
+                    { value: 'New', label: 'New' },
+                    { value: 'Contacted', label: 'Contacted' },
+                    { value: 'Converted', label: 'Converted' },
+                    { value: 'Closed', label: 'Closed' },
+                  ],
+                },
+              ]}
+              onClear={() => {
+                setSearchQuery('');
+                setStatusFilter('All');
+              }}
+            />
           </div>
-        </div>
+          <div className="hidden border-b border-gray-200 bg-white p-4 md:block">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="relative flex-1">
+                <svg className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by student name, email, service, or message..."
+                  className="w-full rounded-lg border border-gray-300 py-2.5 pl-10 pr-4 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="All">All Status</option>
+                <option value="New">New</option>
+                <option value="Contacted">Contacted</option>
+                <option value="Closed">Closed</option>
+                <option value="Converted">Converted</option>
+              </select>
+              {(statusFilter !== 'All' || searchQuery) && (
+                <button
+                  onClick={() => { setStatusFilter('All'); setSearchQuery(''); }}
+                  className="whitespace-nowrap rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          </div>
 
-        {/* Enquiries Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           {filteredEnquiries.length === 0 ? (
-            <div className="p-12 text-center">
-              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-8 text-center sm:p-12">
+              <svg className="mx-auto mb-4 h-12 w-12 text-gray-300 sm:h-16 sm:w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No student enquiries yet</h3>
-              <p className="text-gray-500">When students send enquiries for your services, they will appear here.</p>
+              <h3 className="mb-2 text-base font-semibold text-gray-900 sm:text-lg">No student enquiries yet</h3>
+              <p className="text-sm text-gray-500">When students send enquiries for your services, they will appear here.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              <div className="divide-y divide-gray-200 md:hidden">
+                {filteredEnquiries.map((enquiry) => (
+                  <div key={enquiry._id} className="p-3 sm:p-4">
+                    <div className="mb-2 flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-gray-900">{enquiry.studentName}</p>
+                        <p className="truncate text-xs text-gray-500">{enquiry.studentEmail}</p>
+                        {enquiry.studentMobile && (
+                          <p className="text-xs text-gray-500">{enquiry.studentMobile}</p>
+                        )}
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold ${statusColors[enquiry.status]}`}>
+                        {enquiry.status}
+                      </span>
+                    </div>
+                    <p className="mb-1 text-xs font-medium text-gray-500">
+                      {typeof enquiry.spServiceId === 'object' ? enquiry.spServiceId.title : 'Service'}
+                    </p>
+                    <p className="mb-3 line-clamp-2 text-xs text-gray-600">{enquiry.message}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] text-gray-400">
+                        {enquiry.createdAt ? new Date(enquiry.createdAt).toLocaleDateString() : 'N/A'}
+                      </span>
+                      <select
+                        value={enquiry.status}
+                        onChange={(e) => handleEnquiryStatus(enquiry._id, e.target.value)}
+                        className="rounded-lg border border-gray-300 px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="New">New</option>
+                        <option value="Contacted">Contacted</option>
+                        <option value="Closed">Closed</option>
+                        <option value="Converted">Converted</option>
+                      </select>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
@@ -227,7 +300,8 @@ export default function SPStudentsPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
+              </div>
+            </>
           )}
         </div>
       </div>

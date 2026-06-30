@@ -3,9 +3,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { getApiUrl } from '@/lib/apiConfig';
+import {
+  fetchAuthorizedBlob,
+  runFileAction,
+  saveBlobOnDevice,
+} from '@/lib/fileActions';
+import { useMobileFileViewer } from '@/components/MobileFileViewer';
 import { BrainographyDataType } from '@/components/BrainographyDataDisplay';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = getApiUrl();
 
 export interface PortfolioItem {
   _id: string;
@@ -338,8 +345,8 @@ export function PortfolioRow({ portfolio, onDownload }: { portfolio: PortfolioIt
   const isCareer = portfolio.reportType === 'career';
 
   return (
-    <div className={`flex items-center justify-between p-4 rounded-xl border ${isCareer ? 'bg-blue-50/50 border-blue-200' : 'bg-emerald-50/50 border-emerald-200'}`}>
-      <div className="flex items-center gap-3 min-w-0">
+    <div className={`flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4 ${isCareer ? 'bg-blue-50/50 border-blue-200' : 'bg-emerald-50/50 border-emerald-200'}`}>
+      <div className="flex min-w-0 items-center gap-3">
         <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${isCareer ? 'bg-blue-100' : 'bg-emerald-100'}`}>
           <svg className={`w-4 h-4 ${isCareer ? 'text-blue-600' : 'text-emerald-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -349,7 +356,7 @@ export function PortfolioRow({ portfolio, onDownload }: { portfolio: PortfolioIt
           <p className="text-sm font-semibold text-gray-900">
             {isCareer ? 'Career Report' : 'Development Report'}
           </p>
-          <p className="text-xs text-gray-500 truncate">
+          <p className="truncate text-xs text-gray-500 sm:max-w-none">
             {portfolio.selectedCareerGoals.join(', ')}
             {portfolio.generatedAt && (
               <> &middot; {new Date(portfolio.generatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</>
@@ -358,15 +365,16 @@ export function PortfolioRow({ portfolio, onDownload }: { portfolio: PortfolioIt
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-shrink-0">
         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${st.bg} ${st.text}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />
           {st.label}
         </span>
         {portfolio.status === 'completed' && (
           <button
+            type="button"
             onClick={() => onDownload(portfolio)}
-            className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium"
+            className="inline-flex w-full items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-700 sm:w-auto sm:py-1.5"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -386,24 +394,19 @@ export function PortfolioRow({ portfolio, onDownload }: { portfolio: PortfolioIt
 
 /** Helper hook for portfolio download logic */
 export function usePortfolioDownload() {
+  const { openInAppViewer } = useMobileFileViewer();
+
   const handleDownload = async (portfolio: PortfolioItem) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/portfolio/download/${portfolio._id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', portfolio.fileName || `${portfolio.reportType}_report.docx`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch {
-      toast.error('Failed to download report');
-    }
+    const fileName = portfolio.fileName || `${portfolio.reportType}_report.docx`;
+    await runFileAction(
+      'Preparing download…',
+      'Download started',
+      async () => {
+        const blob = await fetchAuthorizedBlob(`/portfolio/download/${portfolio._id}`);
+        await saveBlobOnDevice(blob, fileName, openInAppViewer);
+      },
+      { openInAppViewer },
+    );
   };
   return handleDownload;
 }
