@@ -98,6 +98,14 @@ export const addMyB2BDocumentField = async (req: AuthRequest, res: Response) => 
     if (!entity) {
       return res.status(404).json({ success: false, message: "Entity not found" });
     }
+
+    if (await isProfileFullyLocked(req.user!.userId, entity.entityType, entity.entityId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Your profile is verified and cannot be modified",
+      });
+    }
+
     const documentKey = `b2b_${documentName
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "_")
@@ -189,6 +197,22 @@ const resolveMyEntityId = async (
     return { entityId: advisor._id as mongoose.Types.ObjectId, entityType: "advisor", b2bLeadId: (advisor.b2bLeadId as mongoose.Types.ObjectId) ?? null };
   }
   return null;
+};
+
+const isProfileFullyLocked = async (
+  userId: string,
+  entityType: "admin" | "advisor",
+  entityId: mongoose.Types.ObjectId
+): Promise<boolean> => {
+  const user = await User.findById(userId).select("isVerified");
+  if (user?.isVerified) return true;
+
+  const profile =
+    entityType === "admin"
+      ? await Admin.findById(entityId).select("isOnboarded")
+      : await Advisor.findById(entityId).select("isOnboarded");
+
+  return !!profile?.isOnboarded;
 };
 
 // Helper: resolve the b2bLeadId for the currently logged-in admin or advisor (kept for backward compat)
@@ -419,6 +443,25 @@ export const uploadB2BLeadDocument = async (req: AuthRequest, res: Response) => 
       if (!entity) {
         fs.unlinkSync(file.path);
         return res.status(403).json({ success: false, message: "Admin/Advisor profile not found" });
+      }
+
+      const locked = await isProfileFullyLocked(userId, entity.entityType, entity.entityId);
+      if (locked) {
+        const preLookup =
+          entity.entityType === "admin"
+            ? { adminId: entity.entityId, documentKey }
+            : { advisorId: entity.entityId, documentKey };
+        const existingLockedDoc = await B2BLeadDocument.findOne(preLookup);
+        if (
+          existingLockedDoc &&
+          existingLockedDoc.status !== B2BDocumentStatus.REJECTED
+        ) {
+          fs.unlinkSync(file.path);
+          return res.status(400).json({
+            success: false,
+            message: "This document is already uploaded and cannot be replaced",
+          });
+        }
       }
 
       if (entity.entityType === "admin") {

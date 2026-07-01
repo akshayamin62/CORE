@@ -31,7 +31,7 @@ export default function AdvisorOnboardingPage() {
       const res = await authAPI.getProfile();
       const userData = res.data.data.user;
       if (userData.role !== USER_ROLE.ADVISOR) { router.push('/'); return; }
-      if (res.data.data.advisor?.isVerified) { router.replace('/advisor/dashboard'); return; }
+      if (userData.isVerified) { router.replace('/advisor/dashboard'); return; }
       setUser(userData);
       await Promise.all([fetchProfile(), fetchAndSeedDocs()]);
     } catch {

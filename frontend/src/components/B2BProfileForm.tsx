@@ -15,6 +15,12 @@ export interface B2BProfileFormProps {
   loadingDocs?: boolean;
   /** true = view-only; default false */
   readOnly?: boolean;
+  /** When readOnly, still allow editing fields that were empty at load (verified profile) */
+  allowEditEmptyFieldsOnly?: boolean;
+  /** Snapshot at load — used with allowEditEmptyFieldsOnly */
+  initialProfileData?: Record<string, string>;
+  /** When readOnly, allow upload only for missing (or rejected) documents */
+  allowUploadMissingDocsOnly?: boolean;
   /** which sectionId is currently being saved */
   savingSection?: string | null;
   onFieldChange?: (key: string, value: string) => void;
@@ -49,6 +55,9 @@ export default function B2BProfileForm({
   b2bDocuments,
   loadingDocs = false,
   readOnly = false,
+  allowEditEmptyFieldsOnly = false,
+  initialProfileData,
+  allowUploadMissingDocsOnly = false,
   savingSection = null,
   onFieldChange,
   onSaveSection,
@@ -63,6 +72,42 @@ export default function B2BProfileForm({
   const [activeTab, setActiveTab] = useState<string>('basic_identity');
 
   const isTruthy = (value: string | undefined) => value === 'true' || value === '1' || value === 'yes';
+
+  const isValueEmpty = useCallback((val: string | undefined, fieldType?: string) => {
+    if (fieldType === 'checkbox') return !isTruthy(val);
+    return !val?.trim();
+  }, []);
+
+  const isInitiallyEmpty = useCallback(
+    (key: string, fieldType?: string) => {
+      const initial = initialProfileData?.[key] ?? '';
+      return isValueEmpty(initial, fieldType);
+    },
+    [initialProfileData, isValueEmpty]
+  );
+
+  const isFieldDisplayOnly = useCallback(
+    (field: { key: string; type?: string }) => {
+      if (field.type === 'readonly') return true;
+      if (!readOnly) return false;
+      if (allowEditEmptyFieldsOnly && isInitiallyEmpty(field.key, field.type)) return false;
+      return true;
+    },
+    [readOnly, allowEditEmptyFieldsOnly, isInitiallyEmpty]
+  );
+
+  const canUploadDocument = useCallback(
+    (doc: B2BLeadDocument | undefined) => {
+      if (!onUploadDoc) return false;
+      if (!readOnly) return true;
+      if (!allowUploadMissingDocsOnly) return false;
+      if (!doc) return true;
+      return doc.status === B2BDocumentStatus.REJECTED;
+    },
+    [onUploadDoc, readOnly, allowUploadMissingDocsOnly]
+  );
+
+  const canSaveSections = !readOnly || allowEditEmptyFieldsOnly;
 
   const shouldShowField = useCallback(
     (field: any) => {
@@ -234,7 +279,7 @@ export default function B2BProfileForm({
     const colSpan = field.type === 'textarea' ? 'md:col-span-2' : '';
 
     // ── Display-only ──
-    if (readOnly || field.type === 'readonly') {
+    if (isFieldDisplayOnly(field)) {
       let displayVal = val;
       if (field.key === 'country' || field.key === 'companyCountry') {
         displayVal = countries.find(c => c.isoCode === val)?.name || val;
@@ -436,7 +481,7 @@ export default function B2BProfileForm({
                 </>
               )}
 
-              {!readOnly && onUploadDoc && (
+              {canUploadDocument(doc) && (
                 <>
                   <input
                     type="file"
@@ -445,7 +490,7 @@ export default function B2BProfileForm({
                     accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                     onChange={e => {
                       const f = e.target.files?.[0];
-                      if (f) onUploadDoc(uploadField, f);
+                      if (f) onUploadDoc!(uploadField, f);
                       e.target.value = '';
                     }}
                   />
@@ -460,7 +505,7 @@ export default function B2BProfileForm({
                         Uploading.
                       </>
                     ) : (
-                      <>{doc ? 'Re-upload' : 'Upload'}</>
+                      <>{doc?.status === B2BDocumentStatus.REJECTED ? 'Re-upload' : 'Upload'}</>
                     )}
                   </button>
                 </>
@@ -528,7 +573,11 @@ export default function B2BProfileForm({
     const section = B2B_FORM_SECTIONS.find(s => s.id === sectionId);
     if (!section) return null;
     const isSaving = savingSection === sectionId;
-    const hasEditableFields = section.fields.some((f: any) => f.type !== 'readonly');
+    const hasEditableFields = allowEditEmptyFieldsOnly
+      ? section.fields.some(
+          (f: any) => f.type !== 'readonly' && shouldShowField(f) && isInitiallyEmpty(f.key, f.type)
+        )
+      : section.fields.some((f: any) => f.type !== 'readonly');
 
     return (
       <div>
@@ -567,7 +616,7 @@ export default function B2BProfileForm({
         )}
 
         {/* Save button */}
-        {!readOnly && onSaveSection && hasEditableFields && (
+        {canSaveSections && onSaveSection && hasEditableFields && (
           <div className="mt-6 flex justify-end">
             <button
               onClick={() => {
@@ -577,6 +626,7 @@ export default function B2BProfileForm({
                 section?.fields.forEach((f: any) => {
                   if (!f.required || f.type === 'readonly') return;
                   if (!shouldShowField(f)) return;
+                  if (allowEditEmptyFieldsOnly && !isInitiallyEmpty(f.key, f.type)) return;
                   if (!getFieldValue(f.key)?.trim()) {
                     newErrors[f.key] = `${f.label} is required`;
                   } else if (f.pattern && !new RegExp(f.pattern).test(getFieldValue(f.key))) {
@@ -698,7 +748,8 @@ export default function B2BProfileForm({
               </div>
 
               {/* Save button for Authorized Signatory (for authPersonName) */}
-              {isAuthSignatory && !readOnly && onSaveSection && authPersonNameField && (
+              {isAuthSignatory && canSaveSections && onSaveSection && authPersonNameField &&
+                (!allowEditEmptyFieldsOnly || isInitiallyEmpty('authPersonName', authPersonNameField.type)) && (
                 <div className="px-5 py-3 bg-gray-50 border-t border-gray-200 flex justify-end">
                   <button
                     onClick={() => onSaveSection('authorized_signatory')}

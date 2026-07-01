@@ -31,7 +31,7 @@ export default function AdminOnboardingPage() {
       const res = await authAPI.getProfile();
       const userData = res.data.data.user;
       if (userData.role !== USER_ROLE.ADMIN) { router.push('/'); return; }
-      if (res.data.data.admin?.isVerified) { router.replace('/admin/dashboard'); return; }
+      if (userData.isVerified) { router.replace('/admin/dashboard'); return; }
       setUser(userData);
       await Promise.all([fetchProfile(), fetchAndSeedDocs()]);
     } catch {

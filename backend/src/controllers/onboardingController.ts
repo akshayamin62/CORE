@@ -83,42 +83,76 @@ export const updateOnboardingProfile = async (req: AuthRequest, res: Response): 
       return res.status(404).json({ success: false, message: "Profile not found" });
     }
 
-    if (profile.isOnboarded) {
-      return res.status(400).json({ success: false, message: "Onboarding is already complete" });
-    }
+    const user = await User.findById(userId).select("isVerified");
+    const isLocked = profile.isOnboarded || user?.isVerified;
 
-    // Update fields
-    if (companyName !== undefined) profile.companyName = companyName.trim();
-    if (address !== undefined) profile.address = address.trim();
-    if (mobileNumber !== undefined) profile.mobileNumber = mobileNumber.trim();
-    if (b2bProfileData !== undefined) {
-      profile.b2bProfileData = { ...(profile.b2bProfileData || {}), ...b2bProfileData };
-      profile.markModified('b2bProfileData');
-    }
+    if (isLocked) {
+      if (companyName !== undefined || address !== undefined || mobileNumber !== undefined || enquiryFormSlug !== undefined) {
+        return res.status(400).json({
+          success: false,
+          message: "Company details cannot be changed after verification",
+        });
+      }
 
-    // Handle slug
-    if (enquiryFormSlug !== undefined) {
-      const baseSlug = generateSlug(enquiryFormSlug || companyName || "company");
-      // Check if this slug is already taken by someone else
-      const existingAdmin = await Admin.findOne({ enquiryFormSlug: baseSlug, _id: { $ne: profile._id } });
-      const existingAdvisor = await Advisor.findOne({ enquiryFormSlug: baseSlug, _id: { $ne: profile._id } });
-      if (existingAdmin || existingAdvisor) {
-        profile.enquiryFormSlug = await getUniqueSlug(baseSlug);
-      } else {
-        profile.enquiryFormSlug = baseSlug;
+      if (b2bProfileData !== undefined) {
+        const existing = profile.b2bProfileData || {};
+        const updates: Record<string, string> = {};
+
+        for (const [key, value] of Object.entries(b2bProfileData)) {
+          const existingVal = existing[key];
+          const isExistingEmpty =
+            existingVal === undefined ||
+            existingVal === null ||
+            (typeof existingVal === "string" && !existingVal.trim());
+
+          if (!isExistingEmpty) {
+            return res.status(400).json({
+              success: false,
+              message: `Field "${key}" is already filled and cannot be changed`,
+            });
+          }
+
+          if (value !== undefined && String(value).trim()) {
+            updates[key] = String(value).trim();
+          }
+        }
+
+        profile.b2bProfileData = { ...existing, ...updates };
+        profile.markModified("b2bProfileData");
+      }
+    } else {
+      // Update fields during onboarding
+      if (companyName !== undefined) profile.companyName = companyName.trim();
+      if (address !== undefined) profile.address = address.trim();
+      if (mobileNumber !== undefined) profile.mobileNumber = mobileNumber.trim();
+      if (b2bProfileData !== undefined) {
+        profile.b2bProfileData = { ...(profile.b2bProfileData || {}), ...b2bProfileData };
+        profile.markModified("b2bProfileData");
+      }
+
+      // Handle slug
+      if (enquiryFormSlug !== undefined) {
+        const baseSlug = generateSlug(enquiryFormSlug || companyName || "company");
+        const existingAdmin = await Admin.findOne({ enquiryFormSlug: baseSlug, _id: { $ne: profile._id } });
+        const existingAdvisor = await Advisor.findOne({ enquiryFormSlug: baseSlug, _id: { $ne: profile._id } });
+        if (existingAdmin || existingAdvisor) {
+          profile.enquiryFormSlug = await getUniqueSlug(baseSlug);
+        } else {
+          profile.enquiryFormSlug = baseSlug;
+        }
       }
     }
 
     await profile.save();
 
-    // Sync mobileNumber to User table
-    if (mobileNumber !== undefined) {
+    // Sync mobileNumber to User table (onboarding only)
+    if (!isLocked && mobileNumber !== undefined) {
       await User.findByIdAndUpdate(userId, { mobileNumber: mobileNumber.trim() });
     }
 
     return res.status(200).json({
       success: true,
-      message: "Onboarding profile updated",
+      message: isLocked ? "Empty profile fields updated" : "Onboarding profile updated",
       data: profile,
     });
   } catch (error) {
