@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { authAPI } from '@/lib/api';
 import { USER_ROLE } from '@/types';
-import toast, { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
+import AuthPageToaster from '@/components/AuthPageToaster';
 import { Country, State, City, ICountry, IState, ICity } from 'country-state-city';
 
 export default function SignupPage() {
@@ -248,7 +249,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-cyan-50 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <Toaster position="top-right" />
+      <AuthPageToaster />
       
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">

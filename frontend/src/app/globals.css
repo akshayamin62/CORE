@@ -78,6 +78,16 @@ html {
   }
 }
 
+/* react-hot-toast — web auth/public pages: below fixed navbar */
+.site-toaster-host {
+  z-index: 99999 !important;
+  pointer-events: none;
+}
+
+.site-toaster-host > div {
+  pointer-events: auto;
+}
+
 /* react-hot-toast — native app: below fixed navbar, full width, swipe to dismiss */
 .app-toaster-host {
   z-index: 99999 !important;
