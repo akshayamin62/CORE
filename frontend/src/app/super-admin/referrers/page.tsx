@@ -495,12 +495,7 @@ export default function SuperAdminReferrersPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
                 <p className="text-gray-500 text-lg">No referrers yet</p>
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                >
-                  Create First Referrer
-                </button>
+                <p className="text-gray-400 text-sm mt-2">Referrers are created by admins via registration links</p>
               </div>
             ) : filteredReferrers.length === 0 ? (
               <div className="text-center py-12">
@@ -542,7 +537,7 @@ export default function SuperAdminReferrersPage() {
                       ...(referrer.userId?.isVerified
                         ? [{
                             label: referrer.userId?.isActive ? 'Deactivate' : 'Activate',
-                            variant: (referrer.userId?.isActive ? 'warning' : 'success') as const,
+                            variant: referrer.userId?.isActive ? ('warning' as const) : ('success' as const),
                             onClick: () => handleToggleStatus(referrer._id),
                           }]
                         : []),

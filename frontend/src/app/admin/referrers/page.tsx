@@ -551,7 +551,7 @@ export default function ReferrersListPage() {
                       ...(referrer.userId?.isVerified
                         ? [{
                             label: referrer.userId?.isActive ? 'Deactivate' : 'Activate',
-                            variant: (referrer.userId?.isActive ? 'warning' : 'success') as const,
+                            variant: referrer.userId?.isActive ? ('warning' as const) : ('success' as const),
                             onClick: () => handleToggleStatus(referrer._id),
                           }]
                         : []),
