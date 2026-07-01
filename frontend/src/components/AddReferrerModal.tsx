@@ -1,6 +1,7 @@
 'use client';
 
 import ResponsiveFormModal from '@/components/ResponsiveFormModal';
+import CountryStateCitySelect from '@/components/CountryStateCitySelect';
 
 export interface ReferrerFormData {
   firstName: string;
@@ -168,47 +169,16 @@ export default function AddReferrerModal({
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Country <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.country}
-              onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-              className={inputClass}
-              placeholder="Country"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              State <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.state}
-              onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-              className={inputClass}
-              placeholder="State"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              City <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.city}
-              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              className={inputClass}
-              placeholder="City"
-            />
-          </div>
-        </div>
+        <CountryStateCitySelect
+          country={formData.country}
+          state={formData.state}
+          city={formData.city}
+          required
+          onChange={({ country, state, city }) =>
+            setFormData({ ...formData, country, state, city })
+          }
+          inputClass={inputClass}
+        />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>

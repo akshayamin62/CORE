@@ -239,16 +239,7 @@ export const superAdminAPI = {
 
   // Referrer management
   getReferrers: () => api.get('/super-admin/referrers'),
-  
-  createReferrer: (data: {
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-    email: string;
-    mobileNumber: string;
-    adminId: string;
-  }) => api.post('/super-admin/referrer', data),
-  
+
   toggleReferrerStatus: (referrerId: string) =>
     api.patch(`/super-admin/referrer/${referrerId}/toggle-status`),
 
@@ -585,18 +576,13 @@ export const adminAPI = {
     api.get(`/admin/counselor/${counselorId}/follow-up-summary`),
 
   // Referrer management
-  createReferrer: (data: {
-    firstName: string;
-    middleName?: string;
-    lastName: string;
-    email: string;
-    mobileNumber: string;
-  }) => api.post('/admin/referrer', data),
-
   getReferrers: () => api.get('/admin/referrers'),
 
   toggleReferrerStatus: (referrerId: string) =>
     api.patch(`/admin/referrer/${referrerId}/toggle-status`),
+
+  verifyReferrer: (referrerId: string) =>
+    api.patch(`/admin/referrer/${referrerId}/verify`),
 
   getReferrerDashboard: (referrerId: string) =>
     api.get(`/admin/referrer/${referrerId}/dashboard`),
@@ -776,6 +762,25 @@ export const referrerAPI = {
   getStudentByLeadId: (leadId: string) => api.get(`/referrer/leads/${leadId}/student`),
   getStudentFormAnswers: (studentId: string, registrationId: string) =>
     api.get(`/referrer/students/${studentId}/registrations/${registrationId}/answers`),
+};
+
+export const referrerOnboardingAPI = {
+  getProfile: () => api.get('/referrer-onboarding/profile'),
+  updateProfile: (data: {
+    onboardingProfileData?: Record<string, string>;
+    identityData?: Record<string, string>;
+  }) => api.put('/referrer-onboarding/profile', data),
+  getProfileForAdmin: (referrerId: string) =>
+    api.get(`/referrer-onboarding/admin/${referrerId}/profile`),
+  updateProfileForAdmin: (
+    referrerId: string,
+    data: {
+      onboardingProfileData?: Record<string, string>;
+      identityData?: Record<string, string>;
+    }
+  ) => api.put(`/referrer-onboarding/admin/${referrerId}/profile`, data),
+  getProfileForSuperAdmin: (referrerId: string) =>
+    api.get(`/referrer-onboarding/super-admin/${referrerId}/profile`),
 };
 
 // Follow-Up API

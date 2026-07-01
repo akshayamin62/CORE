@@ -1,14 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Country, State, City } from 'country-state-city';
 import { useParams } from 'next/navigation';
 import { referrerRegistrationAPI } from '@/lib/api';
 import toast, { Toaster } from 'react-hot-toast';
 import AuthImage from '@/components/AuthImage';
+import CountryStateCitySelect from '@/components/CountryStateCitySelect';
+import { isValidReferrerPhone } from '@/lib/referrerLocationUtils';
 
-const INDIA_ISO_CODE = 'IN';
-const INDIA_COUNTRY_NAME = Country.getCountryByCode(INDIA_ISO_CODE)?.name || 'India';
+const INDIA_COUNTRY_NAME = 'India';
 
 interface AdminInfo {
   adminName: string;
@@ -39,9 +39,6 @@ export default function BecomeReferrerPage() {
     currentRole: '',
   });
 
-  const [states, setStates] = useState(() => State.getStatesOfCountry(INDIA_ISO_CODE) || []);
-  const [cities, setCities] = useState<any[]>([]);
-
   useEffect(() => {
     fetchAdminInfo();
   }, [adminSlug]);
@@ -65,8 +62,7 @@ export default function BecomeReferrerPage() {
       return;
     }
 
-    const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,5}[-\s.]?[0-9]{1,5}$/;
-    if (!phoneRegex.test(formData.mobileNumber.trim())) {
+    if (!isValidReferrerPhone(formData.mobileNumber)) {
       toast.error('Invalid phone number format');
       return;
     }
@@ -100,17 +96,6 @@ export default function BecomeReferrerPage() {
       toast.error(err.response?.data?.message || 'Failed to submit registration');
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleStateChange = (stateIso: string) => {
-    const s = states.find((s) => s.isoCode === stateIso);
-    setFormData({ ...formData, state: s ? s.name : '', city: '' });
-    if (stateIso) {
-      const ct = City.getCitiesOfState(INDIA_ISO_CODE, stateIso) || [];
-      setCities(ct);
-    } else {
-      setCities([]);
     }
   };
 
@@ -266,51 +251,16 @@ export default function BecomeReferrerPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">State <span className="text-red-500">*</span></label>
-                  <select
-                    value={states.find(s => s.name === formData.state)?.isoCode || ''}
-                    onChange={(e) => handleStateChange(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="">Select state</option>
-                    {states.map((s) => (
-                      <option key={s.isoCode} value={s.isoCode}>{s.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">City <span className="text-red-500">*</span></label>
-                  {cities.length > 0 ? (
-                    <select
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      disabled={!formData.state}
-                      required
-                    >
-                      <option value="">Select city</option>
-                      {cities.map((c) => (
-                        <option key={c.name} value={c.name}>{c.name}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter your city"
-                      disabled={!formData.state}
-                      required
-                    />
-                  )}
-                </div>
-              </div>
-              <p className="text-xs text-gray-500">Country: {INDIA_COUNTRY_NAME}</p>
+              <CountryStateCitySelect
+                country={formData.country}
+                state={formData.state}
+                city={formData.city}
+                required
+                onChange={({ country, state, city }) =>
+                  setFormData({ ...formData, country, state, city })
+                }
+                inputClass="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>

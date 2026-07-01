@@ -30,6 +30,7 @@ export interface IReferrer extends Document {
   currentRole: string;
   stage: REFERRER_STAGE;
   notes: IReferrerNote[];
+  onboardingProfileData?: Record<string, unknown>;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -113,6 +114,10 @@ const referrerSchema = new Schema<IReferrer>(
         },
       ],
       default: [],
+    },
+    onboardingProfileData: {
+      type: Schema.Types.Mixed,
+      default: {},
     },
   },
   { timestamps: true }

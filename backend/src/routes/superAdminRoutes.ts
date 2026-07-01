@@ -52,7 +52,6 @@ import { USER_ROLE } from "../types/roles";
 import { uploadAdminLogo } from "../middleware/upload";
 import {
   getAllReferrersForSuperAdmin,
-  createReferrerForSuperAdmin,
   toggleReferrerStatusForSuperAdmin,
   getReferrerDashboardForSuperAdmin,
   updateReferrerStageForSuperAdmin,
@@ -398,16 +397,8 @@ router.get("/eduplan-coaches/:coachUserId/team-meets", getEduplanCoachTeamMeetsF
 router.get("/referrers", getAllReferrersForSuperAdmin);
 
 /**
- * @route   POST /api/super-admin/referrer
- * @desc    Create a new referrer under a specific admin
- * @access  Super Admin only
- * @body    firstName, lastName, email, mobileNumber, adminId
- */
-router.post("/referrer", createReferrerForSuperAdmin);
-
-/**
  * @route   PATCH /api/super-admin/referrer/:referrerId/toggle-status
- * @desc    Toggle referrer active/inactive status
+ * @desc    Toggle referrer active/inactive status (verified referrers only)
  * @access  Super Admin only
  */
 router.patch("/referrer/:referrerId/toggle-status", toggleReferrerStatusForSuperAdmin);

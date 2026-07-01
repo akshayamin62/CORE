@@ -129,20 +129,32 @@ export default function CountryStateCitySelect({
         <label className="mb-2 block text-sm font-medium text-gray-700">
           City{requiredMark}
         </label>
-        <select
-          value={city}
-          onChange={(e) => handleCityChange(e.target.value)}
-          className={inputClass}
-          disabled={!stateIso || cities.length === 0}
-          required={required}
-        >
-          <option value="">Select city</option>
-          {cities.map((c) => (
-            <option key={`${c.name}-${c.latitude}-${c.longitude}`} value={c.name}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+        {cities.length > 0 ? (
+          <select
+            value={city}
+            onChange={(e) => handleCityChange(e.target.value)}
+            className={inputClass}
+            disabled={!stateIso}
+            required={required}
+          >
+            <option value="">Select city</option>
+            {cities.map((c) => (
+              <option key={`${c.name}-${c.latitude}-${c.longitude}`} value={c.name}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type="text"
+            value={city}
+            onChange={(e) => handleCityChange(e.target.value)}
+            className={inputClass}
+            disabled={!stateIso}
+            required={required}
+            placeholder="Enter city"
+          />
+        )}
       </div>
     </div>
   );

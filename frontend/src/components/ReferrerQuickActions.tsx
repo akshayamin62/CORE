@@ -8,6 +8,7 @@ interface ReferrerQuickActionsProps {
   email?: string;
   mobileNumber?: string;
   onEdit?: () => void;
+  onOnboarding?: () => void;
   size?: 'sm' | 'md';
   className?: string;
 }
@@ -16,6 +17,7 @@ export default function ReferrerQuickActions({
   email,
   mobileNumber,
   onEdit,
+  onOnboarding,
   size = 'md',
   className = '',
 }: ReferrerQuickActionsProps) {
@@ -29,6 +31,10 @@ export default function ReferrerQuickActions({
   const editClass = isSm
     ? 'px-3 py-1.5 rounded-lg transition-colors text-xs bg-brand-600 text-white hover:bg-brand-700'
     : 'px-3 py-1.5 rounded-lg transition-colors text-sm bg-brand-600 text-white hover:bg-brand-700';
+
+  const onboardingClass = isSm
+    ? 'px-3 py-1.5 rounded-lg transition-colors text-xs bg-purple-600 text-white hover:bg-purple-700'
+    : 'px-3 py-1.5 rounded-lg transition-colors text-sm bg-purple-600 text-white hover:bg-purple-700';
 
   return (
     <div className={`flex flex-wrap items-center gap-2 ${className}`}>
@@ -55,6 +61,11 @@ export default function ReferrerQuickActions({
           </svg>
           WhatsApp
         </a>
+      )}
+      {onOnboarding && (
+        <button type="button" onClick={onOnboarding} className={onboardingClass}>
+          Onboarding
+        </button>
       )}
       {onEdit && (
         <button type="button" onClick={onEdit} className={editClass}>

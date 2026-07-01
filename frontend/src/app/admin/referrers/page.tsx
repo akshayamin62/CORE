@@ -8,7 +8,6 @@ import AdminLayout from '@/components/AdminLayout';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
-import AddReferrerModal from '@/components/AddReferrerModal';
 import EditReferrerModal, { ReferrerEditFormData } from '@/components/EditReferrerModal';
 import ListPageFilters from '@/components/ListPageFilters';
 import MobileRecordCard from '@/components/MobileRecordCard';
@@ -39,35 +38,38 @@ interface ReferrerData {
   createdAt: string;
 }
 
+function getReferrerStatusLabel(isActive: boolean, isVerified: boolean): string {
+  if (!isActive && !isVerified) return 'Pending Activation';
+  if (isActive && !isVerified) return 'Onboarding';
+  if (isVerified && isActive) return 'Active';
+  if (isVerified && !isActive) return 'Inactive';
+  return 'Unknown';
+}
+
+function getReferrerStatusClass(isActive: boolean, isVerified: boolean): string {
+  if (!isActive && !isVerified) return 'bg-gray-100 text-gray-800';
+  if (isActive && !isVerified) return 'bg-amber-100 text-amber-800';
+  if (isVerified && isActive) return 'bg-green-100 text-green-800';
+  return 'bg-red-100 text-red-800';
+}
+
 export default function ReferrersListPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [referrers, setReferrers] = useState<ReferrerData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingReferrer, setEditingReferrer] = useState<ReferrerData | null>(null);
   const [editingSubmitting, setEditingSubmitting] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'pending' | 'archived'>('all');
   const [stageFilter, setStageFilter] = useState<string>('');
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
   const [referrerRegUrl, setReferrerRegUrl] = useState('');
-  const [formData, setFormData] = useState({
+  const [editFormData, setEditFormData] = useState<ReferrerEditFormData>({
     firstName: '',
     middleName: '',
     lastName: '',
-    email: '',
-    mobileNumber: '',
-    adminId: '',
-    country: '',
-    state: '',
-    city: '',
-    qualification: '',
-    currentRole: '',
-  });
-  const [editFormData, setEditFormData] = useState<ReferrerEditFormData>({
     email: '',
     mobileNumber: '',
     adminId: '',
@@ -81,6 +83,9 @@ export default function ReferrersListPage() {
   const openEditReferrer = (referrer: ReferrerData) => {
     setEditingReferrer(referrer);
     setEditFormData({
+      firstName: referrer.userId?.firstName || '',
+      middleName: referrer.userId?.middleName || '',
+      lastName: referrer.userId?.lastName || '',
       email: referrer.email || '',
       mobileNumber: referrer.mobileNumber || '',
       adminId: '',
@@ -159,44 +164,6 @@ export default function ReferrersListPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.mobileNumber.trim()) {
-      toast.error('Mobile number is required');
-      return;
-    }
-
-    const phoneRegex = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,5}[-\s.]?[0-9]{1,5}$/;
-    if (!phoneRegex.test(formData.mobileNumber.trim())) {
-      toast.error('Invalid phone number format');
-      return;
-    }
-
-    if (!formData.country.trim() || !formData.state.trim() || !formData.city.trim()) {
-      toast.error('Country, state, and city are required');
-      return;
-    }
-
-    if (!formData.qualification.trim() || !formData.currentRole.trim()) {
-      toast.error('Qualification and current role are required');
-      return;
-    }
-
-    setSubmitting(true);
-
-    try {
-      await adminAPI.createReferrer(formData);
-      toast.success('Referrer created successfully!');
-      setShowModal(false);
-      setFormData({ firstName: '', middleName: '', lastName: '', email: '', mobileNumber: '', adminId: '', country: '', state: '', city: '', qualification: '', currentRole: '' });
-      fetchReferrers();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create referrer');
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const filteredReferrers = referrers.filter((referrer) => {
     const referrerName = getFullName(referrer.userId).toLowerCase();
@@ -224,17 +191,23 @@ export default function ReferrersListPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleToggleStatus = async (referrerId: string, isVerified: boolean, isActive: boolean) => {
+  const handleToggleStatus = async (referrerId: string) => {
     try {
       await adminAPI.toggleReferrerStatus(referrerId);
-      if (!isVerified) {
-        toast.success('Referrer verified and activated successfully');
-      } else {
-        toast.success(`Referrer ${isActive ? 'deactivated' : 'activated'} successfully`);
-      }
+      toast.success('Referrer status updated');
       fetchReferrers();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to toggle referrer status');
+      toast.error(error.response?.data?.message || 'Failed to update referrer status');
+    }
+  };
+
+  const handleVerify = async (referrerId: string) => {
+    try {
+      await adminAPI.verifyReferrer(referrerId);
+      toast.success('Referrer verified successfully');
+      fetchReferrers();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to verify referrer');
     }
   };
 
@@ -291,28 +264,9 @@ export default function ReferrersListPage() {
             <div>
               <h2 className="text-2xl font-bold text-gray-900 sm:text-3xl">My Referrers</h2>
               <p className="mt-1 text-gray-600 sm:mt-2">
-                Manage referrers and their referral links
+                Manage referrers who register via your referral link
               </p>
             </div>
-            <button
-              onClick={() => setShowModal(true)}
-              className="hidden shrink-0 items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 md:flex"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Add Referrer
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowModal(true)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg md:hidden"
-              aria-label="Add referrer"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
           </div>
 
           <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-6">
@@ -512,15 +466,6 @@ export default function ReferrersListPage() {
             </div>
           )}
 
-          <AddReferrerModal
-            open={showModal}
-            onClose={() => setShowModal(false)}
-            onSubmit={handleSubmit}
-            submitting={submitting}
-            formData={formData}
-            setFormData={setFormData}
-          />
-
           <EditReferrerModal
             open={showEditModal}
             onClose={() => {
@@ -532,6 +477,7 @@ export default function ReferrersListPage() {
             formData={editFormData}
             setFormData={setEditFormData}
             referrerName={editingReferrer ? getFullName(editingReferrer.userId) : ''}
+            allowNameEdit
           />
 
           {/* Referrers Table */}
@@ -542,12 +488,7 @@ export default function ReferrersListPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
                 <p className="text-gray-500 text-lg">No referrers yet</p>
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                >
-                  Create Your First Referrer
-                </button>
+                <p className="text-gray-400 text-sm mt-2">Share your registration link to onboard referrers</p>
               </div>
             ) : filteredReferrers.length === 0 ? (
               <div className="text-center py-12">
@@ -586,11 +527,34 @@ export default function ReferrersListPage() {
                         label: 'Edit',
                         onClick: () => openEditReferrer(referrer),
                       },
-                      {
-                        label: !referrer.userId?.isVerified ? 'Activate' : referrer.userId?.isActive ? 'Deactivate' : 'Activate',
-                        variant: !referrer.userId?.isVerified ? 'success' : referrer.userId?.isActive ? 'warning' : 'success',
-                        onClick: () => handleToggleStatus(referrer._id, referrer.userId?.isVerified, referrer.userId?.isActive),
-                      },
+                      ...(!referrer.userId?.isActive && !referrer.userId?.isVerified
+                        ? [{
+                            label: 'Activate',
+                            variant: 'success' as const,
+                            onClick: () => handleToggleStatus(referrer._id),
+                          }]
+                        : []),
+                      ...(referrer.userId?.isActive && !referrer.userId?.isVerified
+                        ? [
+                            {
+                              label: 'Verify',
+                              variant: 'success' as const,
+                              onClick: () => handleVerify(referrer._id),
+                            },
+                            {
+                              label: 'Deactivate',
+                              variant: 'warning' as const,
+                              onClick: () => handleToggleStatus(referrer._id),
+                            },
+                          ]
+                        : []),
+                      ...(referrer.userId?.isVerified
+                        ? [{
+                            label: referrer.userId?.isActive ? 'Deactivate' : 'Activate',
+                            variant: (referrer.userId?.isActive ? 'warning' : 'success') as const,
+                            onClick: () => handleToggleStatus(referrer._id),
+                          }]
+                        : []),
                     ]}
                     badges={
                       <>
@@ -602,10 +566,9 @@ export default function ReferrersListPage() {
                           referrer.stage === 'Closed' ? 'bg-gray-100 text-gray-800' :
                           'bg-blue-100 text-blue-800'
                         }`}>{referrer.stage || 'New'}</span>
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          !referrer.userId?.isVerified ? 'bg-amber-100 text-amber-700' :
-                          referrer.userId?.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                        }`}>{!referrer.userId?.isVerified ? 'Pending' : referrer.userId?.isActive ? 'Active' : 'Inactive'}</span>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getReferrerStatusClass(referrer.userId?.isActive, referrer.userId?.isVerified)}`}>
+                          {getReferrerStatusLabel(referrer.userId?.isActive, referrer.userId?.isVerified)}
+                        </span>
                       </>
                     }
                     fields={[
@@ -690,28 +653,20 @@ export default function ReferrersListPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-3 py-1 text-xs font-medium rounded-full ${
-                            !referrer.userId?.isVerified
-                              ? 'bg-amber-100 text-amber-800'
-                              : referrer.userId?.isActive
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {!referrer.userId?.isVerified ? 'Pending' : referrer.userId?.isActive ? 'Active' : 'Inactive'}
+                        <span className={`px-3 py-1 text-xs font-medium rounded-full ${getReferrerStatusClass(referrer.userId?.isActive, referrer.userId?.isVerified)}`}>
+                          {getReferrerStatusLabel(referrer.userId?.isActive, referrer.userId?.isVerified)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-600 text-sm">
                         {new Date(referrer.createdAt).toLocaleDateString('en-GB')}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <button
                             onClick={() => router.push(`/admin/referrers/${referrer._id}`)}
                             className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                           >
-                            View Detail
+                            View
                           </button>
                           <button
                             onClick={() => openEditReferrer(referrer)}
@@ -719,18 +674,42 @@ export default function ReferrersListPage() {
                           >
                             Edit
                           </button>
-                          <button
-                            onClick={() => handleToggleStatus(referrer._id, referrer.userId?.isVerified, referrer.userId?.isActive)}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                              !referrer.userId?.isVerified
-                                ? 'bg-green-600 text-white hover:bg-green-700'
-                                : referrer.userId?.isActive
-                                ? 'bg-yellow-600 text-white hover:bg-yellow-700'
-                                : 'bg-blue-600 text-white hover:bg-blue-700'
-                            }`}
-                          >
-                            {!referrer.userId?.isVerified ? 'Verify & Activate' : referrer.userId?.isActive ? 'Deactivate' : 'Activate'}
-                          </button>
+                          {!referrer.userId?.isActive && !referrer.userId?.isVerified && (
+                            <button
+                              onClick={() => handleToggleStatus(referrer._id)}
+                              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-green-600 text-white hover:bg-green-700"
+                            >
+                              Activate
+                            </button>
+                          )}
+                          {referrer.userId?.isActive && !referrer.userId?.isVerified && (
+                            <>
+                              <button
+                                onClick={() => handleVerify(referrer._id)}
+                                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                              >
+                                Verify
+                              </button>
+                              <button
+                                onClick={() => handleToggleStatus(referrer._id)}
+                                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-yellow-600 text-white hover:bg-yellow-700"
+                              >
+                                Deactivate
+                              </button>
+                            </>
+                          )}
+                          {referrer.userId?.isVerified && (
+                            <button
+                              onClick={() => handleToggleStatus(referrer._id)}
+                              className={`px-3 py-1.5 text-xs font-medium rounded-lg text-white ${
+                                referrer.userId?.isActive
+                                  ? 'bg-yellow-600 hover:bg-yellow-700'
+                                  : 'bg-green-600 hover:bg-green-700'
+                              }`}
+                            >
+                              {referrer.userId?.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

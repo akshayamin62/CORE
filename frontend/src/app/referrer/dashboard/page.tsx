@@ -36,6 +36,17 @@ export default function ReferrerDashboardPage() {
         return;
       }
 
+      if (!userData.isActive) {
+        toast.error('Your account is not activated yet. Please contact your admin.');
+        router.push('/login');
+        return;
+      }
+
+      if (!userData.isVerified) {
+        router.replace('/referrer/onboarding');
+        return;
+      }
+
       setUser(userData);
       fetchStats();
     } catch (error) {

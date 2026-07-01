@@ -11,6 +11,7 @@ import {
   getReferrerStudentDetail,
   getReferrerStudentByLeadId,
   getReferrerStudentFormAnswers,
+  requireVerifiedActiveReferrer,
 } from "../controllers/referrerController";
 
 const router = Router();
@@ -18,6 +19,7 @@ const router = Router();
 // All routes require authentication and referrer role
 router.use(authenticate);
 router.use(authorize([USER_ROLE.REFERRER]));
+router.use(requireVerifiedActiveReferrer);
 
 /**
  * @route   GET /api/referrer/dashboard-stats

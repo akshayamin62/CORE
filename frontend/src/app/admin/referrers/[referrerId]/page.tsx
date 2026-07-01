@@ -105,6 +105,9 @@ export default function AdminReferrerDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingSubmitting, setEditingSubmitting] = useState(false);
   const [editFormData, setEditFormData] = useState<ReferrerEditFormData>({
+    firstName: '',
+    middleName: '',
+    lastName: '',
     email: '',
     mobileNumber: '',
     adminId: '',
@@ -169,6 +172,9 @@ export default function AdminReferrerDetailPage() {
     if (!dashboard) return;
     const r = dashboard.referrer;
     setEditFormData({
+      firstName: r.userId?.firstName || '',
+      middleName: r.userId?.middleName || '',
+      lastName: r.userId?.lastName || '',
       email: r.email || '',
       mobileNumber: r.mobileNumber || '',
       adminId: '',
@@ -386,6 +392,7 @@ export default function AdminReferrerDetailPage() {
               email={dashboard.referrer.email || referrerUser.email}
               mobileNumber={dashboard.referrer.mobileNumber}
               onEdit={openEditReferrer}
+              onOnboarding={() => router.push(`/admin/referrers/${referrerId}/profile`)}
             />
           </div>
 
@@ -872,6 +879,7 @@ export default function AdminReferrerDetailPage() {
           formData={editFormData}
           setFormData={setEditFormData}
           referrerName={dashboard ? getFullName(dashboard.referrer.userId) : ''}
+          allowNameEdit
         />
         <ReferrerFollowUpFormPanel
           mode={followUpPanelMode}

@@ -4,7 +4,7 @@
 
 import { B2B_DOCUMENTS_CONFIG, type B2BDocumentConfigField } from './b2bDocumentsConfig';
 
-export type FieldType = 'text' | 'email' | 'tel' | 'select' | 'textarea' | 'readonly' | 'checkbox';
+export type FieldType = 'text' | 'email' | 'tel' | 'select' | 'textarea' | 'readonly' | 'checkbox' | 'date';
 
 export interface FormField {
   key: string;

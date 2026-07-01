@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Country, State, City } from 'country-state-city';
 import { b2bLeadDocumentAPI } from '@/lib/b2bLeadDocumentAPI';
 import { B2BDocumentField, B2BLeadDocument, B2BDocumentStatus } from '@/types';
-import { B2B_FORM_SECTIONS } from '@/config/b2bOnboardingConfig';
+import { B2B_FORM_SECTIONS, type FormSection } from '@/config/b2bOnboardingConfig';
 import { B2B_DOCUMENTS_CONFIG, B2B_DOC_SECTION_ORDER, PREDEFINED_DOC_KEYS, type B2BDocumentConfigField } from '@/config/b2bDocumentsConfig';
 
 export interface B2BProfileFormProps {
@@ -13,6 +13,14 @@ export interface B2BProfileFormProps {
   b2bDocFields: B2BDocumentField[];
   b2bDocuments: B2BLeadDocument[];
   loadingDocs?: boolean;
+  /** Override form sections (e.g. referrer onboarding) */
+  formSections?: FormSection[];
+  /** Override tab bar */
+  formTabs?: { id: string; title: string }[];
+  /** Override predefined document config */
+  documentsConfig?: B2BDocumentConfigField[];
+  docSectionOrder?: B2BDocumentConfigField['section'][];
+  predefinedDocKeys?: Set<string>;
   /** true = view-only; default false */
   readOnly?: boolean;
   /** When readOnly, still allow editing fields that were empty at load (verified profile) */
@@ -34,6 +42,8 @@ export interface B2BProfileFormProps {
   onRejectDoc?: (docId: string, message: string) => void;
   /** allow adding new document fields */
   onAddDocField?: (data: { documentName: string; required: boolean; helpText: string }) => Promise<void>;
+  /** Custom documents tab content (e.g. referrer documents panel) */
+  customDocumentsTab?: React.ReactNode;
 }
 
 // ─── Tab definitions ─────────────────────────────────────────────────────────
@@ -54,6 +64,11 @@ export default function B2BProfileForm({
   b2bDocFields,
   b2bDocuments,
   loadingDocs = false,
+  formSections = B2B_FORM_SECTIONS,
+  formTabs = FORM_TABS,
+  documentsConfig = B2B_DOCUMENTS_CONFIG,
+  docSectionOrder = B2B_DOC_SECTION_ORDER,
+  predefinedDocKeys = PREDEFINED_DOC_KEYS,
   readOnly = false,
   allowEditEmptyFieldsOnly = false,
   initialProfileData,
@@ -68,6 +83,7 @@ export default function B2BProfileForm({
   onApproveDoc,
   onRejectDoc,
   onAddDocField,
+  customDocumentsTab,
 }: B2BProfileFormProps) {
   const [activeTab, setActiveTab] = useState<string>('basic_identity');
 
@@ -186,10 +202,11 @@ export default function B2BProfileForm({
   }, [profileData.sameAsOfficeAddress, profileData.officeAddress, profileData.registeredAddress, onFieldChange]);
 
   const getFieldValue = (key: string): string => {
+    if (key in profileData) return profileData[key] ?? '';
     if (key === 'firstName') return readonlyData.firstName;
     if (key === 'lastName') return readonlyData.lastName;
     if (key === 'email') return readonlyData.email;
-    return profileData[key] || '';
+    return '';
   };
 
   // ── Document viewer ───────────────────────────────────────────────────────
@@ -347,6 +364,32 @@ export default function B2BProfileForm({
         const list = field.key === 'city' ? cities1 : cities4;
         options = list.map((c: any) => ({ value: c.name, label: c.name }));
         disabled = options.length === 0;
+
+        if (disabled && (profileData[field.key === 'city' ? 'state' : 'companyState'] || val)) {
+          return (
+            <div key={field.key} className="flex flex-col gap-1">
+              {labelEl}
+              <input
+                type="text"
+                value={val}
+                onChange={(e) => {
+                  onFieldChange?.(field.key, e.target.value);
+                  if (fieldErrors[field.key]) {
+                    setFieldErrors((prev) => {
+                      const n = { ...prev };
+                      delete n[field.key];
+                      return n;
+                    });
+                  }
+                }}
+                placeholder={field.placeholder || `Enter ${field.label}`}
+                className={`px-3 py-2 border rounded-lg text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${hasError ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
+              />
+              {hasError && <p className="text-sm text-red-600">{fieldErrors[field.key]}</p>}
+              {!hasError && field.hint && <p className="text-sm text-gray-500">{field.hint}</p>}
+            </div>
+          );
+        }
       } else {
         options = (field.options || []).map((o: string) => ({ value: o, label: o }));
       }
@@ -392,14 +435,22 @@ export default function B2BProfileForm({
       );
     }
 
-    // ── Text / tel / email ──
+    // ── Text / tel / email / date ──
+    const inputType = field.type === 'tel' || field.type === 'email' || field.type === 'date' ? field.type : 'text';
     return (
       <div key={field.key} className="flex flex-col gap-1">
         {labelEl}
         <input
-          type={field.type || 'text'}
+          type={inputType}
           value={val}
-          onChange={e => { onFieldChange?.(field.key, e.target.value); if (fieldErrors[field.key]) setFieldErrors(prev => { const n = { ...prev }; delete n[field.key]; return n; }); }}
+          onChange={e => {
+            const nextVal =
+              field.type === 'tel' && e.target.value !== '' && !/^[+()\-\s.0-9]*$/.test(e.target.value)
+                ? val
+                : e.target.value;
+            onFieldChange?.(field.key, nextVal);
+            if (fieldErrors[field.key]) setFieldErrors(prev => { const n = { ...prev }; delete n[field.key]; return n; });
+          }}
           placeholder={field.placeholder}
           maxLength={field.maxLength}
           className={`px-3 py-2 border rounded-lg text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${hasError ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
@@ -563,14 +614,12 @@ export default function B2BProfileForm({
   };
 
   // Extra fields added by OPS/SA (not in predefined config)
-  const customDocFields = b2bDocFields.filter(f => !PREDEFINED_DOC_KEYS.has(f.documentKey));
+  const customDocFields = b2bDocFields.filter(f => !predefinedDocKeys.has(f.documentKey));
 
-  // authPersonName field from authorized_signatory section
-  const authPersonNameField = B2B_FORM_SECTIONS.find(s => s.id === 'authorized_signatory')?.fields.find(f => f.key === 'authPersonName');
+  const authPersonNameField = formSections.find(s => s.id === 'authorized_signatory')?.fields.find(f => f.key === 'authPersonName');
 
-  // ── Tab: info section ─────────────────────────────────────────────────────
   const renderInfoTab = (sectionId: string) => {
-    const section = B2B_FORM_SECTIONS.find(s => s.id === sectionId);
+    const section = formSections.find(s => s.id === sectionId);
     if (!section) return null;
     const isSaving = savingSection === sectionId;
     const hasEditableFields = allowEditEmptyFieldsOnly
@@ -621,15 +670,20 @@ export default function B2BProfileForm({
             <button
               onClick={() => {
                 // Client-side validation before saving
-                const section = B2B_FORM_SECTIONS.find(s => s.id === sectionId);
+                const section = formSections.find(s => s.id === sectionId);
                 const newErrors: Record<string, string> = {};
                 section?.fields.forEach((f: any) => {
-                  if (!f.required || f.type === 'readonly') return;
+                  if (f.type === 'readonly') return;
                   if (!shouldShowField(f)) return;
                   if (allowEditEmptyFieldsOnly && !isInitiallyEmpty(f.key, f.type)) return;
-                  if (!getFieldValue(f.key)?.trim()) {
-                    newErrors[f.key] = `${f.label} is required`;
-                  } else if (f.pattern && !new RegExp(f.pattern).test(getFieldValue(f.key))) {
+                  const val = getFieldValue(f.key)?.trim() || '';
+                  if (f.required) {
+                    if (!val) {
+                      newErrors[f.key] = `${f.label} is required`;
+                    } else if (f.pattern && !new RegExp(f.pattern).test(val)) {
+                      newErrors[f.key] = `${f.label} has invalid format`;
+                    }
+                  } else if (f.pattern && val && !new RegExp(f.pattern).test(val)) {
                     newErrors[f.key] = `${f.label} has invalid format`;
                   }
                 });
@@ -708,8 +762,8 @@ export default function B2BProfileForm({
           </div>
         )}
         {/* Predefined doc sections from config */}
-        {B2B_DOC_SECTION_ORDER.map(secName => {
-          const configFields = B2B_DOCUMENTS_CONFIG.filter(f => f.section === secName);
+        {docSectionOrder.map(secName => {
+          const configFields = documentsConfig.filter(f => f.section === secName);
           const isAuthSignatory = secName === 'Authorized Signatory';
 
           return (
@@ -807,7 +861,7 @@ export default function B2BProfileForm({
       {/* Horizontal tab bar */}
       <div className="border-b border-gray-200 bg-white px-4 py-3">
         <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-200 overflow-x-auto gap-0.5">
-          {FORM_TABS.map(tab => (
+          {formTabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
@@ -825,7 +879,9 @@ export default function B2BProfileForm({
 
       {/* Tab content */}
       <div className="p-6">
-        {activeTab === '__documents__' ? renderDocumentsTab() : renderInfoTab(activeTab)}
+        {activeTab === '__documents__'
+          ? customDocumentsTab ?? renderDocumentsTab()
+          : renderInfoTab(activeTab)}
       </div>
 
       {/* Add Document modal */}

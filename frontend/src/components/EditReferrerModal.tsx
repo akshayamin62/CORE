@@ -3,7 +3,11 @@
 import ResponsiveFormModal from '@/components/ResponsiveFormModal';
 import { AdminOption } from '@/components/AddReferrerModal';
 import CountryStateCitySelect from '@/components/CountryStateCitySelect';
+
 export interface ReferrerEditFormData {
+  firstName: string;
+  middleName: string;
+  lastName: string;
   email: string;
   mobileNumber: string;
   adminId: string;
@@ -23,6 +27,8 @@ interface EditReferrerModalProps {
   setFormData: React.Dispatch<React.SetStateAction<ReferrerEditFormData>>;
   referrerName: string;
   admins?: AdminOption[];
+  /** Admin can edit first/last name; super-admin view stays read-only */
+  allowNameEdit?: boolean;
 }
 
 const inputClass =
@@ -37,6 +43,7 @@ export default function EditReferrerModal({
   setFormData,
   referrerName,
   admins,
+  allowNameEdit = false,
 }: EditReferrerModalProps) {
   return (
     <ResponsiveFormModal
@@ -65,11 +72,52 @@ export default function EditReferrerModal({
       }
     >
       <form id="edit-referrer-form" onSubmit={onSubmit} className="space-y-4">
-        <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Name</p>
-          <p className="mt-1 text-sm font-semibold text-gray-900">{referrerName || 'N/A'}</p>
-          <p className="mt-1 text-xs text-gray-500">Name cannot be changed here</p>
-        </div>
+        {allowNameEdit ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                First Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                className={inputClass}
+                placeholder="First name"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Middle Name</label>
+              <input
+                type="text"
+                value={formData.middleName}
+                onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
+                className={inputClass}
+                placeholder="Middle name (optional)"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Last Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.lastName}
+                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                className={inputClass}
+                placeholder="Last name"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Name</p>
+            <p className="mt-1 text-sm font-semibold text-gray-900">{referrerName || 'N/A'}</p>
+            <p className="mt-1 text-xs text-gray-500">Name can only be changed by admin</p>
+          </div>
+        )}
 
         {admins && (
           <div>
@@ -138,7 +186,8 @@ export default function EditReferrerModal({
           inputClass={inputClass}
         />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">          <div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">Qualification</label>
             <input
               type="text"

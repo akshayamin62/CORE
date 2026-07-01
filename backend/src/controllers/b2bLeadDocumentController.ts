@@ -181,11 +181,19 @@ const DEFAULT_DOCUMENT_FIELDS = [
   { documentName: "Digital Signature (DSC)", documentKey: "digital_signature", section: "Authorized Signatory", helpText: "Digital Signature Certificate (if required for contracts)", required: false, order: 14 },
 ];
 
+type EntityRef = {
+  entityId: mongoose.Types.ObjectId;
+  entityType: "admin" | "advisor";
+  b2bLeadId: mongoose.Types.ObjectId | null;
+};
+
+const entityFilterFromRef = (entity: EntityRef): Record<string, mongoose.Types.ObjectId> => {
+  if (entity.entityType === "admin") return { adminId: entity.entityId };
+  return { advisorId: entity.entityId };
+};
+
 // Helper: resolve adminId or advisorId for the logged-in user
-const resolveMyEntityId = async (
-  userId: string,
-  role: string
-): Promise<{ entityId: mongoose.Types.ObjectId; entityType: "admin" | "advisor"; b2bLeadId: mongoose.Types.ObjectId | null } | null> => {
+const resolveMyEntityId = async (userId: string, role: string): Promise<EntityRef | null> => {
   if (role === "ADMIN") {
     const admin = await Admin.findOne({ userId }).select("_id b2bLeadId");
     if (!admin) return null;
@@ -233,18 +241,17 @@ export const seedDefaultDocumentFields = async (req: AuthRequest, res: Response)
   try {
     const entity = await resolveMyEntityId(req.user!.userId, req.user!.role);
     if (!entity) {
-      return res.status(403).json({ success: false, message: "Admin/Advisor profile not found" });
+      return res.status(403).json({ success: false, message: "Profile not found" });
     }
 
-    const entityFilter = entity.entityType === "admin"
-      ? { adminId: entity.entityId }
-      : { advisorId: entity.entityId };
+    const entityFilter = entityFilterFromRef(entity);
+    const defaults = DEFAULT_DOCUMENT_FIELDS;
 
     // Check how many fields already exist
     const existingKeys = await B2BDocumentField.find({ ...entityFilter, isActive: true }).distinct("documentKey");
     const existingKeySet = new Set(existingKeys);
 
-    const toCreate = DEFAULT_DOCUMENT_FIELDS.filter(f => !existingKeySet.has(f.documentKey));
+    const toCreate = defaults.filter(f => !existingKeySet.has(f.documentKey));
 
     if (toCreate.length > 0) {
       const docs = toCreate.map(f => ({
@@ -280,9 +287,7 @@ export const getMyB2BDocumentFields = async (req: AuthRequest, res: Response) =>
       return res.status(200).json({ success: true, data: { fields: [] } });
     }
 
-    const entityFilter = entity.entityType === "admin"
-      ? { adminId: entity.entityId }
-      : { advisorId: entity.entityId };
+    const entityFilter = entityFilterFromRef(entity);
 
     const fields = await B2BDocumentField.find({ ...entityFilter, isActive: true })
       .sort({ order: 1, createdAt: 1 });
@@ -302,9 +307,7 @@ export const getMyB2BLeadDocuments = async (req: AuthRequest, res: Response) => 
       return res.status(200).json({ success: true, data: { documents: [] } });
     }
 
-    const entityFilter = entity.entityType === "admin"
-      ? { adminId: entity.entityId }
-      : { advisorId: entity.entityId };
+    const entityFilter = entityFilterFromRef(entity);
 
     const queryFilter: Record<string, any> = entity.b2bLeadId
       ? { $or: [entityFilter, { b2bLeadId: entity.b2bLeadId }] }
@@ -438,19 +441,15 @@ export const uploadB2BLeadDocument = async (req: AuthRequest, res: Response) => 
     let b2bLeadIdRef: mongoose.Types.ObjectId | undefined;
 
     if (userRole === "ADMIN" || userRole === "ADVISOR") {
-      // Admin/Advisor: store by their own ID
       const entity = await resolveMyEntityId(userId, userRole);
       if (!entity) {
         fs.unlinkSync(file.path);
-        return res.status(403).json({ success: false, message: "Admin/Advisor profile not found" });
+        return res.status(403).json({ success: false, message: "Profile not found" });
       }
 
       const locked = await isProfileFullyLocked(userId, entity.entityType, entity.entityId);
       if (locked) {
-        const preLookup =
-          entity.entityType === "admin"
-            ? { adminId: entity.entityId, documentKey }
-            : { advisorId: entity.entityId, documentKey };
+        const preLookup = { ...entityFilterFromRef(entity), documentKey };
         const existingLockedDoc = await B2BLeadDocument.findOne(preLookup);
         if (
           existingLockedDoc &&
@@ -597,12 +596,12 @@ export const viewB2BLeadDocument = async (req: AuthRequest, res: Response): Prom
         res.status(403).json({ success: false, message: "Access denied" });
         return;
       }
-      const hasAccess = entity.entityType === "admin"
-        ? document.adminId?.toString() === entity.entityId.toString()
-        : document.advisorId?.toString() === entity.entityId.toString();
+      const hasAccess =
+        entity.entityType === "admin"
+          ? document.adminId?.toString() === entity.entityId.toString()
+          : document.advisorId?.toString() === entity.entityId.toString();
 
       if (!hasAccess) {
-        // Fallback: check b2bLeadId for older documents
         const myLeadId = await resolveMyLeadId(userId, userRole);
         if (!myLeadId || myLeadId !== document.b2bLeadId?.toString()) {
           res.status(403).json({ success: false, message: "Access denied" });

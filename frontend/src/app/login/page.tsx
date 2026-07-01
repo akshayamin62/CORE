@@ -138,14 +138,26 @@ export default function LoginPage() {
       toast.success('Login successful!');
       
       // Redirect based on role
-      const redirectPath = 
+      let redirectPath =
         user.role === 'SUPER_ADMIN' ? '/super-admin/dashboard' :
         user.role === 'ADMIN' ? '/admin/dashboard' :
         user.role === 'OPS' ? '/ops/dashboard' :
         user.role === 'EDUPLAN_COACH' ? '/eduplan-coach/dashboard' :
-        user.role === 'REFERRER' ? '/referrer/dashboard' :
         user.role === 'ADVISOR' ? '/advisor/dashboard' :
         '/dashboard';
+
+      if (user.role === 'REFERRER') {
+        if (user.isActive === false) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          toast.error('Your account is not activated yet. Please contact your admin.');
+          redirectPath = '/login';
+        } else if (!user.isVerified) {
+          redirectPath = '/referrer/onboarding';
+        } else {
+          redirectPath = '/referrer/dashboard';
+        }
+      }
       
       setTimeout(() => {
         router.push(redirectPath);

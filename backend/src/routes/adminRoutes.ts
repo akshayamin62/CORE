@@ -9,9 +9,9 @@ import {
   getAdminStats
 } from "../controllers/adminController";
 import {
-  createReferrer,
   getReferrers,
   toggleReferrerStatus,
+  verifyReferrer,
   getReferrerDashboardForAdmin,
   updateReferrerStage,
   updateReferrerForAdmin,
@@ -96,18 +96,18 @@ router.patch("/counselor/:counselorId/toggle-status", toggleCounselorStatus);
 // ============= REFERRER ROUTES =============
 
 /**
- * @route   POST /api/admin/referrer
- * @desc    Create a new Referrer
- * @access  Admin only
- */
-router.post("/referrer", createReferrer);
-
-/**
  * @route   GET /api/admin/referrers
  * @desc    Get all referrers created by this admin
  * @access  Admin only
  */
 router.get("/referrers", getReferrers);
+
+/**
+ * @route   PATCH /api/admin/referrer/:referrerId/verify
+ * @desc    Verify referrer after onboarding review
+ * @access  Admin only
+ */
+router.patch("/referrer/:referrerId/verify", verifyReferrer);
 
 /**
  * @route   PATCH /api/admin/referrer/:referrerId/toggle-status

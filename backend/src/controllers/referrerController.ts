@@ -1,4 +1,4 @@
-import { Response, Request } from "express";
+import { Response, Request, NextFunction } from "express";
 import mongoose from "mongoose";
 import { AuthRequest } from "../types/auth";
 import User from "../models/User";
@@ -29,6 +29,36 @@ const getUniqueReferralSlug = async (baseSlug: string): Promise<string> => {
   return slug;
 };
 
+/** Require referrer account to be active and verified (dashboard / leads / students). */
+export const requireVerifiedActiveReferrer = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const user = await User.findById(req.user?.userId);
+    if (!user) {
+      res.status(401).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+    if (!user.isActive) {
+      res.status(403).json({ success: false, message: "Account is not activated" });
+      return;
+    }
+    if (!user.isVerified) {
+      res.status(403).json({
+        success: false,
+        message: "Complete onboarding and wait for admin verification",
+      });
+      return;
+    }
+    next();
+  } catch (error) {
+    console.error("requireVerifiedActiveReferrer error:", error);
+    res.status(500).json({ success: false, message: "Authorization check failed" });
+  }
+};
+
 /** Old referrer documents may not have notes field — Mongoose default only applies on create */
 function getReferrerNotes(referrer: { notes?: unknown }) {
   return Array.isArray(referrer.notes) ? referrer.notes : [];
@@ -54,22 +84,40 @@ function parseReferrerNoteDate(value: string): Date {
 
 function buildReferrerProfileUpdates(
   body: Record<string, unknown>,
-  options?: { allowAdminId?: boolean }
-): { updates: Record<string, unknown>; error?: string } {
+  options?: { allowAdminId?: boolean; allowNameEdit?: boolean }
+): { updates: Record<string, unknown>; userUpdates: Record<string, unknown>; error?: string } {
   const updates: Record<string, unknown> = {};
+  const userUpdates: Record<string, unknown> = {};
+
+  if (options?.allowNameEdit) {
+    if (body.firstName !== undefined) {
+      const firstName = String(body.firstName).trim();
+      if (!firstName) return { updates: {}, userUpdates: {}, error: 'First name is required' };
+      userUpdates.firstName = firstName;
+    }
+    if (body.middleName !== undefined) {
+      userUpdates.middleName = String(body.middleName).trim() || undefined;
+    }
+    if (body.lastName !== undefined) {
+      const lastName = String(body.lastName).trim();
+      if (!lastName) return { updates: {}, userUpdates: {}, error: 'Last name is required' };
+      userUpdates.lastName = lastName;
+    }
+  }
 
   if (body.email !== undefined) {
     const email = String(body.email).trim().toLowerCase();
-    if (!email) return { updates: {}, error: 'Email is required' };
+    if (!email) return { updates: {}, userUpdates: {}, error: 'Email is required' };
     updates.email = email;
   }
   if (body.mobileNumber !== undefined) {
     const mobile = String(body.mobileNumber).trim();
-    if (!mobile) return { updates: {}, error: 'Mobile number is required' };
+    if (!mobile) return { updates: {}, userUpdates: {}, error: 'Mobile number is required' };
     if (!REFERRER_PHONE_REGEX.test(mobile)) {
-      return { updates: {}, error: 'Invalid phone number format' };
+      return { updates: {}, userUpdates: {}, error: 'Invalid phone number format' };
     }
     updates.mobileNumber = mobile;
+    userUpdates.mobileNumber = mobile;
   }
   if (body.country !== undefined) updates.country = String(body.country).trim();
   if (body.state !== undefined) updates.state = String(body.state).trim();
@@ -77,15 +125,15 @@ function buildReferrerProfileUpdates(
   if (body.qualification !== undefined) updates.qualification = String(body.qualification).trim();
   if (body.currentRole !== undefined) updates.currentRole = String(body.currentRole).trim();
   if (options?.allowAdminId && body.adminId !== undefined) {
-    if (!body.adminId) return { updates: {}, error: 'Admin selection is required' };
+    if (!body.adminId) return { updates: {}, userUpdates: {}, error: 'Admin selection is required' };
     updates.adminId = body.adminId;
   }
 
-  if (Object.keys(updates).length === 0) {
-    return { updates: {}, error: 'No fields to update' };
+  if (Object.keys(updates).length === 0 && Object.keys(userUpdates).length === 0) {
+    return { updates: {}, userUpdates: {}, error: 'No fields to update' };
   }
 
-  return { updates };
+  return { updates, userUpdates };
 }
 
 function mapReferrerProfile(re: any) {
@@ -333,64 +381,40 @@ export const toggleReferrerStatus = async (req: AuthRequest, res: Response): Pro
     }
 
     // If the referrer is in Closed stage — just reactivate and reset stage to New
-    // (do NOT run the verification flow, do NOT change isVerified)
     if (referrer.stage === REFERRER_STAGE.CLOSED) {
       user.isActive = true;
       await Referrer.findByIdAndUpdate(referrer._id, { $set: { stage: REFERRER_STAGE.NEW } }, { runValidators: false });
       referrer.stage = REFERRER_STAGE.NEW;
     } else if (!user.isVerified) {
-      // First-time activation: verify, activate, set stage to Converted
-      user.isVerified = true;
-      user.isActive = true;
-      await Referrer.findByIdAndUpdate(referrer._id, { $set: { stage: REFERRER_STAGE.CONVERTED } }, { runValidators: false });
-      referrer.stage = REFERRER_STAGE.CONVERTED;
+      // Activated but not verified: toggle active only
+      user.isActive = !user.isActive;
 
-      // Send activation email
-      const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
-      const referralLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/referral/${referrer.referralSlug}`;
-      try {
-        await sendEmail({
-          to: referrer.email,
-          subject: 'Your Kareer Studio Referrer Account is Now Active!',
-          html: `
-            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1f2937">
-              <div style="background:#7c3aed;padding:24px;border-radius:12px 12px 0 0;text-align:center">
-                <h1 style="color:#fff;margin:0;font-size:24px">Account Activated!</h1>
-              </div>
-              <div style="background:#f9fafb;padding:32px;border-radius:0 0 12px 12px;border:1px solid #e5e7eb">
-                <p style="font-size:16px;margin-top:0">Hi <strong>${fullName}</strong>,</p>
-                <p style="font-size:15px;color:#374151">Congratulations! Your referrer account on the <strong>Kareer Studio</strong> platform has been verified and activated.</p>
-                <p style="font-size:15px;color:#374151">Use the referral link below to generate leads and connect people with our services.</p>
-                <div style="background:#ede9fe;border:1px solid #ddd6fe;border-radius:8px;padding:16px;margin:24px 0">
-                  <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#6d28d9;text-transform:uppercase">Your Referral Link</p>
-                  <a href="${referralLink}" style="color:#7c3aed;word-break:break-all;font-size:14px">${referralLink}</a>
-                </div>
-                <a href="${referralLink}" style="display:inline-block;background:#7c3aed;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Open Referral Link</a>
-                <p style="font-size:13px;color:#6b7280;margin-top:32px">If you have any questions, please reach out to your coordinator.</p>
-                <p style="font-size:13px;color:#6b7280;margin:0">– The Kareer Studio Team</p>
-              </div>
-            </div>
-          `,
-        });
-      } catch (emailErr) {
-        console.error('Failed to send referrer activation email:', emailErr);
-      }
-
-      // Send WhatsApp notification
-      if (referrer.mobileNumber) {
+      if (user.isActive) {
+        const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
+        const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login`;
         try {
-          await sendWhatsAppGeneralNotification(
-            referrer.mobileNumber,
-            fullName,
-            'Your Kareer Studio referrer account is now active!',
-            `Use your referral link to create leads: ${referralLink}`
-          );
-        } catch (waErr) {
-          console.error('Failed to send referrer activation WhatsApp:', waErr);
+          await sendEmail({
+            to: referrer.email,
+            subject: 'Your Kareer Studio Referrer Account is Activated',
+            html: `
+              <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1f2937">
+                <div style="background:#7c3aed;padding:24px;border-radius:12px 12px 0 0;text-align:center">
+                  <h1 style="color:#fff;margin:0;font-size:24px">Account Activated</h1>
+                </div>
+                <div style="background:#f9fafb;padding:32px;border-radius:0 0 12px 12px;border:1px solid #e5e7eb">
+                  <p style="font-size:16px;margin-top:0">Hi <strong>${fullName}</strong>,</p>
+                  <p style="font-size:15px;color:#374151">Your referrer account has been activated. Please log in and complete your onboarding profile.</p>
+                  <a href="${loginUrl}" style="display:inline-block;background:#7c3aed;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;margin-top:16px">Log In & Complete Onboarding</a>
+                </div>
+              </div>
+            `,
+          });
+        } catch (emailErr) {
+          console.error('Failed to send referrer activation email:', emailErr);
         }
       }
     } else {
-      // Already verified: just toggle active state
+      // Verified: toggle active state
       user.isActive = !user.isActive;
     }
     await user.save();
@@ -406,6 +430,95 @@ export const toggleReferrerStatus = async (req: AuthRequest, res: Response): Pro
       success: false,
       message: "Failed to toggle referrer status",
     });
+  }
+};
+
+/**
+ * Verify referrer after onboarding review (Admin only)
+ */
+export const verifyReferrer = async (req: AuthRequest, res: Response): Promise<Response> => {
+  try {
+    const { referrerId } = req.params;
+    const adminUserId = req.user?.userId;
+
+    if (!adminUserId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const referrer = await Referrer.findOne({ _id: referrerId, adminId: adminUserId });
+    if (!referrer) {
+      return res.status(404).json({ success: false, message: "Referrer not found or unauthorized" });
+    }
+
+    const user = await User.findById(referrer.userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    if (!user.isActive) {
+      return res.status(400).json({ success: false, message: "Referrer must be activated before verification" });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ success: false, message: "Referrer is already verified" });
+    }
+
+    user.isVerified = true;
+    user.isActive = true;
+    await user.save();
+
+    await Referrer.findByIdAndUpdate(referrer._id, { $set: { stage: REFERRER_STAGE.CONVERTED } }, { runValidators: false });
+
+    const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
+    const referralLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/referral/${referrer.referralSlug}`;
+    const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/referrer/dashboard`;
+
+    try {
+      await sendEmail({
+        to: referrer.email,
+        subject: 'Your Kareer Studio Referrer Account is Verified!',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1f2937">
+            <div style="background:#059669;padding:24px;border-radius:12px 12px 0 0;text-align:center">
+              <h1 style="color:#fff;margin:0;font-size:24px">Account Verified!</h1>
+            </div>
+            <div style="background:#f9fafb;padding:32px;border-radius:0 0 12px 12px;border:1px solid #e5e7eb">
+              <p style="font-size:16px;margin-top:0">Hi <strong>${fullName}</strong>,</p>
+              <p style="font-size:15px;color:#374151">Your onboarding has been approved. You now have full access to your referrer dashboard.</p>
+              <div style="background:#ede9fe;border:1px solid #ddd6fe;border-radius:8px;padding:16px;margin:24px 0">
+                <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#6d28d9;text-transform:uppercase">Your Referral Link</p>
+                <a href="${referralLink}" style="color:#7c3aed;word-break:break-all;font-size:14px">${referralLink}</a>
+              </div>
+              <a href="${dashboardUrl}" style="display:inline-block;background:#059669;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Go to Dashboard</a>
+            </div>
+          </div>
+        `,
+      });
+    } catch (emailErr) {
+      console.error('Failed to send referrer verification email:', emailErr);
+    }
+
+    if (referrer.mobileNumber) {
+      try {
+        await sendWhatsAppGeneralNotification(
+          referrer.mobileNumber,
+          fullName,
+          'Your Kareer Studio referrer account is verified!',
+          `Use your referral link: ${referralLink}`
+        );
+      } catch (waErr) {
+        console.error('Failed to send referrer verification WhatsApp:', waErr);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Referrer verified successfully",
+      data: { isActive: user.isActive, isVerified: user.isVerified },
+    });
+  } catch (error: any) {
+    console.error("Verify referrer error:", error);
+    return res.status(500).json({ success: false, message: "Failed to verify referrer" });
   }
 };
 
@@ -640,65 +753,17 @@ export const toggleReferrerStatusForSuperAdmin = async (req: AuthRequest, res: R
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // If the referrer is in Closed stage — just reactivate and reset stage to New
-    // (do NOT run the verification flow, do NOT change isVerified)
+    if (!user.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message: "Super admin can only deactivate fully verified referrers",
+      });
+    }
+
     if (referrer.stage === REFERRER_STAGE.CLOSED) {
       user.isActive = true;
       await Referrer.findByIdAndUpdate(referrer._id, { $set: { stage: REFERRER_STAGE.NEW } }, { runValidators: false });
-      referrer.stage = REFERRER_STAGE.NEW;
-    } else if (!user.isVerified) {
-      // First-time activation: verify, activate, set stage to Converted
-      user.isVerified = true;
-      user.isActive = true;
-      await Referrer.findByIdAndUpdate(referrer._id, { $set: { stage: REFERRER_STAGE.CONVERTED } }, { runValidators: false });
-      referrer.stage = REFERRER_STAGE.CONVERTED;
-
-      // Send activation email
-      const fullName = [user.firstName, user.middleName, user.lastName].filter(Boolean).join(' ');
-      const referralLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/referral/${referrer.referralSlug}`;
-      try {
-        await sendEmail({
-          to: referrer.email,
-          subject: 'Your Kareer Studio Referrer Account is Now Active!',
-          html: `
-            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1f2937">
-              <div style="background:#7c3aed;padding:24px;border-radius:12px 12px 0 0;text-align:center">
-                <h1 style="color:#fff;margin:0;font-size:24px">Account Activated!</h1>
-              </div>
-              <div style="background:#f9fafb;padding:32px;border-radius:0 0 12px 12px;border:1px solid #e5e7eb">
-                <p style="font-size:16px;margin-top:0">Hi <strong>${fullName}</strong>,</p>
-                <p style="font-size:15px;color:#374151">Congratulations! Your referrer account on the <strong>Kareer Studio</strong> platform has been verified and activated.</p>
-                <p style="font-size:15px;color:#374151">Use the referral link below to generate leads and connect people with our services.</p>
-                <div style="background:#ede9fe;border:1px solid #ddd6fe;border-radius:8px;padding:16px;margin:24px 0">
-                  <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:#6d28d9;text-transform:uppercase">Your Referral Link</p>
-                  <a href="${referralLink}" style="color:#7c3aed;word-break:break-all;font-size:14px">${referralLink}</a>
-                </div>
-                <a href="${referralLink}" style="display:inline-block;background:#7c3aed;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px">Open Referral Link</a>
-                <p style="font-size:13px;color:#6b7280;margin-top:32px">If you have any questions, please reach out to your coordinator.</p>
-                <p style="font-size:13px;color:#6b7280;margin:0">– The Kareer Studio Team</p>
-              </div>
-            </div>
-          `,
-        });
-      } catch (emailErr) {
-        console.error('Failed to send referrer activation email:', emailErr);
-      }
-
-      // Send WhatsApp notification
-      if (referrer.mobileNumber) {
-        try {
-          await sendWhatsAppGeneralNotification(
-            referrer.mobileNumber,
-            fullName,
-            'Your Kareer Studio referrer account is now active!',
-            `Use your referral link to create leads: ${referralLink}`
-          );
-        } catch (waErr) {
-          console.error('Failed to send referrer activation WhatsApp:', waErr);
-        }
-      }
     } else {
-      // Already verified: just toggle active state
       user.isActive = !user.isActive;
     }
     await user.save();
@@ -727,7 +792,7 @@ export const getReferralInfo = async (req: Request, res: Response): Promise<Resp
     const { referralSlug } = req.params;
 
     const referrer = await Referrer.findOne({ referralSlug: referralSlug.toLowerCase() })
-      .populate("userId", "firstName middleName lastName isActive");
+      .populate("userId", "firstName middleName lastName isActive isVerified");
 
     if (!referrer) {
       return res.status(404).json({
@@ -737,10 +802,10 @@ export const getReferralInfo = async (req: Request, res: Response): Promise<Resp
     }
 
     const referrerUser = referrer.userId as any;
-    if (!referrerUser?.isActive) {
+    if (!referrerUser?.isActive || !referrerUser?.isVerified) {
       return res.status(410).json({
         success: false,
-        message: "This referral link is no longer active",
+        message: "This referral link is not available",
       });
     }
 
@@ -801,7 +866,7 @@ export const submitReferralEnquiry = async (req: Request, res: Response): Promis
     }
 
     const referrer = await Referrer.findOne({ referralSlug: referralSlug.toLowerCase() })
-      .populate("userId", "isActive firstName middleName lastName");
+      .populate("userId", "isActive isVerified firstName middleName lastName");
     if (!referrer) {
       return res.status(404).json({
         success: false,
@@ -810,10 +875,10 @@ export const submitReferralEnquiry = async (req: Request, res: Response): Promis
     }
 
     const referrerUser = referrer.userId as any;
-    if (!referrerUser?.isActive) {
+    if (!referrerUser?.isActive || !referrerUser?.isVerified) {
       return res.status(410).json({
         success: false,
-        message: "This referral link is no longer active",
+        message: "This referral link is not available",
       });
     }
 
@@ -1502,13 +1567,13 @@ export const updateReferrerStageForSuperAdmin = async (req: AuthRequest, res: Re
 };
 
 /**
- * ADMIN: Update referrer profile (name is not editable)
+ * ADMIN: Update referrer profile (including name)
  */
 export const updateReferrerForAdmin = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const { referrerId } = req.params;
     const adminUserId = req.user?.userId;
-    const { updates, error } = buildReferrerProfileUpdates(req.body);
+    const { updates, userUpdates, error } = buildReferrerProfileUpdates(req.body, { allowNameEdit: true });
 
     if (error) {
       return res.status(400).json({ success: false, message: error });
@@ -1536,15 +1601,22 @@ export const updateReferrerForAdmin = async (req: AuthRequest, res: Response): P
       }
     }
 
-    const updated = await Referrer.findByIdAndUpdate(
-      referrer._id,
-      { $set: updates },
-      { new: true, runValidators: false }
-    ).populate('userId', 'firstName middleName lastName email profilePicture isActive isVerified');
+    if (Object.keys(updates).length > 0) {
+      await Referrer.findByIdAndUpdate(referrer._id, { $set: updates }, { runValidators: false });
+    }
 
     if (updates.email) {
       await User.findByIdAndUpdate(referrer.userId, { email: updates.email });
     }
+
+    if (Object.keys(userUpdates).length > 0) {
+      await User.findByIdAndUpdate(referrer.userId, { $set: userUpdates });
+    }
+
+    const updated = await Referrer.findById(referrer._id).populate(
+      'userId',
+      'firstName middleName lastName email profilePicture isActive isVerified'
+    );
 
     return res.json({
       success: true,
@@ -1563,7 +1635,7 @@ export const updateReferrerForAdmin = async (req: AuthRequest, res: Response): P
 export const updateReferrerForSuperAdmin = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
     const { referrerId } = req.params;
-    const { updates, error } = buildReferrerProfileUpdates(req.body, { allowAdminId: true });
+    const { updates, userUpdates, error } = buildReferrerProfileUpdates(req.body, { allowAdminId: true });
 
     if (error) {
       return res.status(400).json({ success: false, message: error });
@@ -1608,6 +1680,10 @@ export const updateReferrerForSuperAdmin = async (req: AuthRequest, res: Respons
 
     if (updates.email) {
       await User.findByIdAndUpdate(referrer.userId, { email: updates.email });
+    }
+
+    if (Object.keys(userUpdates).length > 0) {
+      await User.findByIdAndUpdate(referrer.userId, { $set: userUpdates });
     }
 
     return res.json({

@@ -113,6 +113,9 @@ export default function SuperAdminReferrerDetailPage() {
   const [editingSubmitting, setEditingSubmitting] = useState(false);
   const [admins, setAdmins] = useState<AdminOption[]>([]);
   const [editFormData, setEditFormData] = useState<ReferrerEditFormData>({
+    firstName: '',
+    middleName: '',
+    lastName: '',
     email: '',
     mobileNumber: '',
     adminId: '',
@@ -219,6 +222,9 @@ export default function SuperAdminReferrerDetailPage() {
     if (!dashboard) return;
     const r = dashboard.referrer;
     setEditFormData({
+      firstName: r.userId?.firstName || '',
+      middleName: r.userId?.middleName || '',
+      lastName: r.userId?.lastName || '',
       email: r.email || '',
       mobileNumber: r.mobileNumber || '',
       adminId: r.adminId?._id || '',
@@ -385,6 +391,7 @@ export default function SuperAdminReferrerDetailPage() {
               email={dashboard.referrer.email || referrerUser.email}
               mobileNumber={dashboard.referrer.mobileNumber}
               onEdit={openEditReferrer}
+              onOnboarding={() => router.push(`/super-admin/referrers/${referrerId}/profile`)}
             />
           </div>
 

@@ -300,6 +300,70 @@ export interface B2BLeadDocument {
   updatedAt?: string;
 }
 
+// Referrer Document Types
+export enum ReferrerDocumentStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
+export interface ReferrerDocumentField {
+  _id: string;
+  referrerId: string;
+  documentName: string;
+  documentKey: string;
+  section?: string;
+  required: boolean;
+  helpText?: string;
+  order: number;
+  isActive: boolean;
+  createdByRole: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ReferrerDocument {
+  _id: string;
+  referrerId: string;
+  documentFieldId?: ReferrerDocumentField | string;
+  documentName: string;
+  documentKey: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedAt: string;
+  uploadedBy?: {
+    _id: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
+    email: string;
+  };
+  uploadedByRole: string;
+  status: ReferrerDocumentStatus;
+  approvedBy?: {
+    _id: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
+    email: string;
+  };
+  approvedAt?: string;
+  rejectedBy?: {
+    _id: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
+    email: string;
+  };
+  rejectedAt?: string;
+  rejectionMessage?: string;
+  version: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface ServiceProviderProfile {
   _id: string;
   userId: string;

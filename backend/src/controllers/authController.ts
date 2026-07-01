@@ -470,6 +470,8 @@ export const verifyOTP = async (req: VerifyOTPRequest, res: Response): Promise<R
           email: user.email,
           role: user.role,
           profilePicture: user.profilePicture,
+          isActive: user.isActive,
+          isVerified: user.isVerified,
         },
         token,
       },
