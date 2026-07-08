@@ -10,6 +10,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 import AuthImage from '@/components/AuthImage';
 import MeetingDurationOptions from '@/components/MeetingDurationOptions';
 import {
+  roleListPagePadding,
+  roleListTitleClass,
+  roleListSubtitleClass,
+  roleListBackBtnClass,
+} from '@/components/studentDetailResponsive';
+import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell,
   PieChart, Pie,
@@ -505,51 +511,53 @@ export default function IvyExpertCandidateDetailPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <div className="min-h-screen bg-gray-50">
-        <div className="p-8 max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push('/ivy-league/ivy-expert')}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  {candidate ? getFullName(candidate) : 'Candidate Details'}
-                </h1>
-                <p className="text-gray-600 mt-1">
-                  {candidate ? `${candidate.schoolName} • Grade ${candidate.currentGrade} • ${candidate.curriculum}` : ''}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleConvertToStudent}
-              disabled={converting || !clearances.testCleared || !clearances.studentInterviewCleared || !clearances.parentInterviewCleared}
-              title={(!clearances.testCleared || !clearances.studentInterviewCleared || !clearances.parentInterviewCleared) ? 'All 3 stages (Test, Student Interview, Parent Interview) must be cleared before conversion' : 'Convert to IVY Student'}
-              className={`px-5 py-2.5 rounded-lg transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${(!clearances.testCleared || !clearances.studentInterviewCleared || !clearances.parentInterviewCleared) ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700'}`}
-            >
-              {converting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Converting...
-                </>
-              ) : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Convert to Student
-                </>
-              )}
-            </button>
-          </div>
+      <div className={`${roleListPagePadding} min-w-0 max-w-full overflow-x-hidden`}>
+        <button
+          type="button"
+          onClick={() => router.push('/ivy-league/ivy-expert/candidates')}
+          className={roleListBackBtnClass}
+        >
+          <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Candidates
+        </button>
 
-          {loading ? (
+        <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
+            <h1 className={roleListTitleClass}>
+              {candidate ? getFullName(candidate) : 'Candidate Details'}
+            </h1>
+            {candidate && (
+              <p className={roleListSubtitleClass}>
+                {candidate.schoolName} • Grade {candidate.currentGrade} • {candidate.curriculum}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleConvertToStudent}
+            disabled={converting || !clearances.testCleared || !clearances.studentInterviewCleared || !clearances.parentInterviewCleared}
+            title={(!clearances.testCleared || !clearances.studentInterviewCleared || !clearances.parentInterviewCleared) ? 'All 3 stages (Test, Student Interview, Parent Interview) must be cleared before conversion' : 'Convert to IVY Student'}
+            className={`flex w-full shrink-0 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-5 ${(!clearances.testCleared || !clearances.studentInterviewCleared || !clearances.parentInterviewCleared) ? 'cursor-not-allowed bg-gray-400 text-white' : 'bg-green-600 text-white hover:bg-green-700'}`}
+          >
+            {converting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Converting...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Convert to Student
+              </>
+            )}
+          </button>
+        </div>
+
+        {loading ? (
             <div className="flex items-center justify-center py-20">
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
             </div>
@@ -557,40 +565,41 @@ export default function IvyExpertCandidateDetailPage() {
             <>
               {/* Student Info Card */}
               {candidate && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Student Name</p>
-                      <p className="text-sm font-semibold text-gray-900 mt-1">{getFullName(candidate)}</p>
+                <div className="mb-4 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:mb-6 sm:p-6">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase text-gray-500 sm:text-xs">Student Name</p>
+                      <p className="mt-0.5 truncate text-sm font-semibold text-gray-900">{getFullName(candidate)}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Email</p>
-                      <p className="text-sm text-gray-900 mt-1">{candidate.email}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase text-gray-500 sm:text-xs">Email</p>
+                      <p className="mt-0.5 truncate text-sm text-gray-900">{candidate.email}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Parent Name</p>
-                      <p className="text-sm font-semibold text-gray-900 mt-1">{getParentName(candidate)}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase text-gray-500 sm:text-xs">Parent Name</p>
+                      <p className="mt-0.5 truncate text-sm font-semibold text-gray-900">{getParentName(candidate)}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Parent Contact</p>
-                      <p className="text-sm text-gray-900 mt-1">{candidate.parentEmail}</p>
-                      <p className="text-sm text-gray-900">{candidate.parentMobile}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase text-gray-500 sm:text-xs">Parent Contact</p>
+                      <p className="mt-0.5 truncate text-sm text-gray-900">{candidate.parentEmail}</p>
+                      <p className="truncate text-xs text-gray-900 sm:text-sm">{candidate.parentMobile}</p>
                     </div>
                   </div>
                 </div>
               )}
 
               {/* Tab Navigation */}
-              <div className="flex gap-2 mb-6">
+              <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-none sm:mb-6">
                 {[
-                  { key: 'test', label: '📝 Test Score', color: 'blue' },
-                  { key: 'student-interview', label: '🎓 Student Interview', color: 'green' },
-                  { key: 'parent-interview', label: '👨‍👩‍👧 Parent Interview', color: 'purple' },
+                  { key: 'test', label: '📝 Test Score', mobileLabel: '📝 Test', color: 'blue' },
+                  { key: 'student-interview', label: '🎓 Student Interview', mobileLabel: '🎓 Student', color: 'green' },
+                  { key: 'parent-interview', label: '👨‍👩‍👧 Parent Interview', mobileLabel: '👨‍👩‍👧 Parent', color: 'purple' },
                 ].map((tab) => (
                   <button
                     key={tab.key}
+                    type="button"
                     onClick={() => setActiveTab(tab.key as any)}
-                    className={`px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                    className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:px-5 sm:py-2.5 sm:text-sm ${
                       activeTab === tab.key
                         ? tab.color === 'blue'
                           ? 'bg-blue-600 text-white'
@@ -600,7 +609,8 @@ export default function IvyExpertCandidateDetailPage() {
                         : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                     }`}
                   >
-                    {tab.label}
+                    <span className="sm:hidden">{tab.mobileLabel}</span>
+                    <span className="hidden sm:inline">{tab.label}</span>
                   </button>
                 ))}
               </div>
@@ -618,49 +628,50 @@ export default function IvyExpertCandidateDetailPage() {
                   ) : (
                     <>
                       {/* Score Summary */}
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-bold text-gray-900">Score Summary</h3>
+                      <div className="mb-4 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:mb-6 sm:p-6">
+                        <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between">
+                          <h3 className="text-base font-bold text-gray-900 sm:text-lg">Score Summary</h3>
                           {clearances.testCleared ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold bg-green-100 text-green-700">
+                            <span className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-green-100 px-3 py-1.5 text-sm font-semibold text-green-700 sm:w-auto">
                               ✓ Test Cleared
                             </span>
                           ) : (
                             <button
+                              type="button"
                               onClick={() => handleClearStage('test')}
                               disabled={clearingStage === 'test'}
-                              className="px-4 py-1.5 rounded-lg text-sm font-semibold bg-green-600 text-white hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                              className="w-full rounded-lg bg-green-600 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                             >
                               {clearingStage === 'test' ? 'Clearing...' : '✓ Clear Test'}
                             </button>
                           )}
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                          <div className="bg-blue-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-blue-700">{testResult.totalScore}</p>
-                            <p className="text-xs font-semibold text-blue-600 mt-1">Total Score</p>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 md:grid-cols-5">
+                          <div className="rounded-lg bg-blue-50 p-2.5 text-center sm:p-4">
+                            <p className="text-xl font-extrabold text-blue-700 sm:text-2xl">{testResult.totalScore}</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-blue-600 sm:text-xs">Total Score</p>
                           </div>
-                          <div className="bg-gray-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-gray-700">{testResult.maxScore}</p>
-                            <p className="text-xs font-semibold text-gray-600 mt-1">Max Score</p>
+                          <div className="rounded-lg bg-gray-50 p-2.5 text-center sm:p-4">
+                            <p className="text-xl font-extrabold text-gray-700 sm:text-2xl">{testResult.maxScore}</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-gray-600 sm:text-xs">Max Score</p>
                           </div>
-                          <div className="bg-green-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-green-700">
+                          <div className="rounded-lg bg-green-50 p-2.5 text-center sm:p-4">
+                            <p className="text-xl font-extrabold text-green-700 sm:text-2xl">
                               {testResult.sections.reduce((s, sec) => s + sec.correct, 0)}
                             </p>
-                            <p className="text-xs font-semibold text-green-600 mt-1">Correct</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-green-600 sm:text-xs">Correct</p>
                           </div>
-                          <div className="bg-red-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-red-700">
+                          <div className="rounded-lg bg-red-50 p-2.5 text-center sm:p-4">
+                            <p className="text-xl font-extrabold text-red-700 sm:text-2xl">
                               {testResult.sections.reduce((s, sec) => s + sec.incorrect, 0)}
                             </p>
-                            <p className="text-xs font-semibold text-red-600 mt-1">Incorrect</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-red-600 sm:text-xs">Incorrect</p>
                           </div>
-                          <div className="bg-amber-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-amber-700">
+                          <div className="col-span-2 rounded-lg bg-amber-50 p-2.5 text-center sm:col-span-1 sm:p-4">
+                            <p className="text-xl font-extrabold text-amber-700 sm:text-2xl">
                               {testResult.sections.reduce((s, sec) => s + sec.unanswered, 0)}
                             </p>
-                            <p className="text-xs font-semibold text-amber-600 mt-1">Skipped</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-amber-600 sm:text-xs">Skipped</p>
                           </div>
                         </div>
                         {testResult.violations > 0 && (
@@ -719,11 +730,12 @@ export default function IvyExpertCandidateDetailPage() {
                               </div>
                               <h3 className="text-lg font-bold text-gray-900">Performance Analysis</h3>
                             </div>
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                                <h4 className="text-sm font-bold text-gray-900 mb-0.5 uppercase tracking-wide">Strengths Profile</h4>
-                                <p className="text-xs text-gray-900 mb-3 font-bold">Percentage scored in each section</p>
-                                <ResponsiveContainer width="100%" height={260}>
+                            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
+                                <h4 className="mb-0.5 text-xs font-bold uppercase tracking-wide text-gray-900 sm:text-sm">Strengths Profile</h4>
+                                <p className="mb-2 text-[10px] font-bold text-gray-900 sm:mb-3 sm:text-xs">Percentage scored in each section</p>
+                                <div className="h-[200px] sm:h-[260px]">
+                                <ResponsiveContainer width="100%" height="100%">
                                   <RadarChart data={radarData} outerRadius="75%">
                                     <PolarGrid stroke="#e5e7eb" />
                                     <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 600 }} />
@@ -731,12 +743,13 @@ export default function IvyExpertCandidateDetailPage() {
                                     <Radar name="Score %" dataKey="score" stroke="#6366f1" fill="#6366f1" fillOpacity={0.25} strokeWidth={2} dot={{ r: 4, fill: '#6366f1' }} />
                                   </RadarChart>
                                 </ResponsiveContainer>
+                                </div>
                               </div>
-                              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                                <h4 className="text-sm font-bold text-gray-900 mb-0.5 uppercase tracking-wide">Overall Accuracy</h4>
-                                <p className="text-xs text-gray-900 mb-3 font-bold">Distribution of {totalQ} questions</p>
-                                <div className="relative">
-                                  <ResponsiveContainer width="100%" height={260}>
+                              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
+                                <h4 className="mb-0.5 text-xs font-bold uppercase tracking-wide text-gray-900 sm:text-sm">Overall Accuracy</h4>
+                                <p className="mb-2 text-[10px] font-bold text-gray-900 sm:mb-3 sm:text-xs">Distribution of {totalQ} questions</p>
+                                <div className="relative h-[200px] sm:h-[260px]">
+                                  <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                       <Pie data={donutData} cx="50%" cy="50%" innerRadius={65} outerRadius={100} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="#fff">
                                         {donutData.map((entry, idx) => (<Cell key={idx} fill={entry.color} />))}
@@ -749,7 +762,7 @@ export default function IvyExpertCandidateDetailPage() {
                                     <span className="text-xs font-bold text-gray-400">Accuracy</span>
                                   </div>
                                 </div>
-                                <div className="flex justify-center gap-5 mt-1">
+                                <div className="mt-1 flex flex-wrap justify-center gap-2 sm:gap-5">
                                   {donutData.map((d) => (
                                     <div key={d.name} className="flex items-center gap-1.5">
                                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
@@ -758,10 +771,11 @@ export default function IvyExpertCandidateDetailPage() {
                                   ))}
                                 </div>
                               </div>
-                              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                                <h4 className="text-sm font-bold text-gray-900 mb-0.5 uppercase tracking-wide">Section Scores</h4>
-                                <p className="text-xs text-gray-900 mb-3 font-bold">Score compared to maximum marks</p>
-                                <ResponsiveContainer width="100%" height={260}>
+                              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
+                                <h4 className="mb-0.5 text-xs font-bold uppercase tracking-wide text-gray-900 sm:text-sm">Section Scores</h4>
+                                <p className="mb-2 text-[10px] font-bold text-gray-900 sm:mb-3 sm:text-xs">Score compared to maximum marks</p>
+                                <div className="h-[200px] sm:h-[260px]">
+                                <ResponsiveContainer width="100%" height="100%">
                                   <BarChart data={barData} barGap={4}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                                     <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 600 }} />
@@ -774,10 +788,11 @@ export default function IvyExpertCandidateDetailPage() {
                                     <Bar dataKey="Max Marks" fill="#ef4444" radius={[6, 6, 0, 0]} />
                                   </BarChart>
                                 </ResponsiveContainer>
+                                </div>
                               </div>
-                              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                                <h4 className="text-sm font-bold text-gray-900 mb-0.5 uppercase tracking-wide">Section Accuracy</h4>
-                                <p className="text-xs text-gray-900 mb-3 font-bold">Percentage of attempted questions answered correctly</p>
+                              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
+                                <h4 className="mb-0.5 text-xs font-bold uppercase tracking-wide text-gray-900 sm:text-sm">Section Accuracy</h4>
+                                <p className="mb-2 text-[10px] font-bold text-gray-900 sm:mb-3 sm:text-xs">Percentage of attempted questions answered correctly</p>
                                 <div className="space-y-5 mt-2">
                                   {accuracyData.map((sec, idx) => (
                                     <div key={idx}>
@@ -798,22 +813,22 @@ export default function IvyExpertCandidateDetailPage() {
                       })()}
 
                       {/* Section Cards */}
-                      <div className="flex gap-4 mb-6">
+                      <div className="mb-4 flex gap-3 overflow-x-auto pb-1 scrollbar-none sm:mb-6 sm:flex-wrap sm:overflow-visible">
                         {testResult.sections.map((sec, idx) => (
                           <div
                             key={idx}
-                            className="flex-1 min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-all"
+                            className="min-w-[min(100%,280px)] shrink-0 cursor-pointer rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md sm:min-w-0 sm:flex-1 sm:p-5"
                             style={{ borderLeftWidth: 4, borderLeftColor: SECTION_COLORS[idx] || '#6b7280' }}
                             onClick={() => setActiveSectionIdx(idx)}
                           >
-                            <div className="flex items-center justify-between mb-3">
-                              <p className="text-lg font-bold text-gray-900">{SECTION_ICONS[idx]} {sec.sectionName}</p>
+                            <div className="mb-2 flex flex-col gap-2 sm:mb-3 sm:flex-row sm:items-center sm:justify-between">
+                              <p className="text-sm font-bold text-gray-900 sm:text-lg">{SECTION_ICONS[idx]} {sec.sectionName}</p>
                               <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${sec.status === 'submitted' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                                 {sec.status === 'submitted' ? 'Submitted' : sec.status}
                               </span>
                             </div>
                             {sec.status === 'submitted' && (
-                              <div className="grid grid-cols-4 gap-2 text-center">
+                              <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
                                 <div><p className="text-lg font-bold" style={{ color: SECTION_COLORS[idx] }}>{sec.score}</p><p className="text-[10px] text-gray-500 font-semibold">Score</p></div>
                                 <div><p className="text-lg font-bold text-green-600">{sec.correct}</p><p className="text-[10px] text-gray-500 font-semibold">Correct</p></div>
                                 <div><p className="text-lg font-bold text-red-600">{sec.incorrect}</p><p className="text-[10px] text-gray-500 font-semibold">Wrong</p></div>
@@ -827,7 +842,7 @@ export default function IvyExpertCandidateDetailPage() {
                       {/* Question-level Review */}
                       {testResult.sections[activeSectionIdx]?.status === 'submitted' &&
                        testResult.sections[activeSectionIdx].questions.length > 0 && (
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
                           <h3 className="text-lg font-bold text-gray-900 mb-4">
                             {SECTION_ICONS[activeSectionIdx]} {testResult.sections[activeSectionIdx].sectionName} — Questions
                           </h3>
@@ -919,7 +934,7 @@ export default function IvyExpertCandidateDetailPage() {
                           }
                           setShowStudentScheduleForm((v) => !v);
                         }}
-                        className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition-colors"
+                        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50 sm:px-6 sm:py-4"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-green-100 text-green-600 flex items-center justify-center">
@@ -927,14 +942,14 @@ export default function IvyExpertCandidateDetailPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                           </div>
-                          <span className="font-semibold text-gray-900">Schedule Student Interview Meeting</span>
+                          <span className="text-sm font-semibold text-gray-900 sm:text-base">Schedule Student Interview Meeting</span>
                         </div>
                         <svg className={`w-5 h-5 text-gray-400 transition-transform ${showStudentScheduleForm ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
                       {showStudentScheduleForm && (
-                        <form onSubmit={handleScheduleStudentMeeting} className="px-6 pb-6 border-t border-gray-100">
+                        <form onSubmit={handleScheduleStudentMeeting} className="border-t border-gray-100 px-4 pb-4 sm:px-6 sm:pb-6">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                             <div className="md:col-span-2">
                               <label className="block text-xs font-semibold text-gray-600 mb-1">Subject *</label>
@@ -989,18 +1004,18 @@ export default function IvyExpertCandidateDetailPage() {
                               </select>
                             </div>
                           </div>
-                          <div className="flex gap-3 mt-4">
+                          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-3">
                             <button
                               type="submit"
                               disabled={schedulingStudent}
-                              className="px-5 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+                              className="w-full rounded-lg bg-green-600 px-5 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 sm:w-auto"
                             >
                               {schedulingStudent ? 'Scheduling...' : 'Schedule Meeting'}
                             </button>
                             <button
                               type="button"
                               onClick={() => setShowStudentScheduleForm(false)}
-                              className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50"
+                              className="w-full rounded-lg border border-gray-300 px-5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:w-auto"
                             >
                               Cancel
                             </button>
@@ -1011,16 +1026,16 @@ export default function IvyExpertCandidateDetailPage() {
 
                     {/* Student Interview Meetings List */}
                     {studentMeetings.length > 0 && (
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
                         <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-4">Scheduled Meetings</h4>
                         <div className="space-y-3">
                           {studentMeetings.map((m) => {
                             const edit = getMeetEdit(m._id, m.status, (m as any).notes);
                             const dirty = !!meetEditState[m._id];
                             return (
-                            <div key={m._id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1 min-w-0">
+                            <div key={m._id} className="rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="min-w-0 flex-1">
                                   <p className="font-semibold text-gray-900 text-sm">{m.subject}</p>
                                   <p className="text-xs text-gray-500 mt-0.5">
                                     {new Date(m.scheduledDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at {m.scheduledTime} &bull; {m.duration} min &bull; {m.meetingType === 'ONLINE' ? 'Online' : 'In Person'}
@@ -1036,7 +1051,7 @@ export default function IvyExpertCandidateDetailPage() {
                                     </div>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-3 shrink-0">
+                                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
                                   <select
                                     value={edit.status}
                                     onChange={(e) => setMeetEditState((s) => ({ ...s, [m._id]: { ...getMeetEdit(m._id, m.status, (m as any).notes), status: e.target.value } }))}
@@ -1078,43 +1093,45 @@ export default function IvyExpertCandidateDetailPage() {
                         </div>
                       </div>
                     )}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-600 sm:h-10 sm:w-10">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
                         </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900">Student Interview</h3>
-                          <p className="text-sm text-gray-500">Rate each question 1–5 ★. Section score = average of question scores.</p>
+                        <div className="min-w-0">
+                          <h3 className="text-base font-bold text-gray-900 sm:text-lg">Student Interview</h3>
+                          <p className="text-xs text-gray-500 sm:text-sm">Rate each question 1–5 ★. Section score = average of question scores.</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Overall Score</p>
-                          <p className="text-3xl font-extrabold text-green-700">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-4">
+                        <div className="text-left sm:text-right">
+                          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Overall Score</p>
+                          <p className="text-2xl font-extrabold text-green-700 sm:text-3xl">
                             {overallScore ?? '—'}
                             {overallScore && <span className="text-base font-semibold text-gray-400"> / 20</span>}
                           </p>
                         </div>
                         <button
+                          type="button"
                           onClick={() => saveInterview('student')}
                           disabled={saving}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-semibold disabled:opacity-50"
+                          className="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50 sm:w-auto"
                         >
                           {saving ? 'Saving...' : 'Save'}
                         </button>
                         {clearances.studentInterviewCleared ? (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-green-100 text-green-700">
+                          <span className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-green-100 px-3 py-2 text-sm font-semibold text-green-700">
                             ✓ Student Interview Cleared
                           </span>
                         ) : (
                           <button
+                            type="button"
                             onClick={() => handleClearStage('student-interview')}
                             disabled={clearingStage === 'student-interview' || !clearances.testCleared}
                             title={!clearances.testCleared ? 'Test must be cleared first' : undefined}
-                            className="px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                            className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                           >
                             {clearingStage === 'student-interview' ? 'Clearing...' : '✓ Clear Student Interview'}
                           </button>
@@ -1130,12 +1147,12 @@ export default function IvyExpertCandidateDetailPage() {
 
                       return (
                         <div key={sIdx} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                          <div className={`flex items-center justify-between px-6 py-4 border-b border-blue-500 ${cl.header}`}>
-                            <div>
-                              <p className="text-xs font-semibold text-blue-100 uppercase tracking-wide mb-0.5">Section {sIdx + 1}</p>
-                              <h4 className="text-base font-bold text-white">{section.icon} {section.title}</h4>
+                          <div className={`flex flex-col gap-2 border-b border-blue-500 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4 ${cl.header}`}>
+                            <div className="min-w-0">
+                              <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-blue-100">Section {sIdx + 1}</p>
+                              <h4 className="text-sm font-bold text-white sm:text-base">{section.icon} {section.title}</h4>
                             </div>
-                            <div className="text-right">
+                            <div className="text-left sm:text-right">
                               <p className="text-xs text-blue-100 font-medium">Section Score</p>
                               <p className="text-2xl font-extrabold text-white">
                                 {sectionAvg ?? <span className="text-blue-200">—</span>}
@@ -1146,7 +1163,7 @@ export default function IvyExpertCandidateDetailPage() {
                           </div>
                           <div className="divide-y divide-gray-100">
                             {section.questions.map((q, qIdx) => (
-                              <div key={qIdx} className="p-5">
+                              <div key={qIdx} className="p-3 sm:p-5">
                                 <div className="flex items-start gap-4">
                                   <span className={`shrink-0 w-7 h-7 rounded-full ${cl.dot} text-white flex items-center justify-center text-xs font-bold mt-0.5`}>{qIdx + 1}</span>
                                   <div className="flex-1">
@@ -1237,7 +1254,7 @@ export default function IvyExpertCandidateDetailPage() {
                           }
                           setShowParentScheduleForm((v) => !v);
                         }}
-                        className="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition-colors"
+                        className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50 sm:px-6 sm:py-4"
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
@@ -1245,14 +1262,14 @@ export default function IvyExpertCandidateDetailPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                           </div>
-                          <span className="font-semibold text-gray-900">Schedule Parent Interview Meeting</span>
+                          <span className="text-sm font-semibold text-gray-900 sm:text-base">Schedule Parent Interview Meeting</span>
                         </div>
                         <svg className={`w-5 h-5 text-gray-400 transition-transform ${showParentScheduleForm ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
                       {showParentScheduleForm && (
-                        <form onSubmit={handleScheduleParentMeeting} className="px-6 pb-6 border-t border-gray-100">
+                        <form onSubmit={handleScheduleParentMeeting} className="border-t border-gray-100 px-4 pb-4 sm:px-6 sm:pb-6">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                             <div className="md:col-span-2">
                               <label className="block text-xs font-semibold text-gray-600 mb-1">Subject *</label>
@@ -1307,18 +1324,18 @@ export default function IvyExpertCandidateDetailPage() {
                               </select>
                             </div>
                           </div>
-                          <div className="flex gap-3 mt-4">
+                          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-3">
                             <button
                               type="submit"
                               disabled={schedulingParent}
-                              className="px-5 py-2 bg-purple-600 text-white rounded-lg text-sm font-semibold hover:bg-purple-700 disabled:opacity-50"
+                              className="w-full rounded-lg bg-purple-600 px-5 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50 sm:w-auto"
                             >
                               {schedulingParent ? 'Scheduling...' : 'Schedule Meeting'}
                             </button>
                             <button
                               type="button"
                               onClick={() => setShowParentScheduleForm(false)}
-                              className="px-5 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50"
+                              className="w-full rounded-lg border border-gray-300 px-5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:w-auto"
                             >
                               Cancel
                             </button>
@@ -1329,16 +1346,16 @@ export default function IvyExpertCandidateDetailPage() {
 
                     {/* Parent Interview Meetings List */}
                     {parentMeetings.length > 0 && (
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
                         <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-4">Scheduled Meetings</h4>
                         <div className="space-y-3">
                           {parentMeetings.map((m) => {
                             const edit = getMeetEdit(m._id, m.status, (m as any).notes);
                             const dirty = !!meetEditState[m._id];
                             return (
-                            <div key={m._id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1 min-w-0">
+                            <div key={m._id} className="rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="min-w-0 flex-1">
                                   <p className="font-semibold text-gray-900 text-sm">{m.subject}</p>
                                   <p className="text-xs text-gray-500 mt-0.5">
                                     {new Date(m.scheduledDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} at {m.scheduledTime} &bull; {m.duration} min &bull; {m.meetingMode === 'online' ? 'Online' : 'In Person'}
@@ -1355,7 +1372,7 @@ export default function IvyExpertCandidateDetailPage() {
                                     </div>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-3 shrink-0">
+                                <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0 sm:justify-end">
                                   <select
                                     value={edit.status}
                                     onChange={(e) => setMeetEditState((s) => ({ ...s, [m._id]: { ...getMeetEdit(m._id, m.status, (m as any).notes), status: e.target.value } }))}
@@ -1397,44 +1414,46 @@ export default function IvyExpertCandidateDetailPage() {
                         </div>
                       </div>
                     )}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-100 text-purple-600 sm:h-10 sm:w-10">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
                         </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900">Parent Interview</h3>
-                          <p className="text-sm text-gray-500">Rate each question 1–5 ★. Section score = average of question scores.</p>
-                          {candidate && <p className="text-xs text-gray-400 mt-1">Parent: {getParentName(candidate)}</p>}
+                        <div className="min-w-0">
+                          <h3 className="text-base font-bold text-gray-900 sm:text-lg">Parent Interview</h3>
+                          <p className="text-xs text-gray-500 sm:text-sm">Rate each question 1–5 ★. Section score = average of question scores.</p>
+                          {candidate && <p className="mt-1 text-xs text-gray-400">Parent: {getParentName(candidate)}</p>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Overall Score</p>
-                          <p className="text-3xl font-extrabold text-purple-700">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-4">
+                        <div className="text-left sm:text-right">
+                          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Overall Score</p>
+                          <p className="text-2xl font-extrabold text-purple-700 sm:text-3xl">
                             {overallScore ?? '—'}
                             {overallScore && <span className="text-base font-semibold text-gray-400"> / 20</span>}
                           </p>
                         </div>
                         <button
+                          type="button"
                           onClick={() => saveInterview('parent')}
                           disabled={saving}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-semibold disabled:opacity-50"
+                          className="w-full rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50 sm:w-auto"
                         >
                           {saving ? 'Saving...' : 'Save'}
                         </button>
                         {clearances.parentInterviewCleared ? (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-green-100 text-green-700">
+                          <span className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-green-100 px-3 py-2 text-sm font-semibold text-green-700">
                             ✓ Parent Interview Cleared
                           </span>
                         ) : (
                           <button
+                            type="button"
                             onClick={() => handleClearStage('parent-interview')}
                             disabled={clearingStage === 'parent-interview' || !clearances.studentInterviewCleared}
                             title={!clearances.studentInterviewCleared ? 'Student Interview must be cleared first' : undefined}
-                            className="px-4 py-2 rounded-lg text-sm font-semibold bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                            className="w-full rounded-lg bg-purple-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                           >
                             {clearingStage === 'parent-interview' ? 'Clearing...' : '✓ Clear Parent Interview'}
                           </button>
@@ -1450,12 +1469,12 @@ export default function IvyExpertCandidateDetailPage() {
 
                       return (
                         <div key={sIdx} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                          <div className={`flex items-center justify-between px-6 py-4 border-b border-blue-500 ${cl.header}`}>
-                            <div>
-                              <p className="text-xs font-semibold text-blue-100 uppercase tracking-wide mb-0.5">Section {sIdx + 1}</p>
-                              <h4 className="text-base font-bold text-white">{section.icon} {section.title}</h4>
+                          <div className={`flex flex-col gap-2 border-b border-blue-500 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4 ${cl.header}`}>
+                            <div className="min-w-0">
+                              <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-blue-100">Section {sIdx + 1}</p>
+                              <h4 className="text-sm font-bold text-white sm:text-base">{section.icon} {section.title}</h4>
                             </div>
-                            <div className="text-right">
+                            <div className="text-left sm:text-right">
                               <p className="text-xs text-blue-100 font-medium">Section Score</p>
                               <p className="text-2xl font-extrabold text-white">
                                 {sectionAvg ?? <span className="text-blue-200">—</span>}
@@ -1466,7 +1485,7 @@ export default function IvyExpertCandidateDetailPage() {
                           </div>
                           <div className="divide-y divide-gray-100">
                             {section.questions.map((q, qIdx) => (
-                              <div key={qIdx} className="p-5">
+                              <div key={qIdx} className="p-3 sm:p-5">
                                 <div className="flex items-start gap-4">
                                   <span className={`shrink-0 w-7 h-7 rounded-full ${cl.dot} text-white flex items-center justify-center text-xs font-bold mt-0.5`}>{qIdx + 1}</span>
                                   <div className="flex-1">
@@ -1514,7 +1533,6 @@ export default function IvyExpertCandidateDetailPage() {
               })()}
             </>
           )}
-        </div>
       </div>
     </>
   );

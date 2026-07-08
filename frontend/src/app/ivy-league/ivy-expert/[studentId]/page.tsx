@@ -8,6 +8,22 @@ import StudentProfileModal from '@/components/StudentProfileModal';
 import AuthImage from '@/components/AuthImage';
 import toast, { Toaster } from 'react-hot-toast';
 import { getFullName, getInitials } from '@/utils/nameHelpers';
+import {
+  roleListPagePadding,
+  roleListBackBtnClass,
+  studentCardClass,
+  studentHeaderRowClass,
+  studentIdentityRowClass,
+  studentAvatarClass,
+  studentAvatarFallbackClass,
+  studentTitleClass,
+  studentBadgeRowClass,
+  studentMetaGridClass,
+  registrationCardClass,
+  registrationCardRowClass,
+  registrationMetaRowClass,
+  registrationActionBtnClass,
+} from '@/components/studentDetailResponsive';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -178,42 +194,41 @@ function IvyExpertStudentDetail({ params }: { params: Promise<{ studentId: strin
   return (
     <>
       <Toaster position="top-right" />
-      <div className="p-8">
-        {/* Back Button */}
+      <div className={`${roleListPagePadding} min-w-0 max-w-full overflow-x-hidden`}>
         <button
+          type="button"
           onClick={() => router.push('/ivy-league/ivy-expert/students')}
-          className="mb-6 flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          className={roleListBackBtnClass}
         >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="mr-2 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Back to Students
         </button>
 
-        {/* Student Info Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex items-center">
+        <div className={studentCardClass}>
+          <div className={studentHeaderRowClass}>
+            <div className={studentIdentityRowClass}>
               <AuthImage
                   path={student.userId.profilePicture}
                   alt={getFullName(student.userId)}
-                  className="w-16 h-16 rounded-full object-cover mr-4"
+                  className={studentAvatarClass}
                   fallback={
-                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
-                      <span className="text-blue-600 font-bold text-xl">
+                    <div className={studentAvatarFallbackClass}>
+                      <span className="text-xl font-bold text-blue-600">
                         {getInitials(student.userId)}
                       </span>
                     </div>
                   }
                 />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">{getFullName(student.userId)}</h1>
-                <p className="text-gray-600">{student.userId.email}</p>
+              <div className="min-w-0">
+                <h1 className={studentTitleClass}>{getFullName(student.userId)}</h1>
+                <p className="truncate text-sm text-gray-600 sm:text-base">{student.userId.email}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className={studentBadgeRowClass}>
               <span
-                className={`px-3 py-1 text-xs font-medium rounded-full ${
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
                   student.userId.isVerified
                     ? 'bg-green-100 text-green-800'
                     : 'bg-yellow-100 text-yellow-800'
@@ -222,7 +237,7 @@ function IvyExpertStudentDetail({ params }: { params: Promise<{ studentId: strin
                 {student.userId.isVerified ? 'Verified' : 'Unverified'}
               </span>
               <span
-                className={`px-3 py-1 text-xs font-medium rounded-full ${
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
                   student.userId.isActive
                     ? 'bg-green-100 text-green-800'
                     : 'bg-red-100 text-red-800'
@@ -231,15 +246,16 @@ function IvyExpertStudentDetail({ params }: { params: Promise<{ studentId: strin
                 {student.userId.isActive ? 'Active' : 'Inactive'}
               </span>
               <button
+                type="button"
                 onClick={() => setShowProfileModal(true)}
-                className="px-3 py-1 text-xs font-medium rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                className="rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white transition-colors hover:bg-blue-700"
               >
                 View Profile
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-4 border-t border-gray-200">
+          <div className={studentMetaGridClass}>
             <div>
               <p className="text-sm text-gray-600 mb-1">Mobile Number</p>
               <p className="font-medium text-gray-900">
@@ -304,9 +320,8 @@ function IvyExpertStudentDetail({ params }: { params: Promise<{ studentId: strin
           </div>
         </div>
 
-        {/* Service Registrations */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <div className={studentCardClass}>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900 sm:text-xl">
             Ivy League Service ({registrations.length})
           </h2>
 
@@ -315,27 +330,27 @@ function IvyExpertStudentDetail({ params }: { params: Promise<{ studentId: strin
               {registrations.map((registration) => (
                 <div
                   key={registration._id}
-                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                  className={registrationCardClass}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-1">
+                  <div className={registrationCardRowClass}>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="mb-1 font-semibold text-gray-900">
                         {registration.serviceId.name}
                       </h3>
-                      <p className="text-sm text-gray-600 mb-2">
+                      <p className="mb-2 text-sm text-gray-600">
                         {registration.serviceId.shortDescription}
                       </p>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className={registrationMetaRowClass}>
                         <span>Registered: {new Date(registration.createdAt).toLocaleDateString('en-GB')}</span>
                         <select
                           value={registration.status}
                           onChange={(e) => handleStatusChange(registration._id, e.target.value)}
                           disabled={updatingStatus === registration._id}
-                          className={`px-2 py-1 rounded text-xs font-medium border cursor-pointer focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                            registration.status === 'COMPLETED' ? 'bg-green-100 text-green-800 border-green-300' :
-                            registration.status === 'CANCELLED' ? 'bg-red-100 text-red-800 border-red-300' :
-                            registration.status === 'IN_PROGRESS' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
-                            'bg-blue-100 text-blue-800 border-blue-300'
+                          className={`cursor-pointer rounded border px-2 py-1 text-xs font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-500 ${
+                            registration.status === 'COMPLETED' ? 'border-green-300 bg-green-100 text-green-800' :
+                            registration.status === 'CANCELLED' ? 'border-red-300 bg-red-100 text-red-800' :
+                            registration.status === 'IN_PROGRESS' ? 'border-yellow-300 bg-yellow-100 text-yellow-800' :
+                            'border-blue-300 bg-blue-100 text-blue-800'
                           }`}
                         >
                           <option value="IN_PROGRESS">IN_PROGRESS</option>
@@ -343,13 +358,14 @@ function IvyExpertStudentDetail({ params }: { params: Promise<{ studentId: strin
                           <option value="CANCELLED">CANCELLED</option>
                         </select>
                         {updatingStatus === registration._id && (
-                          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
                         )}
                       </div>
                     </div>
                     <button
+                      type="button"
                       onClick={() => handleViewService(registration)}
-                      className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                      className={registrationActionBtnClass}
                     >
                       View Details
                     </button>
@@ -376,21 +392,22 @@ function IvyExpertStudentDetail({ params }: { params: Promise<{ studentId: strin
             </div>
           )}
         </div>
+
+        {(student.adminId?._id || student.advisorId?._id) && (
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={() => router.push('/service-plans/view?studentId=' + studentId)}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 sm:w-auto"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Service Plans
+            </button>
+          </div>
+        )}
       </div>
-      {/* Service Plans Button */}
-      {(student.adminId?._id || student.advisorId?._id) && (
-        <div className="px-8 pb-6">
-          <button
-            onClick={() => router.push('/service-plans/view?studentId=' + studentId)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Service Plans
-          </button>
-        </div>
-      )}
       {showProfileModal && (
         <StudentProfileModal studentId={studentId} onClose={() => setShowProfileModal(false)} viewerRole="IVY_EXPERT" />
       )}

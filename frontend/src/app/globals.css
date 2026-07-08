@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* Role layout main offsets — fixed sidebar needs explicit margin on desktop */
+@source inline("md:ml-64");
+@source inline("md:ml-20");
+@source inline("md:ml-72");
+@source inline("md:w-64");
+@source inline("md:w-20");
+@source inline("md:w-72");
+
+@media (max-width: 767px) {
+  .app-role-layout-main {
+    margin-left: 0 !important;
+  }
+}
+
 :root {
   --background: #f4f6fb;
   --foreground: #1a1d2e;
@@ -759,5 +773,45 @@ html {
 
   .h-\[calc\(100vh-6\.25rem\)\] {
     height: calc(100vh - 5rem) !important;
+  }
+
+  /* Fixed desktop sidebar: flush below CORE navbar, does not scroll with page */
+  .app-desktop-sidebar {
+    position: fixed;
+    top: 5rem;
+    left: 0;
+    z-index: 40;
+    height: calc(100vh - 5rem);
+    max-height: calc(100vh - 5rem);
+  }
+
+  .app-role-sidebar-w-64 {
+    width: 16rem;
+    min-width: 16rem;
+    max-width: 16rem;
+  }
+  .app-role-sidebar-w-72 {
+    width: 18rem;
+    min-width: 18rem;
+    max-width: 18rem;
+  }
+  .app-role-sidebar-w-20 {
+    width: 5rem;
+    min-width: 5rem;
+    max-width: 5rem;
+  }
+
+  /* Main content offset — matches fixed sidebar width (all role dashboards) */
+  .app-role-layout-shell[data-sidebar='open'][data-sidebar-width='64'] > main.app-role-layout-main,
+  .app-role-main-offset-64 {
+    margin-left: 16rem;
+  }
+  .app-role-layout-shell[data-sidebar='open'][data-sidebar-width='72'] > main.app-role-layout-main,
+  .app-role-main-offset-72 {
+    margin-left: 18rem;
+  }
+  .app-role-layout-shell[data-sidebar='closed'] > main.app-role-layout-main,
+  .app-role-main-offset-20 {
+    margin-left: 5rem;
   }
 }

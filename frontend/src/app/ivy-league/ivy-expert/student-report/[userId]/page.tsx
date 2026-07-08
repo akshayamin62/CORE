@@ -7,6 +7,12 @@ import axios from 'axios';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import AuthImage from '@/components/AuthImage';
 import {
+  roleListPagePadding,
+  roleListTitleClass,
+  roleListSubtitleClass,
+  roleListBackBtnClass,
+} from '@/components/studentDetailResponsive';
+import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell,
   PieChart, Pie,
@@ -264,26 +270,27 @@ export default function IvyExpertStudentReportPage() {
   return (
     <>
       <Toaster position="top-right" />
-      <div className="min-h-screen bg-gray-50">
-        <div className="p-8 max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <button
-              onClick={() => router.push('/ivy-league/ivy-expert')}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                {student ? `${getFullName(student)} — Report` : 'Student Report'}
-              </h1>
-              <p className="text-gray-600 mt-1">
-                {student ? `${student.schoolName} • Grade ${student.currentGrade} • ${student.curriculum}` : ''}
+      <div className="min-h-screen min-w-0 max-w-full overflow-x-hidden bg-gray-50">
+        <div className={`mx-auto max-w-7xl ${roleListPagePadding}`}>
+          <button
+            type="button"
+            onClick={() => router.push('/ivy-league/ivy-expert')}
+            className={roleListBackBtnClass}
+          >
+            <svg className="mr-2 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Dashboard
+          </button>
+          <div className="mb-4 min-w-0 sm:mb-6">
+            <h1 className={roleListTitleClass}>
+              {student ? `${getFullName(student)} — Report` : 'Student Report'}
+            </h1>
+            {student && (
+              <p className={roleListSubtitleClass}>
+                {student.schoolName} • Grade {student.currentGrade} • {student.curriculum}
               </p>
-            </div>
+            )}
           </div>
 
           {loading ? (
@@ -294,50 +301,52 @@ export default function IvyExpertStudentReportPage() {
             <>
               {/* Student Info Card */}
               {student && (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Student Name</p>
-                      <p className="text-sm font-semibold text-gray-900 mt-1">{getFullName(student)}</p>
+                <div className="mb-4 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:mb-6 sm:p-6">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase text-gray-500 sm:text-xs">Student Name</p>
+                      <p className="mt-0.5 truncate text-sm font-semibold text-gray-900">{getFullName(student)}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Email</p>
-                      <p className="text-sm text-gray-900 mt-1">{student.email}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase text-gray-500 sm:text-xs">Email</p>
+                      <p className="mt-0.5 truncate text-sm text-gray-900">{student.email}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Parent Name</p>
-                      <p className="text-sm font-semibold text-gray-900 mt-1">{getParentName(student)}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase text-gray-500 sm:text-xs">Parent Name</p>
+                      <p className="mt-0.5 truncate text-sm font-semibold text-gray-900">{getParentName(student)}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase">Parent Contact</p>
-                      <p className="text-sm text-gray-900 mt-1">{student.parentEmail}</p>
-                      <p className="text-sm text-gray-900">{student.parentMobile}</p>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase text-gray-500 sm:text-xs">Parent Contact</p>
+                      <p className="mt-0.5 truncate text-sm text-gray-900">{student.parentEmail}</p>
+                      <p className="truncate text-xs text-gray-900 sm:text-sm">{student.parentMobile}</p>
                     </div>
                   </div>
                 </div>
               )}
 
               {/* Tab Navigation */}
-              <div className="flex gap-2 mb-6">
+              <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scrollbar-none sm:mb-6">
                 {[
-                  { key: 'test', label: '📝 Test Score', color: 'blue' },
-                  { key: 'student-interview', label: '🎓 Student Interview', color: 'green' },
-                  { key: 'parent-interview', label: '👨‍👩‍👧 Parent Interview', color: 'purple' },
+                  { key: 'test', label: '📝 Test Score', mobileLabel: '📝 Test', color: 'blue' },
+                  { key: 'student-interview', label: '🎓 Student Interview', mobileLabel: '🎓 Student', color: 'green' },
+                  { key: 'parent-interview', label: '👨‍👩‍👧 Parent Interview', mobileLabel: '👨‍👩‍👧 Parent', color: 'purple' },
                 ].map((tab) => (
                   <button
                     key={tab.key}
+                    type="button"
                     onClick={() => setActiveTab(tab.key as any)}
-                    className={`px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors ${
+                    className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-xs font-semibold transition-colors sm:px-5 sm:py-2.5 sm:text-sm ${
                       activeTab === tab.key
                         ? tab.color === 'blue'
                           ? 'bg-blue-600 text-white'
                           : tab.color === 'green'
                           ? 'bg-green-600 text-white'
                           : 'bg-purple-600 text-white'
-                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                        : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
                     }`}
                   >
-                    {tab.label}
+                    <span className="sm:hidden">{tab.mobileLabel}</span>
+                    <span className="hidden sm:inline">{tab.label}</span>
                   </button>
                 ))}
               </div>
@@ -355,28 +364,28 @@ export default function IvyExpertStudentReportPage() {
                   ) : (
                     <>
                       {/* Score Summary */}
-                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4">Score Summary</h3>
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                          <div className="bg-blue-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-blue-700">{testResult.totalScore}</p>
-                            <p className="text-xs font-semibold text-blue-600 mt-1">Total Score</p>
+                      <div className="mb-4 rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:mb-6 sm:p-6">
+                        <h3 className="mb-3 text-base font-bold text-gray-900 sm:mb-4 sm:text-lg">Score Summary</h3>
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-4 md:grid-cols-5">
+                          <div className="rounded-lg bg-blue-50 p-2.5 text-center sm:p-4">
+                            <p className="text-xl font-extrabold text-blue-700 sm:text-2xl">{testResult.totalScore}</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-blue-600 sm:text-xs">Total Score</p>
                           </div>
-                          <div className="bg-gray-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-gray-700">{testResult.maxScore}</p>
-                            <p className="text-xs font-semibold text-gray-600 mt-1">Max Score</p>
+                          <div className="rounded-lg bg-gray-50 p-2.5 text-center sm:p-4">
+                            <p className="text-xl font-extrabold text-gray-700 sm:text-2xl">{testResult.maxScore}</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-gray-600 sm:text-xs">Max Score</p>
                           </div>
-                          <div className="bg-green-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-green-700">{testResult.sections.reduce((s, sec) => s + sec.correct, 0)}</p>
-                            <p className="text-xs font-semibold text-green-600 mt-1">Correct</p>
+                          <div className="rounded-lg bg-green-50 p-2.5 text-center sm:p-4">
+                            <p className="text-xl font-extrabold text-green-700 sm:text-2xl">{testResult.sections.reduce((s, sec) => s + sec.correct, 0)}</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-green-600 sm:text-xs">Correct</p>
                           </div>
-                          <div className="bg-red-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-red-700">{testResult.sections.reduce((s, sec) => s + sec.incorrect, 0)}</p>
-                            <p className="text-xs font-semibold text-red-600 mt-1">Incorrect</p>
+                          <div className="rounded-lg bg-red-50 p-2.5 text-center sm:p-4">
+                            <p className="text-xl font-extrabold text-red-700 sm:text-2xl">{testResult.sections.reduce((s, sec) => s + sec.incorrect, 0)}</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-red-600 sm:text-xs">Incorrect</p>
                           </div>
-                          <div className="bg-amber-50 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-extrabold text-amber-700">{testResult.sections.reduce((s, sec) => s + sec.unanswered, 0)}</p>
-                            <p className="text-xs font-semibold text-amber-600 mt-1">Skipped</p>
+                          <div className="col-span-2 rounded-lg bg-amber-50 p-2.5 text-center sm:col-span-1 sm:p-4">
+                            <p className="text-xl font-extrabold text-amber-700 sm:text-2xl">{testResult.sections.reduce((s, sec) => s + sec.unanswered, 0)}</p>
+                            <p className="mt-0.5 text-[10px] font-semibold text-amber-600 sm:text-xs">Skipped</p>
                           </div>
                         </div>
                         {testResult.violations > 0 && (
@@ -426,20 +435,21 @@ export default function IvyExpertStudentReportPage() {
                         });
 
                         return (
-                          <div className="mb-6">
-                            <div className="flex items-center gap-2 mb-4">
-                              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <div className="mb-4 sm:mb-6">
+                            <div className="mb-3 flex items-center gap-2 sm:mb-4">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600">
+                                <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                                 </svg>
                               </div>
-                              <h3 className="text-lg font-bold text-gray-900">Performance Analysis</h3>
+                              <h3 className="text-base font-bold text-gray-900 sm:text-lg">Performance Analysis</h3>
                             </div>
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                                <h4 className="text-xs font-bold text-gray-700 mb-0.5 uppercase tracking-wide">Strengths Profile</h4>
-                                <p className="text-xs text-gray-900 mb-3 font-bold">Percentage scored in each section</p>
-                                <ResponsiveContainer width="100%" height={260}>
+                            <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
+                                <h4 className="mb-0.5 text-xs font-bold uppercase tracking-wide text-gray-700 sm:text-sm">Strengths Profile</h4>
+                                <p className="mb-2 text-[10px] font-bold text-gray-900 sm:mb-3 sm:text-xs">Percentage scored in each section</p>
+                                <div className="h-[200px] sm:h-[260px]">
+                                <ResponsiveContainer width="100%" height="100%">
                                   <RadarChart data={radarData} outerRadius="75%">
                                     <PolarGrid stroke="#e5e7eb" />
                                     <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 600 }} />
@@ -447,12 +457,13 @@ export default function IvyExpertStudentReportPage() {
                                     <Radar name="Score %" dataKey="score" stroke="#6366f1" fill="#6366f1" fillOpacity={0.25} strokeWidth={2} dot={{ r: 4, fill: '#6366f1' }} />
                                   </RadarChart>
                                 </ResponsiveContainer>
+                                </div>
                               </div>
-                              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                                <h4 className="text-xs font-bold text-gray-700 mb-0.5 uppercase tracking-wide">Overall Accuracy</h4>
-                                <p className="text-xs text-gray-900 mb-3 font-bold">Distribution of {totalQ} questions</p>
-                                <div className="relative">
-                                  <ResponsiveContainer width="100%" height={260}>
+                              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
+                                <h4 className="mb-0.5 text-xs font-bold uppercase tracking-wide text-gray-700 sm:text-sm">Overall Accuracy</h4>
+                                <p className="mb-2 text-[10px] font-bold text-gray-900 sm:mb-3 sm:text-xs">Distribution of {totalQ} questions</p>
+                                <div className="relative h-[200px] sm:h-[260px]">
+                                  <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                       <Pie data={donutData} cx="50%" cy="50%" innerRadius={65} outerRadius={100} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="#fff">
                                         {donutData.map((entry, idx) => (<Cell key={idx} fill={entry.color} />))}
@@ -465,7 +476,7 @@ export default function IvyExpertStudentReportPage() {
                                     <span className="text-xs font-bold text-gray-400">Accuracy</span>
                                   </div>
                                 </div>
-                                <div className="flex justify-center gap-5 mt-1">
+                                <div className="mt-1 flex flex-wrap justify-center gap-2 sm:gap-5">
                                   {donutData.map((d) => (
                                     <div key={d.name} className="flex items-center gap-1.5">
                                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
@@ -474,10 +485,11 @@ export default function IvyExpertStudentReportPage() {
                                   ))}
                                 </div>
                               </div>
-                              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                                <h4 className="text-xs font-bold text-gray-700 mb-0.5 uppercase tracking-wide">Section Scores</h4>
-                                <p className="text-xs text-gray-900 mb-3 font-bold">Score compared to maximum marks</p>
-                                <ResponsiveContainer width="100%" height={260}>
+                              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
+                                <h4 className="mb-0.5 text-xs font-bold uppercase tracking-wide text-gray-700 sm:text-sm">Section Scores</h4>
+                                <p className="mb-2 text-[10px] font-bold text-gray-900 sm:mb-3 sm:text-xs">Score compared to maximum marks</p>
+                                <div className="h-[200px] sm:h-[260px]">
+                                <ResponsiveContainer width="100%" height="100%">
                                   <BarChart data={barData} barGap={4}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
                                     <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 600 }} />
@@ -490,10 +502,11 @@ export default function IvyExpertStudentReportPage() {
                                     <Bar dataKey="Max Marks" fill="#ef4444" radius={[6, 6, 0, 0]} />
                                   </BarChart>
                                 </ResponsiveContainer>
+                                </div>
                               </div>
-                              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-                                <h4 className="text-xs font-bold text-gray-700 mb-0.5 uppercase tracking-wide">Section Accuracy</h4>
-                                <p className="text-xs text-gray-900 mb-3 font-bold">Percentage of attempted questions answered correctly</p>
+                              <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-5">
+                                <h4 className="mb-0.5 text-xs font-bold uppercase tracking-wide text-gray-700 sm:text-sm">Section Accuracy</h4>
+                                <p className="mb-2 text-[10px] font-bold text-gray-900 sm:mb-3 sm:text-xs">Percentage of attempted questions answered correctly</p>
                                 <div className="space-y-5 mt-2">
                                   {accuracyData.map((sec, idx) => (
                                     <div key={idx}>
@@ -514,22 +527,22 @@ export default function IvyExpertStudentReportPage() {
                       })()}
 
                       {/* Section Cards */}
-                      <div className="flex gap-4 mb-6">
+                      <div className="mb-4 flex gap-3 overflow-x-auto pb-1 scrollbar-none sm:mb-6 sm:flex-wrap sm:overflow-visible">
                         {testResult.sections.map((sec, idx) => (
                           <div
                             key={idx}
-                            className="flex-1 min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer hover:shadow-md transition-all"
+                            className="min-w-[min(100%,280px)] shrink-0 cursor-pointer rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-all hover:shadow-md sm:min-w-0 sm:flex-1 sm:p-5"
                             style={{ borderLeftWidth: 4, borderLeftColor: SECTION_COLORS[idx] || '#6b7280' }}
                             onClick={() => setActiveSectionIdx(idx)}
                           >
-                            <div className="flex items-center justify-between mb-3">
-                              <p className="text-lg font-bold text-gray-900">{SECTION_ICONS[idx]} {sec.sectionName}</p>
+                            <div className="mb-2 flex flex-col gap-2 sm:mb-3 sm:flex-row sm:items-center sm:justify-between">
+                              <p className="text-sm font-bold text-gray-900 sm:text-lg">{SECTION_ICONS[idx]} {sec.sectionName}</p>
                               <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${sec.status === 'submitted' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
                                 {sec.status === 'submitted' ? 'Submitted' : sec.status}
                               </span>
                             </div>
                             {sec.status === 'submitted' && (
-                              <div className="grid grid-cols-4 gap-2 text-center">
+                              <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
                                 <div><p className="text-lg font-bold" style={{ color: SECTION_COLORS[idx] }}>{sec.score}</p><p className="text-[10px] text-gray-500 font-semibold">Score</p></div>
                                 <div><p className="text-lg font-bold text-green-600">{sec.correct}</p><p className="text-[10px] text-gray-500 font-semibold">Correct</p></div>
                                 <div><p className="text-lg font-bold text-red-600">{sec.incorrect}</p><p className="text-[10px] text-gray-500 font-semibold">Wrong</p></div>
@@ -543,7 +556,7 @@ export default function IvyExpertStudentReportPage() {
                       {/* Question-level Review */}
                       {testResult.sections[activeSectionIdx]?.status === 'submitted' &&
                        testResult.sections[activeSectionIdx].questions.length > 0 && (
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
                           <h3 className="text-lg font-bold text-gray-900 mb-4">
                             {SECTION_ICONS[activeSectionIdx]} {testResult.sections[activeSectionIdx].sectionName} — Questions
                           </h3>
@@ -619,21 +632,21 @@ export default function IvyExpertStudentReportPage() {
 
                 return (
                   <div className="space-y-5">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-600 sm:h-10 sm:w-10">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
                         </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900">Student Interview Report</h3>
-                          <p className="text-sm text-gray-500">Evaluation scores and recorded responses</p>
+                        <div className="min-w-0">
+                          <h3 className="text-base font-bold text-gray-900 sm:text-lg">Student Interview Report</h3>
+                          <p className="text-xs text-gray-500 sm:text-sm">Evaluation scores and recorded responses</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Overall Score</p>
-                        <p className="text-3xl font-extrabold text-green-700">
+                      <div className="text-left sm:text-right">
+                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Overall Score</p>
+                        <p className="text-2xl font-extrabold text-green-700 sm:text-3xl">
                           {overallScore ?? '—'}
                           {overallScore && <span className="text-base font-semibold text-gray-400"> / 20</span>}
                         </p>
@@ -648,12 +661,12 @@ export default function IvyExpertStudentReportPage() {
 
                       return (
                         <div key={sIdx} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                          <div className={`flex items-center justify-between px-6 py-4 border-b border-blue-500 ${cl.header}`}>
-                            <div>
-                              <p className="text-xs font-semibold text-blue-100 uppercase tracking-wide mb-0.5">Section {sIdx + 1}</p>
-                              <h4 className="text-base font-bold text-white">{section.icon} {section.title}</h4>
+                          <div className={`flex flex-col gap-2 border-b border-blue-500 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4 ${cl.header}`}>
+                            <div className="min-w-0">
+                              <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-blue-100">Section {sIdx + 1}</p>
+                              <h4 className="text-sm font-bold text-white sm:text-base">{section.icon} {section.title}</h4>
                             </div>
-                            <div className="text-right">
+                            <div className="text-left sm:text-right">
                               <p className="text-xs text-blue-100 font-medium">Section Score</p>
                               <p className="text-2xl font-extrabold text-white">
                                 {sectionAvg ?? <span className="text-blue-200">—</span>}
@@ -663,7 +676,7 @@ export default function IvyExpertStudentReportPage() {
                           </div>
                           <div className="divide-y divide-gray-100">
                             {section.questions.map((q, qIdx) => (
-                              <div key={qIdx} className="p-5">
+                              <div key={qIdx} className="p-3 sm:p-5">
                                 <div className="flex items-start gap-4">
                                   <span className={`shrink-0 w-7 h-7 rounded-full ${cl.dot} text-white flex items-center justify-center text-xs font-bold mt-0.5`}>{qIdx + 1}</span>
                                   <div className="flex-1">
@@ -713,22 +726,22 @@ export default function IvyExpertStudentReportPage() {
 
                 return (
                   <div className="space-y-5">
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <div className="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-100 text-purple-600 sm:h-10 sm:w-10">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
                         </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-gray-900">Parent Interview Report</h3>
-                          <p className="text-sm text-gray-500">Evaluation scores and recorded responses</p>
-                          {student && <p className="text-xs text-gray-400 mt-1">Parent: {getParentName(student)}</p>}
+                        <div className="min-w-0">
+                          <h3 className="text-base font-bold text-gray-900 sm:text-lg">Parent Interview Report</h3>
+                          <p className="text-xs text-gray-500 sm:text-sm">Evaluation scores and recorded responses</p>
+                          {student && <p className="mt-1 text-xs text-gray-400">Parent: {getParentName(student)}</p>}
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Overall Score</p>
-                        <p className="text-3xl font-extrabold text-purple-700">
+                      <div className="text-left sm:text-right">
+                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Overall Score</p>
+                        <p className="text-2xl font-extrabold text-purple-700 sm:text-3xl">
                           {overallScore ?? '—'}
                           {overallScore && <span className="text-base font-semibold text-gray-400"> / 20</span>}
                         </p>
@@ -743,12 +756,12 @@ export default function IvyExpertStudentReportPage() {
 
                       return (
                         <div key={sIdx} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                          <div className={`flex items-center justify-between px-6 py-4 border-b border-blue-500 ${cl.header}`}>
-                            <div>
-                              <p className="text-xs font-semibold text-blue-100 uppercase tracking-wide mb-0.5">Section {sIdx + 1}</p>
-                              <h4 className="text-base font-bold text-white">{section.icon} {section.title}</h4>
+                          <div className={`flex flex-col gap-2 border-b border-blue-500 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-4 ${cl.header}`}>
+                            <div className="min-w-0">
+                              <p className="mb-0.5 text-xs font-semibold uppercase tracking-wide text-blue-100">Section {sIdx + 1}</p>
+                              <h4 className="text-sm font-bold text-white sm:text-base">{section.icon} {section.title}</h4>
                             </div>
-                            <div className="text-right">
+                            <div className="text-left sm:text-right">
                               <p className="text-xs text-blue-100 font-medium">Section Score</p>
                               <p className="text-2xl font-extrabold text-white">
                                 {sectionAvg ?? <span className="text-blue-200">—</span>}
@@ -758,7 +771,7 @@ export default function IvyExpertStudentReportPage() {
                           </div>
                           <div className="divide-y divide-gray-100">
                             {section.questions.map((q, qIdx) => (
-                              <div key={qIdx} className="p-5">
+                              <div key={qIdx} className="p-3 sm:p-5">
                                 <div className="flex items-start gap-4">
                                   <span className={`shrink-0 w-7 h-7 rounded-full ${cl.dot} text-white flex items-center justify-center text-xs font-bold mt-0.5`}>{qIdx + 1}</span>
                                   <div className="flex-1">

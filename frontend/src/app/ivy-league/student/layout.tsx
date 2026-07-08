@@ -9,6 +9,9 @@ import { authAPI } from '@/lib/api';
 import { USER_ROLE } from '@/types';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { buildCallbackMobileNavItems } from '@/utils/mobileNavHelpers';
+import { roleLayoutShellProps, roleLayoutSidebarClass, roleLayoutMainClass } from '@/utils/roleLayoutShell';
+
+const IVY_SIDEBAR_WIDTHS = { openWidth: 'md:w-72', closedWidth: 'md:w-20' } as const;
 
 const REFERRER_ROLE = USER_ROLE.REFERRER;
 const ADVISOR_ROLE = USER_ROLE.ADVISOR;
@@ -171,7 +174,9 @@ function StudentSidebar() {
 
     return (
         <>
-        <aside className={`hidden md:flex bg-white border-r border-gray-100 flex-col h-screen sticky top-0 shadow-sm z-20 transition-all duration-300 ${isConversationOpen ? 'w-20' : 'w-72'}`}>
+        <aside
+            className={`${roleLayoutSidebarClass(!isConversationOpen, IVY_SIDEBAR_WIDTHS)} border-gray-100 shadow-sm z-20`}
+        >
             <div className={`p-8 border-b border-gray-50 ${isConversationOpen ? 'px-4' : ''}`}>
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center shadow-lg shadow-brand-100 flex-shrink-0">
@@ -242,6 +247,24 @@ function StudentSidebar() {
     );
 }
 
+function StudentLayoutFrame({ children }: { children: React.ReactNode }) {
+    const searchParams = useSearchParams();
+    const sidebarExpanded = searchParams.get('conversationOpen') !== 'true';
+
+    return (
+        <div {...roleLayoutShellProps(sidebarExpanded, IVY_SIDEBAR_WIDTHS, 'bg-[#FBFBFE]')}>
+            <Suspense fallback={<div className="hidden md:block md:w-72" />}>
+                <StudentSidebar />
+            </Suspense>
+            <main
+                className={roleLayoutMainClass(sidebarExpanded, 'min-h-screen overflow-y-auto', IVY_SIDEBAR_WIDTHS)}
+            >
+                {children}
+            </main>
+        </div>
+    );
+}
+
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const [authorized, setAuthorized] = useState(false);
@@ -268,13 +291,10 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     }
 
     return (
-        <div className="flex bg-[#FBFBFE] min-h-screen">
-            <Suspense fallback={<div className="w-72 bg-white border-r animate-pulse"></div>}>
-                <StudentSidebar />
-            </Suspense>
-            <main className="flex-1 min-h-screen overflow-x-hidden app-main-mobile-pb">
-                {children}
-            </main>
-        </div>
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#FBFBFE]">
+            <div className="w-10 h-10 border-4 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>}>
+            <StudentLayoutFrame>{children}</StudentLayoutFrame>
+        </Suspense>
     );
 }

@@ -9,6 +9,7 @@ import { SP_DOCUMENTS_CONFIG, SPDocumentField } from '@/config/spDocumentsConfig
 import { getFullName } from '@/utils/nameHelpers';
 import ServiceProviderLayout from '@/components/ServiceProviderLayout';
 import AuthImage from '@/components/AuthImage';
+import { roleListPagePadding, roleListTitleClass, roleListSubtitleClass } from '@/components/studentDetailResponsive';
 import toast, { Toaster } from 'react-hot-toast';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -222,18 +223,18 @@ export default function ServiceProviderProfilePage() {
   return (
     <ServiceProviderLayout user={user}>
       <Toaster position="top-right" />
-      <div className="p-6 lg:p-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-          <p className="text-gray-500 mt-1">Manage your company information, documents and bank details</p>
+      <div className={`${roleListPagePadding} min-w-0 max-w-full`}>
+        <div className="mb-6 sm:mb-8">
+          <h1 className={roleListTitleClass}>Profile</h1>
+          <p className={roleListSubtitleClass}>Manage your company information, documents and bank details</p>
         </div>
 
         {/* Account Information */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
             <h2 className="text-lg font-bold text-gray-900">Account Information</h2>
             {/* Logo Upload */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-3">
               {spProfile?.companyLogo && (
                 <AuthImage path={spProfile.companyLogo} alt="Logo" className="w-14 h-14 rounded-lg object-cover border border-gray-200" />
               )}
@@ -252,7 +253,7 @@ export default function ServiceProviderProfilePage() {
                 <button
                   onClick={() => logoInputRef.current?.click()}
                   disabled={uploadingLogo}
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  className="w-full sm:w-auto px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
                   {uploadingLogo ? 'Uploading...' : spProfile?.companyLogo ? 'Change Logo' : 'Upload Logo'}
                 </button>
@@ -279,18 +280,18 @@ export default function ServiceProviderProfilePage() {
         </div>
 
         {/* Company Information (includes address) */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
             <h2 className="text-lg font-bold text-gray-900">Company Information</h2>
             {!editingCompany ? (
               <button
                 onClick={() => setEditingCompany(true)}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full sm:w-auto px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Edit
               </button>
             ) : (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => {
                     setEditingCompany(false);
@@ -364,18 +365,18 @@ export default function ServiceProviderProfilePage() {
         </div>
 
         {/* Bank & Tax Details */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
             <h2 className="text-lg font-bold text-gray-900">Bank & Tax Details</h2>
             {!editingBank ? (
               <button
                 onClick={() => setEditingBank(true)}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full sm:w-auto px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 {spProfile?.bankName ? 'Edit' : 'Add Bank Details'}
               </button>
             ) : (
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => {
                     setEditingBank(false);
@@ -485,13 +486,13 @@ export default function ServiceProviderProfilePage() {
         </div>
 
         {/* Documents Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 min-w-0">
           <h2 className="text-lg font-bold text-gray-900 mb-2">Required Documents</h2>
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-gray-500 mb-4 sm:mb-6">
             Upload all required documents for verification. Documents will be reviewed by the admin.
           </p>
 
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {SP_DOCUMENTS_CONFIG.map((field) => {
               const doc = getDocumentForKey(field.documentKey);
               const isUploading = uploadingKey === field.documentKey;
@@ -499,7 +500,7 @@ export default function ServiceProviderProfilePage() {
               return (
                 <div
                   key={field.documentKey}
-                  className={`border-2 rounded-xl p-5 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-gray-50 ${
+                  className={`min-w-0 border-2 rounded-xl p-4 sm:p-5 hover:shadow-md transition-all duration-200 bg-gradient-to-br from-white to-gray-50 ${
                     doc
                       ? doc.status === SPDocumentStatus.APPROVED
                         ? 'border-green-300'
@@ -509,79 +510,75 @@ export default function ServiceProviderProfilePage() {
                       : 'border-gray-200 hover:border-blue-300'
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
-                      <svg className="w-5 h-5 text-gray-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <h3 className="font-medium text-gray-900">{field.documentName}</h3>
-                          {field.required && <span className="text-sm text-red-500 font-bold">*</span>}
-                        </div>
-                        {field.helpText && (
-                          <p className="text-sm text-gray-500 mt-0.5">{field.helpText}</p>
-                        )}
-                        {doc?.rejectionMessage && (
-                          <p className="text-sm text-red-600 mt-1">Reason: {doc.rejectionMessage}</p>
-                        )}
+                  <div className="flex items-start gap-3 min-w-0">
+                    <svg className="w-5 h-5 text-gray-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-medium text-gray-900 text-sm sm:text-base leading-snug break-words">
+                          {field.documentName}
+                        </h3>
+                        {field.required && <span className="text-sm text-red-500 font-bold">*</span>}
+                        {doc && getStatusBadge(doc.status as SPDocumentStatus)}
                       </div>
-                    </div>
+                      {field.helpText && (
+                        <p className="text-xs sm:text-sm text-gray-500 mt-1 break-words">{field.helpText}</p>
+                      )}
+                      {doc?.rejectionMessage && (
+                        <p className="text-xs sm:text-sm text-red-600 mt-1 break-words">Reason: {doc.rejectionMessage}</p>
+                      )}
 
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {doc && (
-                        <div className="flex-shrink-0">
-                          {getStatusBadge(doc.status as SPDocumentStatus)}
-                        </div>
-                      )}
-                      {field.hasSample && (
-                        <a
-                          href={`/samples/${field.sampleFileName}`}
-                          download
-                          className="px-4 py-2 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 rounded-lg hover:from-gray-100 hover:to-gray-200 transition-all text-xs font-semibold flex items-center gap-1.5 border border-gray-300 shadow-sm whitespace-nowrap"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                          Sample
-                        </a>
-                      )}
-                      {doc && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {field.hasSample && (
+                          <a
+                            href={`/samples/${field.sampleFileName}`}
+                            download
+                            className="inline-flex flex-1 min-w-[calc(50%-0.25rem)] sm:flex-none sm:min-w-0 items-center justify-center gap-1.5 px-3 py-2 sm:px-4 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 rounded-lg hover:from-gray-100 hover:to-gray-200 transition-all text-xs font-semibold border border-gray-300 shadow-sm"
+                          >
+                            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Sample
+                          </a>
+                        )}
+                        {doc && (
+                          <button
+                            onClick={() => handleViewDocument(doc)}
+                            className="inline-flex flex-1 min-w-[calc(50%-0.25rem)] sm:flex-none sm:min-w-0 items-center justify-center gap-1.5 px-3 py-2 sm:px-4 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 rounded-lg hover:from-blue-100 hover:to-blue-200 transition-all text-xs font-semibold border border-blue-200 shadow-sm"
+                          >
+                            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            View
+                          </button>
+                        )}
+                        <input
+                          ref={(el) => { fileInputRefs.current[field.documentKey] = el; }}
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleFileUpload(field, file);
+                            e.target.value = '';
+                          }}
+                        />
                         <button
-                          onClick={() => handleViewDocument(doc)}
-                          className="px-4 py-2 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 rounded-lg hover:from-blue-100 hover:to-blue-200 transition-all text-xs font-semibold flex items-center gap-1.5 border border-blue-200 shadow-sm"
+                          onClick={() => fileInputRefs.current[field.documentKey]?.click()}
+                          disabled={isUploading}
+                          className={`inline-flex flex-1 min-w-[calc(50%-0.25rem)] sm:flex-none sm:min-w-0 items-center justify-center gap-1.5 px-3 py-2 sm:px-5 sm:py-2.5 rounded-lg transition-all text-xs sm:text-sm font-semibold shadow-md hover:shadow-lg ${
+                            doc
+                              ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
+                              : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
+                          } disabled:opacity-50`}
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12" />
                           </svg>
-                          View
+                          {isUploading ? 'Uploading...' : doc ? 'Reupload' : 'Upload'}
                         </button>
-                      )}
-                      <input
-                        ref={(el) => { fileInputRefs.current[field.documentKey] = el; }}
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleFileUpload(field, file);
-                          e.target.value = '';
-                        }}
-                      />
-                      <button
-                        onClick={() => fileInputRefs.current[field.documentKey]?.click()}
-                        disabled={isUploading}
-                        className={`px-5 py-2.5 rounded-lg transition-all text-sm font-semibold flex items-center gap-2 shadow-md hover:shadow-lg whitespace-nowrap ${
-                          doc
-                            ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
-                            : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800'
-                        } disabled:opacity-50`}
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l4-4m0 0l4 4m-4-4v12" />
-                        </svg>
-                        {isUploading ? 'Uploading...' : doc ? 'Reupload' : 'Upload'}
-                      </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -591,7 +588,7 @@ export default function ServiceProviderProfilePage() {
 
           {/* Document Stats */}
           <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="flex items-center space-x-6 text-sm">
+            <div className="grid grid-cols-2 gap-3 text-sm sm:flex sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
               <span className="text-gray-600">
                 Total: <strong>{SP_DOCUMENTS_CONFIG.length}</strong>
               </span>

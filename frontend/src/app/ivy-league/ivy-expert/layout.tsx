@@ -8,6 +8,9 @@ import { User, USER_ROLE } from '@/types';
 import IvyExpertLayoutWrapper from '@/components/IvyExpertLayout';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { buildCallbackMobileNavItems } from '@/utils/mobileNavHelpers';
+import { roleLayoutShellProps, roleLayoutSidebarClass, roleLayoutMainClass } from '@/utils/roleLayoutShell';
+
+const IVY_SIDEBAR_WIDTHS = { openWidth: 'md:w-72', closedWidth: 'md:w-20' } as const;
 
 
 
@@ -121,7 +124,9 @@ function IvyExpertSidebar() {
 
     return (
         <>
-        <aside className={`hidden md:flex bg-white border-r border-gray-100 flex-col h-screen sticky top-0 shadow-sm z-20 transition-all duration-300 ${isConversationOpen ? 'w-20' : 'w-72'}`}>
+        <aside
+            className={`${roleLayoutSidebarClass(!isConversationOpen, IVY_SIDEBAR_WIDTHS)} border-gray-100 shadow-sm z-20`}
+        >
             <div className={`p-8 border-b border-gray-50 ${isConversationOpen ? 'px-4' : ''}`}>
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center shadow-lg shadow-brand-100 flex-shrink-0">
@@ -211,10 +216,13 @@ function IvyExpertLayoutContent({ children }: { children: React.ReactNode }) {
 
     // When a student is selected, show the pointer-navigation sidebar
     if (studentId) {
+        const sidebarExpanded = searchParams.get('conversationOpen') !== 'true';
         return (
-            <div className="flex bg-[#FBFBFE] min-h-screen">
+            <div {...roleLayoutShellProps(sidebarExpanded, IVY_SIDEBAR_WIDTHS, 'bg-[#FBFBFE]')}>
                 <IvyExpertSidebar />
-                <main className="flex-1 min-h-screen overflow-x-hidden app-main-mobile-pb">
+                <main
+                    className={roleLayoutMainClass(sidebarExpanded, 'min-h-screen overflow-y-auto', IVY_SIDEBAR_WIDTHS)}
+                >
                     {children}
                 </main>
             </div>

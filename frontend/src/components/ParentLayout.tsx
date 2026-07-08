@@ -7,6 +7,7 @@ import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { buildPathMobileNavItems } from '@/utils/mobileNavHelpers';
+import { roleLayoutShellProps, roleLayoutSidebarClass, roleLayoutMainClass } from '@/utils/roleLayoutShell';
 
 interface ParentLayoutProps {
   children: React.ReactNode;
@@ -49,12 +50,9 @@ export default function ParentLayout({ children, user }: ParentLayoutProps) {
   const mobileNavItems = buildPathMobileNavItems(navigationItems, pathname, router);
 
   return (
-    <div className="flex min-h-[calc(100vh-6.25rem)] bg-gray-50">
+    <div {...roleLayoutShellProps(sidebarOpen)}>
       {/* Sidebar */}
-      <aside
-        className={`hidden md:flex ${
-          sidebarOpen ? 'w-64' : 'w-20'
-        } bg-white border-r border-gray-200 transition-all duration-300 flex-col sticky top-25 h-[calc(100vh-6.25rem)]`}
+      <aside className={roleLayoutSidebarClass(sidebarOpen)}
       >
         {/* Sidebar Header */}
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4">
@@ -168,7 +166,7 @@ export default function ParentLayout({ children, user }: ParentLayoutProps) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-x-hidden overflow-y-auto app-main-mobile-pb">
+      <main className={roleLayoutMainClass(sidebarOpen, 'overflow-y-auto')}>
         {children}
       </main>
 

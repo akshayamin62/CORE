@@ -8,6 +8,7 @@ import AuthImage from '@/components/AuthImage';
 import NativeAwareToaster from '@/components/NativeAwareToaster';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { buildPathMobileNavItems } from '@/utils/mobileNavHelpers';
+import { roleLayoutShellProps, roleLayoutSidebarClass, roleLayoutMainClass } from '@/utils/roleLayoutShell';
 
 interface EduplanCoachLayoutProps {
   children: React.ReactNode;
@@ -95,12 +96,9 @@ export default function EduplanCoachLayout({ children, user }: EduplanCoachLayou
   });
 
   return (
-    <div className="flex min-h-[calc(100dvh-3.5rem)] w-full min-w-0 max-w-full overflow-x-hidden bg-gray-50 md:min-h-[calc(100vh-6.25rem)]">
+    <div {...roleLayoutShellProps(sidebarOpen, undefined, 'min-h-[calc(100dvh-3.5rem)] md:min-h-[calc(100vh-6.25rem)]')}>
       {/* Sidebar */}
-      <aside
-        className={`${
-          sidebarOpen ? 'w-64' : 'w-20'
-        } bg-white border-r border-gray-200 transition-all duration-300 hidden md:flex flex-col sticky top-25 h-[calc(100vh-6.25rem)]`}
+      <aside className={roleLayoutSidebarClass(sidebarOpen)}
       >
         {/* Sidebar Header */}
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4">
@@ -220,7 +218,7 @@ export default function EduplanCoachLayout({ children, user }: EduplanCoachLayou
       </aside>
 
       {/* Main Content */}
-      <main className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto app-main-mobile-pb">{children}</main>
+      <main className={roleLayoutMainClass(sidebarOpen, 'overflow-y-auto')}>{children}</main>
 
       <MobileBottomNav items={mobileNavItems} />
       <NativeAwareToaster />

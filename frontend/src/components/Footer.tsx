@@ -1,9 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { shouldShowSiteFooter } from '@/utils/shouldShowSiteFooter';
 
 export default function Footer() {
+  const pathname = usePathname();
   const currentYear = new Date().getFullYear();
+
+  if (!shouldShowSiteFooter(pathname)) return null;
 
   return (
     <footer className="relative hidden md:block bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-300">

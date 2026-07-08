@@ -6,6 +6,7 @@ import { getFullName, getInitials } from '@/utils/nameHelpers';
 import AuthImage from '@/components/AuthImage';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { buildCallbackMobileNavItems } from '@/utils/mobileNavHelpers';
+import { roleLayoutShellProps, roleLayoutSidebarClass, roleLayoutMainClass } from '@/utils/roleLayoutShell';
 
 interface UserInfo {
   firstName?: string;
@@ -103,8 +104,8 @@ export default function CoachingClassesLayout({
   );
 
   return (
-    <div className="flex min-h-[calc(100vh-5rem)] bg-gray-50">
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 transition-all duration-300 hidden md:flex flex-col sticky top-20 h-[calc(100vh-5rem)]`}>
+    <div {...roleLayoutShellProps(sidebarOpen)}>
+      <aside className={roleLayoutSidebarClass(sidebarOpen)}>
         {/* Header */}
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-4">
           {sidebarOpen && <span className="font-semibold text-gray-900 truncate">{serviceName}</span>}
@@ -170,7 +171,7 @@ export default function CoachingClassesLayout({
         )}
       </aside>
 
-      <main className="flex-1 overflow-x-hidden app-main-mobile-pb">{children}</main>
+      <main className={roleLayoutMainClass(sidebarOpen)}>{children}</main>
 
       <MobileBottomNav items={mobileNavItems} />
     </div>
