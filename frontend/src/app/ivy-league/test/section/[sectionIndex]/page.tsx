@@ -296,19 +296,21 @@ export default function SectionTestPage() {
   return (
     <div className="h-screen bg-white flex flex-col overflow-hidden select-none">
       {/* ── Top Bar ─────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${meta.color} flex items-center justify-center text-white text-sm`}>
+      <div className="flex-shrink-0 border-b border-gray-200 bg-white px-3 py-2 max-md:px-2 sm:px-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br text-sm text-white ${meta.color}`}>
             {meta.icon}
           </div>
-          <div>
-            <span className="font-bold text-gray-900 text-sm">{sectionName}: Question {currentIdx + 1}</span>
+          <div className="min-w-0">
+            <span className="block truncate text-xs font-bold text-gray-900 sm:text-sm">{sectionName}: Question {currentIdx + 1}</span>
             <div className="text-[10px] text-gray-400">{answeredCount}/{questions.length} answered</div>
           </div>
         </div>
 
+        <div className="flex flex-wrap items-center justify-end gap-2">
         {/* Timer */}
-        <div className={`flex items-center gap-2 px-4 py-1.5 rounded-lg border font-mono text-lg font-bold ${
+        <div className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-mono text-base font-bold sm:gap-2 sm:px-4 sm:text-lg ${
           isUrgent
             ? 'bg-red-50 border-red-300 text-red-600 animate-pulse'
             : 'bg-gray-50 border-gray-200 text-gray-800'
@@ -323,25 +325,27 @@ export default function SectionTestPage() {
         <button
           onClick={() => handleSubmit(false)}
           disabled={submitting}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-60"
+          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-green-600 to-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-60 sm:px-4 sm:text-sm"
         >
           {submitting ? (
-            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Submitting...</>
+            <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Submitting...</>
           ) : (
             <>Submit Section</>
           )}
         </button>
+        </div>
+        </div>
       </div>
 
       {/* ── Body ────────────────────────────────────────────────── */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden md:flex-row">
         {/* ── Left: Question Area ───────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto p-6 lg:p-10">
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10">
           {currentQ && (
             <>
               {/* Question text */}
               <div className="mb-6">
-                <p className="text-gray-900 text-xl leading-relaxed font-medium" style={{ fontFamily: 'Calibri, sans-serif' }}>
+                <p className="text-base font-medium leading-relaxed text-gray-900 sm:text-xl" style={{ fontFamily: 'Calibri, sans-serif' }}>
                   <span className="font-bold text-[#2959ba] mr-2">Q{currentIdx + 1}.</span>
                   {currentQ.questionText}
                 </p>
@@ -366,7 +370,7 @@ export default function SectionTestPage() {
                     <button
                       key={opt.label}
                       onClick={() => handleSelectOption(opt.label)}
-                      className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl border-2 text-left transition-all duration-150 ${
+                      className={`flex w-full items-center gap-3 rounded-xl border-2 px-4 py-3 text-left transition-all duration-150 sm:gap-4 sm:px-5 sm:py-4 ${
                         isSelected
                           ? 'border-blue-500 bg-blue-50 shadow-md'
                           : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
@@ -388,24 +392,24 @@ export default function SectionTestPage() {
               </div>
 
               {/* Navigation buttons */}
-              <div className="flex items-center justify-between mt-8 pt-4 border-t border-gray-100">
+              <div className="mt-8 flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <button
                   onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))}
                   disabled={currentIdx === 0}
-                  className="flex items-center gap-2 px-5 py-2.5 border border-gray-200 rounded-xl text-base font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-5 sm:text-base"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                   Previous
                 </button>
-                <span className="text-base font-medium text-gray-500">
+                <span className="text-center text-sm font-medium text-gray-500 sm:text-base">
                   {currentIdx + 1} of {questions.length}
                 </span>
                 <button
                   onClick={() => setCurrentIdx(Math.min(questions.length - 1, currentIdx + 1))}
                   disabled={currentIdx === questions.length - 1}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#2959ba] to-[#1e3f8a] text-white rounded-xl text-base font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2959ba] to-[#1e3f8a] px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-5 sm:text-base"
                 >
                   Next
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -418,11 +422,11 @@ export default function SectionTestPage() {
         </div>
 
         {/* ── Right: Question Navigation Grid ───────────────────── */}
-        <div className="flex-shrink-0 w-64 border-l border-gray-200 bg-gray-50 overflow-y-auto p-4">
-          <h3 className="text-sm font-bold text-gray-900 mb-3">Question No.</h3>
+        <div className="w-full shrink-0 overflow-y-auto border-t border-gray-200 bg-gray-50 p-3 max-md:max-h-[38vh] sm:p-4 md:w-64 md:border-l md:border-t-0">
+          <h3 className="mb-2 text-sm font-bold text-gray-900 sm:mb-3">Question No.</h3>
 
           {/* Grid */}
-          <div className="grid grid-cols-5 gap-1.5 mb-6">
+          <div className="mb-4 grid grid-cols-5 gap-1 sm:mb-6 sm:gap-1.5">
             {questions.map((q, idx) => (
               <button
                 key={idx}

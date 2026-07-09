@@ -3,6 +3,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import ivyApi from '@/lib/ivyApi';
+import {
+  ivyLeagueFlowPageClass,
+  ivyLeagueTestHeaderClass,
+  ivyLeagueTestSummaryGridClass,
+  ivyLeagueTestSectionRowClass,
+} from '@/components/studentDetailResponsive';
 
 /* ── Section metadata ──────────────────────────────────────────────── */
 const SECTIONS = [
@@ -146,18 +152,18 @@ export default function IvyLeagueTestPage() {
   const isCompleted = session?.status === 'completed';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+    <div className={ivyLeagueFlowPageClass}>
       {/* Header */}
-      <div className="sticky top-25 z-40 bg-white/95 backdrop-blur shadow-sm border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2959ba] to-[#1e3f8a] flex items-center justify-center">
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className={ivyLeagueTestHeaderClass}>
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#2959ba] to-[#1e3f8a]">
+            <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
-          <span className="font-bold text-gray-900 tracking-wide">Ivy League Readiness Test</span>
+          <span className="truncate text-sm font-bold tracking-wide text-gray-900 sm:text-base">Ivy League Readiness Test</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {session && session.violations > 0 && (
             <span className="text-xs font-semibold bg-red-100 text-red-600 border border-red-200 px-3 py-1 rounded-full">
               ⚠ {session.violations} Violation{session.violations > 1 ? 's' : ''}
@@ -175,10 +181,10 @@ export default function IvyLeagueTestPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
         {/* Title */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-gray-900 mb-2">
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-2xl font-black tracking-tight text-gray-900 sm:text-3xl md:text-4xl">
             {isCompleted ? '🎉 Test Completed!' : 'Ivy League Readiness Test'}
           </h1>
           <p className="text-gray-600 max-w-xl mx-auto">
@@ -189,7 +195,7 @@ export default function IvyLeagueTestPage() {
         </div>
 
         {/* Summary Row */}
-        <div className="grid grid-cols-5 gap-3 mb-8">
+        <div className={ivyLeagueTestSummaryGridClass}>
           {[
             { label: 'Total Questions', value: '60', icon: '📝' },
             { label: 'Total Duration', value: '150 min', icon: '⏱' },
@@ -197,10 +203,10 @@ export default function IvyLeagueTestPage() {
             { label: 'Correct', value: '+2', icon: '✅' },
             { label: 'Wrong', value: '−0.5', icon: '⚠️' },
           ].map((s) => (
-            <div key={s.label} className="bg-white border border-gray-200 rounded-xl p-3 text-center shadow-sm">
-              <div className="text-xl">{s.icon}</div>
-              <div className="text-xl font-extrabold text-gray-900">{s.value}</div>
-              <div className="text-xs font-semibold text-gray-600">{s.label}</div>
+            <div key={s.label} className="rounded-xl border border-gray-200 bg-white p-2.5 text-center shadow-sm sm:p-3">
+              <div className="text-lg sm:text-xl">{s.icon}</div>
+              <div className="text-lg font-extrabold text-gray-900 sm:text-xl">{s.value}</div>
+              <div className="text-[10px] font-semibold text-gray-600 sm:text-xs">{s.label}</div>
             </div>
           ))}
         </div>
@@ -237,9 +243,9 @@ export default function IvyLeagueTestPage() {
                   isSubmitted ? 'border-green-200 bg-green-50/30' : isInProgress ? `${sec.border} ${sec.bg}` : 'border-gray-200'
                 }`}
               >
-                <div className="flex items-center gap-4 px-6 py-5">
+                <div className={ivyLeagueTestSectionRowClass}>
                   {/* Icon */}
-                  <div className={`flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br ${sec.color} flex items-center justify-center text-white text-xl`}>
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-xl text-white ${sec.color}`}>
                     {sec.icon}
                   </div>
 
@@ -254,7 +260,7 @@ export default function IvyLeagueTestPage() {
                         <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full animate-pulse">IN PROGRESS</span>
                       )}
                     </div>
-                    <p className="text-gray-900 font-bold text-lg">{sec.name}</p>
+                    <p className="text-base font-bold text-gray-900 sm:text-lg">{sec.name}</p>
                     <div className="flex items-center gap-3 mt-1 flex-wrap">
                       <span className="text-xs text-gray-500">{sec.questions} questions</span>
                       <span className="text-xs text-gray-400">•</span>
@@ -273,9 +279,9 @@ export default function IvyLeagueTestPage() {
                   )}
 
                   {/* Action Button */}
-                  <div className="flex-shrink-0">
+                  <div className="w-full shrink-0 md:w-auto">
                     {isSubmitted ? (
-                      <div className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-xl text-sm font-semibold">
+                      <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-100 px-4 py-2 text-sm font-semibold text-green-700 sm:w-auto">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
@@ -284,7 +290,7 @@ export default function IvyLeagueTestPage() {
                     ) : isInProgress ? (
                       <button
                         onClick={() => handleResumeSection(idx)}
-                        className={`flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r ${sec.color} text-white rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all`}
+                        className={`flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg sm:w-auto ${sec.color}`}
                       >
                         Resume →
                       </button>
@@ -292,9 +298,9 @@ export default function IvyLeagueTestPage() {
                       <button
                         onClick={() => handleStartSection(idx)}
                         disabled={!!otherInProgress || startingSection === idx}
-                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                        className={`flex w-full items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all sm:w-auto ${
                           otherInProgress
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            ? 'cursor-not-allowed bg-gray-100 text-gray-400'
                             : `bg-gradient-to-r ${sec.color} text-white shadow-md hover:shadow-lg`
                         }`}
                       >
@@ -323,9 +329,9 @@ export default function IvyLeagueTestPage() {
           })}
 
           {/* Total Row */}
-          <div className="bg-gradient-to-r from-[#2959ba]/10 to-[#1e3f8a]/10 border border-[#2959ba]/30 rounded-2xl px-6 py-4 flex items-center justify-between">
-            <span className="font-bold text-gray-900 text-lg">Total</span>
-            <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-col gap-3 rounded-2xl border border-[#2959ba]/30 bg-gradient-to-r from-[#2959ba]/10 to-[#1e3f8a]/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <span className="text-base font-bold text-gray-900 sm:text-lg">Total</span>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <span className="text-sm bg-white border border-gray-200 rounded-lg px-3 py-1 text-gray-700 font-semibold">60 Questions</span>
               <span className="text-sm bg-white border border-gray-200 rounded-lg px-3 py-1 text-gray-700 font-semibold">150 min</span>
               <span className="text-sm bg-[#2959ba] rounded-lg px-3 py-1 text-white font-bold">120 Marks</span>

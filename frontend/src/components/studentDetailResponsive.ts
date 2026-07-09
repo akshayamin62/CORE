@@ -226,6 +226,34 @@ export const ivyPointer6DateRowClass =
 export const ivyPointer6FileRowClass =
   'flex flex-col gap-3 rounded-lg bg-gray-50 p-4 max-md:gap-2 md:flex-row md:items-center md:justify-between';
 
+export const ivyPointer6ScoringRowClass =
+  'flex flex-col gap-3 max-md:gap-2 md:flex-row md:items-start md:gap-2';
+
+export const ivyPointer6ScoringInputsClass =
+  'flex flex-col gap-3 max-md:gap-2 sm:flex-row sm:items-start sm:gap-2';
+
+/** Ivy League instructions + test pages */
+export const ivyLeagueFlowPageClass =
+  'min-h-screen overflow-x-hidden bg-gradient-to-br from-blue-50 via-white to-cyan-50';
+
+export const ivyLeagueFlowContainerClass =
+  'relative mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8';
+
+export const ivyLeagueFlowStepCardClass =
+  'flex items-stretch max-md:flex-col';
+
+export const ivyLeagueFlowStepAsideClass =
+  'flex w-24 shrink-0 flex-col items-center justify-center gap-2 bg-gradient-to-b from-[#2959ba] to-[#1e3f8a] p-4 max-md:w-full max-md:flex-row max-md:justify-center max-md:py-3 sm:w-28';
+
+export const ivyLeagueTestHeaderClass =
+  'sticky top-0 z-40 flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 bg-white/95 px-4 py-3 backdrop-blur max-md:px-3 max-md:py-2 sm:px-6';
+
+export const ivyLeagueTestSummaryGridClass =
+  'mb-8 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-5';
+
+export const ivyLeagueTestSectionRowClass =
+  'flex flex-col gap-4 px-4 py-4 max-md:gap-3 sm:px-6 sm:py-5 md:flex-row md:items-center';
+
 export const eduPlanPortfolioRowClass = 'w-full min-w-0 sm:flex-1 sm:min-w-[260px]';
 
 /** Activity planner accomplishments — card stack on mobile, grid on md+ */

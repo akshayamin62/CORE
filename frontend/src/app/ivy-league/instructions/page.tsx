@@ -3,6 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authAPI } from '@/lib/api';
+import {
+  ivyLeagueFlowPageClass,
+  ivyLeagueFlowContainerClass,
+  ivyLeagueFlowStepCardClass,
+  ivyLeagueFlowStepAsideClass,
+} from '@/components/studentDetailResponsive';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -104,17 +110,17 @@ export default function IvyLeagueInstructionsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
+    <div className={ivyLeagueFlowPageClass}>
       {/* Decorative Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-20 w-72 h-72 bg-blue-400/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-cyan-400/10 rounded-full blur-3xl"></div>
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute right-10 top-20 h-72 w-72 rounded-full bg-blue-400/10 blur-3xl max-md:right-0 max-md:h-48 max-md:w-48"></div>
+        <div className="absolute bottom-20 left-10 h-96 w-96 rounded-full bg-cyan-400/10 blur-3xl max-md:left-0 max-md:h-56 max-md:w-56"></div>
       </div>
 
-      <div className="relative max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+      <div className={ivyLeagueFlowContainerClass}>
         {/* Success Banner */}
         {showBanner && (
-        <div className="mb-8 bg-green-50 border border-green-200 rounded-2xl p-6 flex items-start gap-4 transition-opacity duration-500">
+        <div className="mb-8 flex items-start gap-4 rounded-2xl border border-green-200 bg-green-50 p-6 transition-opacity duration-500 max-md:mb-6 max-md:flex-col max-md:gap-3 max-md:p-4">
           <div className="flex-shrink-0 w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
             <svg className="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -130,16 +136,16 @@ export default function IvyLeagueInstructionsPage() {
         )}
 
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[#2959ba] to-[#1e3f8a] shadow-lg mb-4">
+        <div className="mb-12 text-center max-md:mb-8">
+          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#2959ba] to-[#1e3f8a] shadow-lg max-md:mb-3 max-md:h-14 max-md:w-14">
             <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl md:text-4xl">
             Ivy League Admission Procedure
           </h1>
-          <p className="text-gray-600 mt-3 text-lg max-w-2xl mx-auto">
+          <p className="mx-auto mt-3 max-w-2xl text-base text-gray-600 sm:text-lg">
             To proceed with the Ivy League preparation program, students need to pass through the following procedure
           </p>
         </div>
@@ -149,19 +155,19 @@ export default function IvyLeagueInstructionsPage() {
           {steps.map((step, index) => (
             <div
               key={step.number}
-              className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow duration-300"
+              className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg transition-shadow duration-300 hover:shadow-xl"
             >
-              <div className="flex items-stretch">
+              <div className={ivyLeagueFlowStepCardClass}>
                 {/* Step Number + Icon */}
-                <div className="flex-shrink-0 w-24 sm:w-28 bg-gradient-to-b from-[#2959ba] to-[#1e3f8a] flex flex-col items-center justify-center gap-2 p-4">
-                  <span className="text-white/70 text-sm font-medium uppercase tracking-wider">Step</span>
-                  <span className="text-white text-3xl font-bold">{step.number}</span>
-                  <div className="mt-1">{step.icon}</div>
+                <div className={ivyLeagueFlowStepAsideClass}>
+                  <span className="text-sm font-medium uppercase tracking-wider text-white/70">Step</span>
+                  <span className="text-3xl font-bold text-white">{step.number}</span>
+                  <div className="mt-1 max-md:mt-0">{step.icon}</div>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 p-6 sm:p-8">
-                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3">
+                <div className="flex-1 p-5 sm:p-8">
+                  <h3 className="mb-3 text-lg font-bold text-gray-900 sm:text-2xl">
                     {step.title}
                   </h3>
                   <p className="text-gray-600 leading-relaxed">{step.description}</p>
@@ -170,7 +176,7 @@ export default function IvyLeagueInstructionsPage() {
                     <div className="mt-5">
                       <button
                         onClick={() => router.push('/ivy-league/test')}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#2959ba] to-[#1e3f8a] text-white font-semibold rounded-xl shadow-md hover:shadow-lg hover:shadow-[#2959ba]/30 transition-all duration-200"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2959ba] to-[#1e3f8a] px-6 py-3 font-semibold text-white shadow-md transition-all duration-200 hover:shadow-lg hover:shadow-[#2959ba]/30 sm:w-auto"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -185,8 +191,8 @@ export default function IvyLeagueInstructionsPage() {
                     <div className="mt-5 space-y-3">
                       <p className="text-sm font-semibold text-gray-700">Your Scheduled Meetings:</p>
                       {studentMeetings.map((m) => (
-                        <div key={m._id} className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
-                          <div className="flex items-start justify-between gap-3">
+                        <div key={m._id} className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-blue-900">{m.subject}</p>
                               <p className="text-xs text-blue-600 mt-0.5">
@@ -203,7 +209,7 @@ export default function IvyLeagueInstructionsPage() {
                                 </div>
                               )}
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex flex-wrap items-center gap-2">
                               <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
                                 m.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
                                 m.status === 'COMPLETED' ? 'bg-blue-100 text-blue-700' :
@@ -228,8 +234,8 @@ export default function IvyLeagueInstructionsPage() {
                     <div className="mt-5 space-y-3">
                       <p className="text-sm font-semibold text-gray-700">Scheduled Parent Meetings:</p>
                       {parentMeetings.map((m) => (
-                        <div key={m._id} className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-3">
-                          <div className="flex items-start justify-between gap-3">
+                        <div key={m._id} className="rounded-xl border border-purple-200 bg-purple-50 px-4 py-3">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-purple-900">{m.subject}</p>
                               <p className="text-xs text-purple-600 mt-0.5">
@@ -246,7 +252,7 @@ export default function IvyLeagueInstructionsPage() {
                                 </div>
                               )}
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex flex-wrap items-center gap-2">
                               <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
                                 m.status === 'completed' ? 'bg-blue-100 text-blue-700' :
                                 m.status === 'cancelled' ? 'bg-red-100 text-red-700' :
@@ -280,7 +286,7 @@ export default function IvyLeagueInstructionsPage() {
         </div>
 
         {/* Bottom Note */}
-        <div className="mt-10 bg-blue-50 border border-blue-200 rounded-2xl p-6 text-center">
+        <div className="mt-10 rounded-2xl border border-blue-200 bg-blue-50 p-5 text-center sm:p-6">
           <p className="text-blue-800 font-medium">
             Our team will reach out to you with the schedule for each step. Please ensure your contact details are up to date.
           </p>
@@ -290,7 +296,7 @@ export default function IvyLeagueInstructionsPage() {
         <div className="mt-8 text-center">
           <button
             onClick={() => router.push('/dashboard')}
-            className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#2959ba] to-[#1e3f8a] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2959ba] to-[#1e3f8a] px-8 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:shadow-xl sm:w-auto"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />

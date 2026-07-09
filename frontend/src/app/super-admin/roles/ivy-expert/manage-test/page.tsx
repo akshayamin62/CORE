@@ -484,7 +484,7 @@ export default function ManageTestPage() {
         )}
 
         {/* ── Section Overview Cards ─────────────────────────────── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="mb-8 grid grid-cols-2 gap-2 max-md:mb-6 sm:gap-4 lg:grid-cols-4">
           {SECTIONS.map((sec) => {
             const m = SECTION_META[sec];
             const cnt = getCount(sec);
@@ -493,19 +493,19 @@ export default function ManageTestPage() {
               <button
                 key={sec}
                 onClick={() => setFilterSection(isActive ? null : sec)}
-                className={`text-left p-4 rounded-2xl border-2 transition-all duration-200 ${
+                className={`rounded-2xl border-2 p-4 text-left transition-all duration-200 max-md:p-2.5 ${
                   isActive ? `${m.bg} ${m.border} shadow-md` : "bg-white border-gray-100 hover:border-gray-200 hover:shadow-sm"
                 }`}
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xl">{m.icon}</span>
-                  <span className={`text-xs font-bold uppercase tracking-wider ${isActive ? m.color : "text-gray-400"}`}>
+                <div className="mb-2 flex items-center gap-1.5 max-md:mb-1.5 sm:gap-2">
+                  <span className="text-xl max-md:text-base">{m.icon}</span>
+                  <span className={`text-xs font-bold uppercase tracking-wider max-md:text-[10px] max-md:leading-tight ${isActive ? m.color : "text-gray-400"}`}>
                     Section {SECTIONS.indexOf(sec) + 1}
                   </span>
                 </div>
-                <p className={`text-sm font-semibold ${isActive ? m.color : "text-gray-700"} truncate`}>{sec}</p>
-                <div className="flex items-center gap-3 mt-2">
-                  <span className="text-xs text-gray-500">{cnt} Qs</span>
+                <p className={`text-sm font-semibold leading-snug [overflow-wrap:anywhere] [word-break:break-word] max-md:text-xs max-md:leading-snug sm:truncate ${isActive ? m.color : "text-gray-700"}`}>{sec}</p>
+                <div className="mt-2 flex items-center gap-3 max-md:mt-1.5">
+                  <span className="text-xs text-gray-500 max-md:text-[10px]">{cnt} Qs</span>
                 </div>
               </button>
             );
@@ -513,7 +513,7 @@ export default function ManageTestPage() {
         </div>
 
         {/* ── Search bar ─────────────────────────────────────────── */}
-        <div className="mb-6">
+        <div className="mb-6 max-md:mb-4">
           <div className="relative max-w-md">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -523,7 +523,7 @@ export default function ManageTestPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search questions..."
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white placeholder:text-gray-400"
+              className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-gray-900 placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 max-md:py-2 max-md:text-sm"
             />
           </div>
         </div>
@@ -548,15 +548,15 @@ export default function ManageTestPage() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 max-md:space-y-2">
             {filtered.map((q, idx) => {
               const m = SECTION_META[q.section] || SECTION_META["Global Awareness"];
               const isExpanded = expandedId === q._id;
               return (
                 <div
                   key={q._id}
-                  className={`bg-white border rounded-2xl overflow-hidden transition-all duration-200 ${
-                    !q.isActive ? "opacity-60 border-gray-200" : "border-gray-100 shadow-sm hover:shadow-md"
+                  className={`overflow-hidden rounded-2xl border bg-white transition-all duration-200 max-md:rounded-xl ${
+                    !q.isActive ? "border-gray-200 opacity-60" : "border-gray-100 shadow-sm hover:shadow-md"
                   }`}
                 >
                   {/* Row */}
@@ -565,16 +565,16 @@ export default function ManageTestPage() {
                     tabIndex={0}
                     onClick={() => setExpandedId(isExpanded ? null : q._id)}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setExpandedId(isExpanded ? null : q._id); }}
-                    className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="flex w-full cursor-pointer items-start gap-2 px-4 py-4 text-left transition-colors hover:bg-gray-50 max-md:gap-2 max-md:px-3 max-md:py-2.5 sm:items-center sm:gap-4 sm:px-5"
                   >
                     {/* Section badge */}
-                    <div className={`flex-shrink-0 w-10 h-10 rounded-xl ${m.bg} ${m.border} border flex items-center justify-center text-lg`}>
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border text-lg max-md:h-8 max-md:w-8 max-md:rounded-lg max-md:text-base ${m.bg} ${m.border}`}>
                       {m.icon}
                     </div>
                     {/* Question text */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 line-clamp-1">{q.questionText}</p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold leading-relaxed text-gray-900 [overflow-wrap:anywhere] [word-break:break-word] max-md:text-xs max-md:leading-snug max-md:line-clamp-2 sm:line-clamp-1">{q.questionText}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 max-md:mt-0.5">
                         <span className="text-[10px] text-gray-400">{q.options.length} options</span>
                         {!q.isActive && <span className="text-[10px] font-bold text-red-500 uppercase">Inactive</span>}
                       </div>
@@ -621,7 +621,7 @@ export default function ManageTestPage() {
                     </div>
                     {/* Chevron */}
                     <svg
-                      className={`flex-shrink-0 w-4 h-4 text-gray-400 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                      className={`ml-auto h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200 max-md:mt-0.5 sm:ml-0 ${isExpanded ? "rotate-180" : ""}`}
                       fill="none" viewBox="0 0 24 24" stroke="currentColor"
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -630,7 +630,7 @@ export default function ManageTestPage() {
 
                   {/* Expanded detail */}
                   {isExpanded && (
-                    <div className="px-5 pb-5 border-t border-gray-100 pt-4 space-y-4">
+                    <div className="space-y-4 border-t border-gray-100 px-5 pb-5 pt-4 max-md:space-y-3 max-md:px-3 max-md:pb-3 max-md:pt-3">
                       {/* Full question */}
                       <div>
                         <p className="text-sm font-medium text-gray-500 mb-1">Question</p>

@@ -3,7 +3,7 @@ import AgentSuggestion, { IActivityTask } from '../models/ivy/AgentSuggestion';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { getUploadBaseDir, ensureDir } from '../utils/uploadDir';
+import { getUploadBaseDir, ensureDir, validateFilePath } from '../utils/uploadDir';
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -313,6 +313,54 @@ export const updateActivity = async (req: Request, res: Response): Promise<void>
     res.status(500).json({
       success: false,
       message: 'Failed to update activity',
+    });
+  }
+};
+
+// Stream activity document by ID (avoids brittle direct /uploads paths on clients)
+export const getActivityDocument = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const activity = await AgentSuggestion.findById(id);
+
+    if (!activity?.documentUrl) {
+      res.status(404).json({
+        success: false,
+        message: 'Document not found',
+      });
+      return;
+    }
+
+    const relative = activity.documentUrl.replace(/^\/uploads\//, '');
+    const filePath = path.join(getUploadBaseDir(), relative);
+    const safePath = validateFilePath(filePath);
+
+    if (!safePath || !fs.existsSync(safePath)) {
+      res.status(404).json({
+        success: false,
+        message: 'Document file not found on server',
+      });
+      return;
+    }
+
+    const downloadName = activity.documentName || path.basename(safePath);
+    res.setHeader('Content-Disposition', `inline; filename="${downloadName.replace(/"/g, '')}"`);
+
+    const lowerName = downloadName.toLowerCase();
+    if (lowerName.endsWith('.pdf')) {
+      res.type('application/pdf');
+    } else if (lowerName.endsWith('.docx')) {
+      res.type('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    } else if (lowerName.endsWith('.doc')) {
+      res.type('application/msword');
+    }
+
+    res.sendFile(safePath);
+  } catch (error: any) {
+    console.error('Error streaming activity document:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to load document',
     });
   }
 };

@@ -9,6 +9,10 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell,
   PieChart, Pie,
 } from 'recharts';
+import {
+  ivyLeagueFlowPageClass,
+  ivyLeagueTestHeaderClass,
+} from '@/components/studentDetailResponsive';
 
 interface Option { label: string; text: string; }
 
@@ -89,16 +93,16 @@ export default function TestReviewPage() {
   const totalSkipped = reviewData.sections.reduce((sum, s) => sum + s.questions.filter(q => q.selectedOption === null).length, 0);
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-cyan-50">
+    <div className={ivyLeagueFlowPageClass}>
       {/* Header */}
-      <div className="sticky top-25 z-40 bg-white/95 backdrop-blur shadow-sm border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#2959ba] to-[#1e3f8a] flex items-center justify-center">
+      <div className={ivyLeagueTestHeaderClass}>
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#2959ba] to-[#1e3f8a]">
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <span className="font-bold text-gray-900 tracking-wide">Answer Review</span>
+          <span className="truncate text-sm font-bold tracking-wide text-gray-900 sm:text-base">Answer Review</span>
         </div>
         <button
           onClick={() => router.push('/ivy-league/test')}
@@ -108,14 +112,14 @@ export default function TestReviewPage() {
         </button>
       </div>
 
-      <div className="w-full px-4 sm:px-6 py-8">
+      <div className="w-full px-4 py-6 sm:px-6 sm:py-8">
         {/* Score Summary */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6 shadow-sm">
+        <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:mb-6 sm:p-6">
           <div className="text-center mb-4">
             <h1 className="text-2xl font-bold text-gray-900 mb-1">Test Result Summary</h1>
             <p className="text-gray-500 text-sm">Review your answers, correct answers, and explanations</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-5">
             <div className="bg-linear-to-br from-[#2959ba]/10 to-[#1e3f8a]/10 border border-[#2959ba]/30 rounded-xl p-3 text-center">
               <div className="text-2xl font-black text-[#2959ba]">{reviewData.totalScore}</div>
               <div className="text-xs font-semibold text-[#2959ba]/70">Total Score</div>
@@ -141,7 +145,7 @@ export default function TestReviewPage() {
 
         {/* Detailed Section Cards (One Line) */}
         <div className="mb-8">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {reviewData.sections.map((sec) => {
               const meta = SECTION_COLORS[sec.sectionName] || { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-700', icon: '📝' };
               const correct = sec.questions.filter(q => q.isCorrect === true).length;
@@ -158,12 +162,12 @@ export default function TestReviewPage() {
               return (
                 <div
                   key={sec.sectionIndex}
-                  className={`bg-white border-l-4 ${borderColorMap[sec.sectionName] || 'border-l-gray-600'} border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow`}
+                  className={`rounded-lg border border-gray-200 border-l-4 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:p-6 ${borderColorMap[sec.sectionName] || 'border-l-gray-600'}`}
                 >
                   {/* Header with title and badge */}
-                  <div className="flex items-start justify-between mb-6">
-                    <div className="flex-1">
-                      <h3 className={`text-lg font-bold ${meta.text} mb-1`}>{meta.icon} {sec.sectionName}</h3>
+                  <div className="mb-4 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <h3 className={`text-base font-bold sm:text-lg ${meta.text} mb-1`}>{meta.icon} {sec.sectionName}</h3>
                     </div>
                     <span className="text-xs font-semibold bg-green-100 text-green-700 px-3 py-1.5 rounded-full whitespace-nowrap">
                       Submitted
@@ -171,9 +175,9 @@ export default function TestReviewPage() {
                   </div>
 
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
                     <div className="text-center">
-                      <div className="text-3xl font-black text-gray-900">{sec.score.toFixed(1)}</div>
+                      <div className="text-2xl font-black text-gray-900 sm:text-3xl">{sec.score.toFixed(1)}</div>
                       <div className="text-sm font-semibold text-gray-500 mt-1">Score</div>
                     </div>
                     <div className="text-center">
@@ -294,7 +298,7 @@ export default function TestReviewPage() {
                     </div>
                   </div>
                   {/* Legend */}
-                  <div className="flex justify-center gap-6 mt-2">
+                  <div className="mt-2 flex flex-wrap justify-center gap-3 sm:gap-6">
                     {donutData.map((d) => (
                       <div key={d.name} className="flex items-center gap-1.5">
                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
@@ -488,21 +492,21 @@ export default function TestReviewPage() {
         </div>
 
         {/* Bottom nav */}
-        <div className="mt-8 mb-4 flex items-center justify-between">
+        <div className="mb-4 mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button
             onClick={() => setActiveSection(Math.max(0, activeSection - 1))}
             disabled={activeSection === 0}
-            className="flex items-center gap-2 px-5 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
           >
             ← Previous Section
           </button>
-          <span className="text-sm text-gray-500 font-medium">
+          <span className="text-center text-sm font-medium text-gray-500">
             Section {activeSection + 1} of {reviewData.sections.length}
           </span>
           <button
             onClick={() => setActiveSection(Math.min(reviewData.sections.length - 1, activeSection + 1))}
             disabled={activeSection === reviewData.sections.length - 1}
-            className="flex items-center gap-2 px-5 py-2.5 bg-linear-to-r from-[#2959ba] to-[#1e3f8a] text-white rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2959ba] to-[#1e3f8a] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
           >
             Next Section →
           </button>

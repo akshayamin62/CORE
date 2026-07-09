@@ -50,7 +50,7 @@ export function useBlobUrl(path: string | null) {
       setLoading(true);
       setError(false);
       try {
-        const res = await fetchFileBlob(path);
+        const res = await fetchFileBlob(resolveUploadPath(path));
         if (!cancelled) {
           const url = URL.createObjectURL(res.data);
           objectUrls.push(url);
@@ -75,6 +75,33 @@ export function useBlobUrl(path: string | null) {
 }
 
 export async function fetchBlobUrl(path: string): Promise<string> {
-  const res = await fetchFileBlob(path);
+  const res = await fetchFileBlob(resolveUploadPath(path));
   return URL.createObjectURL(res.data);
+}
+
+/** Normalize stored upload paths for authenticated file fetches */
+export function resolveUploadPath(path: string): string {
+  if (!path) return path;
+
+  let normalized = path.trim();
+
+  if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+    try {
+      const parsed = new URL(normalized);
+      normalized = parsed.pathname;
+    } catch {
+      return path;
+    }
+  }
+
+  if (!normalized.startsWith('/')) {
+    normalized = `/${normalized}`;
+  }
+
+  return normalized;
+}
+
+export async function fetchUploadArrayBuffer(path: string): Promise<ArrayBuffer> {
+  const res = await fetchFileBlob(resolveUploadPath(path), 'arraybuffer');
+  return res.data;
 }

@@ -4,10 +4,45 @@ import { useEffect, useState, ReactNode } from 'react';
 import mammoth from 'mammoth';
 import DOMPurify from 'dompurify';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
-import { useBlobUrl, fileApi } from '@/lib/useBlobUrl';
+import ivyApi from '@/lib/ivyApi';
+import { useBlobUrl, fetchUploadArrayBuffer, resolveUploadPath } from '@/lib/useBlobUrl';
 
 GlobalWorkerOptions.workerSrc =
   'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+
+type DocumentKind = 'pdf' | 'word' | 'image' | 'unknown';
+
+function getDocumentKind(url: string, fileName?: string): DocumentKind {
+  const detect = (value: string): DocumentKind | null => {
+    const lower = value.toLowerCase();
+    if (lower.endsWith('.pdf')) return 'pdf';
+    if (lower.endsWith('.doc') || lower.endsWith('.docx')) return 'word';
+    if (/\.(jpg|jpeg|png|gif|webp)$/i.test(lower)) return 'image';
+    return null;
+  };
+
+  if (fileName) {
+    const fromName = detect(fileName);
+    if (fromName) return fromName;
+  }
+
+  const fromUrl = detect(url);
+  return fromUrl || 'unknown';
+}
+
+async function fetchDocumentArrayBuffer(
+  url: string,
+  activityId?: string,
+): Promise<ArrayBuffer> {
+  if (activityId) {
+    const response = await ivyApi.get(`/activities/${activityId}/document`, {
+      responseType: 'arraybuffer',
+    });
+    return response.data;
+  }
+
+  return fetchUploadArrayBuffer(url);
+}
 
 function useDocumentProtection(enabled = true) {
   useEffect(() => {
@@ -36,7 +71,13 @@ function useDocumentProtection(enabled = true) {
   }, [enabled]);
 }
 
-function ProtectedPdfCanvas({ url }: { url: string }) {
+function ProtectedPdfCanvas({
+  url,
+  activityId,
+}: {
+  url: string;
+  activityId?: string;
+}) {
   const [pages, setPages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -50,8 +91,8 @@ function ProtectedPdfCanvas({ url }: { url: string }) {
       setPages([]);
 
       try {
-        const response = await fileApi.get(url, { responseType: 'arraybuffer' });
-        const pdf = await getDocument({ data: response.data }).promise;
+        const data = await fetchDocumentArrayBuffer(url, activityId);
+        const pdf = await getDocument({ data }).promise;
         const renderedPages: string[] = [];
 
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
@@ -75,7 +116,6 @@ function ProtectedPdfCanvas({ url }: { url: string }) {
           setPages(renderedPages);
         }
       } catch (err) {
-        console.error('Error rendering protected PDF:', err);
         if (!cancelled) setError(true);
       } finally {
         if (!cancelled) setLoading(false);
@@ -87,7 +127,7 @@ function ProtectedPdfCanvas({ url }: { url: string }) {
     return () => {
       cancelled = true;
     };
-  }, [url]);
+  }, [url, activityId]);
 
   if (loading) {
     return (
@@ -99,8 +139,10 @@ function ProtectedPdfCanvas({ url }: { url: string }) {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <p className="text-red-500 font-medium">Failed to load PDF</p>
+      <div className="flex items-center justify-center py-16 px-4 text-center">
+        <p className="text-red-500 font-medium">
+          Failed to load document. The file may be missing or unavailable.
+        </p>
       </div>
     );
   }
@@ -125,7 +167,13 @@ function ProtectedPdfCanvas({ url }: { url: string }) {
   );
 }
 
-function ProtectedWordContent({ url }: { url: string }) {
+function ProtectedWordContent({
+  url,
+  activityId,
+}: {
+  url: string;
+  activityId?: string;
+}) {
   const [htmlContent, setHtmlContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -137,13 +185,15 @@ function ProtectedWordContent({ url }: { url: string }) {
       setLoading(true);
       setError('');
       try {
-        const response = await fileApi.get(url, { responseType: 'arraybuffer' });
-        const result = await mammoth.convertToHtml({ arrayBuffer: response.data });
+        const data = await fetchDocumentArrayBuffer(url, activityId);
+        const result = await mammoth.convertToHtml({ arrayBuffer: data });
         if (!cancelled) {
           setHtmlContent(result.value);
         }
       } catch {
-        if (!cancelled) setError('Failed to load document');
+        if (!cancelled) {
+          setError('Failed to load document. The file may be missing or unavailable.');
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -154,7 +204,7 @@ function ProtectedWordContent({ url }: { url: string }) {
     return () => {
       cancelled = true;
     };
-  }, [url]);
+  }, [url, activityId]);
 
   if (loading) {
     return (
@@ -166,7 +216,7 @@ function ProtectedWordContent({ url }: { url: string }) {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center py-16 text-red-500">{error}</div>
+      <div className="flex items-center justify-center py-16 px-4 text-center text-red-500">{error}</div>
     );
   }
 
@@ -177,7 +227,7 @@ function ProtectedWordContent({ url }: { url: string }) {
       onContextMenu={(e) => e.preventDefault()}
     >
       <div
-        className="text-gray-800"
+        className="text-gray-800 break-words [overflow-wrap:anywhere]"
         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(htmlContent) }}
       />
     </div>
@@ -186,6 +236,8 @@ function ProtectedWordContent({ url }: { url: string }) {
 
 interface ProtectedActivityDocumentViewerProps {
   url: string;
+  fileName?: string;
+  activityId?: string;
   className?: string;
   iframeClassName?: string;
   minHeight?: string;
@@ -193,15 +245,16 @@ interface ProtectedActivityDocumentViewerProps {
 
 export function ProtectedActivityDocumentViewer({
   url,
+  fileName,
+  activityId,
   className = '',
   minHeight = '500px',
 }: ProtectedActivityDocumentViewerProps) {
   useDocumentProtection();
 
-  const isPdf = /\.pdf$/i.test(url);
-  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-  const isWord = /\.(doc|docx)$/i.test(url);
-  const { blobUrl, loading, error } = useBlobUrl(isImage ? url : null);
+  const resolvedUrl = resolveUploadPath(url);
+  const kind = getDocumentKind(resolvedUrl, fileName);
+  const { blobUrl, loading, error } = useBlobUrl(kind === 'image' ? resolvedUrl : null);
 
   return (
     <div
@@ -210,11 +263,11 @@ export function ProtectedActivityDocumentViewer({
       onContextMenu={(e) => e.preventDefault()}
       onDragStart={(e) => e.preventDefault()}
     >
-      {isPdf ? (
-        <ProtectedPdfCanvas url={url} />
-      ) : isWord ? (
-        <ProtectedWordContent url={url} />
-      ) : isImage ? (
+      {kind === 'pdf' ? (
+        <ProtectedPdfCanvas url={resolvedUrl} activityId={activityId} />
+      ) : kind === 'word' ? (
+        <ProtectedWordContent url={resolvedUrl} activityId={activityId} />
+      ) : kind === 'image' ? (
         error ? (
           <p className="text-red-500 text-center py-16">Failed to load image</p>
         ) : loading || !blobUrl ? (
@@ -239,12 +292,16 @@ export function ProtectedActivityDocumentViewer({
 
 interface ProtectedActivityDocumentPanelProps {
   url: string;
+  fileName?: string;
+  activityId?: string;
   onClose?: () => void;
   children?: ReactNode;
 }
 
 export function ProtectedActivityDocumentPanel({
   url,
+  fileName,
+  activityId,
   onClose,
   children,
 }: ProtectedActivityDocumentPanelProps) {
@@ -266,7 +323,13 @@ export function ProtectedActivityDocumentPanel({
         </div>
       )}
       <div className="bg-gray-800">
-        {children || <ProtectedActivityDocumentViewer url={url} />}
+        {children || (
+          <ProtectedActivityDocumentViewer
+            url={url}
+            fileName={fileName}
+            activityId={activityId}
+          />
+        )}
       </div>
       <div className="px-4 py-2 bg-yellow-900/40 border-t border-yellow-700/30">
         <p className="text-xs text-yellow-200 text-center">View only — download, print, and copy are disabled</p>

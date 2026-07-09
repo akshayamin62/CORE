@@ -328,7 +328,7 @@ export default function SuperAdminActivitiesPage() {
               />
               {selectedFile ? (
                 <div className="flex items-center justify-center gap-3">
-                  <p className="text-sm font-semibold text-blue-700 truncate max-w-[240px]">{selectedFile.name}</p>
+                  <p className="max-w-full text-sm font-semibold text-blue-700 break-all [overflow-wrap:anywhere] sm:max-w-[240px] sm:truncate">{selectedFile.name}</p>
                   <button
                     type="button"
                     onClick={(e) => {
@@ -644,8 +644,8 @@ export default function SuperAdminActivitiesPage() {
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
                 <div className="min-w-0">
-                  <h2 className="text-lg font-bold text-gray-900 truncate">{viewingActivity.title}</h2>
-                  <p className="text-sm text-gray-500 truncate">
+                  <h2 className="text-lg font-bold text-gray-900 [overflow-wrap:anywhere] [word-break:break-word] sm:truncate">{viewingActivity.title}</h2>
+                  <p className="text-sm text-gray-500 [overflow-wrap:anywhere] [word-break:break-word] sm:truncate">
                     {viewingActivity.documentName || "Activity PDF"}
                   </p>
                 </div>
@@ -661,7 +661,11 @@ export default function SuperAdminActivitiesPage() {
                 </button>
               </div>
               <div className="overflow-y-auto flex-1 p-4 bg-gray-50">
-                <ProtectedActivityDocumentViewer url={viewingActivity.documentUrl} />
+                <ProtectedActivityDocumentViewer
+                  url={viewingActivity.documentUrl}
+                  fileName={viewingActivity.documentName}
+                  activityId={viewingActivity._id}
+                />
               </div>
             </div>
           </div>
@@ -774,7 +778,7 @@ export default function SuperAdminActivitiesPage() {
                   {stat.count}
                 </p>
                 <p
-                  className={`mt-0.5 text-xs font-semibold leading-snug break-words sm:truncate ${
+                  className={`mt-0.5 text-xs font-semibold leading-snug break-words [overflow-wrap:anywhere] max-md:break-all ${
                     isActive ? c.text : "text-gray-500"
                   }`}
                 >
@@ -844,7 +848,7 @@ export default function SuperAdminActivitiesPage() {
         </div>
 
         {/* Activities List */}
-        <div className="bg-white rounded-2xl shadow-lg border border-blue-50 overflow-hidden">
+        <div className="rounded-2xl border border-blue-50 bg-white shadow-lg max-md:overflow-visible md:overflow-hidden">
           <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <h2 className="text-base font-bold text-white flex items-center gap-2 break-words sm:text-lg">
               <svg
@@ -965,26 +969,26 @@ export default function SuperAdminActivitiesPage() {
                 return (
                   <div
                     key={activity._id}
-                    className="p-3 hover:bg-blue-50/30 transition-colors group sm:p-5"
+                    className="p-3 transition-colors hover:bg-blue-50/30 group sm:p-5"
                   >
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                    <div className="grid grid-cols-[2.25rem_minmax(0,1fr)] items-start gap-3">
                       {/* Number Badge */}
-                      <div className="flex-shrink-0 w-9 h-9 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-blue-100 bg-blue-50">
                         <span className="text-sm font-bold text-blue-600">
                           {index + 1}
                         </span>
                       </div>
 
                       {/* Content */}
-                      <div className="flex-1 min-w-0">
+                      <div className="min-w-0 w-full overflow-visible">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <h3 className="text-base font-bold text-gray-900 break-words">
+                          <div className="min-w-0 w-full flex-1 overflow-visible">
+                            <div className="mb-1 flex w-full min-w-0 flex-col items-start gap-1.5">
+                              <h3 className="block w-full min-w-0 text-base font-bold leading-relaxed text-gray-900 [overflow-wrap:anywhere] [word-break:break-word]">
                                 {activity.title}
                               </h3>
                               <span
-                                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${pc.bg} ${pc.text}`}
+                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${pc.bg} ${pc.text}`}
                               >
                                 <span
                                   className={`w-1.5 h-1.5 rounded-full ${pc.dot}`}
@@ -992,12 +996,12 @@ export default function SuperAdminActivitiesPage() {
                                 Pointer {activity.pointerNo}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                            <p className="mb-2 text-sm leading-relaxed text-gray-600 [overflow-wrap:anywhere] [word-break:break-word] max-md:line-clamp-none line-clamp-2">
                               {activity.description}
                             </p>
-                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-gray-400">
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400 sm:gap-4">
                               {activity.documentName && (
-                                <span className="flex items-center gap-1">
+                                <span className="flex min-w-0 max-w-full items-start gap-1 break-all [overflow-wrap:anywhere] max-md:break-all">
                                   <svg
                                     className="w-3.5 h-3.5"
                                     fill="none"

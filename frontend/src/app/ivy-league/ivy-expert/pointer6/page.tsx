@@ -7,11 +7,18 @@ import { IVY_API_URL } from '@/lib/ivyApi';
 import { fetchBlobUrl } from '@/lib/useBlobUrl';
 import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
 import {
+  IvyPointerPageShell,
+  IvyPointerPageHeader,
+} from '@/components/IvyPointerPageChrome';
+import {
   ivyPointer6CourseRowClass,
   ivyPointer6CourseGridClass,
   ivyPointer6CourseNameClass,
   ivyPointer6CountdownRowClass,
   ivyPointer6DateRowClass,
+  ivyPointer6FileRowClass,
+  ivyPointer6ScoringRowClass,
+  ivyPointer6ScoringInputsClass,
 } from '@/components/studentDetailResponsive';
 
 interface Course {
@@ -333,30 +340,18 @@ function Pointer6Content() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-50 py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Header with Score */}
-          <div className="mb-8 flex items-start justify-between max-md:mb-6 max-md:flex-col max-md:gap-4">
-            <div>
-              <h1 className="mb-4 text-5xl font-black tracking-tighter text-gray-900 max-md:mb-2 max-md:text-base max-md:leading-snug">
-                POINTER 6: ENGAGEMENT WITH LEARNING & INTELLECTUAL CURIOSITY
-              </h1>
-            </div>
-            {pointer6Score != null && (
-              <div className="bg-brand-100 rounded-lg p-4 text-center min-w-[120px]">
-                <p className="text-sm text-brand-600 font-medium">Pointer 6 Score</p>
-                <p className="text-3xl font-bold text-brand-900">{pointer6Score.toFixed(1)}</p>
-                <p className="text-xs text-brand-500 mt-1">out of 10</p>
-              </div>
-            )}
-          </div>
+    <>
+      <IvyPointerPageShell>
+          <IvyPointerPageHeader
+            title="POINTER 6: ENGAGEMENT WITH LEARNING & INTELLECTUAL CURIOSITY"
+            showScore={pointer6Score != null}
+            score={pointer6Score}
+          />
 
-          {/* Ivy League Applicant Info */}
           <IvyLeagueApplicantInfoPanel pointerNo={6} />
 
           {/* Upload Section */}
-          <div className={`mb-8 border border-gray-200 rounded-lg p-6 ${coursesUploaded ? 'bg-gray-100' : 'bg-gray-50'}`}>
+          <div className={`mb-8 rounded-lg border border-gray-200 p-6 max-md:mb-4 max-md:p-3 ${coursesUploaded ? 'bg-gray-100' : 'bg-gray-50'}`}>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Upload Course List</h2>
             <div className="flex items-center gap-4">
               <label className={`flex-1 flex items-center justify-center px-4 py-3 border-2 border-dashed rounded-lg transition-colors ${
@@ -584,8 +579,8 @@ function Pointer6Content() {
                               <h3 className="text-sm font-semibold text-gray-700 mb-3">Course Certificate & Scoring</h3>
                               {course.certificateFileName ? (
                                 <div className="space-y-3">
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
+                                  <div className={ivyPointer6FileRowClass}>
+                                    <div className="flex min-w-0 items-center gap-3">
                                       <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                       </svg>
@@ -611,16 +606,16 @@ function Pointer6Content() {
                                           console.error('Failed to load certificate');
                                         }
                                       }}
-                                      className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors text-sm font-medium cursor-pointer"
+                                      className="w-full shrink-0 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 cursor-pointer sm:w-auto"
                                     >
                                       View Certificate
                                     </a>
                                   </div>
 
                                   {/* Scoring Section */}
-                                  <div className="flex items-end gap-3 pt-3 border-t border-gray-200">
+                                  <div className={`border-t border-gray-200 pt-3 ${ivyPointer6ScoringRowClass}`}>
                                     {course.score !== undefined && course.score !== null ? (
-                                      <div className="flex items-center gap-3 flex-1">
+                                      <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                                         <div className="flex items-center gap-2 bg-brand-100 px-4 py-2 rounded-lg">
                                           <svg className="w-5 h-5 text-brand-600" fill="currentColor" viewBox="0 0 20 20">
                                             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -634,8 +629,8 @@ function Pointer6Content() {
                                         )}
                                       </div>
                                     ) : (
-                                      <div className="space-y-2 w-full">
-                                        <div className="flex gap-2 w-full">
+                                      <div className="w-full space-y-2">
+                                        <div className="hidden gap-2 sm:flex sm:w-full">
                                           <label className="flex-1 text-xs font-medium text-gray-700">
                                             Assign Score (0-10)
                                           </label>
@@ -644,7 +639,7 @@ function Pointer6Content() {
                                           </label>
                                           <div className="w-24"></div>
                                         </div>
-                                        <div className="flex items-start gap-2 w-full">
+                                        <div className={ivyPointer6ScoringInputsClass}>
                                           <input
                                             type="number"
                                             min="0"
@@ -665,7 +660,7 @@ function Pointer6Content() {
                                           <button
                                             onClick={() => handleScoreCertificate(course._id)}
                                             disabled={scoringCourse === course._id}
-                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:bg-gray-400 disabled:cursor-not-allowed h-fit whitespace-nowrap"
+                                            className="w-full rounded-lg bg-green-600 px-4 py-2 font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-400 sm:w-auto sm:whitespace-nowrap"
                                           >
                                             {scoringCourse === course._id ? 'Scoring...' : 'Submit Score'}
                                           </button>
@@ -693,15 +688,14 @@ function Pointer6Content() {
               </div>
             </div>
           )}
-        </div>
-      </div>
+      </IvyPointerPageShell>
 
       {/* Certificate Modal */}
       {certificateModal.isOpen && certificateModal.url && (
         <div className="app-modal-overlay fixed inset-0 z-[70] flex items-end justify-center bg-black/50 md:items-center md:p-4">
           <div className="app-modal-panel bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">Certificate View</h2>
+            <div className="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-white p-6 max-md:p-4">
+              <h2 className="text-2xl font-bold text-gray-900 max-md:text-lg">Certificate View</h2>
               <button
                 onClick={() => setCertificateModal({ isOpen: false, url: null })}
                 className="text-gray-500 hover:text-gray-700 text-3xl leading-none"
@@ -729,7 +723,7 @@ function Pointer6Content() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 

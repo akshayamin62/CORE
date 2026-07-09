@@ -5,6 +5,7 @@ import {
   getActivityById,
   updateActivity,
   deleteActivity,
+  getActivityDocument,
   activityFileUploadMiddleware,
 } from '../controllers/ivyActivityController';
 import { authorize } from '../middleware/authorize';
@@ -30,6 +31,9 @@ router.put('/:id', authorize(USER_ROLE.SUPER_ADMIN), activityFileUploadMiddlewar
 
 // Get all activities (can filter by pointerNo)
 router.get('/', authorize(readRoles), getActivities);
+
+// Stream activity document
+router.get('/:id/document', authorize(readRoles), getActivityDocument);
 
 // Get activity by ID
 router.get('/:id', authorize(readRoles), getActivityById);
