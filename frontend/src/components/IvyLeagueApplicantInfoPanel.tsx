@@ -1,5 +1,13 @@
 'use client';
 
+import {
+  ivyPointerInfoPanelClass,
+  ivyPointerInfoSubtitleClass,
+  ivyPointerInfoSectionClass,
+  ivyPointerInfoSectionTitleClass,
+  ivyPointerInfoItemClass,
+} from '@/components/studentDetailResponsive';
+
 interface InfoPanelProps {
   pointerNo: number;
 }
@@ -125,44 +133,41 @@ export default function IvyLeagueApplicantInfoPanel({ pointerNo }: InfoPanelProp
   if (!content) return null;
 
   return (
-    <div className="mb-12 bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-8 border-2 border-blue-200 shadow-lg">
-      {/* Header */}
-      <div className="mb-6">
+    <div className={ivyPointerInfoPanelClass}>
+      <div className="mb-6 max-md:mb-3">
         {content.subtitle && (
-          <p className="text-lg font-bold text-gray-700">{content.subtitle}</p>
+          <p className={ivyPointerInfoSubtitleClass}>{content.subtitle}</p>
         )}
       </div>
 
-      {/* Content Sections */}
-      <div className="space-y-6">
+      <div className="space-y-6 max-md:space-y-3">
         {content.sections.map((section, idx) => (
-          <div key={idx} className="bg-white rounded-lg p-6 border border-blue-100">
+          <div key={idx} className={ivyPointerInfoSectionClass}>
             {section.heading && (
-              <h3 className="text-lg font-bold text-gray-900 mb-3">{section.heading}</h3>
+              <h3 className={ivyPointerInfoSectionTitleClass}>{section.heading}</h3>
             )}
 
             {section.items && section.items.length > 0 && (
-              <ul className="space-y-2 ml-4">
+              <ul className="ml-4 space-y-2 max-md:ml-3 max-md:space-y-1.5">
                 {section.items.map((item, itemIdx) => (
-                  <li key={itemIdx} className="flex gap-3 text-gray-700">
-                    <span className="text-blue-600 font-black flex-shrink-0">•</span>
-                    <span className="text-base leading-relaxed">{item}</span>
+                  <li key={itemIdx} className="flex gap-3 text-gray-700 max-md:gap-2">
+                    <span className="shrink-0 font-black text-blue-600">•</span>
+                    <span className={ivyPointerInfoItemClass}>{item}</span>
                   </li>
                 ))}
               </ul>
             )}
 
             {section.text && (
-              <p className="text-gray-700 italic font-medium">{section.text}</p>
+              <p className={`${ivyPointerInfoItemClass} font-medium italic`}>{section.text}</p>
             )}
           </div>
         ))}
       </div>
 
-      {/* Decorative divider */}
-      <div className="flex justify-center gap-2 mt-6">
+      <div className="mt-6 flex justify-center gap-2 max-md:hidden">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="w-2 h-2 rounded-full bg-blue-400"></div>
+          <div key={i} className="h-2 w-2 rounded-full bg-blue-400" />
         ))}
       </div>
     </div>

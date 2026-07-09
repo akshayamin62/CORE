@@ -6,6 +6,23 @@ import { useStudentService } from '../useStudentService';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { fetchBlobUrl, useBlobUrl, fileApi } from '@/lib/useBlobUrl';
 import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
+import {
+  IvyPointerPageShell,
+  IvyPointerReadOnlyBanner,
+  IvyPointerPageHeader,
+} from '@/components/IvyPointerPageChrome';
+import {
+  ivyPointer5ResponseGridClass,
+  ivyPointer5ResponseMainClass,
+  ivyPointer5WordsLearnedClass,
+  ivyPointerTaskCardClass,
+  ivyPointerTaskHeaderClass,
+  ivyPointerTaskHeaderPaddingClass,
+  ivyPointerTaskExpandedClass,
+  ivyPointerTaskPanelClass,
+  ivyPointerEvaluationRowClass,
+  ivyPointerFileViewerIframeClass,
+} from '@/components/studentDetailResponsive';
 
 interface Attachment {
     fileName: string;
@@ -176,7 +193,7 @@ function StudentPointer5Content() {
 
     if (!studentIvyServiceId && !serviceLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 p-6 md:p-12">
+            <div className="min-h-screen bg-gray-50 p-6 md:p-12 max-md:p-4">
                 <div className="max-w-6xl mx-auto bg-red-50 text-red-800 border border-red-200 p-6 rounded-2xl">
                     {serviceError || 'Student Ivy Service ID is required.'}
                 </div>
@@ -189,40 +206,13 @@ function StudentPointer5Content() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6 md:p-12">
-            <div className="max-w-6xl mx-auto">
-                {/* Read-Only Banner */}
-                {readOnly && (
-                    <div className="mb-8 bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-center gap-3">
-                        <svg className="w-6 h-6 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        <span className="text-sm font-bold text-amber-800 uppercase tracking-wide">Read-Only View</span>
-                    </div>
-                )}
-
-                {/* Header */}
-                <div className="mb-12 flex justify-between items-start">
-                    <div>
-                        <h1 className="text-5xl font-black text-gray-900 tracking-tighter mb-4">
-                            POINTER 5: AUTHENTIC & REFLECTIVE STORYTELLING
-                        </h1>
-                    </div>
-
-                    {/* Pointer 5 Score Card */}
-                    {pointer5Score !== null && pointer5Score !== undefined && (
-                        // <div className="bg-white p-6 rounded-2xl shadow-md border-2 border-brand-100 flex flex-col items-center justify-center text-center scale-110 md:mr-10">
-                        //     <span className="text-xs font-black tracking-widest text-gray-400 uppercase mb-2">Current Mean Score</span>
-                        //     <div className="text-5xl font-black text-brand-600 leading-none">{typeof pointer5Score === 'number' ? pointer5Score.toFixed(2) : '0.00'}</div>
-                        // </div>
-
-                        <div className="bg-white p-6 rounded-2xl shadow-md border-2 border-brand-100 flex flex-col items-center justify-center text-center scale-110 md:mr-10">
-                            <span className="text-xs font-black tracking-widest text-gray-400 uppercase mb-2">Current Mean Score</span>
-                            <div className="text-5xl font-black text-brand-600 leading-none">{typeof pointer5Score === 'number' ? pointer5Score.toFixed(2) : '0.00'}</div>
-                        </div>
-                    )}
-                </div>
+        <IvyPointerPageShell>
+                {readOnly && <IvyPointerReadOnlyBanner />}
+                <IvyPointerPageHeader
+                    title="POINTER 5: AUTHENTIC & REFLECTIVE STORYTELLING"
+                    showScore={pointer5Score !== null && pointer5Score !== undefined}
+                    score={pointer5Score}
+                />
 
                 {/* Ivy League Applicant Info Panel */}
                 <IvyLeagueApplicantInfoPanel pointerNo={5} />
@@ -238,7 +228,7 @@ function StudentPointer5Content() {
                 {loading ? (
                     <div className="text-center py-20 text-gray-500">Loading...</div>
                 ) : tasks.length === 0 ? (
-                    <div className="bg-white rounded-3xl p-12 text-center shadow-sm border border-gray-200">
+                    <div className="rounded-3xl border border-gray-200 bg-white p-12 text-center shadow-sm max-md:p-6">
                         <div className="text-6xl mb-6">📝</div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-4">No Tasks Assigned Yet</h2>
                         <p className="text-gray-600">Your IVY League Expert will assign writing tasks here.</p>
@@ -251,21 +241,21 @@ function StudentPointer5Content() {
                             const isOverLimit = wordCount > taskStatus.task.wordLimit;
 
                             return (
-                                <div key={taskStatus.task._id} className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+                                <div key={taskStatus.task._id} className={ivyPointerTaskCardClass}>
                                     {/* Task Header */}
                                     <div
-                                        className="p-6 cursor-pointer hover:bg-gray-50 transition-all"
+                                        className={`${ivyPointerTaskHeaderPaddingClass} cursor-pointer transition-all hover:bg-gray-50`}
                                         onClick={() => toggleTask(taskStatus.task._id)}
                                     >
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <span className="text-2xl font-black text-brand-600">#{tasks.length - index}</span>
-                                                <div>
-                                                    <p className="font-bold text-gray-900 line-clamp-1">{taskStatus.task.taskDescription}</p>
-                                                    <p className="text-sm text-gray-500">Word Limit: {taskStatus.task.wordLimit}</p>
+                                        <div className={ivyPointerTaskHeaderClass}>
+                                            <div className="flex min-w-0 items-center gap-3 max-md:gap-2 md:gap-4">
+                                                <span className="shrink-0 text-2xl font-black text-brand-600 max-md:text-xl">#{tasks.length - index}</span>
+                                                <div className="min-w-0">
+                                                    <p className="line-clamp-2 font-bold text-gray-900 max-md:text-sm md:line-clamp-1">{taskStatus.task.taskDescription}</p>
+                                                    <p className="text-sm text-gray-500 max-md:text-xs">Word Limit: {taskStatus.task.wordLimit}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-4">
+                                            <div className="flex shrink-0 items-center justify-between gap-3 max-md:w-full md:justify-end md:gap-4">
                                                 {taskStatus.evaluation ? (
                                                     <span className="px-4 py-2 bg-green-100 text-green-700 font-bold rounded-xl">
                                                         Score: {taskStatus.evaluation.score}/10
@@ -291,9 +281,9 @@ function StudentPointer5Content() {
 
                                     {/* Expanded Content */}
                                     {expandedTasks.has(taskStatus.task._id) && (
-                                        <div className="border-t border-gray-100 p-6 space-y-6">
+                                        <div className={ivyPointerTaskExpandedClass}>
                                             {/* Task Details */}
-                                            <div className="bg-brand-50 rounded-2xl p-6">
+                                            <div className="rounded-2xl bg-brand-50 p-6 max-md:p-3">
                                                 <h3 className="text-sm font-black text-brand-600 uppercase tracking-wider mb-3">Task Description</h3>
                                                 <p className="text-gray-900 whitespace-pre-wrap">{taskStatus.task.taskDescription}</p>
                                                 {taskStatus.task.attachments.length > 0 && (
@@ -320,8 +310,8 @@ function StudentPointer5Content() {
 
                                             {/* File Viewer - Inline */}
                                             {viewingFile[taskStatus.task._id] && (
-                                                <div className="bg-gray-50 rounded-2xl p-6 border-2 border-gray-200">
-                                                    <div className="flex items-center justify-between mb-4">
+                                                <div className="rounded-2xl border-2 border-gray-200 bg-gray-50 p-6 max-md:p-3">
+                                                    <div className="mb-4 flex flex-col gap-2 max-md:gap-1.5 sm:flex-row sm:items-center sm:justify-between">
                                                         <h3 className="text-sm font-black text-gray-700 uppercase tracking-wider">
                                                             Viewing: {viewingFile[taskStatus.task._id]?.name}
                                                         </h3>
@@ -344,7 +334,7 @@ function StudentPointer5Content() {
                                                         ) : viewingFile[taskStatus.task._id]?.type === 'pdf' ? (
                                                             <iframe
                                                                 src={viewingFile[taskStatus.task._id]?.url}
-                                                                className="w-full h-[600px] border-0"
+                                                                className={ivyPointerFileViewerIframeClass}
                                                                 title={viewingFile[taskStatus.task._id]?.name}
                                                             />
                                                         ) : (
@@ -358,9 +348,9 @@ function StudentPointer5Content() {
                                             )}
 
                                             {/* Response Input - 70/30 split */}
-                                            <div className="grid grid-cols-10 gap-4">
-                                                <div className="col-span-7">
-                                                    <div className="bg-white border-2 border-gray-200 rounded-2xl p-6">
+                                            <div className={ivyPointer5ResponseGridClass}>
+                                                <div className={ivyPointer5ResponseMainClass}>
+                                                    <div className={ivyPointerTaskPanelClass}>
                                                         <h3 className="text-sm font-black text-gray-700 uppercase tracking-wider mb-3">Your Response</h3>
                                                         <textarea
                                                             value={responses[taskStatus.task._id]?.response || ''}
@@ -384,8 +374,8 @@ function StudentPointer5Content() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="col-span-3">
-                                                    <div className="bg-brand-50 border-2 border-brand-200 rounded-2xl p-6 h-full">
+                                                <div className={ivyPointer5WordsLearnedClass}>
+                                                    <div className="h-full rounded-2xl border-2 border-brand-200 bg-brand-50 p-6 max-md:p-3">
                                                         <h3 className="text-sm font-black text-brand-700 uppercase tracking-wider mb-3">Words Learned</h3>
                                                         <textarea
                                                             value={responses[taskStatus.task._id]?.wordsLearned || ''}
@@ -405,11 +395,11 @@ function StudentPointer5Content() {
 
                                             {/* Submit Button */}
                                             {!readOnly && !taskStatus.evaluation && (
-                                                <div className="flex justify-end">
+                                                <div className="flex justify-end max-md:justify-stretch">
                                                     <button
                                                         onClick={() => handleSubmit(taskStatus.task._id)}
                                                         disabled={submitting === taskStatus.task._id || isOverLimit}
-                                                        className="px-8 py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        className="rounded-xl bg-brand-600 px-8 py-3 font-bold text-white transition-all hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50 max-md:w-full"
                                                     >
                                                         {submitting === taskStatus.task._id ? 'Submitting...' : taskStatus.submission ? 'Update Response' : 'Submit Response'}
                                                     </button>
@@ -418,9 +408,9 @@ function StudentPointer5Content() {
 
                                             {/* Evaluation Display */}
                                             {taskStatus.evaluation && (
-                                                <div className="bg-green-50 rounded-2xl p-6">
+                                                <div className="rounded-2xl bg-green-50 p-6 max-md:p-3">
                                                     <h3 className="text-sm font-black text-green-600 uppercase tracking-wider mb-3">Ivy Expert Feedback</h3>
-                                                    <div className="flex items-start gap-6">
+                                                    <div className={ivyPointerEvaluationRowClass}>
                                                         <div className="text-center">
                                                             <div className="text-4xl font-black text-green-600">{taskStatus.evaluation.score}</div>
                                                             <div className="text-sm text-green-600 font-bold">out of 10</div>
@@ -443,8 +433,7 @@ function StudentPointer5Content() {
                         })}
                     </div>
                 )}
-            </div>
-        </div>
+        </IvyPointerPageShell>
     );
 }
 

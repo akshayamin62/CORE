@@ -5,6 +5,19 @@ import axios from 'axios';
 import { useStudentService } from '../useStudentService';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
+import {
+  IvyPointerPageShell,
+  IvyPointerReadOnlyBanner,
+  IvyPointerPageHeader,
+} from '@/components/IvyPointerPageChrome';
+import {
+  ivyPointer6CourseRowClass,
+  ivyPointer6CourseGridClass,
+  ivyPointer6CourseNameClass,
+  ivyPointer6CountdownRowClass,
+  ivyPointer6DateRowClass,
+  ivyPointer6FileRowClass,
+} from '@/components/studentDetailResponsive';
 
 interface Course {
   _id: string;
@@ -271,39 +284,13 @@ function Pointer6Content() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-50 py-12 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Read-Only Banner */}
-        {readOnly && (
-          <div className="mb-6 bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-center gap-3">
-            <svg className="w-6 h-6 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            <span className="text-sm font-bold text-amber-800 uppercase tracking-wide">Read-Only View</span>
-          </div>
-        )}
-
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Header with Score */}
-          <div className="mb-8 flex justify-between items-start">
-            <div>
-              <h1 className="text-5xl font-black text-gray-900 mb-2">
-                POINTER 6: ENGAGEMENT WITH LEARNING & INTELLECTUAL CURIOSITY
-              </h1>
-            </div>
-            {pointer6Score != null && (
-              // <div className="bg-white p-10 rounded-[3rem] shadow-2xl border-4 border-brand-50 flex flex-col items-center justify-center text-center scale-110 md:mr-10">
-              //   <span className="text-[10px] font-black tracking-[0.3em] text-gray-400 uppercase mb-2">Current Mean Score</span>
-              //   <div className="text-7xl font-black text-brand-600 leading-none">{typeof pointer6Score === 'number' ? pointer6Score.toFixed(1) : '0.00'}</div>
-              // </div>
-
-              <div className="bg-white p-6 rounded-2xl shadow-md border-2 border-brand-100 flex flex-col items-center justify-center text-center scale-110 md:mr-10">
-                <span className="text-xs font-black tracking-widest text-gray-400 uppercase mb-2">Current Mean Score</span>
-                <div className="text-5xl font-black text-brand-600 leading-none">{typeof pointer6Score === 'number' ? pointer6Score.toFixed(2) : '0.00'}</div>
-              </div>
-            )}
-          </div>
+    <IvyPointerPageShell>
+        {readOnly && <IvyPointerReadOnlyBanner />}
+        <IvyPointerPageHeader
+          title="POINTER 6: ENGAGEMENT WITH LEARNING & INTELLECTUAL CURIOSITY"
+          showScore={pointer6Score != null}
+          score={pointer6Score}
+        />
 
           {/* Ivy League Applicant Info Panel */}
           <IvyLeagueApplicantInfoPanel pointerNo={6} />
@@ -360,8 +347,8 @@ function Pointer6Content() {
                       </div>
                     </div>
                   )}
-                  <div className="bg-white p-4">
-                    <div className="flex items-start gap-4">
+                  <div className="bg-white p-4 max-md:p-3">
+                    <div className={ivyPointer6CourseRowClass}>
                       {/* Checkbox */}
                       <div className="flex items-center pt-1">
                         <input
@@ -375,7 +362,7 @@ function Pointer6Content() {
                       </div>
 
                       {/* Course Details */}
-                      <div className="flex-1 grid grid-cols-6 gap-4">
+                      <div className={ivyPointer6CourseGridClass}>
                         <div className="flex items-center justify-center">
                           <div className="text-center">
                             <p className="text-xs text-gray-500 mb-1">Sr. No.</p>
@@ -388,7 +375,7 @@ function Pointer6Content() {
                             <p className="text-gray-900">{course.platform}</p>
                           </div>
                         </div>
-                        <div className="col-span-2 flex items-center justify-center">
+                        <div className={`${ivyPointer6CourseNameClass} flex items-center justify-center`}>
                           <div className="text-center">
                             <p className="text-xs text-gray-500 mb-1">Course Name</p>
                             <p className="text-gray-900">{course.courseName}</p>
@@ -429,8 +416,8 @@ function Pointer6Content() {
                       const c = colorMap[countdown.status] || colorMap.ongoing;
 
                       return (
-                        <div className={`mt-3 p-4 ${c.bg} border ${c.border} rounded-xl`}>
-                          <div className="flex items-center justify-between">
+                        <div className={`mt-3 rounded-xl border ${c.border} p-4 max-md:p-3 ${c.bg}`}>
+                          <div className={ivyPointer6CountdownRowClass}>
                             <div className="flex items-center gap-2">
                               <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full ${c.badge} text-white`}>
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -441,7 +428,7 @@ function Pointer6Content() {
                             </div>
 
                             {countdown.status !== 'overdue' && (
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-wrap items-center justify-center gap-2 max-md:w-full md:justify-end">
                                 {[{ value: countdown.days, label: 'Days' },
                                   { value: countdown.hours, label: 'Hrs' },
                                   { value: countdown.minutes, label: 'Min' },
@@ -463,7 +450,7 @@ function Pointer6Content() {
                     {/* Date Inputs - Show when selected or expanding */}
                     {(course.selected || expandedCourse === course._id) && (
                       <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
-                        <div className="flex items-end gap-4">
+                        <div className={ivyPointer6DateRowClass}>
                           <div className="flex-1">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                               Start Date
@@ -495,7 +482,7 @@ function Pointer6Content() {
                           {!readOnly && !course.selected && (
                             <button
                               onClick={() => handleSaveDates(course._id)}
-                              className="px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
+                              className="w-full rounded-lg bg-brand-600 px-6 py-2 font-medium text-white transition-colors hover:bg-brand-700 sm:w-auto"
                             >
                               Save
                             </button>
@@ -504,7 +491,7 @@ function Pointer6Content() {
 
                         {/* Certificate Upload Section - Show only for selected courses without certificate */}
                         {!readOnly && course.selected && !course.certificateFileName && (
-                          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                          <div className={ivyPointer6FileRowClass}>
                             <div className="flex items-center gap-2 flex-1">
                               <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -535,7 +522,7 @@ function Pointer6Content() {
 
                         {/* Certificate Display - Show only after upload */}
                         {course.selected && course.certificateFileName && (
-                          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                          <div className={ivyPointer6FileRowClass}>
                             <div className="flex items-center gap-3 flex-1">
                               <div className="flex items-center gap-2">
                                 <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -569,9 +556,7 @@ function Pointer6Content() {
               })}
             </div>
           )}
-        </div>
-      </div>
-    </div>
+    </IvyPointerPageShell>
   );
 }
 

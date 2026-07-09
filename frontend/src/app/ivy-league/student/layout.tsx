@@ -9,6 +9,7 @@ import { authAPI } from '@/lib/api';
 import { USER_ROLE } from '@/types';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { buildCallbackMobileNavItems } from '@/utils/mobileNavHelpers';
+import { ivyLeagueMobileNavLabel } from '@/utils/ivyLeagueMobileNavLabels';
 import { roleLayoutShellProps, roleLayoutSidebarClass, roleLayoutMainClass } from '@/utils/roleLayoutShell';
 
 const IVY_SIDEBAR_WIDTHS = { openWidth: 'md:w-72', closedWidth: 'md:w-20' } as const;
@@ -165,7 +166,7 @@ function StudentSidebar() {
     const mobileNavItems = buildCallbackMobileNavItems(
         displayedNavItems.map((item) => ({
             id: item.href,
-            label: item.name,
+            label: ivyLeagueMobileNavLabel(item.name),
             icon: item.icon,
             isActive: isActive(item.href),
             onClick: () => router.push(item.href),

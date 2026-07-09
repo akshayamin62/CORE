@@ -6,6 +6,13 @@ import { useSearchParams } from 'next/navigation';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { fetchBlobUrl } from '@/lib/useBlobUrl';
 import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
+import {
+  ivyPointer6CourseRowClass,
+  ivyPointer6CourseGridClass,
+  ivyPointer6CourseNameClass,
+  ivyPointer6CountdownRowClass,
+  ivyPointer6DateRowClass,
+} from '@/components/studentDetailResponsive';
 
 interface Course {
   _id: string;
@@ -330,9 +337,9 @@ function Pointer6Content() {
       <div className="max-w-6xl mx-auto">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header with Score */}
-          <div className="mb-8 flex justify-between items-start">
+          <div className="mb-8 flex items-start justify-between max-md:mb-6 max-md:flex-col max-md:gap-4">
             <div>
-              <h1 className="text-5xl font-black text-gray-900 tracking-tighter mb-4">
+              <h1 className="mb-4 text-5xl font-black tracking-tighter text-gray-900 max-md:mb-2 max-md:text-base max-md:leading-snug">
                 POINTER 6: ENGAGEMENT WITH LEARNING & INTELLECTUAL CURIOSITY
               </h1>
             </div>
@@ -431,8 +438,8 @@ function Pointer6Content() {
                         </div>
                       </div>
                     )}
-                    <div className="bg-white p-4">
-                      <div className="flex items-start gap-4">
+                    <div className="bg-white p-4 max-md:p-3">
+                      <div className={ivyPointer6CourseRowClass}>
                         {/* Checkbox */}
                         <div className="flex items-center pt-1">
                           <input
@@ -446,7 +453,7 @@ function Pointer6Content() {
                         </div>
 
                         {/* Course Details */}
-                        <div className="flex-1 grid grid-cols-6 gap-4">
+                        <div className={ivyPointer6CourseGridClass}>
                           <div className="flex items-center justify-center">
                             <div className="text-center">
                               <p className="text-xs text-gray-500 mb-1">Sr. No.</p>
@@ -459,7 +466,7 @@ function Pointer6Content() {
                               <p className="text-gray-900">{course.platform}</p>
                             </div>
                           </div>
-                          <div className="col-span-2 flex items-center justify-center">
+                          <div className={`${ivyPointer6CourseNameClass} flex items-center justify-center`}>
                             <div className="text-center">
                               <p className="text-xs text-gray-500 mb-1">Course Name</p>
                               <p className="text-gray-900">{course.courseName}</p>
@@ -500,8 +507,8 @@ function Pointer6Content() {
                         const c = colorMap[countdown.status] || colorMap.ongoing;
 
                         return (
-                          <div className={`mt-3 p-4 ${c.bg} border ${c.border} rounded-xl`}>
-                            <div className="flex items-center justify-between">
+                          <div className={`mt-3 rounded-xl border ${c.border} p-4 max-md:p-3 ${c.bg}`}>
+                            <div className={ivyPointer6CountdownRowClass}>
                               <div className="flex items-center gap-2">
                                 <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full ${c.badge} text-white`}>
                                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -512,7 +519,7 @@ function Pointer6Content() {
                               </div>
 
                               {countdown.status !== 'overdue' && (
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center justify-center gap-2 max-md:w-full md:justify-end">
                                   {[{ value: countdown.days, label: 'Days' },
                                     { value: countdown.hours, label: 'Hrs' },
                                     { value: countdown.minutes, label: 'Min' },
@@ -534,7 +541,7 @@ function Pointer6Content() {
                       {/* Date Inputs - Show when selected or expanding */}
                       {(course.selected || expandedCourse === course._id) && (
                         <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
-                          <div className="flex items-end gap-4">
+                          <div className={ivyPointer6DateRowClass}>
                             <div className="flex-1">
                               <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Start Date
@@ -564,7 +571,7 @@ function Pointer6Content() {
                             {!course.selected && (
                               <button
                                 onClick={() => handleSaveDates(course._id)}
-                                className="px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors font-medium"
+                                className="w-full rounded-lg bg-brand-600 px-6 py-2 font-medium text-white transition-colors hover:bg-brand-700 sm:w-auto"
                               >
                                 Save
                               </button>

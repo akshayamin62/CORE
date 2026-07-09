@@ -85,6 +85,147 @@ export const brainographyFileActionsClass =
 export const brainographyActionBtnClass =
   'rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-700 sm:py-1.5';
 
+/** Ivy League student portal — mobile-only overrides; desktop keeps original sizing */
+export const ivyStudentPageShellClass =
+  'mx-auto min-w-0 max-w-6xl px-6 pb-12 pt-6 md:pt-8 max-md:px-3 max-md:pt-2 max-md:pb-0';
+
+export const ivyStudentPageTitleClass =
+  'text-5xl font-black tracking-tight text-gray-900 max-md:text-2xl';
+
+export const ivyStudentPageHeaderRowClass =
+  'mb-8 flex items-start justify-between max-md:mb-6 max-md:flex-col max-md:gap-4';
+
+/** Ivy League pointer pages — shared compact mobile chrome */
+export const ivyPointerPageShellClass = ivyStudentPageShellClass;
+
+export const ivyPointerReadOnlyBannerClass =
+  'mb-4 flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 max-md:mb-2 md:rounded-2xl md:border-2 md:p-4';
+
+export const ivyPointerConversationOverlayClass =
+  'max-md:fixed max-md:inset-x-0 max-md:top-[calc(5rem+env(safe-area-inset-top,0px))] max-md:bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] max-md:z-40 max-md:flex max-md:w-full max-md:flex-col max-md:bg-white';
+
+export const ivyPointerConversationHeaderClass =
+  'shrink-0 border-b border-gray-200 bg-white';
+
+export const ivyPointerConversationMobileBarClass =
+  'flex items-center gap-2 border-b border-gray-100 px-3 py-2.5 md:hidden';
+
+export const ivyPointerConversationBackBtnClass =
+  'inline-flex items-center gap-1.5 rounded-lg px-1 py-1 text-sm font-semibold text-brand-600 active:bg-brand-50';
+
+export const ivyPointerHeaderRowClass =
+  'mb-2 flex flex-col gap-3 border-b border-gray-100 pb-2 max-md:mb-3 max-md:gap-2 max-md:pb-3 md:mb-2 md:flex-row md:items-center md:justify-between md:pb-2';
+
+export const ivyPointerTitleClass =
+  'text-5xl font-black uppercase leading-tight tracking-tight text-gray-900 max-md:text-base max-md:leading-snug';
+
+export const ivyPointerScoreCardClass =
+  'flex shrink-0 flex-col items-center justify-center rounded-xl border-2 border-brand-100 bg-white px-5 py-3 text-center shadow-sm max-md:w-full max-md:px-4 max-md:py-2.5 md:rounded-2xl md:p-6 md:shadow-md md:scale-110 md:mr-10';
+
+export const ivyPointerScoreLabelClass =
+  'mb-0.5 text-[10px] font-black uppercase leading-tight tracking-widest text-gray-400 md:mb-2 md:text-xs';
+
+export const ivyPointerScoreValueClass =
+  'text-5xl font-black leading-none text-brand-600 max-md:text-2xl';
+
+export const ivyPointerInfoPanelClass =
+  'mb-12 rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-8 shadow-lg max-md:mb-4 max-md:rounded-xl max-md:border max-md:p-3 max-md:shadow-sm';
+
+export const ivyPointerInfoSubtitleClass =
+  'text-lg font-bold text-gray-700 max-md:text-sm max-md:leading-snug';
+
+export const ivyPointerInfoSectionClass =
+  'rounded-lg border border-blue-100 bg-white p-6 max-md:p-3';
+
+export const ivyPointerInfoSectionTitleClass =
+  'mb-3 text-lg font-bold text-gray-900 max-md:mb-2 max-md:text-sm';
+
+export const ivyPointerInfoItemClass =
+  'text-base leading-relaxed text-gray-700 max-md:text-xs max-md:leading-relaxed';
+
+export const ivyPointerActivityCardClass =
+  'relative overflow-hidden rounded-lg border border-gray-200 p-6 max-md:rounded-xl max-md:p-3';
+
+export const ivyPointerActivityTitleRowClass =
+  'mb-2 grid grid-cols-[1fr_auto] items-start gap-x-2 gap-y-1.5 max-md:gap-x-1.5';
+
+export const ivyPointerActivityTitleClass =
+  'min-w-0 text-lg font-semibold text-gray-900 max-md:break-words max-md:text-base max-md:leading-snug';
+
+export const ivyPointerActivityWeightageBadgeClass =
+  'shrink-0 justify-self-end rounded-lg border-2 border-orange-400 bg-gradient-to-r from-orange-100 to-amber-100 px-2 py-1 max-md:px-1.5 max-md:py-0.5';
+
+/** Pointer 1 — subject rows and section cards (mobile stack, desktop grid) */
+export const ivyPointerSubjectRowClass =
+  'grid grid-cols-1 gap-3 rounded-xl bg-gray-50 p-4 md:grid-cols-6 md:items-start';
+
+export const ivyPointerSubSectionFiltersClass =
+  'grid flex-1 grid-cols-1 gap-4 md:grid-cols-3';
+
+export const ivyPointerSubSectionHeaderClass =
+  'mb-6 flex flex-col gap-4 max-md:mb-4 md:flex-row md:items-start';
+
+export const ivyPointerSectionCardClass =
+  'rounded-3xl border-2 border-brand-200 bg-brand-50 p-6 shadow-lg max-md:rounded-2xl max-md:p-3';
+
+export const ivyPointerSectionHeaderClass =
+  'mb-6 flex flex-col gap-3 max-md:mb-4 md:flex-row md:items-center md:justify-between';
+
+export const ivyPointerSectionTitleClass =
+  'text-2xl font-black uppercase text-gray-900 max-md:text-lg';
+
+export const ivyPointerInlineActionsClass =
+  'flex flex-col gap-2 max-md:w-full sm:flex-row sm:flex-wrap sm:gap-3';
+
+export const ivyPointerProjectGridClass =
+  'grid grid-cols-1 gap-3 p-4 md:grid-cols-2';
+
+/** Pointer 5 — response + words learned (stack on mobile, 70/30 on desktop) */
+export const ivyPointer5ResponseGridClass =
+  'grid grid-cols-1 gap-4 md:grid-cols-10';
+
+export const ivyPointer5ResponseMainClass = 'md:col-span-7';
+
+export const ivyPointer5WordsLearnedClass = 'md:col-span-3';
+
+export const ivyPointerTaskCardClass =
+  'overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm max-md:rounded-2xl';
+
+export const ivyPointerTaskHeaderClass =
+  'flex flex-col gap-3 max-md:gap-2 md:flex-row md:items-center md:justify-between';
+
+export const ivyPointerTaskHeaderPaddingClass = 'p-6 max-md:p-3';
+
+export const ivyPointerTaskExpandedClass =
+  'space-y-6 border-t border-gray-100 p-6 max-md:space-y-4 max-md:p-3';
+
+export const ivyPointerTaskPanelClass =
+  'rounded-2xl border-2 border-gray-200 bg-white p-6 max-md:p-3';
+
+export const ivyPointerEvaluationRowClass =
+  'flex flex-col gap-4 max-md:gap-3 md:flex-row md:items-start md:gap-6';
+
+export const ivyPointerFileViewerIframeClass =
+  'h-[min(50vh,420px)] w-full border-0 md:h-[600px]';
+
+/** Pointer 6 — course row fields */
+export const ivyPointer6CourseRowClass =
+  'flex items-start gap-3 max-md:gap-2 md:gap-4';
+
+export const ivyPointer6CourseGridClass =
+  'grid min-w-0 flex-1 grid-cols-2 gap-3 md:grid-cols-6 md:gap-4';
+
+export const ivyPointer6CourseNameClass = 'col-span-2';
+
+export const ivyPointer6CountdownRowClass =
+  'flex flex-col gap-3 max-md:gap-2 md:flex-row md:items-center md:justify-between';
+
+export const ivyPointer6DateRowClass =
+  'flex flex-col gap-3 max-md:gap-2 sm:flex-row sm:items-end sm:gap-4';
+
+export const ivyPointer6FileRowClass =
+  'flex flex-col gap-3 rounded-lg bg-gray-50 p-4 max-md:gap-2 md:flex-row md:items-center md:justify-between';
+
 export const eduPlanPortfolioRowClass = 'w-full min-w-0 sm:flex-1 sm:min-w-[260px]';
 
 /** Activity planner accomplishments — card stack on mobile, grid on md+ */

@@ -9,6 +9,21 @@ import { useStudentService } from '../useStudentService';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { useBlobUrl, fetchBlobUrl, fileApi } from '@/lib/useBlobUrl';
 import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
+import {
+  IvyPointerPageShell,
+  IvyPointerReadOnlyBanner,
+  IvyPointerPageHeader,
+} from '@/components/IvyPointerPageChrome';
+import {
+  ivyPointerActivityCardClass,
+  ivyPointerActivityTitleRowClass,
+  ivyPointerActivityTitleClass,
+  ivyPointerActivityWeightageBadgeClass,
+  ivyPointerConversationOverlayClass,
+  ivyPointerConversationHeaderClass,
+  ivyPointerConversationMobileBarClass,
+  ivyPointerConversationBackBtnClass,
+} from '@/components/studentDetailResponsive';
 import { ProtectedActivityDocumentPanel, ProtectedActivityDocumentViewer } from '@/components/ProtectedActivityDocumentViewer';
 
 function InlineDocViewer({ url, onClose }: { url: string, onClose: () => void }) {
@@ -246,38 +261,52 @@ function ConversationWindow({
 
   return (
     <div className="h-full flex flex-col bg-white">
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-gray-900 mb-1">{activityTitle}</h2>
-              <p className="text-sm text-gray-500">Pointer: Spike</p>
-            </div>
-            <button
-              onClick={onClose}
-              className="ml-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className={ivyPointerConversationHeaderClass}>
+          <div className={ivyPointerConversationMobileBarClass}>
+            <button type="button" onClick={onClose} className={ivyPointerConversationBackBtnClass}>
+              <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
+              Back
             </button>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span>Student Perspective</span>
-            </div>
-            <button className="px-4 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-md hover:bg-gray-200 transition-colors uppercase tracking-wide">
+            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-gray-600">Student Perspective</span>
+            <span className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
               Live View
-            </button>
+            </span>
+          </div>
+
+          <div className="px-6 py-4 max-md:px-3 max-md:py-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <h2 className="mb-1 text-xl font-bold text-gray-900 max-md:text-base max-md:leading-snug">{activityTitle}</h2>
+                <p className="text-sm text-gray-500 max-md:text-xs">Pointer: Spike</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="ml-4 shrink-0 rounded-full p-2 transition-colors hover:bg-gray-100 max-md:hidden"
+              >
+                <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="mt-3 hidden items-center justify-between md:flex">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span>Student Perspective</span>
+              </div>
+              <button className="rounded-md bg-gray-100 px-4 py-1.5 text-xs font-medium uppercase tracking-wide text-gray-700 transition-colors hover:bg-gray-200">
+                Live View
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Messages */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-gray-50">
+        <div ref={messagesContainerRef} className="flex-1 space-y-4 overflow-y-auto bg-gray-50 px-6 py-4 max-md:px-3 max-md:py-3">
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-gray-500">Loading conversation...</p>
@@ -749,6 +778,12 @@ function ActivitiesContent() {
   }, [searchParams]);
 
   useEffect(() => {
+    if (searchParams.get('conversationOpen') !== 'true') {
+      setSelectedTask(null);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     if (!studentId || serviceLoading) {
       return;
     }
@@ -953,43 +988,21 @@ function ActivitiesContent() {
   const filteredActivities = activities.filter(a => a.pointerNo === activePointer);
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50 max-md:h-auto max-md:flex-col max-md:overflow-visible">
       {/* Tasks List Section */}
-      <div className={`flex-1 overflow-y-auto transition-all duration-300 ${selectedTask ? 'w-[35%]' : 'w-full'}`}>
-        <div className="py-12 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
-      {/* Read-Only Banner */}
-      {readOnly && (
-        <div className="max-w-6xl mx-auto mb-4">
-          <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-center gap-3">
-            <svg className="w-6 h-6 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            <span className="text-sm font-bold text-amber-800 uppercase tracking-wide">Read-Only View</span>
-          </div>
-        </div>
-      )}
-      {/* <div className="max-w-5xl mx-auto bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.02)] border border-gray-100 p-10 mt-6"> */}
-        <div className="mb-10 pb-6 border-b border-gray-100 flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-5xl font-black text-gray-900 tracking-tight uppercase">{getPointerLabel(activePointer)}</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            {/* <div className={`px-6 py-3 rounded-2xl border-2 flex items-center gap-3 ${activePointer === 2 ? 'border-brand-100 bg-brand-50 text-brand-700' : activePointer === 3 ? 'border-brand-100 bg-brand-50 text-brand-700' : 'border-brand-100 bg-brand-50 text-brand-700'}`}>
-              <span className={`w-2 h-2 rounded-full animate-pulse ${activePointer === 2 ? 'bg-brand-500' : activePointer === 3 ? 'bg-brand-500' : 'bg-brand-500'}`}></span>
-              <span className="font-bold uppercase tracking-wider">{getPointerLabel(activePointer)}</span>
-            </div> */}
-            {/* Score Card - Always show when studentIvyServiceId is present */}
-            {studentIvyServiceId && (
-              <div className="bg-white p-6 rounded-2xl shadow-md border-2 border-brand-100 flex flex-col items-center justify-center text-center">
-                <span className="text-xs font-black tracking-widest text-gray-400 uppercase mb-2">Current Mean <br /> Score</span>
-                <div className="text-5xl font-black text-brand-600 leading-none">
-                  {pointerScore !== null && pointerScore !== undefined ? pointerScore.toFixed(2) : '0.00'}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+      <div
+        className={`flex-1 overflow-y-auto transition-all duration-300 max-md:overflow-visible ${
+          selectedTask ? 'w-[35%] max-md:hidden' : 'w-full'
+        }`}
+      >
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 max-md:px-0">
+        <IvyPointerPageShell>
+      {readOnly && <IvyPointerReadOnlyBanner />}
+      <IvyPointerPageHeader
+        title={getPointerLabel(activePointer)}
+        showScore={Boolean(studentIvyServiceId)}
+        score={pointerScore}
+      />
 
         {/* Ivy League Applicant Info Panel */}
         <IvyLeagueApplicantInfoPanel pointerNo={activePointer} />
@@ -1021,7 +1034,7 @@ function ActivitiesContent() {
               return (
               <div
                 key={activity.selectionId}
-                className="relative border border-gray-200 rounded-lg p-6 overflow-hidden"
+                className={ivyPointerActivityCardClass}
               >
                 {/* Overdue Ribbon */}
                 {isActivityOverdue && (
@@ -1033,11 +1046,11 @@ function ActivitiesContent() {
                 )}
                 <div className="mb-4">
                   <div className="flex flex-col gap-2 mb-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-lg font-semibold text-gray-900 flex-1">{activity.title}</h3>
-                      {/* Weightage Badge - Always visible next to title */}
+                    <div className={ivyPointerActivityTitleRowClass}>
+                      <h3 className={ivyPointerActivityTitleClass}>{activity.title}</h3>
+                      {/* Weightage Badge — right-aligned, fully visible on mobile */}
                       {activity.weightage !== undefined && activity.weightage !== null && (
-                        <div className="flex-shrink-0 px-2 py-1 bg-gradient-to-r from-orange-100 to-amber-100 border-2 border-orange-400 rounded-lg">
+                        <div className={ivyPointerActivityWeightageBadgeClass}>
                           <span className="text-xs font-bold text-orange-900 whitespace-nowrap">Weightage: {activity.weightage}%</span>
                         </div>
                       )}
@@ -1363,13 +1376,13 @@ function ActivitiesContent() {
             })}
           </div>
         )}
-      {/* </div> */}
+        </IvyPointerPageShell>
       </div>
       </div>
 
       {/* Conversation Window Section */}
       {selectedTask && (
-        <div className="w-[65%] border-l border-gray-200 flex-shrink-0 overflow-hidden">
+        <div className={`w-[65%] shrink-0 overflow-hidden border-l border-gray-200 ${ivyPointerConversationOverlayClass}`}>
           <ConversationWindow
             activityTitle={selectedTask.activityTitle}
             task={selectedTask.task}

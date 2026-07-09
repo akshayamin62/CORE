@@ -5,6 +5,11 @@ import axios from 'axios';
 import { useStudentService } from '../useStudentService';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { useBlobUrl } from '@/lib/useBlobUrl';
+import {
+  IvyPointerPageShell,
+  IvyPointerReadOnlyBanner,
+} from '@/components/IvyPointerPageChrome';
+import { ivyStudentPageTitleClass } from '@/components/studentDetailResponsive';
 
 interface AcademicDoc {
     _id: string;
@@ -128,22 +133,12 @@ function DocumentsContent() {
     const getUniversityDocs = () => documents.filter(d => d.documentType === 'UNIVERSITY_MARKSHEET');
 
     return (
-        <div className="max-w-6xl mx-auto py-12 px-6">
+        <IvyPointerPageShell>
+            {readOnly && <IvyPointerReadOnlyBanner />}
 
-            {/* Read-Only Banner */}
-            {readOnly && (
-                <div className="mb-8 bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-center gap-3">
-                    <svg className="w-6 h-6 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <span className="text-sm font-bold text-amber-800 uppercase tracking-wide">Read-Only View</span>
-                </div>
-            )}
-
-            <header className="mb-12">
-                <h1 className="text-5xl font-black text-gray-900 mb-4 tracking-tight">DOCUMENT REPOSITORY</h1>
-                <p className="text-xl text-gray-500 max-w-2xl leading-relaxed">Upload and manage all your identity proofs and academic marksheets.</p>
+            <header className="mb-12 max-md:mb-4">
+                <h1 className={`${ivyStudentPageTitleClass} mb-4 tracking-tight max-md:mb-3`}>DOCUMENT REPOSITORY</h1>
+                <p className="text-xl text-gray-500 max-w-2xl leading-relaxed max-md:text-base">Upload and manage all your identity proofs and academic marksheets.</p>
             </header>
 
             {message && (
@@ -291,7 +286,7 @@ function DocumentsContent() {
                     )}
                 </div>
             </div>
-        </div>
+        </IvyPointerPageShell>
     );
 }
 

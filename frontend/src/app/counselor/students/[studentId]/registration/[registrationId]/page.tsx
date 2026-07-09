@@ -30,6 +30,13 @@ import {
   registrationNavClass,
   registrationNavBtnClass,
   roleListBackBtnClass,
+  brainographyShellClass,
+  brainographyHeaderRowClass,
+  brainographyFileRowClass,
+  brainographyFileInfoClass,
+  brainographyFileMetaClass,
+  brainographyFileActionsClass,
+  brainographyActionBtnClass,
 } from '@/components/studentDetailResponsive';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -494,65 +501,65 @@ export default function CounselorStudentFormViewPage() {
           {/* Brainography */}
           {isEducationPlanning && activeView === 'brainography' && (
             <>
-              <div className="bg-white rounded-xl shadow-sm border border-blue-200 p-6 mb-6">
-                <div className="flex items-center justify-between mb-4">
+              <div className={brainographyShellClass}>
+                <div className={brainographyHeaderRowClass}>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100">
+                      <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <h3 className="text-lg font-semibold text-gray-900">Brainography Report</h3>
                       <p className="text-sm text-gray-500">Upload the brainography report for this student</p>
                     </div>
                   </div>
                 </div>
                 {brainographyDoc ? (
-                  <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                          </svg>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">{brainographyDoc.fileName}</p>
-                          <p className="text-xs text-gray-500">{(brainographyDoc.fileSize / 1024).toFixed(1)} KB | Uploaded: {new Date(brainographyDoc.uploadedAt).toLocaleDateString('en-GB')} | Version: {brainographyDoc.version}</p>
-                        </div>
+                  <div className={brainographyFileRowClass}>
+                    <div className={brainographyFileInfoClass}>
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50">
+                        <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <button onClick={handleBrainographyView} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">View</button>
-                        <button onClick={handleBrainographyDownload} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium">Download</button>
-                        <label className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-xs font-medium cursor-pointer">
-                          Re-upload
-                          <input ref={fileInputRef} type="file" className="hidden" onChange={handleBrainographyUpload} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
-                        </label>
+                      <div className="min-w-0">
+                        <p className={brainographyFileMetaClass}>{brainographyDoc.fileName}</p>
+                        <p className="break-words text-xs text-gray-500">
+                          {(brainographyDoc.fileSize / 1024).toFixed(1)} KB | Uploaded: {new Date(brainographyDoc.uploadedAt).toLocaleDateString('en-GB')} | Version: {brainographyDoc.version}
+                        </p>
                       </div>
+                    </div>
+                    <div className={brainographyFileActionsClass}>
+                      <button type="button" onClick={handleBrainographyView} className={brainographyActionBtnClass}>View</button>
+                      <button type="button" onClick={handleBrainographyDownload} className={brainographyActionBtnClass}>Download</button>
+                      <label className={`${brainographyActionBtnClass} cursor-pointer`}>
+                        Re-upload
+                        <input ref={fileInputRef} type="file" className="hidden" onChange={handleBrainographyUpload} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
+                      </label>
                     </div>
                   </div>
                 ) : (
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                    <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="rounded-lg border-2 border-dashed border-gray-300 p-6 text-center sm:p-8">
+                    <svg className="mx-auto mb-3 h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
-                    <p className="text-gray-600 mb-3">No brainography report uploaded yet</p>
-                    <label className={`inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium cursor-pointer ${uploadingBrainography ? 'opacity-50 pointer-events-none' : ''}`}>
-                      {uploadingBrainography ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>Uploading...</>) : 'Upload Brainography Report'}
+                    <p className="mb-3 text-gray-600">No brainography report uploaded yet</p>
+                    <label className={`inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 ${uploadingBrainography ? 'pointer-events-none opacity-50' : ''}`}>
+                      {uploadingBrainography ? (<><div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>Uploading...</>) : 'Upload Brainography Report'}
                       <input ref={fileInputRef} type="file" className="hidden" onChange={handleBrainographyUpload} accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" disabled={uploadingBrainography} />
                     </label>
                   </div>
                 )}
               </div>
               {brainographyDoc && !brainographyData && extractingBrainography && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6 text-center">
-                  <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-6 text-center">
+                  <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-3 border-blue-600 border-t-transparent"></div>
                   <p className="text-sm font-medium text-blue-800">AI is extracting data from brainography report...</p>
-                  <p className="text-xs text-blue-600 mt-1">This may take a minute. Please wait.</p>
+                  <p className="mt-1 text-xs text-blue-600">This may take a minute. Please wait.</p>
                 </div>
               )}
-              {brainographyData && <div className="mb-6"><BrainographyDataDisplay data={brainographyData} canEdit onUpdate={handleUpdateBrainographyMeta} /></div>}
+              {brainographyData && <div className="mb-6 min-w-0"><BrainographyDataDisplay data={brainographyData} canEdit onUpdate={handleUpdateBrainographyMeta} /></div>}
             </>
           )}
 

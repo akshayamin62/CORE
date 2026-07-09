@@ -7,6 +7,21 @@ import { IVY_API_URL } from '@/lib/ivyApi';
 import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
 import AuthImage from '@/components/AuthImage';
 import { useBlobUrl, fetchBlobUrl } from '@/lib/useBlobUrl';
+import {
+  ivyPointerSectionCardClass,
+  ivyPointerSectionHeaderClass,
+  ivyPointerSectionTitleClass,
+  ivyPointerSubSectionHeaderClass,
+  ivyPointerSubSectionFiltersClass,
+  ivyPointerSubjectRowClass,
+  ivyPointerInlineActionsClass,
+  ivyPointerProjectGridClass,
+} from '@/components/studentDetailResponsive';
+import {
+  IvyPointerPageShell,
+  IvyPointerReadOnlyBanner,
+  IvyPointerPageHeader,
+} from '@/components/IvyPointerPageChrome';
 
 function AuthFilePreview({ filePath, mimeType, originalName }: { filePath: string; mimeType: string; originalName: string }) {
   const { blobUrl, loading } = useBlobUrl(filePath);
@@ -468,46 +483,22 @@ function Pointer1Content() {
     if (serviceError) return <div className="p-8 text-center text-red-500 font-medium">{serviceError}</div>;
 
     return (
-        <div className="max-w-6xl mx-auto py-12 px-6">
-            {/* Read-Only Banner */}
-            {readOnly && (
-                <div className="mb-8 bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-center gap-3">
-                    <svg className="w-6 h-6 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <span className="text-sm font-bold text-amber-800 uppercase tracking-wide">Read-Only View</span>
-                </div>
-            )}
-            <div className="mb-8 flex justify-between items-start">
-                <div>
-                    <h1 className="text-5xl font-black text-gray-900 mb-4 tracking-tight">
-                        POINTER 1: ACADEMIC EXCELLENCE
-                    </h1>
-                </div>
-
-                {/* Academic Excellence Score Card */}
-                {academicScore && (
-                    // <div className="bg-white p-10 rounded-[3rem] shadow-2xl border-4 border-brand-50 flex flex-col items-center justify-center text-center scale-110 md:mr-10">
-                    //     <span className="text-[10px] font-black tracking-[0.3em] text-gray-400 uppercase mb-2">Academic Excellence Score</span>
-                    //     <div className="text-7xl font-black text-brand-600 leading-none">{academicScore.finalScore.toFixed(2)}</div>
-                    // </div>
-
-                    <div className="bg-white p-6 rounded-2xl shadow-md border-2 border-brand-100 flex flex-col items-center justify-center text-center scale-110 md:mr-10">
-                        <span className="text-xs font-black tracking-widest text-gray-400 uppercase mb-2">Current Mean <br /> Score</span>
-                        <div className="text-5xl font-black text-brand-600 leading-none">{typeof academicScore.finalScore === 'number' ? academicScore.finalScore.toFixed(2) : '0.00'}</div>
-                    </div>
-                )}
-            </div>
+        <IvyPointerPageShell>
+            {readOnly && <IvyPointerReadOnlyBanner />}
+            <IvyPointerPageHeader
+                title="POINTER 1: ACADEMIC EXCELLENCE"
+                showScore={Boolean(academicScore)}
+                score={academicScore?.finalScore}
+            />
 
             {/* Ivy League Applicant Info Panel */}
             <IvyLeagueApplicantInfoPanel pointerNo={1} />
 
             {/* Tabs */}
-            <div className="flex gap-2 mb-8 border-b border-gray-200">
+            <div className="mb-8 flex gap-2 border-b border-gray-200 max-md:mb-4">
                 <button
                     onClick={() => setActiveTab('formal')}
-                    className={`px-8 py-4 font-bold text-sm transition-all ${
+                    className={`px-8 py-4 text-sm font-bold transition-all max-md:px-4 max-md:py-2 max-md:text-xs ${
                         activeTab === 'formal'
                             ? 'text-brand-600 border-b-2 border-brand-600'
                             : 'text-gray-400 hover:text-gray-600'
@@ -517,7 +508,7 @@ function Pointer1Content() {
                 </button>
                 <button
                     onClick={() => setActiveTab('informal')}
-                    className={`px-8 py-4 font-bold text-sm transition-all ${
+                    className={`px-8 py-4 font-bold text-sm transition-all max-md:px-4 max-md:py-2 max-md:text-xs ${
                         activeTab === 'informal'
                             ? 'text-brand-600 border-b-2 border-brand-600'
                             : 'text-gray-400 hover:text-gray-600'
@@ -540,19 +531,19 @@ function Pointer1Content() {
                         </button>
                     </div>
                 ) : (
-                    <div className="bg-white p-6 rounded-2xl border-2 border-brand-200 shadow-sm">
-                        <h3 className="text-lg font-bold text-gray-900 mb-4">New Section</h3>
-                        <div className="flex gap-4">
+                    <div className="rounded-2xl border-2 border-brand-200 bg-white p-6 shadow-sm max-md:p-3">
+                        <h3 className="mb-3 text-lg font-bold text-gray-900 max-md:mb-2 max-md:text-base">New Section</h3>
+                        <div className={ivyPointerInlineActionsClass}>
                             <input
                                 type="text"
                                 placeholder={activeTab === 'informal' ? 'Enter Exam or Project (e.g. Olympiad, JEE, etc.)' : 'Exam Name (e.g., Mid-Term, Final Exam)'}
                                 value={newSectionName}
                                 onChange={(e) => setNewSectionName(e.target.value)}
-                                className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:border-brand-500 outline-none text-black placeholder:text-gray-400"
+                                className="flex-1 rounded-xl border border-gray-300 px-4 py-3 text-black outline-none placeholder:text-gray-400 focus:border-brand-500 max-md:w-full"
                             />
                             <button
                                 onClick={addSection}
-                                className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700"
+                                className="rounded-xl bg-brand-600 px-6 py-3 font-bold text-white hover:bg-brand-700 max-md:w-full"
                             >
                                 Save
                             </button>
@@ -561,7 +552,7 @@ function Pointer1Content() {
                                     setShowAddSection(false);
                                     setNewSectionName('');
                                 }}
-                                className="px-6 py-3 bg-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-300"
+                                className="rounded-xl bg-gray-200 px-6 py-3 font-bold text-gray-700 hover:bg-gray-300 max-md:w-full"
                             >
                                 Cancel
                             </button>
@@ -571,17 +562,17 @@ function Pointer1Content() {
 
                 {/* Sections */}
                 {sections.map((section, sectionIndex) => (
-                    <div key={section._id || sectionIndex} className="bg-brand-50 p-6 rounded-3xl border-2 border-brand-200 shadow-lg">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-4">
-                                <h2 className="text-2xl font-black text-gray-900 uppercase">{section.examName}</h2>
+                    <div key={section._id || sectionIndex} className={ivyPointerSectionCardClass}>
+                        <div className={ivyPointerSectionHeaderClass}>
+                            <div className="flex min-w-0 flex-wrap items-center gap-2 md:gap-4">
+                                <h2 className={ivyPointerSectionTitleClass}>{section.examName}</h2>
                                 {activeTab === 'informal' && section.weightage !== undefined && (
                                     <span className="px-3 py-1 bg-brand-100 text-brand-700 font-bold rounded-full text-sm">
                                         Weightage: {section.weightage}%
                                     </span>
                                 )}
                             </div>
-                            <div className="flex gap-3">
+                            <div className="flex flex-wrap gap-2 md:gap-3">
                                     {!readOnly && (
                                     <button
                                         onClick={() => addSubSection(sectionIndex)}
@@ -615,10 +606,10 @@ function Pointer1Content() {
                             {expandedSections.has(sectionIndex) && (
                                 <div className="space-y-4">
                                     {section.subSections?.map((subSection, subIndex) => (
-                                        <div key={subSection._id || subIndex} className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                                        <div key={subSection._id || subIndex} className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm max-md:p-4">
                                             {/* Sub-section header with horizontal fields */}
-                                            <div className="flex items-start gap-4 mb-6">
-                                                <div className="flex-1 grid grid-cols-3 gap-4">
+                                            <div className={ivyPointerSubSectionHeaderClass}>
+                                                <div className={ivyPointerSubSectionFiltersClass}>
                                                     <div>
                                                         <label className="block text-xs font-bold text-gray-600 mb-2 uppercase">Test Type</label>
                                                         <select
@@ -673,7 +664,7 @@ function Pointer1Content() {
                                                 {!readOnly && (
                                                 <button
                                                     onClick={() => deleteSubSectionHandler(section._id!, subSection._id!)}
-                                                    className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 mt-6"
+                                                    className="rounded-lg bg-red-100 p-2 text-red-600 hover:bg-red-200 max-md:self-end md:mt-6"
                                                     title="Delete Sub-Section"
                                                 >
                                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -705,7 +696,7 @@ function Pointer1Content() {
                                                                 )}
                                                             </div>
                                                             {/* Project Content */}
-                                                            <div className="grid grid-cols-2 gap-3 p-4">
+                                                            <div className={ivyPointerProjectGridClass}>
                                                                 <div>
                                                                     <label className="block text-xs font-bold text-gray-600 mb-1">Project Title</label>
                                                                     <input
@@ -771,9 +762,9 @@ function Pointer1Content() {
                                             ) : (
                                                 <div className="space-y-3">
                                                     {subSection.subjects?.map((subject, subjectIndex) => (
-                                                        <div key={subject._id || subjectIndex} className="grid grid-cols-6 gap-3 items-start p-4 bg-gray-50 rounded-xl">
-                                                            <div>
-                                                                <label className="block text-xs font-bold text-gray-600 mb-1">Subject</label>
+                                                        <div key={subject._id || subjectIndex} className={ivyPointerSubjectRowClass}>
+                                                            <div className="min-w-0">
+                                                                <label className="mb-1 block text-xs font-bold uppercase text-gray-600">Subject</label>
                                                                 <input
                                                                     type="text"
                                                                     value={subject.name}
@@ -783,8 +774,8 @@ function Pointer1Content() {
                                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-brand-500 outline-none text-sm text-black placeholder:text-gray-400 read-only:opacity-60 read-only:cursor-not-allowed"
                                                                 />
                                                             </div>
-                                                            <div>
-                                                                <label className="block text-xs font-bold text-gray-600 mb-1">Marks Obtained</label>
+                                                            <div className="min-w-0">
+                                                                <label className="mb-1 block text-xs font-bold uppercase text-gray-600">Marks Obtained</label>
                                                                 <input
                                                                     type="number"
                                                                     value={subject.marksObtained}
@@ -793,8 +784,8 @@ function Pointer1Content() {
                                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-brand-500 outline-none text-sm text-black read-only:opacity-60 read-only:cursor-not-allowed"
                                                                 />
                                                             </div>
-                                                            <div>
-                                                                <label className="block text-xs font-bold text-gray-600 mb-1">Total Marks</label>
+                                                            <div className="min-w-0">
+                                                                <label className="mb-1 block text-xs font-bold uppercase text-gray-600">Total Marks</label>
                                                                 <input
                                                                     type="number"
                                                                     value={subject.totalMarks}
@@ -803,19 +794,19 @@ function Pointer1Content() {
                                                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-brand-500 outline-none text-sm text-black read-only:opacity-60 read-only:cursor-not-allowed"
                                                                 />
                                                             </div>
-                                                            <div>
-                                                                <label className="block text-xs font-bold text-gray-600 mb-1">Percentage</label>
+                                                            <div className="min-w-0">
+                                                                <label className="mb-1 block text-xs font-bold uppercase text-gray-600">Percentage</label>
                                                                 <div className="px-3 py-2 bg-brand-50 text-brand-700 font-bold rounded-lg text-sm text-center">
                                                                     {subject.totalMarks > 0 ? ((subject.marksObtained / subject.totalMarks) * 100).toFixed(2) : '0.00'}%
                                                                 </div>
                                                             </div>
-                                                            <div>
-                                                                <label className="block text-xs font-bold text-gray-600 mb-1">Feedback</label>
+                                                            <div className="min-w-0">
+                                                                <label className="mb-1 block text-xs font-bold uppercase text-gray-600">Feedback</label>
                                                                 <div className="px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm min-h-[40px] italic">
                                                                     {subject.feedback || 'Awaiting feedback'}
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-end justify-center h-full pb-1">
+                                                            <div className="flex h-full items-end justify-center pb-1 max-md:justify-end md:pb-1">
                                                                 {!readOnly && (
                                                                 <button
                                                                     onClick={() => deleteSubjectHandler(section._id!, subSection._id!, subject._id!)}
@@ -951,7 +942,7 @@ function Pointer1Content() {
                     </div>
                 )}
             </div>
-        </div>
+        </IvyPointerPageShell>
     );
 }
 

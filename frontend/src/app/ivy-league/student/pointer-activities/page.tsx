@@ -169,7 +169,7 @@ function StudentPointerActivitiesContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-8 space-y-6">
+      <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-md p-8 space-y-6 max-md:p-4 max-md:space-y-4">
         <header className="flex justify-between items-start">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Your Assigned Activities (Pointers 2 / 3 / 4)</h1>
@@ -357,7 +357,7 @@ export default function StudentPointerActivitiesPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8">
+          <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-8 max-md:p-4">
             <div className="text-center text-gray-500">Loading...</div>
           </div>
         </div>

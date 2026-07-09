@@ -7,6 +7,15 @@ import { ErrorHighlightedText } from '@/components/ErrorHighlightedText';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { fileApi } from '@/lib/useBlobUrl';
 import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
+import {
+  ivyPointer5ResponseGridClass,
+  ivyPointer5ResponseMainClass,
+  ivyPointer5WordsLearnedClass,
+  ivyPointerTaskCardClass,
+  ivyPointerTaskHeaderClass,
+  ivyPointerTaskHeaderPaddingClass,
+  ivyPointerTaskExpandedClass,
+} from '@/components/studentDetailResponsive';
 
 interface Attachment {
     fileName: string;
@@ -345,21 +354,21 @@ function IvyExpertPointer5Content() {
                 ) : (
                     <div className="space-y-6">
                         {tasks.map((taskStatus, index) => (
-                            <div key={taskStatus.task._id} className="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div key={taskStatus.task._id} className={ivyPointerTaskCardClass}>
                                 {/* Task Header */}
                                 <div
-                                    className="p-6 cursor-pointer hover:bg-gray-50 transition-all"
+                                    className={`${ivyPointerTaskHeaderPaddingClass} cursor-pointer transition-all hover:bg-gray-50`}
                                     onClick={() => toggleTask(taskStatus.task._id)}
                                 >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                            <span className="text-2xl font-black text-brand-600">#{tasks.length - index}</span>
-                                            <div>
-                                                <p className="font-bold text-gray-900 line-clamp-1">{taskStatus.task.taskDescription}</p>
-                                                <p className="text-sm text-gray-500">Word Limit: {taskStatus.task.wordLimit}</p>
+                                    <div className={ivyPointerTaskHeaderClass}>
+                                        <div className="flex min-w-0 items-center gap-3 max-md:gap-2 md:gap-4">
+                                            <span className="shrink-0 text-2xl font-black text-brand-600 max-md:text-xl">#{tasks.length - index}</span>
+                                            <div className="min-w-0">
+                                                <p className="line-clamp-2 font-bold text-gray-900 max-md:text-sm md:line-clamp-1">{taskStatus.task.taskDescription}</p>
+                                                <p className="text-sm text-gray-500 max-md:text-xs">Word Limit: {taskStatus.task.wordLimit}</p>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-4">
+                                        <div className="flex shrink-0 items-center justify-between gap-3 max-md:w-full md:justify-end md:gap-4">
                                             {taskStatus.evaluation ? (
                                                 <span className="px-4 py-2 bg-green-100 text-green-700 font-bold rounded-xl">
                                                     Score: {taskStatus.evaluation.score}/10
@@ -385,9 +394,9 @@ function IvyExpertPointer5Content() {
 
                                 {/* Expanded Content */}
                                 {expandedTasks.has(taskStatus.task._id) && (
-                                    <div className="border-t border-gray-100 p-6 space-y-6">
+                                    <div className={ivyPointerTaskExpandedClass}>
                                         {/* Task Details */}
-                                        <div className="bg-gray-50 rounded-2xl p-6">
+                                        <div className="rounded-2xl bg-gray-50 p-6 max-md:p-3">
                                             <h3 className="text-sm font-black text-gray-500 uppercase tracking-wider mb-3">Task Description</h3>
                                             <p className="text-gray-900 whitespace-pre-wrap">{taskStatus.task.taskDescription}</p>
                                             {taskStatus.task.attachments.length > 0 && (
@@ -419,13 +428,13 @@ function IvyExpertPointer5Content() {
                                         {/* Student Response */}
                                         {taskStatus.submission ? (
                                             <div className="space-y-4">
-                                                <div className="grid grid-cols-10 gap-4">
-                                                    <div className="col-span-7 bg-brand-50 rounded-2xl p-6">
+                                            <div className={ivyPointer5ResponseGridClass}>
+                                                    <div className={`${ivyPointer5ResponseMainClass} rounded-2xl bg-brand-50 p-6 max-md:p-3`}>
                                                         <h3 className="text-sm font-black text-brand-600 uppercase tracking-wider mb-3">Student Response</h3>
                                                         <ErrorHighlightedText text={taskStatus.submission.studentResponse} />
                                                         <p className="text-sm text-brand-600 mt-4">Word Count: {taskStatus.submission.wordCount}/{taskStatus.task.wordLimit}</p>
                                                     </div>
-                                                    <div className="col-span-3 bg-brand-50 rounded-2xl p-6">
+                                                    <div className={`${ivyPointer5WordsLearnedClass} rounded-2xl bg-brand-50 p-6 max-md:p-3`}>
                                                         <h3 className="text-sm font-black text-brand-600 uppercase tracking-wider mb-3">Words Learned</h3>
                                                         <p className="text-gray-900 whitespace-pre-wrap">{taskStatus.submission.wordsLearned || 'None provided'}</p>
                                                     </div>
@@ -436,8 +445,8 @@ function IvyExpertPointer5Content() {
                                                     <h3 className="text-sm font-black text-green-600 uppercase tracking-wider mb-4">
                                                         {taskStatus.evaluation ? 'Update Evaluation' : 'Evaluate Response'}
                                                     </h3>
-                                                    <div className="flex gap-4">
-                                                        <div className="w-32">
+                                                    <div className="flex flex-col gap-4 max-md:gap-3 sm:flex-row">
+                                                        <div className="w-full sm:w-32">
                                                             <label className="block text-sm font-bold text-gray-700 mb-2">Score (0-10)</label>
                                                             <input
                                                                 type="number"

@@ -8,6 +8,7 @@ import { User, USER_ROLE } from '@/types';
 import IvyExpertLayoutWrapper from '@/components/IvyExpertLayout';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { buildCallbackMobileNavItems } from '@/utils/mobileNavHelpers';
+import { ivyLeagueMobileNavLabel } from '@/utils/ivyLeagueMobileNavLabels';
 import { roleLayoutShellProps, roleLayoutSidebarClass, roleLayoutMainClass } from '@/utils/roleLayoutShell';
 
 const IVY_SIDEBAR_WIDTHS = { openWidth: 'md:w-72', closedWidth: 'md:w-20' } as const;
@@ -112,7 +113,7 @@ function IvyExpertSidebar() {
             const isDisabled = item.requiresStudent && !studentId;
             return {
                 id: item.href,
-                label: item.name,
+                label: ivyLeagueMobileNavLabel(item.name),
                 icon: item.icon,
                 isActive: isActive(item.href),
                 onClick: () => {
