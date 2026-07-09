@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import ivyApi from "@/lib/ivyApi";
 import AuthImage from '@/components/AuthImage';
 import { fetchBlobUrl } from '@/lib/useBlobUrl';
@@ -58,6 +59,7 @@ const EMPTY_FORM = {
 /* ──────────────────────── Component ──────────────────────────────── */
 
 export default function ManageTestPage() {
+  const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [sectionCounts, setSectionCounts] = useState<SectionCount[]>([]);
   const [fetching, setFetching] = useState(true);
@@ -250,6 +252,16 @@ export default function ManageTestPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3 sm:gap-4">
+              <button
+                type="button"
+                onClick={() => router.push("/super-admin/roles/ivy-expert")}
+                className="rounded-lg p-1.5 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
+                aria-label="Back to Ivy Expert"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
               <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
                 <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
