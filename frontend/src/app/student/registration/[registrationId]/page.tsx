@@ -23,6 +23,7 @@ import OpsCalendarGrid from '@/components/OpsCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
 import CoachingClassCards, { ClassTiming } from '@/components/CoachingClassCards';
+import StudentSupportTeamSection, { buildRegistrationSupportTeamMembers } from '@/components/StudentSupportTeamSection';
 import { fetchBlobUrl } from '@/lib/useBlobUrl';
 
 const BRAINOGRAPHY_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -848,6 +849,13 @@ function MyDetailsContent() {
 
     return (
       <div className="mx-auto max-w-7xl space-y-6 px-3 py-4 sm:space-y-8 sm:px-6 sm:py-6 lg:px-8">
+        <div className="min-w-0">
+          <h1 className="min-w-0 truncate text-lg font-bold text-gray-900 sm:text-2xl md:text-3xl">
+            {getFullName(currentUser)}
+          </h1>
+          <p className="mt-1 text-sm text-gray-600">Study Abroad Dashboard</p>
+        </div>
+
         {/* Application Stats */}
         <div>
           <h2 className="mb-3 text-lg font-semibold text-gray-900 sm:mb-4 sm:text-xl">Application Overview</h2>
@@ -911,6 +919,13 @@ function MyDetailsContent() {
 
     return (
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-4 sm:space-y-8 sm:px-6 sm:py-6 lg:px-8">
+        <div className="min-w-0">
+          <h1 className="min-w-0 truncate text-lg font-bold text-gray-900 sm:text-2xl md:text-3xl">
+            {getFullName(currentUser)}
+          </h1>
+          <p className="mt-1 text-sm text-gray-600">Education Planning Dashboard</p>
+        </div>
+
         {/* Activity Stats */}
         <div>
           <h2 className={eduPlanOverviewHeadingClass}>
@@ -939,98 +954,33 @@ function MyDetailsContent() {
     );
   };
 
-    /* ─── Shared: Support Team Section ─── */
     const eduplanCoach = registration.activeEduplanCoachId || registration.primaryEduplanCoachId;
     const opsLabel = service?.name === 'Ivy League Preparation' ? 'Ivy Expert' : service?.name === 'Education Planning' ? 'Eduplan Coach' : 'OPS';
     const opsUser = registration.activeOpsId || registration.primaryOpsId;
 
+    const supportTeamMembers = buildRegistrationSupportTeamMembers({
+      adminId: registration.studentId?.adminId,
+      counselorId: registration.studentId?.counselorId,
+      advisorId: registration.studentId?.advisorId,
+      opsUser,
+      opsLabel,
+      eduplanCoach: isEducationPlanning ? eduplanCoach : null,
+      intake: registration.studentId?.intake,
+      year: registration.studentId?.year,
+    });
+
     const renderSupportTeam = () => {
-      if (!registration.studentId) return null;
-      const hasTeam = registration.studentId.adminId || registration.studentId.counselorId || registration.studentId.advisorId || opsUser || (isEducationPlanning && eduplanCoach);
-      if (!hasTeam) return null;
+      if (!registration.studentId || supportTeamMembers.length === 0) return null;
       return (
-        <div className="mb-4 border-b border-gray-200 bg-white sm:mb-6">
+        <div className="mb-4 hidden border-b border-gray-200 bg-white sm:mb-6 md:block">
           <div className="mx-auto max-w-7xl px-3 py-3 sm:px-6 sm:py-4">
-            <h3 className="mb-2 text-xs font-semibold text-gray-900 sm:mb-3 sm:text-sm">Your Support Team</h3>
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-2 lg:grid-cols-5 lg:gap-4">
-              {registration.studentId.adminId && (
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-2.5 sm:p-3">
-                  <p className="text-xs font-medium text-gray-700 mb-1">Admin</p>
-                  <p className="text-sm font-semibold text-gray-900">
-                    {registration.studentId.adminId.companyName || getFullName(registration.studentId.adminId.userId)}
-                  </p>
-                  {registration.studentId.adminId.userId?.email && (
-                    <p className="text-xs text-gray-600">{registration.studentId.adminId.userId.email}</p>
-                  )}
-                  {registration.studentId.adminId.mobileNumber && (
-                    <p className="text-xs text-gray-600">{registration.studentId.adminId.mobileNumber}</p>
-                  )}
-                </div>
-              )}
-              {registration.studentId.counselorId && (
-                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                  <p className="text-xs font-medium text-gray-700 mb-1">Counselor</p>
-                  <p className="text-sm font-semibold text-gray-900">
-                    {getFullName(registration.studentId.counselorId.userId)}
-                  </p>
-                  {registration.studentId.counselorId.userId?.email && (
-                    <p className="text-xs text-gray-600">{registration.studentId.counselorId.userId.email}</p>
-                  )}
-                  {registration.studentId.counselorId.mobileNumber && (
-                    <p className="text-xs text-gray-600">{registration.studentId.counselorId.mobileNumber}</p>
-                  )}
-                </div>
-              )}
-              {registration.studentId.advisorId && (
-                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                  <p className="text-xs font-medium text-gray-700 mb-1">Advisor</p>
-                  <p className="text-sm font-semibold text-gray-900">
-                    {registration.studentId.advisorId?.companyName}
-                  </p>
-                  {registration.studentId.advisorId.userId?.email && (
-                    <p className="text-xs text-gray-600">{registration.studentId.advisorId.userId.email}</p>
-                  )}
-                </div>
-              )}
-              {opsUser && (
-                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                  <p className="text-xs font-medium text-gray-700 mb-1">{opsLabel}</p>
-                  <p className="text-sm font-semibold text-gray-900">{getFullName(opsUser.userId)}</p>
-                  {opsUser.userId?.email && <p className="text-xs text-gray-600">{opsUser.userId.email}</p>}
-                  {opsUser.mobileNumber && <p className="text-xs text-gray-600">{opsUser.mobileNumber}</p>}
-                </div>
-              )}
-              {isEducationPlanning && eduplanCoach && (
-                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                  <p className="text-xs font-medium text-gray-700 mb-1">Eduplan Coach</p>
-                  <p className="text-sm font-semibold text-gray-900">{getFullName(eduplanCoach.userId)}</p>
-                  {eduplanCoach.userId?.email && <p className="text-xs text-gray-600">{eduplanCoach.userId.email}</p>}
-                  {(eduplanCoach.mobileNumber || eduplanCoach.email) && (
-                    <p className="text-xs text-gray-600">{eduplanCoach.mobileNumber || eduplanCoach.email}</p>
-                  )}
-                </div>
-              )}
-              {(registration.studentId.intake || registration.studentId.year) && (
-                <div className="border border-blue-200 rounded-lg p-3 bg-blue-50">
-                  {registration.studentId.intake && (
-                    <div className="mb-2">
-                      <p className="text-xs font-medium text-gray-700 mb-1">Intake</p>
-                      <p className="text-sm font-semibold text-blue-700">{registration.studentId.intake}</p>
-                    </div>
-                  )}
-                  {registration.studentId.year && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-700 mb-1">Year</p>
-                      <p className="text-sm font-semibold text-blue-700">{registration.studentId.year}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            <StudentSupportTeamSection members={supportTeamMembers} />
           </div>
         </div>
       );
     };
+
+    /* ─── Shared: Support Team Section (desktop footer only) ─── */
 
     /* ─── Shared: Navigation Bar ─── */
     const renderNavBar = (showFormTab: boolean) => (

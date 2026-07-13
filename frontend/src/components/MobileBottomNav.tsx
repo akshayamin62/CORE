@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { scrollAppToTopSoon } from '@/utils/mobileNavigationHistory';
 
 export interface MobileNavChild {
   id: string;
@@ -96,6 +97,10 @@ export default function MobileBottomNav({ items, visibleCount = VISIBLE_COUNT }:
     [items.length, visibleCount]
   );
 
+  const scrollMainToTop = useCallback(() => {
+    scrollAppToTopSoon();
+  }, []);
+
   const activateItem = useCallback(
     (index: number) => {
       const item = items[index];
@@ -108,8 +113,9 @@ export default function MobileBottomNav({ items, visibleCount = VISIBLE_COUNT }:
 
       setOpenDropdownIndex(null);
       if (!item.isActive) item.onClick();
+      scrollMainToTop();
     },
-    [items]
+    [items, scrollMainToTop]
   );
 
   const handleItemClick = useCallback(
@@ -171,6 +177,7 @@ export default function MobileBottomNav({ items, visibleCount = VISIBLE_COUNT }:
                     onClick={() => {
                       child.onClick();
                       setOpenDropdownIndex(null);
+                      scrollMainToTop();
                     }}
                     className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors duration-200 ${
                       child.isActive ? 'bg-blue-50 font-semibold text-blue-600' : 'text-slate-700 hover:bg-slate-50'

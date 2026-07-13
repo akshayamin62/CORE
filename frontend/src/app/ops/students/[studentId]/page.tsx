@@ -283,45 +283,6 @@ export default function StudentDetailPage() {
                   <SecondaryMobileField />
                 </div>
               </div>
-              {student.adminId && (
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Admin</p>
-                <p className="font-medium text-gray-900">
-                  {student.adminId?.companyName || 'Not assigned'}
-                </p>
-                {student.adminId?.userId?.email && (
-                  <p className="text-sm text-gray-500">{student.adminId.userId.email}</p>
-                )}
-                {student.adminId?.mobileNumber && (
-                  <p className="text-sm text-gray-500">{student.adminId.mobileNumber}</p>
-                )}
-              </div>
-              )}
-              {student.adminId && (
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Counselor</p>
-                <p className="font-medium text-gray-900">
-                  {getFullName(student.counselorId?.userId) || 'Not assigned'}
-                </p>
-                {student.counselorId?.userId?.email && (
-                  <p className="text-sm text-gray-500">{student.counselorId.userId.email}</p>
-                )}
-                {student.counselorId?.mobileNumber && (
-                  <p className="text-sm text-gray-500">{student.counselorId.mobileNumber}</p>
-                )}
-              </div>
-              )}
-              {student.advisorId && (
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Advisor</p>
-                <p className="font-medium text-gray-900">
-                  {student.advisorId?.companyName || 'N/A'}
-                </p>
-                {student.advisorId?.userId?.email && (
-                  <p className="text-sm text-gray-500">{student.advisorId.userId.email}</p>
-                )}
-              </div>
-              )}
               <div>
                 <p className="text-sm text-gray-600 mb-1">Joined Date</p>
                 <p className="font-medium text-gray-900">
@@ -330,7 +291,7 @@ export default function StudentDetailPage() {
               </div>
             </div>
 
-            {/* Source / Intake / Year / Transfer */}
+            {/* Source / Transfer */}
             <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-gray-200 mt-4">
               <div>
                 <p className="text-sm text-gray-600 mb-1">Source</p>
@@ -338,18 +299,6 @@ export default function StudentDetailPage() {
                   {(student as any).referrerId ? 'Referral' : 'Enquiry Form'}
                 </span>
               </div>
-              {student.intake && (
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Intake</p>
-                  <p className="font-medium text-blue-600">{student.intake}</p>
-                </div>
-              )}
-              {student.year && (
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Year</p>
-                  <p className="font-medium text-blue-600">{student.year}</p>
-                </div>
-              )}
               {student.advisorId && transferInterestedServices.length > 0 && (
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Transfer For</p>

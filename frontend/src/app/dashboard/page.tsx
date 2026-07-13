@@ -6,6 +6,7 @@ import { authAPI, serviceAPI } from '@/lib/api';
 import { User, Service, StudentServiceRegistration } from '@/types';
 import toast, { Toaster } from 'react-hot-toast';
 import ServiceCard from '@/components/ServiceCard';
+import { getFullName } from '@/utils/nameHelpers';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -230,10 +231,10 @@ export default function DashboardPage() {
           {/* Welcome Header */}
           <div className="mb-8 animate-fade-in flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-                My Services
+              <h1 className="min-w-0 truncate text-3xl font-bold text-gray-900 md:text-4xl">
+                {getFullName(user)}
               </h1>
-              <p className="text-gray-600 text-base mt-2">
+              <p className="mt-2 text-base text-gray-600">
                 Manage your registered services and track your progress.
               </p>
             </div>

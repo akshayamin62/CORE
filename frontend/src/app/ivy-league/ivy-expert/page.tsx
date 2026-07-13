@@ -6,10 +6,11 @@ import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { teamMeetAPI, authAPI, opsScheduleAPI } from '@/lib/api';
-import { TeamMeet, OpsSchedule, TEAMMEET_STATUS } from '@/types';
+import { TeamMeet, OpsSchedule, TEAMMEET_STATUS, User } from '@/types';
 import OpsCalendarGrid from '@/components/OpsCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface StudentService {
     _id: string; // The Service ID
@@ -146,6 +147,7 @@ function IvyExpertDashboard() {
     const [selectedTeamMeet, setSelectedTeamMeet] = useState<TeamMeet | null>(null);
     const [selectedTeamMeetDate, setSelectedTeamMeetDate] = useState<Date | undefined>(undefined);
     const [currentUserId, setCurrentUserId] = useState('');
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
 
     // Calendar / OPS tasks state
     const [showCalendar, setShowCalendar] = useState(false);
@@ -174,6 +176,7 @@ function IvyExpertDashboard() {
                 if (res.data.success) {
                     const u = res.data.data.user;
                     setCurrentUserId(u?.id || u?._id || '');
+                    setCurrentUser(u || null);
                 }
             } catch (err) {
                 console.error('Error fetching user:', err);
@@ -671,7 +674,9 @@ function IvyExpertDashboard() {
                     {/* Header */}
                     <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
-                            <h1 className="mb-1 text-xl font-bold text-gray-900 sm:text-2xl">Ivy Expert Dashboard</h1>
+                            <h1 className="mb-1 min-w-0 truncate text-lg font-bold text-gray-900 sm:text-2xl md:text-3xl">
+                                {getFullName(currentUser) || 'Ivy Expert Dashboard'}
+                            </h1>
                             <p className="text-sm text-gray-600">Manage your assigned Ivy League candidates and students</p>
                         </div>
                         {(() => {

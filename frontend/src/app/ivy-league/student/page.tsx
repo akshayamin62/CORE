@@ -5,10 +5,11 @@ import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { teamMeetAPI, authAPI, opsScheduleAPI } from '@/lib/api';
-import { TeamMeet, OpsSchedule, TEAMMEET_STATUS, USER_ROLE } from '@/types';
+import { TeamMeet, OpsSchedule, TEAMMEET_STATUS, USER_ROLE, User } from '@/types';
 import OpsCalendarGrid from '@/components/OpsCalendarGrid';
 import TeamMeetFormPanel from '@/components/TeamMeetFormPanel';
 import OpsScheduleFormPanel from '@/components/OpsScheduleFormPanel';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface PointerScore {
     pointerNo: number;
@@ -90,6 +91,7 @@ function IvyScoreContent() {
     const [teamMeetPanelMode, setTeamMeetPanelMode] = useState<'create' | 'view' | 'respond'>('create');
     const [selectedTeamMeetDate, setSelectedTeamMeetDate] = useState<Date | undefined>(undefined);
     const [currentUserId, setCurrentUserId] = useState('');
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [userRole, setUserRole] = useState('');
 
     const fetchTeamMeets = useCallback(async (studentDocId?: string) => {
@@ -126,6 +128,7 @@ function IvyScoreContent() {
                 if (res.data.success) {
                     const u = res.data.data.user;
                     setCurrentUserId(u?.id || u?._id || '');
+                    setCurrentUser(u || null);
                     setUserRole(u?.role || '');
                 }
             } catch (err) {
@@ -402,6 +405,11 @@ function IvyScoreContent() {
             <header className="mb-8 sm:mb-12 md:mb-16">
                 <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
+                        {getFullName(currentUser) ? (
+                            <p className="mb-2 min-w-0 truncate text-lg font-bold text-gray-900 sm:mb-3 sm:text-2xl md:text-3xl">
+                                {getFullName(currentUser)}
+                            </p>
+                        ) : null}
                         <h1 className="mb-3 text-2xl font-black leading-tight tracking-tighter text-gray-900 sm:mb-4 sm:text-4xl md:text-5xl lg:text-6xl">Your IVY League Readiness Score</h1>
                         <p className="max-w-2xl text-sm font-medium leading-relaxed text-gray-400 sm:text-base md:text-xl">Track your competitive trajectory across all core admission pillars. Your score is real-time and reflects current Ivy Expert evaluations.</p>
                     </div>
@@ -571,7 +579,7 @@ function IvyScoreContent() {
 
             {/* Team Contact Info */}
             {serviceData && (
-                <div className="mt-8 bg-white rounded-[3rem] p-12 border-2 border-gray-100 shadow-xl">
+                <div className="mt-8 hidden rounded-[3rem] border-2 border-gray-100 bg-white p-12 shadow-xl md:block">
                     <h4 className="text-2xl font-black text-gray-900 mb-8 uppercase tracking-tight">Your Support Team</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {/* Admin */}

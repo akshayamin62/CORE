@@ -7,6 +7,7 @@ import { User, USER_ROLE } from '@/types';
 import ReferrerLayout from '@/components/ReferrerLayout';
 import EnquiryUrlCopy from '@/components/EnquiryUrlCopy';
 import toast, { Toaster } from 'react-hot-toast';
+import { getFullName } from '@/utils/nameHelpers';
 
 interface DashboardStats {
   totalLeads: number;
@@ -84,8 +85,10 @@ export default function ReferrerDashboardPage() {
       <ReferrerLayout user={user}>
         <div className="p-8">
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Dashboard</h2>
-            <p className="text-gray-600 mt-2">Welcome back! Here&apos;s your referral overview.</p>
+            <h1 className="min-w-0 truncate text-lg font-bold text-gray-900 sm:text-2xl md:text-3xl">
+              {getFullName(user)}
+            </h1>
+            <p className="mt-2 text-gray-600">Welcome back! Here&apos;s your referral overview.</p>
           </div>
 
           <EnquiryUrlCopy
