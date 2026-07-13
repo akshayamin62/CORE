@@ -189,7 +189,7 @@ function IvyExpertSidebar() {
             </div>
             )}
         </aside>
-        <MobileBottomNav items={mobileNavItems} />
+        {!isConversationOpen && <MobileBottomNav items={mobileNavItems} />}
         </>
     );
 }

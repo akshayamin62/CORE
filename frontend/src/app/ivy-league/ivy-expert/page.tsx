@@ -375,8 +375,8 @@ function IvyExpertDashboard() {
         setSelectedTeamMeetDate(undefined);
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-500">Loading students...</div>;
-    if (error) return <div className="p-8 text-center text-red-600">{error}</div>;
+    if (loading) return <div className="p-6 text-center text-gray-500 sm:p-8">Loading students...</div>;
+    if (error) return <div className="p-6 text-center text-red-600 sm:p-8">{error}</div>;
 
     // If a student is selected, show the Ivy Score dashboard
     if (selectedStudentId && studentIvyServiceId) {
@@ -384,27 +384,28 @@ function IvyExpertDashboard() {
 
         if (scoreLoading) {
             return (
-                <div className="p-20 text-center">
+                <div className="p-12 text-center sm:p-20">
                     <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-brand-600 border-r-transparent"></div>
-                    <p className="mt-4 text-gray-500 font-bold uppercase tracking-widest text-xs">Loading Student Performance Data...</p>
+                    <p className="mt-4 text-xs font-bold uppercase tracking-widest text-gray-500">Loading Student Performance Data...</p>
                 </div>
             );
         }
 
         if (scoreError) {
             return (
-                <div className="p-12">
-                    <div className="bg-red-50 border-2 border-red-100 rounded-3xl p-10 text-center max-w-lg mx-auto shadow-xl shadow-red-50">
+                <div className="p-4 sm:p-12">
+                    <div className="mx-auto max-w-lg rounded-3xl border-2 border-red-100 bg-red-50 p-6 text-center shadow-xl shadow-red-50 sm:p-10">
                         <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-red-100 mb-6 border-4 border-white shadow-lg">
                             <svg className="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </div>
-                        <h3 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tight">Load Failed</h3>
-                        <p className="text-gray-500 font-medium mb-8 leading-relaxed">{scoreError}</p>
+                        <h3 className="mb-2 text-xl font-black uppercase tracking-tight text-gray-900 sm:text-2xl">Load Failed</h3>
+                        <p className="mb-6 text-sm font-medium leading-relaxed text-gray-500 sm:mb-8">{scoreError}</p>
                         <button
+                            type="button"
                             onClick={fetchIvyScore}
-                            className="px-8 py-3 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all active:scale-95 shadow-lg shadow-red-100 uppercase tracking-widest text-sm"
+                            className="rounded-2xl bg-red-600 px-6 py-3 text-sm font-bold uppercase tracking-widest text-white shadow-lg shadow-red-100 transition-all hover:bg-red-700 active:scale-95 sm:px-8"
                         >
                             Try Again
                         </button>
@@ -434,22 +435,23 @@ function IvyExpertDashboard() {
 
         return (
             <>
-                <div className="p-8 md:p-12 max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                <div className="mx-auto max-w-6xl animate-in fade-in slide-in-from-bottom-4 p-4 duration-1000 sm:p-6 md:p-8 lg:p-12">
                     {/* Header */}
-                    <header className="mb-16">
-                        <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <h1 className="text-6xl font-black text-gray-900 tracking-tighter mb-4 leading-tight">
-                                    {selectedStudent?.studentId.firstName ? `${selectedStudent.studentId.firstName} ${selectedStudent.studentId.lastName}` : 'Student'}'s Ivy League Readiness
+                    <header className="mb-8 sm:mb-12 md:mb-16">
+                        <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="min-w-0">
+                                <h1 className="mb-3 text-2xl font-black leading-tight tracking-tighter text-gray-900 sm:mb-4 sm:text-4xl md:text-5xl lg:text-6xl">
+                                    {selectedStudent?.studentId.firstName ? `${selectedStudent.studentId.firstName} ${selectedStudent.studentId.lastName}` : 'Student'}&apos;s Ivy League Readiness
                                 </h1>
-                                <p className="text-xl text-gray-400 font-medium max-w-2xl leading-relaxed">
+                                <p className="max-w-2xl text-sm font-medium leading-relaxed text-gray-400 sm:text-base md:text-xl">
                                     Track competitive trajectory across all core admission pillars. Scores are real-time and reflect current evaluations.
                                 </p>
                             </div>
-                            <div className="flex items-center gap-3 flex-shrink-0">
+                            <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
                                 <button
+                                    type="button"
                                     onClick={() => setShowCalendar(prev => !prev)}
-                                    className="inline-flex items-center gap-2 px-5 py-3 bg-brand-600 text-white text-sm font-bold rounded-xl hover:bg-brand-700 transition-all shadow-lg"
+                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:bg-brand-700 sm:w-auto sm:px-5 sm:py-3"
                                 >
                                     {showCalendar ? (
                                         <>
@@ -468,11 +470,12 @@ function IvyExpertDashboard() {
                                     )}
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={() => {
                                         const resolvedUserId = userIdForProfile || selectedStudent?.studentId.userId || selectedStudentId;
                                         router.push(`/ivy-league/ivy-expert/student-report/${resolvedUserId}`);
                                     }}
-                                    className="flex-shrink-0 inline-flex items-center gap-2 px-5 py-3 bg-brand-600 text-white text-sm font-bold rounded-xl hover:bg-brand-700 transition-all shadow-lg"
+                                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:bg-brand-700 sm:w-auto sm:px-5 sm:py-3"
                                 >
                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -485,41 +488,41 @@ function IvyExpertDashboard() {
 
                     {!showCalendar && (<>
                         {/* Overall Score Card */}
-                        <div className="relative mb-16 group">
-                            <div className="absolute inset-0 bg-brand-600 rounded-[3rem] blur-3xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
-                            <div className="relative bg-white rounded-[3.5rem] shadow-[0_32px_64px_-16px_rgba(41,89,186,0.1)] border border-gray-100 p-12 overflow-hidden">
-                                <div className="flex flex-col md:flex-row items-center gap-12">
+                        <div className="relative mb-8 group sm:mb-12 md:mb-16">
+                            <div className="absolute inset-0 rounded-[2rem] bg-brand-600 opacity-10 blur-3xl transition-opacity group-hover:opacity-20 md:rounded-[3rem]"></div>
+                            <div className="relative overflow-hidden rounded-[2rem] border border-gray-100 bg-white p-6 shadow-[0_32px_64px_-16px_rgba(41,89,186,0.1)] sm:p-8 md:rounded-[3.5rem] md:p-12">
+                                <div className="flex flex-col items-center gap-8 md:flex-row md:gap-12">
                                     <div className="flex-1 text-center md:text-left">
-                                        <span className="text-[10px] font-black tracking-[0.4em] text-gray-400 uppercase mb-4 block">Calculated Potential</span>
-                                        <div className="flex items-baseline justify-center md:justify-start gap-4 mb-6">
-                                            <span className="text-9xl font-black text-brand-600 leading-none tracking-tighter">{overallScore.toFixed(1)}</span>
-                                            <span className="text-3xl font-black text-gray-300">/ {totalMaxScore}</span>
+                                        <span className="mb-3 block text-[10px] font-black uppercase tracking-[0.4em] text-gray-400 sm:mb-4">Calculated Potential</span>
+                                        <div className="mb-4 flex items-baseline justify-center gap-2 sm:mb-6 sm:gap-4 md:justify-start">
+                                            <span className="text-5xl font-black leading-none tracking-tighter text-brand-600 sm:text-7xl md:text-9xl">{overallScore.toFixed(1)}</span>
+                                            <span className="text-xl font-black text-gray-300 sm:text-2xl md:text-3xl">/ {totalMaxScore}</span>
                                         </div>
-                                        <div className="inline-flex items-center gap-3 bg-brand-50 text-brand-600 px-6 py-3 rounded-full text-base font-black uppercase tracking-widest">
-                                            <span className="h-2 w-2 bg-brand-600 rounded-full animate-pulse"></span>
+                                        <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-4 py-2 text-sm font-black uppercase tracking-widest text-brand-600 sm:gap-3 sm:px-6 sm:py-3 sm:text-base">
+                                            <span className="h-2 w-2 animate-pulse rounded-full bg-brand-600"></span>
                                             {getScoreGrade(overallScore, totalMaxScore)}
                                         </div>
                                     </div>
 
-                                    <div className="w-full md:w-[400px] space-y-6">
-                                        <div className="flex items-end justify-between mb-2">
-                                            <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Aggregate Readiness</span>
-                                            <span className="text-2xl font-black text-brand-600">{overallPercentage.toFixed(0)}%</span>
+                                    <div className="w-full space-y-4 md:w-[400px] md:space-y-6">
+                                        <div className="mb-2 flex items-end justify-between">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 sm:text-xs">Aggregate Readiness</span>
+                                            <span className="text-xl font-black text-brand-600 sm:text-2xl">{overallPercentage.toFixed(0)}%</span>
                                         </div>
-                                        <div className="h-8 bg-gray-50 rounded-2xl overflow-hidden p-1.5 border border-gray-100 flex items-center">
+                                        <div className="flex h-6 items-center overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 p-1 sm:h-8 sm:p-1.5">
                                             <div
-                                                className="h-full bg-brand-600 rounded-xl transition-all duration-1500 ease-out shadow-[0_0_20px_rgba(41,89,186,0.3)]"
+                                                className="h-full rounded-xl bg-brand-600 shadow-[0_0_20px_rgba(41,89,186,0.3)] transition-all duration-1500 ease-out"
                                                 style={{ width: `${overallPercentage}%` }}
                                             ></div>
                                         </div>
-                                        <p className="text-xs text-center text-gray-400 font-bold italic">Last evaluated on {new Date(scoreData.generatedAt).toLocaleDateString('en-GB')}</p>
+                                        <p className="text-center text-xs font-bold italic text-gray-400">Last evaluated on {new Date(scoreData.generatedAt).toLocaleDateString('en-GB')}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Individual Pointer Scores */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 md:gap-8 lg:grid-cols-3">
                             {scoreData.pointerScores.map((pointer) => {
                                 // Use academic excellence score for Pointer 1 if available
                                 // Use pointer5Score for Pointer 5 if available
@@ -535,20 +538,20 @@ function IvyExpertDashboard() {
                                     <div
                                         key={pointer.pointerNo}
                                         onClick={() => handlePointerClick(pointer.pointerNo)}
-                                        className="bg-white rounded-[2.5rem] shadow-sm hover:shadow-2xl hover:translate-y-[-8px] transition-all duration-500 p-8 border border-gray-100 hover:border-brand-100 group flex flex-col cursor-pointer"
+                                        className="group flex cursor-pointer flex-col rounded-[1.5rem] border border-gray-100 bg-white p-5 shadow-sm transition-all duration-500 hover:border-brand-100 sm:rounded-[2.5rem] sm:p-8 sm:hover:-translate-y-2 sm:hover:shadow-2xl"
                                     >
-                                        <div className="flex items-center justify-between mb-6">
-                                            <div className="flex items-center gap-4">
-                                                <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 font-black text-xl border border-brand-100 shadow-inner group-hover:bg-brand-600 group-hover:text-white transition-colors">
+                                        <div className="mb-4 flex items-center justify-between sm:mb-6">
+                                            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-brand-100 bg-brand-50 text-lg font-black text-brand-600 shadow-inner transition-colors group-hover:bg-brand-600 group-hover:text-white sm:h-12 sm:w-12 sm:text-xl">
                                                     {pointer.pointerNo}
                                                 </div>
-                                                <h3 className="font-black text-gray-900 text-lg leading-tight uppercase tracking-tight">
+                                                <h3 className="text-sm font-black uppercase leading-tight tracking-tight text-gray-900 sm:text-lg">
                                                     {pointerNames[pointer.pointerNo]}
                                                 </h3>
                                             </div>
                                         </div>
 
-                                        <p className="text-sm text-gray-400 font-bold mb-8 leading-relaxed uppercase tracking-wide">
+                                        <p className="mb-6 text-xs font-bold uppercase leading-relaxed tracking-wide text-gray-400 sm:mb-8 sm:text-sm">
                                             {pointerDescriptions[pointer.pointerNo]}
                                         </p>
 
@@ -566,11 +569,11 @@ function IvyExpertDashboard() {
                                         )}
 
                                         <div className="mt-auto">
-                                            <div className="flex items-baseline justify-between mb-4">
-                                                <span className="text-5xl font-black text-gray-900 tracking-tighter">
+                                            <div className="mb-4 flex items-baseline justify-between">
+                                                <span className="text-3xl font-black tracking-tighter text-gray-900 sm:text-5xl">
                                                     {displayScore.toFixed(1)}
                                                 </span>
-                                                <span className="text-sm font-black text-gray-300 uppercase italic">
+                                                <span className="text-xs font-black uppercase italic text-gray-300 sm:text-sm">
                                                     Target: {pointer.maxScore}
                                                 </span>
                                             </div>
@@ -597,17 +600,17 @@ function IvyExpertDashboard() {
                         </div>
 
                         {/* Info Panel */}
-                        <div className="mt-20 bg-gray-900 rounded-[3rem] p-12 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-96 h-96 bg-brand-600 rounded-full blur-[120px] opacity-20 translate-x-1/2 -translate-y-1/2"></div>
-                            <div className="relative z-10 flex flex-col md:flex-row items-center gap-12 text-center md:text-left">
-                                <div className="flex-shrink-0 w-20 h-20 bg-white/10 rounded-[2rem] flex items-center justify-center backdrop-blur-xl border border-white/20">
-                                    <svg className="h-10 w-10 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <div className="relative mt-10 overflow-hidden rounded-[2rem] bg-gray-900 p-6 group sm:mt-16 sm:rounded-[3rem] sm:p-12 md:mt-20">
+                            <div className="absolute top-0 right-0 h-64 w-64 translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-600 opacity-20 blur-[120px] sm:h-96 sm:w-96"></div>
+                            <div className="relative z-10 flex flex-col items-center gap-6 text-center sm:gap-12 md:flex-row md:text-left">
+                                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[1.5rem] border border-white/20 bg-white/10 backdrop-blur-xl sm:h-20 sm:w-20 sm:rounded-[2rem]">
+                                    <svg className="h-8 w-8 text-brand-400 sm:h-10 sm:w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Understanding Student Profile</h4>
-                                    <p className="text-brand-200/60 font-medium leading-relaxed max-w-3xl">
+                                    <h4 className="mb-2 text-lg font-black uppercase tracking-tight text-white sm:text-2xl">Understanding Student Profile</h4>
+                                    <p className="max-w-3xl text-sm font-medium leading-relaxed text-brand-200/60 sm:text-base">
                                         Each pointer follows the Ivy League evaluation matrix scaled from 0-10. Scores are manually verified based on shared evidences.
                                     </p>
                                 </div>
@@ -663,53 +666,61 @@ function IvyExpertDashboard() {
 
     return (
         <>
-            <div className="py-8 px-6 lg:px-8">
-                <div className="max-w-7xl mx-auto">
+            <div className="px-4 py-6 pb-24 sm:px-6 sm:py-8 md:px-8 md:pb-8">
+                <div className="mx-auto max-w-7xl">
                     {/* Header */}
-                    <div className="mb-6 flex items-start justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900 mb-1">Ivy Expert Dashboard</h1>
-                            <p className="text-gray-600 text-sm">Manage your assigned Ivy League candidates and students</p>
+                    <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0">
+                            <h1 className="mb-1 text-xl font-bold text-gray-900 sm:text-2xl">Ivy Expert Dashboard</h1>
+                            <p className="text-sm text-gray-600">Manage your assigned Ivy League candidates and students</p>
                         </div>
-                        {(() => { const t = new Date(); const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000); return (<div className="text-right"><p className="text-3xl font-extrabold text-gray-900">Day {d}</p><p className="text-sm text-gray-500">of {t.getFullYear()}</p></div>); })()}
-
+                        {(() => {
+                            const t = new Date();
+                            const d = Math.floor((t.getTime() - new Date(t.getFullYear(), 0, 0).getTime()) / 86400000);
+                            return (
+                                <div className="shrink-0 text-left sm:text-right">
+                                    <p className="text-2xl font-extrabold text-gray-900 sm:text-3xl">Day {d}</p>
+                                    <p className="text-xs text-gray-500 sm:text-sm">of {t.getFullYear()}</p>
+                                </div>
+                            );
+                        })()}
                     </div>
                     {/* Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="mb-6 grid grid-cols-2 gap-3 sm:mb-8 sm:gap-6 md:grid-cols-3">
 
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push('/ivy-league/ivy-expert/candidates')}>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600 mb-1">Ivy Candidates</p>
-                                    <p className="text-3xl font-bold text-gray-900">{myCandidates.length}</p>
+                        <div className="col-span-2 cursor-pointer rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:col-span-1 sm:p-6" onClick={() => router.push('/ivy-league/ivy-expert/candidates')}>
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="mb-1 text-xs text-gray-600 sm:text-sm">Ivy Candidates</p>
+                                    <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{myCandidates.length}</p>
                                 </div>
-                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-amber-100 text-amber-600">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600 sm:h-12 sm:w-12">
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                     </svg>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push('/ivy-league/ivy-expert/students')}>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600 mb-1">Ivy Students</p>
-                                    <p className="text-3xl font-bold text-gray-900">{myStudents.length}</p>
+                        <div className="col-span-2 cursor-pointer rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md sm:col-span-1 sm:p-6" onClick={() => router.push('/ivy-league/ivy-expert/students')}>
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="mb-1 text-xs text-gray-600 sm:text-sm">Ivy Students</p>
+                                    <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{myStudents.length}</p>
                                 </div>
-                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-green-100 text-green-600">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-600 sm:h-12 sm:w-12">
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600 mb-1">Upcoming Meetings</p>
-                                    <p className="text-3xl font-bold text-gray-900">{teamMeets.filter(t => t.status === TEAMMEET_STATUS.CONFIRMED || t.status === TEAMMEET_STATUS.PENDING_CONFIRMATION).length}</p>
+                        <div className="col-span-2 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:col-span-1 sm:p-6">
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                    <p className="mb-1 text-xs text-gray-600 sm:text-sm">Upcoming Meetings</p>
+                                    <p className="text-2xl font-bold text-gray-900 sm:text-3xl">{teamMeets.filter(t => t.status === TEAMMEET_STATUS.CONFIRMED || t.status === TEAMMEET_STATUS.PENDING_CONFIRMATION).length}</p>
                                 </div>
-                                <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-indigo-100 text-indigo-600">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 sm:h-12 sm:w-12">
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>

@@ -7,6 +7,7 @@ import { ErrorHighlightedText } from '@/components/ErrorHighlightedText';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { fileApi } from '@/lib/useBlobUrl';
 import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
+import { IvyPointerPageShell, IvyPointerPageHeader } from '@/components/IvyPointerPageChrome';
 import {
   ivyPointer5ResponseGridClass,
   ivyPointer5ResponseMainClass,
@@ -227,24 +228,12 @@ function IvyExpertPointer5Content() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6 md:p-12">
-            <div className="max-w-6xl mx-auto">
-                {/* Header */}
-                <header className="mb-8 flex justify-between items-start">
-                    <div>
-                        <h1 className="text-5xl font-black text-gray-900 tracking-tighter mb-4">
-                            POINTER 5: AUTHENTIC & REFLECTIVE STORYTELLING
-                        </h1>
-                    </div>
-
-                    {/* Pointer 5 Score Card */}
-                    {/* {pointer5Score !== null && pointer5Score !== undefined && (
-                        <div className="bg-white p-10 rounded-[3rem] shadow-2xl border-4 border-brand-50 flex flex-col items-center justify-center text-center scale-110 md:mr-10">
-                            <span className="text-[10px] font-black tracking-[0.3em] text-gray-400 uppercase mb-2">Current Mean Score</span>
-                            <div className="text-7xl font-black text-brand-600 leading-none">{typeof pointer5Score === 'number' ? pointer5Score.toFixed(2) : '0.00'}</div>
-                        </div>
-                    )} */}
-                </header>
+        <IvyPointerPageShell>
+                <IvyPointerPageHeader
+                    title="POINTER 5: AUTHENTIC & REFLECTIVE STORYTELLING"
+                    showScore={pointer5Score !== null && pointer5Score !== undefined}
+                    score={pointer5Score}
+                />
 
                 {/* Ivy League Applicant Info Panel */}
                 <IvyLeagueApplicantInfoPanel pointerNo={5} />
@@ -496,8 +485,7 @@ function IvyExpertPointer5Content() {
                         ))}
                     </div>
                 )}
-            </div>
-        </div>
+        </IvyPointerPageShell>
     );
 }
 

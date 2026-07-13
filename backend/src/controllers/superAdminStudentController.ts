@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import Student from '../models/Student';
@@ -292,7 +293,15 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
     const userId = req.user?.userId;
     const user = await User.findById(userId);
 
-    const student = await Student.findById(studentId)
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid student ID',
+      });
+    }
+
+    const studentPopulate = (id: string) =>
+      Student.findById(id)
       .populate('userId', 'firstName middleName lastName email role profilePicture isVerified isActive createdAt')
       .populate({
         path: 'adminId',
@@ -324,6 +333,42 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
       })
       .lean()
       .exec();
+
+    let student = await studentPopulate(studentId);
+    if (!student) {
+      student = await Student.findOne({ userId: studentId })
+        .populate('userId', 'firstName middleName lastName email role profilePicture isVerified isActive createdAt')
+        .populate({
+          path: 'adminId',
+          populate: {
+            path: 'userId',
+            select: 'firstName middleName lastName email'
+          }
+        })
+        .populate({
+          path: 'counselorId',
+          populate: {
+            path: 'userId',
+            select: 'firstName middleName lastName email'
+          }
+        })
+        .populate({
+          path: 'referrerId',
+          populate: {
+            path: 'userId',
+            select: 'firstName middleName lastName'
+          }
+        })
+        .populate({
+          path: 'advisorId',
+          populate: {
+            path: 'userId',
+            select: 'firstName middleName lastName email'
+          }
+        })
+        .lean()
+        .exec();
+    }
 
     if (!student) {
       return res.status(404).json({
@@ -472,7 +517,7 @@ export const getStudentDetails = async (req: AuthRequest, res: Response): Promis
     }
 
     // Get approved transfer's interestedServices
-    const approvedTransfer = await StudentTransfer.findOne({ studentId, status: 'APPROVED' }).lean();
+    const approvedTransfer = await StudentTransfer.findOne({ studentId: student._id, status: 'APPROVED' }).lean();
     const transferInterestedServices: string[] = approvedTransfer?.interestedServices || [];
 
     return res.status(200).json({

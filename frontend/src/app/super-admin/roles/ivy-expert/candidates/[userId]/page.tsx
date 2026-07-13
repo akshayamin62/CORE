@@ -11,6 +11,11 @@ import axios from 'axios';
 import AuthImage from '@/components/AuthImage';
 import MeetingDurationOptions from '@/components/MeetingDurationOptions';
 import {
+  ivyStudentReportQuestionsScrollClass,
+  ivyStudentReportSectionQuestionsScrollClass,
+  ivyStudentReportMobileScrollHintClass,
+} from '@/components/studentDetailResponsive';
+import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell,
   PieChart, Pie,
@@ -888,10 +893,13 @@ export default function CandidateDetailPage() {
                       {testResult.sections[activeSectionIdx]?.status === 'submitted' &&
                        testResult.sections[activeSectionIdx].questions.length > 0 && (
                         <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
-                          <h3 className="mb-3 text-base font-bold text-gray-900 break-words sm:mb-4 sm:text-lg">
+                          <h3 className="mb-2 text-base font-bold text-gray-900 break-words sm:mb-4 sm:text-lg">
                             {SECTION_ICONS[activeSectionIdx]} {testResult.sections[activeSectionIdx].sectionName} — Questions
                           </h3>
-                          <div className="space-y-5">
+                          <p className={ivyStudentReportMobileScrollHintClass}>
+                            Scroll to view all questions
+                          </p>
+                          <div className={`space-y-5 ${ivyStudentReportQuestionsScrollClass}`}>
                             {testResult.sections[activeSectionIdx].questions.map((q) => (
                               <div key={q.questionNumber} className="border border-gray-200 rounded-lg overflow-hidden">
                                 {/* Question Header */}
@@ -1263,8 +1271,7 @@ export default function CandidateDetailPage() {
                             </div>
                           </div>
 
-                          {/* Questions */}
-                          <div className="divide-y divide-gray-100">
+                          <div className={ivyStudentReportSectionQuestionsScrollClass}>
                             {section.questions.map((q, qIdx) => (
                               <div key={qIdx} className="p-3 sm:p-5">
                                 <div className="flex items-start gap-4">
@@ -1607,8 +1614,7 @@ export default function CandidateDetailPage() {
                             </div>
                           </div>
 
-                          {/* Questions */}
-                          <div className="divide-y divide-gray-100">
+                          <div className={ivyStudentReportSectionQuestionsScrollClass}>
                             {section.questions.map((q, qIdx) => (
                               <div key={qIdx} className="p-3 sm:p-5">
                                 <div className="flex items-start gap-4">

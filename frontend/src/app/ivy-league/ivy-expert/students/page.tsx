@@ -2,8 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
-import { IVY_API_URL } from '@/lib/ivyApi';
+import ivyApi from '@/lib/ivyApi';
 import AuthImage from '@/components/AuthImage';
 import PageStatCard from '@/components/PageStatCard';
 import ListPageFilters from '@/components/ListPageFilters';
@@ -66,11 +65,21 @@ function IvyStudentsContent() {
     const fetchStudents = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`${IVY_API_URL}/ivy-expert-candidates/my-ivy-students`);
+        setError(null);
+        const params = new URLSearchParams(window.location.search);
+        const ivyExpertId = params.get('ivyExpertId');
+        const res = await ivyApi.get('/ivy-expert-candidates/my-ivy-students', {
+          params: ivyExpertId ? { ivyExpertId } : undefined,
+        });
         if (res.data.success) setMyStudents(res.data.students);
       } catch (err: any) {
         console.error('Error fetching students:', err);
-        setError('Failed to load students');
+        const message =
+          err.response?.data?.message ||
+          (err.response?.status === 403
+            ? 'You do not have permission to view Ivy students.'
+            : 'Failed to load students');
+        setError(message);
       } finally {
         setLoading(false);
       }

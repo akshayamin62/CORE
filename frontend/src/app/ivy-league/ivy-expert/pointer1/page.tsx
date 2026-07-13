@@ -6,6 +6,7 @@ import axios from 'axios';
 import Link from 'next/link';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import IvyLeagueApplicantInfoPanel from '@/components/IvyLeagueApplicantInfoPanel';
+import { IvyPointerPageShell, IvyPointerPageHeader } from '@/components/IvyPointerPageChrome';
 import AuthImage from '@/components/AuthImage';
 import { useBlobUrl, fetchBlobUrl } from '@/lib/useBlobUrl';
 
@@ -503,32 +504,21 @@ function IvyExpertPointer1Content() {
     if (loading) return <div className="p-12 text-center text-brand-400 font-black animate-pulse">Loading...</div>;
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6 md:p-12 font-sans tracking-tight">
-            <div className="max-w-6xl mx-auto">
-                <div className="mb-12 flex justify-between items-start">
-                    <div>
-                        <h1 className="text-5xl font-black text-gray-900 tracking-tighter mb-4">
-                            POINTER 1: ACADEMIC EXCELLENCE
-                        </h1>
-                    </div>
-
-                    {/* Academic Excellence Score Card */}
-                    {/* {academicScore && (
-                        <div className="bg-white p-10 rounded-[3rem] shadow-2xl border-4 border-brand-50 flex flex-col items-center justify-center text-center scale-110 md:mr-10">
-                            <span className="text-[10px] font-black tracking-[0.3em] text-gray-400 uppercase mb-2">Academic Excellence Score</span>
-                            <div className="text-7xl font-black text-brand-600 leading-none">{academicScore.finalScore.toFixed(2)}</div>
-                        </div>
-                    )} */}
-                </div>
+        <IvyPointerPageShell>
+            <IvyPointerPageHeader
+                title="POINTER 1: ACADEMIC EXCELLENCE"
+                showScore={Boolean(academicScore)}
+                score={academicScore?.finalScore}
+            />
 
                 {/* Ivy League Applicant Info Panel */}
                 <IvyLeagueApplicantInfoPanel pointerNo={1} />
 
                 {/* Tabs */}
-                <div className="flex gap-2 mb-8 border-b border-gray-200">
+                <div className="mb-8 flex gap-2 border-b border-gray-200 max-md:mb-4">
                     <button
                         onClick={() => setActiveTab('formal')}
-                        className={`px-8 py-4 font-bold text-sm transition-all ${
+                        className={`px-8 py-4 text-sm font-bold transition-all max-md:px-4 max-md:py-2 max-md:text-xs ${
                             activeTab === 'formal'
                                 ? 'text-brand-600 border-b-2 border-brand-600'
                                 : 'text-gray-400 hover:text-gray-600'
@@ -538,7 +528,7 @@ function IvyExpertPointer1Content() {
                     </button>
                     <button
                         onClick={() => setActiveTab('informal')}
-                        className={`px-8 py-4 font-bold text-sm transition-all ${
+                        className={`px-8 py-4 text-sm font-bold transition-all max-md:px-4 max-md:py-2 max-md:text-xs ${
                             activeTab === 'informal'
                                 ? 'text-brand-600 border-b-2 border-brand-600'
                                 : 'text-gray-400 hover:text-gray-600'
@@ -1020,8 +1010,7 @@ function IvyExpertPointer1Content() {
                             </div>
                         )}
                 </div>
-            </div>
-        </div>
+        </IvyPointerPageShell>
     );
 }
 

@@ -102,7 +102,28 @@ export const ivyPointerReadOnlyBannerClass =
   'mb-4 flex items-center gap-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 max-md:mb-2 md:rounded-2xl md:border-2 md:p-4';
 
 export const ivyPointerConversationOverlayClass =
-  'max-md:fixed max-md:inset-x-0 max-md:top-[calc(5rem+env(safe-area-inset-top,0px))] max-md:bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px))] max-md:z-40 max-md:flex max-md:w-full max-md:flex-col max-md:bg-white';
+  'max-md:fixed max-md:inset-x-0 max-md:top-[calc(4rem+env(safe-area-inset-top,0px))] max-md:bottom-0 max-md:z-[55] max-md:flex max-md:min-h-0 max-md:w-full max-md:flex-col max-md:overflow-hidden max-md:bg-white max-md:pb-[max(0.5rem,env(safe-area-inset-bottom))]';
+
+export const ivyPointerConversationShellClass =
+  'flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden bg-white';
+
+export const ivyPointerConversationGridClass =
+  'grid h-full min-h-0 w-full grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden';
+
+export const ivyPointerConversationMessagesClass =
+  'min-h-0 space-y-4 overflow-y-auto bg-gray-50 px-6 py-4 max-md:px-3 max-md:py-2';
+
+export const ivyPointerConversationInputClass =
+  'shrink-0 border-t border-gray-200 bg-white px-6 py-4 shadow-[0_-4px_12px_rgba(15,23,42,0.06)] max-md:px-3 max-md:py-2';
+
+export const ivyPointerConversationTabsClass =
+  'mb-3 flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] max-md:mb-2 max-md:flex-nowrap max-md:gap-1.5 [&::-webkit-scrollbar]:hidden';
+
+export const ivyPointerConversationTabBtnClass =
+  'shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-all max-md:px-2.5 max-md:py-1 max-md:text-[11px] md:px-4 md:py-2 md:text-sm';
+
+export const ivyPointerConversationComposerClass =
+  'flex items-end gap-2 max-md:gap-1.5 md:gap-3';
 
 export const ivyPointerConversationHeaderClass =
   'shrink-0 border-b border-gray-200 bg-white';
@@ -154,6 +175,86 @@ export const ivyPointerActivityTitleClass =
 
 export const ivyPointerActivityWeightageBadgeClass =
   'shrink-0 justify-self-end rounded-lg border-2 border-orange-400 bg-gradient-to-r from-orange-100 to-amber-100 px-2 py-1 max-md:px-1.5 max-md:py-0.5';
+
+/** Activities pages — shell, tabs, deadline countdown, evaluate cards (student + ivy-expert) */
+export const ivyPointerActivitiesShellClass =
+  'mx-auto max-w-6xl rounded-lg bg-white p-8 shadow-md max-md:rounded-xl max-md:p-3';
+
+export const ivyPointerActivitiesOuterPadClass =
+  'px-4 py-12 sm:px-6 lg:px-8 max-md:px-3 max-md:py-4 max-md:pb-24';
+
+export const ivyPointerActivitiesPageTitleClass =
+  'flex items-center gap-3 text-2xl font-bold text-gray-900 max-md:text-base max-md:leading-snug';
+
+export const ivyPointerActivitiesTabsClass =
+  'mb-6 flex space-x-4 overflow-x-auto border-b border-gray-200 scrollbar-none max-md:mb-4 max-md:space-x-2';
+
+export const ivyPointerActivitiesTabBtnClass =
+  'shrink-0 px-4 py-2 font-medium max-md:px-3 max-md:py-1.5 max-md:text-sm';
+
+export const ivyPointerAssignedActivityCardClass =
+  'rounded-lg border border-brand-500 bg-brand-50 p-4 transition-all max-md:p-3';
+
+export const ivyPointerActivityMetaRowClass =
+  'mt-2 flex flex-col gap-2 text-sm max-md:gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4';
+
+export const ivyPointerActivityDeadlineTextClass =
+  'min-w-0 break-words text-gray-600 max-md:text-xs';
+
+export const ivyPointerActivityEvaluateTitleRowClass =
+  'mb-2 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center';
+
+export const ivyPointerActivityProgressTrackClass =
+  'flex w-full min-w-0 items-center gap-2 sm:w-auto';
+
+export const ivyPointerActivityProgressBarClass =
+  'h-2.5 min-w-[72px] flex-1 overflow-hidden rounded-full bg-gray-200 sm:w-32 sm:flex-none';
+
+export const ivyPointerDeadlinePanelClass =
+  'mb-4 rounded-lg border border-brand-200 bg-brand-50 p-4 max-md:p-3';
+
+export const ivyPointerCountdownBlockClass =
+  'flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3';
+
+export const ivyPointerCountdownRowClass =
+  'grid w-full grid-cols-4 gap-1.5 max-[380px]:gap-1 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:gap-2';
+
+export const ivyPointerCountdownUnitClass =
+  'flex min-w-0 flex-col items-center rounded-lg border border-brand-300 bg-brand-100 px-1.5 py-1.5 sm:min-w-[48px] sm:px-3';
+
+export const ivyPointerCountdownValueClass =
+  'text-base font-black leading-none text-brand-700 sm:text-lg';
+
+export const ivyPointerDeadlineUpdateRowClass =
+  'mt-3 flex flex-col gap-2 border-t border-brand-200 pt-3 sm:flex-row sm:items-center sm:gap-3';
+
+export const ivyPointerDeadlineInputClass =
+  'w-full min-w-0 flex-1 rounded-lg border border-brand-300 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-brand-500 focus:ring-2 focus:ring-brand-500 sm:py-1.5';
+
+export const ivyPointerDeadlineUpdateBtnClass =
+  'w-full shrink-0 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-3 sm:py-1.5 sm:text-xs';
+
+export const ivyPointerActivityTaskRowClass =
+  'relative flex cursor-pointer flex-col gap-2 rounded bg-gray-50 p-2 transition-colors hover:bg-gray-100 sm:flex-row sm:items-start';
+
+export const ivyPointerActivityTaskSelectClass = 'w-full shrink-0 sm:w-auto';
+
+export const ivyPointerOverdueRibbonClass =
+  'pointer-events-none absolute left-0 top-0 z-10 hidden h-28 w-28 overflow-hidden md:block';
+
+export const ivyPointerOverdueBadgeClass =
+  'mb-2 inline-block rounded bg-red-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white md:hidden';
+
+export const ivyPointerRefreshRowClass = 'flex justify-end max-md:justify-stretch';
+
+export const ivyPointerRefreshBtnClass =
+  'rounded-md bg-brand-600 px-4 py-2 text-white transition-colors hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-50 max-md:w-full';
+
+export const ivyPointerSelectActivitiesBtnClass =
+  'flex w-full items-center justify-center gap-3 rounded-xl bg-brand-600 px-6 py-4 text-base font-semibold text-white shadow-sm transition-all hover:bg-brand-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 max-md:px-4 max-md:py-3 max-md:text-sm';
+
+export const ivyPointerActivityTaskChatBtnClass =
+  'inline-flex w-full shrink-0 items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-700 active:bg-brand-800 sm:w-auto md:hidden';
 
 /** Pointer 1 — subject rows and section cards (mobile stack, desktop grid) */
 export const ivyPointerSubjectRowClass =
@@ -326,6 +427,49 @@ export const activityCalendarDropdownClass =
 export const activityCalendarPopupClass =
   'absolute right-0 top-full z-50 mt-2 w-[min(420px,calc(100vw-2rem))] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl animate-fadeIn max-md:fixed max-md:inset-x-3 max-md:left-3 max-md:right-3 max-md:top-[calc(5rem+env(safe-area-inset-top,28px)+0.5rem)] max-md:bottom-[calc(5.5rem+env(safe-area-inset-bottom,0px)+0.5rem)] max-md:mt-0 max-md:flex max-md:w-auto max-md:max-w-none max-md:flex-col';
 
+/** Ivy Expert — select activities (master/detail) */
+export const ivySelectActivitiesPageClass =
+  'flex min-h-screen flex-col bg-gray-50 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-0';
+
+export const ivySelectActivitiesHeaderClass =
+  'sticky top-0 z-10 border-b border-gray-200 bg-white';
+
+export const ivySelectActivitiesHeaderInnerClass =
+  'mx-auto max-w-[1600px] px-3 py-3 sm:px-6 sm:py-4';
+
+export const ivySelectActivitiesHeaderRowClass =
+  'flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4';
+
+export const ivySelectActivitiesTitleRowClass =
+  'flex min-w-0 items-center gap-3';
+
+export const ivySelectActivitiesMainClass =
+  'mx-auto w-full max-w-[1600px] flex-1 px-3 py-4 sm:px-6 sm:py-6';
+
+export const ivySelectActivitiesSplitClass =
+  'flex flex-col gap-4 md:h-[calc(100vh-180px)] md:flex-row md:gap-6';
+
+export const ivySelectActivitiesListPanelClass =
+  'flex max-h-[min(42vh,380px)] w-full flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm md:max-h-none md:w-[380px] md:shrink-0';
+
+export const ivySelectActivitiesDetailPanelClass =
+  'flex min-w-0 flex-1 flex-col gap-4 md:gap-6';
+
+export const ivySelectActivitiesListItemTitleClass =
+  'text-sm font-semibold leading-tight text-gray-900 max-md:break-words md:truncate';
+
+export const ivySelectActivitiesSummaryRowClass =
+  'flex flex-col gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3 sm:flex-row sm:items-center sm:gap-4';
+
+export const ivySelectActivitiesSummaryFieldRowClass =
+  'flex flex-wrap items-center gap-2 sm:shrink-0';
+
+export const ivySelectActivitiesDetailTitleClass =
+  'text-xl font-bold text-gray-900 max-md:break-words sm:text-2xl';
+
+export const ivySelectActivitiesDocViewerWrapClass =
+  'max-md:max-h-[min(50vh,420px)] max-md:overflow-auto';
+
 /** Parent detail pages — compact 2-col meta on mobile */
 export const parentMetaGridClass =
   'grid grid-cols-2 gap-x-3 gap-y-3 border-t border-gray-200 pt-3 sm:grid-cols-3 sm:gap-4 sm:pt-4 lg:grid-cols-5';
@@ -366,6 +510,16 @@ export const roleListTabStatGridClass =
   'mb-4 grid grid-cols-2 gap-3 sm:mb-6 sm:gap-4';
 
 export const roleListTabRowClass = 'mb-4 flex gap-2 sm:mb-6';
+
+/** Ivy Expert student report — scrollable question lists on mobile only */
+export const ivyStudentReportQuestionsScrollClass =
+  'max-md:max-h-[min(58dvh,480px)] max-md:overflow-y-auto max-md:overscroll-contain max-md:rounded-lg max-md:border max-md:border-gray-100 max-md:bg-gray-50/40 max-md:p-1 max-md:[scrollbar-width:thin] max-md:[-webkit-overflow-scrolling:touch]';
+
+export const ivyStudentReportSectionQuestionsScrollClass =
+  'divide-y divide-gray-100 max-md:max-h-[min(42dvh,360px)] max-md:overflow-y-auto max-md:overscroll-contain max-md:[scrollbar-width:thin] max-md:[-webkit-overflow-scrolling:touch]';
+
+export const ivyStudentReportMobileScrollHintClass =
+  'mb-2 text-[11px] font-medium text-gray-400 md:hidden';
 
 export function formatSpServicePrice(priceType?: string, price?: number): string {
   if (!priceType || priceType === 'Contact for Price') return 'Contact for Price';

@@ -243,7 +243,7 @@ function StudentSidebar() {
             </div>
             )}
         </aside>
-        <MobileBottomNav items={mobileNavItems} />
+        {!isConversationOpen && <MobileBottomNav items={mobileNavItems} />}
         </>
     );
 }

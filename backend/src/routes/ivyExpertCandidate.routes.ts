@@ -14,11 +14,13 @@ import {
 
 const router = express.Router();
 
+const ivyExpertOrSuperAdmin = authorize([USER_ROLE.IVY_EXPERT, USER_ROLE.SUPER_ADMIN]);
+
 // GET /api/ivy/ivy-expert-candidates/my-candidates — Ivy Expert's assigned candidates
-router.get('/my-candidates', authorize(USER_ROLE.IVY_EXPERT), getMyIvyCandidates);
+router.get('/my-candidates', ivyExpertOrSuperAdmin, getMyIvyCandidates);
 
 // GET /api/ivy/ivy-expert-candidates/my-ivy-students — Ivy Expert's converted students
-router.get('/my-ivy-students', authorize(USER_ROLE.IVY_EXPERT), getMyIvyStudents);
+router.get('/my-ivy-students', ivyExpertOrSuperAdmin, getMyIvyStudents);
 
 // POST /api/ivy/ivy-expert-candidates/convert-to-student — Convert candidate to student
 router.post('/convert-to-student', authorize(USER_ROLE.IVY_EXPERT), ivyExpertConvertToStudent);

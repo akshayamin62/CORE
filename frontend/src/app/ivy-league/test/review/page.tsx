@@ -12,6 +12,8 @@ import {
 import {
   ivyLeagueFlowPageClass,
   ivyLeagueTestHeaderClass,
+  ivyStudentReportQuestionsScrollClass,
+  ivyStudentReportMobileScrollHintClass,
 } from '@/components/studentDetailResponsive';
 
 interface Option { label: string; text: string; }
@@ -379,7 +381,10 @@ export default function TestReviewPage() {
         </div>
 
         {/* Questions List */}
-        <div className="space-y-4">
+        <p className={ivyStudentReportMobileScrollHintClass}>
+          Scroll to view all questions
+        </p>
+        <div className={`space-y-4 ${ivyStudentReportQuestionsScrollClass}`}>
           {currentSection.questions.map((q) => {
             const isCorrect = q.isCorrect === true;
             const isIncorrect = q.isCorrect === false;

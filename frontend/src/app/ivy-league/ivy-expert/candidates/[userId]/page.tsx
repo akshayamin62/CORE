@@ -14,6 +14,9 @@ import {
   roleListTitleClass,
   roleListSubtitleClass,
   roleListBackBtnClass,
+  ivyStudentReportQuestionsScrollClass,
+  ivyStudentReportSectionQuestionsScrollClass,
+  ivyStudentReportMobileScrollHintClass,
 } from '@/components/studentDetailResponsive';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
@@ -843,10 +846,13 @@ export default function IvyExpertCandidateDetailPage() {
                       {testResult.sections[activeSectionIdx]?.status === 'submitted' &&
                        testResult.sections[activeSectionIdx].questions.length > 0 && (
                         <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm sm:p-6">
-                          <h3 className="text-lg font-bold text-gray-900 mb-4">
+                          <h3 className="mb-2 text-lg font-bold text-gray-900 sm:mb-4">
                             {SECTION_ICONS[activeSectionIdx]} {testResult.sections[activeSectionIdx].sectionName} — Questions
                           </h3>
-                          <div className="space-y-5">
+                          <p className={ivyStudentReportMobileScrollHintClass}>
+                            Scroll to view all questions
+                          </p>
+                          <div className={`space-y-5 ${ivyStudentReportQuestionsScrollClass}`}>
                             {testResult.sections[activeSectionIdx].questions.map((q) => (
                               <div key={q.questionNumber} className="border border-gray-200 rounded-lg overflow-hidden">
                                 <div className={`px-4 py-2 flex items-center justify-between text-sm font-semibold ${
@@ -1161,7 +1167,7 @@ export default function IvyExpertCandidateDetailPage() {
                               <p className="text-xs text-blue-200">{rated.length}/{scores.length} rated</p>
                             </div>
                           </div>
-                          <div className="divide-y divide-gray-100">
+                          <div className={ivyStudentReportSectionQuestionsScrollClass}>
                             {section.questions.map((q, qIdx) => (
                               <div key={qIdx} className="p-3 sm:p-5">
                                 <div className="flex items-start gap-4">
@@ -1483,7 +1489,7 @@ export default function IvyExpertCandidateDetailPage() {
                               <p className="text-xs text-blue-200">{rated.length}/{scores.length} rated</p>
                             </div>
                           </div>
-                          <div className="divide-y divide-gray-100">
+                          <div className={ivyStudentReportSectionQuestionsScrollClass}>
                             {section.questions.map((q, qIdx) => (
                               <div key={qIdx} className="p-3 sm:p-5">
                                 <div className="flex items-start gap-4">

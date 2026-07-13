@@ -25,6 +25,8 @@ import {
   registrationActionBtnClass,
 } from '@/components/studentDetailResponsive';
 
+import { IVY_API_URL } from '@/lib/ivyApi';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 interface StudentDetails {
@@ -123,9 +125,34 @@ function IvyExpertStudentDetail({ params }: { params: Promise<{ studentId: strin
   const fetchStudentDetails = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API_URL}/super-admin/students/${studentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const headers = { Authorization: `Bearer ${token}` };
+      let resolvedStudentId = studentId;
+
+      const loadStudent = async (id: string) =>
+        axios.get(`${API_URL}/super-admin/students/${id}`, { headers });
+
+      let response;
+      try {
+        response = await loadStudent(resolvedStudentId);
+      } catch (firstError: any) {
+        if (serviceId && [404, 500].includes(firstError.response?.status)) {
+          try {
+            const svcRes = await axios.get(`${IVY_API_URL}/ivy-service/${serviceId}`, { headers });
+            const docId = svcRes.data?.data?.studentId?._id;
+            if (docId && docId !== resolvedStudentId) {
+              resolvedStudentId = docId;
+              response = await loadStudent(resolvedStudentId);
+            } else {
+              throw firstError;
+            }
+          } catch {
+            throw firstError;
+          }
+        } else {
+          throw firstError;
+        }
+      }
+
       setStudent(response.data.data.student);
       const allRegs: Registration[] = response.data.data.registrations || [];
       setRegistrations(allRegs.filter((r) => r.serviceId.slug === 'ivy-league' || r.serviceId.name === 'Ivy League Admissions'));

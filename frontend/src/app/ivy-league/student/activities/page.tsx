@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { useSearchParams, useRouter } from 'next/navigation';
 import mammoth from 'mammoth';
@@ -19,10 +20,26 @@ import {
   ivyPointerActivityTitleRowClass,
   ivyPointerActivityTitleClass,
   ivyPointerActivityWeightageBadgeClass,
+  ivyPointerDeadlinePanelClass,
+  ivyPointerCountdownBlockClass,
+  ivyPointerCountdownRowClass,
+  ivyPointerCountdownUnitClass,
+  ivyPointerCountdownValueClass,
+  ivyPointerOverdueRibbonClass,
+  ivyPointerOverdueBadgeClass,
+  ivyPointerActivityTaskRowClass,
+  ivyPointerActivityTaskChatBtnClass,
   ivyPointerConversationOverlayClass,
   ivyPointerConversationHeaderClass,
   ivyPointerConversationMobileBarClass,
   ivyPointerConversationBackBtnClass,
+  ivyPointerConversationShellClass,
+  ivyPointerConversationGridClass,
+  ivyPointerConversationMessagesClass,
+  ivyPointerConversationInputClass,
+  ivyPointerConversationTabsClass,
+  ivyPointerConversationTabBtnClass,
+  ivyPointerConversationComposerClass,
 } from '@/components/studentDetailResponsive';
 import { ProtectedActivityDocumentPanel, ProtectedActivityDocumentViewer } from '@/components/ProtectedActivityDocumentViewer';
 
@@ -260,8 +277,8 @@ function ConversationWindow({
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+    <div className={ivyPointerConversationShellClass}>
+      <div className={ivyPointerConversationGridClass}>
         <div className={ivyPointerConversationHeaderClass}>
           <div className={ivyPointerConversationMobileBarClass}>
             <button type="button" onClick={onClose} className={ivyPointerConversationBackBtnClass}>
@@ -306,7 +323,7 @@ function ConversationWindow({
         </div>
 
         {/* Messages */}
-        <div ref={messagesContainerRef} className="flex-1 space-y-4 overflow-y-auto bg-gray-50 px-6 py-4 max-md:px-3 max-md:py-3">
+        <div ref={messagesContainerRef} className={ivyPointerConversationMessagesClass}>
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-gray-500">Loading conversation...</p>
@@ -492,12 +509,12 @@ function ConversationWindow({
 
         {/* Input Area */}
         {!readOnly && (
-        <div className="px-6 py-4 border-t border-gray-200 flex-shrink-0 bg-white">
+        <div className={ivyPointerConversationInputClass}>
           {/* Message Type Tabs */}
-          <div className="flex items-center gap-2 mb-3">
+          <div className={ivyPointerConversationTabsClass}>
             <button
               onClick={() => setMessageType('normal')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`${ivyPointerConversationTabBtnClass} ${
                 messageType === 'normal'
                   ? 'bg-brand-500 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -507,7 +524,7 @@ function ConversationWindow({
             </button>
             <button
               onClick={() => setMessageType('advice')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`${ivyPointerConversationTabBtnClass} ${
                 messageType === 'advice'
                   ? 'bg-brand-500 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -517,7 +534,7 @@ function ConversationWindow({
             </button>
             <button
               onClick={() => setMessageType('resource')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`${ivyPointerConversationTabBtnClass} ${
                 messageType === 'resource'
                   ? 'bg-brand-500 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -547,7 +564,7 @@ function ConversationWindow({
               </button>
             </div>
           )}
-          <div className="flex items-end gap-3">
+          <div className={ivyPointerConversationComposerClass}>
             {/* Photos/Videos Upload Button */}
             <button
               onClick={() => {
@@ -608,8 +625,8 @@ function ConversationWindow({
               }}
               placeholder="Type your message..."
               rows={1}
-              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-gray-900 bg-white resize-none overflow-y-auto"
-              style={{ minHeight: '42px', maxHeight: '120px' }}
+              className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 resize-none overflow-y-auto focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand-500 max-md:py-1.5 md:px-4 md:py-2.5"
+              style={{ minHeight: '38px', maxHeight: '120px' }}
             />
             <button
               onClick={handleSendMessage}
@@ -735,6 +752,17 @@ function ActivitiesContent() {
   const [viewingIvyExpertDocUrl, setViewingIvyExpertDocUrl] = useState<string | null>(null);
   const [selectedTask, setSelectedTask] = useState<{ activityTitle: string; task: DocumentTask; activityId: string } | null>(null);
   const [pointerScore, setPointerScore] = useState<number | null>(null);
+  const [portalMounted, setPortalMounted] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    setPortalMounted(true);
+    const mq = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsMobileViewport(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   // Real-time countdown timer
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
@@ -757,9 +785,16 @@ function ActivitiesContent() {
   // Update URL when conversation opens/closes
   const handleTaskClick = async (activityTitle: string, task: DocumentTask, activityId: string) => {
     setSelectedTask({ activityTitle, task, activityId });
-    
+
     const params = new URLSearchParams(window.location.search);
     params.set('conversationOpen', 'true');
+    params.set('taskSelectionId', activityId);
+    params.set('taskTitle', task.title);
+    if (task.page != null) {
+      params.set('taskPage', String(task.page));
+    } else {
+      params.delete('taskPage');
+    }
     router.push(`${window.location.pathname}?${params.toString()}`, { scroll: false });
   };
 
@@ -767,6 +802,9 @@ function ActivitiesContent() {
     setSelectedTask(null);
     const params = new URLSearchParams(window.location.search);
     params.delete('conversationOpen');
+    params.delete('taskSelectionId');
+    params.delete('taskTitle');
+    params.delete('taskPage');
     router.push(`${window.location.pathname}?${params.toString()}`, { scroll: false });
   };
 
@@ -782,6 +820,46 @@ function ActivitiesContent() {
       setSelectedTask(null);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (searchParams.get('conversationOpen') !== 'true' || selectedTask) {
+      return;
+    }
+
+    const taskSelectionId = searchParams.get('taskSelectionId');
+    const taskTitle = searchParams.get('taskTitle');
+    if (!taskSelectionId || !taskTitle) {
+      return;
+    }
+
+    const taskPageParam = searchParams.get('taskPage');
+    const taskPage = taskPageParam ? Number(taskPageParam) : undefined;
+
+    const activity = activities.find((act) => act.selectionId === taskSelectionId);
+    const activityTitle = activity?.title || 'Activity';
+
+    let matchedTask: DocumentTask | undefined;
+    if (activity?.ivyExpertDocuments) {
+      for (const doc of activity.ivyExpertDocuments) {
+        matchedTask = doc.tasks.find(
+          (t) =>
+            t.title === taskTitle &&
+            (taskPageParam == null || t.page === taskPage)
+        );
+        if (matchedTask) break;
+      }
+    }
+
+    setSelectedTask({
+      activityTitle,
+      task: matchedTask || {
+        title: taskTitle,
+        page: taskPage,
+        status: 'not-started',
+      },
+      activityId: taskSelectionId,
+    });
+  }, [searchParams, activities, selectedTask]);
 
   useEffect(() => {
     if (!studentId || serviceLoading) {
@@ -1036,13 +1114,16 @@ function ActivitiesContent() {
                 key={activity.selectionId}
                 className={ivyPointerActivityCardClass}
               >
-                {/* Overdue Ribbon */}
+                {/* Overdue Ribbon — desktop corner ribbon; mobile inline badge */}
                 {isActivityOverdue && (
-                  <div className="absolute top-0 left-0 w-28 h-28 overflow-hidden z-10 pointer-events-none">
-                    <div className="absolute top-[14px] left-[-32px] w-[140px] text-center text-white text-[11px] font-extrabold uppercase tracking-wider py-1.5 bg-red-600 shadow-lg transform -rotate-45">
-                      Overdue
+                  <>
+                    <span className={ivyPointerOverdueBadgeClass}>Overdue</span>
+                    <div className={ivyPointerOverdueRibbonClass}>
+                      <div className="absolute left-[-32px] top-[14px] w-[140px] rotate-[-45deg] transform bg-red-600 py-1.5 text-center text-[11px] font-extrabold uppercase tracking-wider text-white shadow-lg">
+                        Overdue
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
                 <div className="mb-4">
                   <div className="flex flex-col gap-2 mb-2">
@@ -1106,24 +1187,24 @@ function ActivitiesContent() {
                 {activity.deadline && !activity.proofUploaded && (() => {
                   const cd = getCountdown(activity.deadline);
                   return (
-                    <div className="mb-4 p-4 bg-brand-50 border border-brand-200 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-brand-900">⏰ Deadline:</span>
+                    <div className={ivyPointerDeadlinePanelClass}>
+                      <div className={ivyPointerCountdownBlockClass}>
+                        <span className="text-sm font-bold text-brand-900 max-md:text-xs">⏰ Deadline:</span>
                         {cd.expired ? (
-                          <div className="flex items-center gap-2 px-3 py-1.5 bg-red-100 border border-red-300 rounded-lg">
-                            <span className="text-red-700 font-bold text-sm">⚠ Deadline Expired!</span>
+                          <div className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-100 px-3 py-1.5">
+                            <span className="text-sm font-bold text-red-700">⚠ Deadline Expired!</span>
                           </div>
                         ) : (
-                          <div className="flex items-center gap-2">
+                          <div className={ivyPointerCountdownRowClass}>
                             {[
                               { value: cd.days, unit: 'Days' },
                               { value: cd.hours, unit: 'Hrs' },
                               { value: cd.minutes, unit: 'Min' },
                               { value: cd.seconds, unit: 'Sec' },
                             ].map((item) => (
-                              <div key={item.unit} className="flex flex-col items-center bg-brand-100 border border-brand-300 rounded-lg px-3 py-1.5 min-w-[48px]">
-                                <span className="text-lg font-black text-brand-700 leading-none">{String(item.value).padStart(2, '0')}</span>
-                                <span className="text-[10px] font-bold text-brand-500 uppercase">{item.unit}</span>
+                              <div key={item.unit} className={ivyPointerCountdownUnitClass}>
+                                <span className={ivyPointerCountdownValueClass}>{String(item.value).padStart(2, '0')}</span>
+                                <span className="text-[10px] font-bold uppercase text-brand-500">{item.unit}</span>
                               </div>
                             ))}
                           </div>
@@ -1186,7 +1267,7 @@ function ActivitiesContent() {
                                     <div
                                       key={taskIdx}
                                       onClick={() => handleTaskClick(activity.title, task, activity.selectionId)}
-                                      className="flex items-start gap-2 p-2 rounded bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer relative"
+                                      className={ivyPointerActivityTaskRowClass}
                                     >
                                       {task.status === 'completed' && (
                                         <div className="flex-shrink-0 mt-0.5">
@@ -1195,20 +1276,33 @@ function ActivitiesContent() {
                                           </svg>
                                         </div>
                                       )}
-                                      <div className="flex-1 min-w-0">
+                                      <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2">
-                                          <p className={`text-sm ${task.status === 'completed' ? 'text-gray-500 line-through' : 'text-gray-700 font-medium'}`}>
+                                          <p className={`text-sm ${task.status === 'completed' ? 'text-gray-500 line-through' : 'font-medium text-gray-700'}`}>
                                             {task.title}
                                           </p>
                                         </div>
                                         {task.page && (
-                                          <p className="text-xs text-gray-500 mt-0.5">Page {task.page}</p>
+                                          <p className="mt-0.5 text-xs text-gray-500">Page {task.page}</p>
                                         )}
                                       </div>
-                                      <span className={`flex-shrink-0 px-2.5 py-1 text-xs font-medium ${statusBadge.bg} ${statusBadge.text} rounded-full flex items-center gap-1`}>
+                                      <span className={`hidden shrink-0 rounded-full px-2.5 py-1 text-xs font-medium sm:inline-flex sm:items-center sm:gap-1 ${statusBadge.bg} ${statusBadge.text}`}>
                                         <span>{statusBadge.icon}</span>
                                         {statusBadge.label}
                                       </span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleTaskClick(activity.title, task, activity.selectionId);
+                                        }}
+                                        className={ivyPointerActivityTaskChatBtnClass}
+                                      >
+                                        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                        </svg>
+                                        Chat
+                                      </button>
                                     </div>
                                   );
                                 })}
@@ -1382,17 +1476,37 @@ function ActivitiesContent() {
 
       {/* Conversation Window Section */}
       {selectedTask && (
-        <div className={`w-[65%] shrink-0 overflow-hidden border-l border-gray-200 ${ivyPointerConversationOverlayClass}`}>
-          <ConversationWindow
-            activityTitle={selectedTask.activityTitle}
-            task={selectedTask.task}
-            activityId={selectedTask.activityId}
-            studentIvyServiceId={studentIvyServiceId!}
-            onClose={handleCloseConversation}
-            studentId={studentId!}
-            readOnly={readOnly}
-          />
-        </div>
+        <>
+          {!isMobileViewport && (
+            <div className="h-full w-[65%] shrink-0 overflow-hidden border-l border-gray-200">
+              <ConversationWindow
+                activityTitle={selectedTask.activityTitle}
+                task={selectedTask.task}
+                activityId={selectedTask.activityId}
+                studentIvyServiceId={studentIvyServiceId!}
+                onClose={handleCloseConversation}
+                studentId={studentId!}
+                readOnly={readOnly}
+              />
+            </div>
+          )}
+          {isMobileViewport &&
+            portalMounted &&
+            createPortal(
+              <div className={ivyPointerConversationOverlayClass}>
+                <ConversationWindow
+                  activityTitle={selectedTask.activityTitle}
+                  task={selectedTask.task}
+                  activityId={selectedTask.activityId}
+                  studentIvyServiceId={studentIvyServiceId!}
+                  onClose={handleCloseConversation}
+                  studentId={studentId!}
+                  readOnly={readOnly}
+                />
+              </div>,
+              document.body
+            )}
+        </>
       )}
     </div>
   );

@@ -4,6 +4,11 @@ import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import AuthImage from '@/components/AuthImage';
 import {
+  ivyStudentReportQuestionsScrollClass,
+  ivyStudentReportSectionQuestionsScrollClass,
+  ivyStudentReportMobileScrollHintClass,
+} from '@/components/studentDetailResponsive';
+import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell,
   PieChart, Pie,
@@ -548,8 +553,11 @@ export default function IvyLeagueCandidateSection({
               {/* Question Detail */}
               {testResult.sections[activeSectionIdx]?.status === 'submitted' && testResult.sections[activeSectionIdx].questions.length > 0 && (
                 <div className="border border-gray-200 rounded-xl p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">{SECTION_ICONS[activeSectionIdx]} {testResult.sections[activeSectionIdx].sectionName} — Questions</h3>
-                  <div className="space-y-5">
+                  <h3 className="mb-2 text-lg font-bold text-gray-900 sm:mb-4">{SECTION_ICONS[activeSectionIdx]} {testResult.sections[activeSectionIdx].sectionName} — Questions</h3>
+                  <p className={ivyStudentReportMobileScrollHintClass}>
+                    Scroll to view all questions
+                  </p>
+                  <div className={`space-y-5 ${ivyStudentReportQuestionsScrollClass}`}>
                     {testResult.sections[activeSectionIdx].questions.map((q) => (
                       <div key={q.questionNumber} className="border border-gray-200 rounded-lg overflow-hidden">
                         <div className={`px-4 py-2 flex items-center justify-between text-sm font-semibold ${q.isCorrect === true ? 'bg-green-50 text-green-700' : q.isCorrect === false ? 'bg-red-50 text-red-700' : 'bg-gray-50 text-gray-600'}`}>
@@ -688,7 +696,7 @@ function renderInterviewTab(
                 <p className="text-xs text-blue-200">{rated.length}/{sScores.length} rated</p>
               </div>
             </div>
-            <div className="divide-y divide-gray-100">
+            <div className={ivyStudentReportSectionQuestionsScrollClass}>
               {section.questions.map((q, qIdx) => (
                 <div key={qIdx} className="p-5">
                   <div className="flex items-start gap-4">

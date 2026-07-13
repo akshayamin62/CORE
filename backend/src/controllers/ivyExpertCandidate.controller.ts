@@ -8,6 +8,7 @@ import User from '../models/ivy/User';
 import IvyExpert from '../models/IvyExpert';
 import Student from '../models/Student';
 import { resolveIvyExpertId } from '../utils/resolveRole';
+import { USER_ROLE } from '../types/roles';
 import { sendEmail } from '../utils/email';
 import { sendWhatsAppGeneralNotification, sendWhatsAppGeneral4LineNotification } from '../utils/whatsapp';
 
@@ -18,6 +19,31 @@ const getIvyServiceId = async () => {
   const svc = await Service.findOne({ slug: 'ivy-league' }).select('_id');
   if (svc) _ivyServiceId = svc._id;
   return _ivyServiceId;
+};
+
+type IvyExpertScope = {
+  ivyExpertId?: string;
+  allExperts: boolean;
+};
+
+/** Resolve which ivy expert's roster to load (expert self, super-admin scoped, or all). */
+const resolveIvyExpertScope = async (req: AuthRequest): Promise<IvyExpertScope> => {
+  const queryExpertId =
+    typeof req.query.ivyExpertId === 'string' && req.query.ivyExpertId.trim()
+      ? req.query.ivyExpertId.trim()
+      : undefined;
+
+  if (req.user!.role === USER_ROLE.SUPER_ADMIN) {
+    if (queryExpertId) {
+      return { ivyExpertId: queryExpertId, allExperts: false };
+    }
+    return { allExperts: true };
+  }
+
+  return {
+    ivyExpertId: await resolveIvyExpertId(req.user!.userId),
+    allExperts: false,
+  };
 };
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -109,13 +135,15 @@ export const assignExpertToCandidate = async (req: AuthRequest, res: Response): 
    ══════════════════════════════════════════════════════════════════════ */
 export const getMyIvyCandidates = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const ivyExpertId = await resolveIvyExpertId(req.user!.userId);
+    const { ivyExpertId, allExperts } = await resolveIvyExpertScope(req);
     const serviceId = await getIvyServiceId();
 
-    // Get all registrations assigned to this expert
-    const registrations = await IvyLeagueRegistration.find({
-      assignedIvyExpertId: ivyExpertId,
-    }).lean();
+    const registrationFilter: Record<string, unknown> = allExperts
+      ? { assignedIvyExpertId: { $ne: null } }
+      : { assignedIvyExpertId: ivyExpertId };
+
+    // Get all registrations assigned to this expert (or all experts for super-admin)
+    const registrations = await IvyLeagueRegistration.find(registrationFilter).lean();
 
     if (registrations.length === 0) {
       res.json({ success: true, candidates: [] });
@@ -173,7 +201,7 @@ export const getMyIvyCandidates = async (req: AuthRequest, res: Response): Promi
    ══════════════════════════════════════════════════════════════════════ */
 export const getMyIvyStudents = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const ivyExpertId = await resolveIvyExpertId(req.user!.userId);
+    const { ivyExpertId, allExperts } = await resolveIvyExpertScope(req);
     const serviceId = await getIvyServiceId();
 
     if (!serviceId) {
@@ -181,11 +209,15 @@ export const getMyIvyStudents = async (req: AuthRequest, res: Response): Promise
       return;
     }
 
+    const ssrFilter: Record<string, unknown> = { serviceId };
+    if (allExperts) {
+      ssrFilter.activeIvyExpertId = { $ne: null };
+    } else {
+      ssrFilter.activeIvyExpertId = ivyExpertId;
+    }
+
     // Base truth: SSRs where this expert is assigned
-    const ssrs = await StudentServiceRegistration.find({
-      serviceId,
-      activeIvyExpertId: ivyExpertId,
-    }).populate({
+    const ssrs = await StudentServiceRegistration.find(ssrFilter).populate({
       path: 'studentId',
       populate: { path: 'userId', select: 'firstName middleName lastName email profilePicture' },
     }).lean();

@@ -1,11 +1,54 @@
 'use client';
 
 import { useState, useEffect, Suspense, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { IVY_API_URL } from '@/lib/ivyApi';
 import { useBlobUrl, fetchBlobUrl, fileApi } from '@/lib/useBlobUrl';
 import { ProtectedActivityDocumentPanel } from '@/components/ProtectedActivityDocumentViewer';
+import {
+  ivyPointerActivityCardClass,
+  ivyPointerActivityTitleClass,
+  ivyPointerActivitiesShellClass,
+  ivyPointerActivitiesOuterPadClass,
+  ivyPointerActivitiesPageTitleClass,
+  ivyPointerActivitiesTabsClass,
+  ivyPointerActivitiesTabBtnClass,
+  ivyPointerAssignedActivityCardClass,
+  ivyPointerActivityMetaRowClass,
+  ivyPointerActivityDeadlineTextClass,
+  ivyPointerActivityEvaluateTitleRowClass,
+  ivyPointerActivityProgressTrackClass,
+  ivyPointerActivityProgressBarClass,
+  ivyPointerDeadlinePanelClass,
+  ivyPointerCountdownBlockClass,
+  ivyPointerCountdownRowClass,
+  ivyPointerCountdownUnitClass,
+  ivyPointerCountdownValueClass,
+  ivyPointerDeadlineUpdateRowClass,
+  ivyPointerDeadlineInputClass,
+  ivyPointerDeadlineUpdateBtnClass,
+  ivyPointerActivityTaskRowClass,
+  ivyPointerActivityTaskChatBtnClass,
+  ivyPointerActivityTaskSelectClass,
+  ivyPointerOverdueRibbonClass,
+  ivyPointerOverdueBadgeClass,
+  ivyPointerRefreshRowClass,
+  ivyPointerRefreshBtnClass,
+  ivyPointerSelectActivitiesBtnClass,
+  ivyPointerConversationOverlayClass,
+  ivyPointerConversationHeaderClass,
+  ivyPointerConversationMobileBarClass,
+  ivyPointerConversationBackBtnClass,
+  ivyPointerConversationShellClass,
+  ivyPointerConversationGridClass,
+  ivyPointerConversationMessagesClass,
+  ivyPointerConversationInputClass,
+  ivyPointerConversationTabsClass,
+  ivyPointerConversationTabBtnClass,
+  ivyPointerConversationComposerClass,
+} from '@/components/studentDetailResponsive';
 
 function InlineDocViewer({ url, onClose }: { url: string, onClose: () => void }) {
   return <ProtectedActivityDocumentPanel url={url} onClose={onClose} />;
@@ -175,36 +218,50 @@ function ConversationWindow({
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex-1">
-              <h2 className="text-xl font-bold text-gray-900 mb-1">{activityTitle}</h2>
-              <p className="text-sm text-gray-500">Spike in One Area</p>
-            </div>
-            <button
-              onClick={onClose}
-              className="ml-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    <div className={ivyPointerConversationShellClass}>
+      <div className={ivyPointerConversationGridClass}>
+        <div className={ivyPointerConversationHeaderClass}>
+          <div className={ivyPointerConversationMobileBarClass}>
+            <button type="button" onClick={onClose} className={ivyPointerConversationBackBtnClass}>
+              <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
+              Back
             </button>
+            <span className="min-w-0 flex-1 truncate text-xs font-semibold text-gray-600">Student Chat</span>
+            <span className="shrink-0 rounded-md bg-green-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-green-700">
+              Active
+            </span>
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span className="font-medium text-green-600">ADMIN ACTIVE</span>
+
+          <div className="px-6 py-4 max-md:px-3 max-md:py-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <h2 className="mb-1 text-xl font-bold text-gray-900 max-md:text-base max-md:leading-snug">{activityTitle}</h2>
+                <p className="text-sm text-gray-500 max-md:text-xs">Spike in One Area</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="ml-4 shrink-0 rounded-full p-2 transition-colors hover:bg-gray-100 max-md:hidden"
+              >
+                <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="mt-3 hidden items-center justify-between md:flex">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="font-medium text-green-600">ADMIN ACTIVE</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Messages */}
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-gray-50">
+        <div ref={messagesContainerRef} className={ivyPointerConversationMessagesClass}>
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-gray-500">Loading conversation...</p>
@@ -389,12 +446,12 @@ function ConversationWindow({
         </div>
 
         {/* Input Area */}
-        <div className="px-6 py-4 border-t border-gray-200 flex-shrink-0 bg-white">
+        <div className={ivyPointerConversationInputClass}>
           {/* Message Type Tabs */}
-          <div className="flex items-center gap-2 mb-3">
+          <div className={ivyPointerConversationTabsClass}>
             <button
               onClick={() => setMessageType('normal')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`${ivyPointerConversationTabBtnClass} ${
                 messageType === 'normal'
                   ? 'bg-brand-500 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -404,7 +461,7 @@ function ConversationWindow({
             </button>
             <button
               onClick={() => setMessageType('feedback')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`${ivyPointerConversationTabBtnClass} ${
                 messageType === 'feedback'
                   ? 'bg-brand-500 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -414,7 +471,7 @@ function ConversationWindow({
             </button>
             <button
               onClick={() => setMessageType('action')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`${ivyPointerConversationTabBtnClass} ${
                 messageType === 'action'
                   ? 'bg-brand-500 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -424,7 +481,7 @@ function ConversationWindow({
             </button>
             <button
               onClick={() => setMessageType('resource')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`${ivyPointerConversationTabBtnClass} ${
                 messageType === 'resource'
                   ? 'bg-brand-500 text-white shadow-md'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -454,7 +511,7 @@ function ConversationWindow({
               </button>
             </div>
           )}
-          <div className="flex items-end gap-3">
+          <div className={ivyPointerConversationComposerClass}>
             {/* Photos/Videos Upload Button */}
             <button
               onClick={() => {
@@ -515,8 +572,8 @@ function ConversationWindow({
               }}
               placeholder="Write structured feedback..."
               rows={1}
-              className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-gray-900 bg-white resize-none overflow-y-auto"
-              style={{ minHeight: '42px', maxHeight: '120px' }}
+              className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 resize-none overflow-y-auto focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand-500 max-md:py-1.5 md:px-4 md:py-2.5"
+              style={{ minHeight: '38px', maxHeight: '120px' }}
             />
             <button
               onClick={handleSendMessage}
@@ -528,7 +585,7 @@ function ConversationWindow({
               </svg>
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-2 text-center">Sending as "Advanced Ivy Expert" mode</p>
+          <p className="mt-2 hidden text-center text-xs text-gray-400 md:block">Sending as &quot;Advanced Ivy Expert&quot; mode</p>
         </div>
       </div>
 
@@ -660,6 +717,17 @@ function ActivitiesContent() {
   const [viewingDocumentForActivity, setViewingDocumentForActivity] = useState<string | null>(null); // Store activity ID
   const [selectedTask, setSelectedTask] = useState<{ activityTitle: string; task: DocumentTask; activityId: string } | null>(null);
   const [dropdownValue, setDropdownValue] = useState<string>(''); // Controlled dropdown state
+  const [portalMounted, setPortalMounted] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    setPortalMounted(true);
+    const mq = window.matchMedia('(max-width: 767px)');
+    const update = () => setIsMobileViewport(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   // Real-time countdown timer
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
@@ -715,6 +783,13 @@ function ActivitiesContent() {
     
     const params = new URLSearchParams(window.location.search);
     params.set('conversationOpen', 'true');
+    params.set('taskSelectionId', activityId);
+    params.set('taskTitle', task.title);
+    if (task.page != null) {
+      params.set('taskPage', String(task.page));
+    } else {
+      params.delete('taskPage');
+    }
     router.push(`${window.location.pathname}?${params.toString()}`, { scroll: false });
   };
 
@@ -722,8 +797,57 @@ function ActivitiesContent() {
     setSelectedTask(null);
     const params = new URLSearchParams(window.location.search);
     params.delete('conversationOpen');
+    params.delete('taskSelectionId');
+    params.delete('taskTitle');
+    params.delete('taskPage');
     router.push(`${window.location.pathname}?${params.toString()}`, { scroll: false });
   };
+
+  useEffect(() => {
+    if (searchParams.get('conversationOpen') !== 'true') {
+      setSelectedTask(null);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (searchParams.get('conversationOpen') !== 'true' || selectedTask) {
+      return;
+    }
+
+    const taskSelectionId = searchParams.get('taskSelectionId');
+    const taskTitle = searchParams.get('taskTitle');
+    if (!taskSelectionId || !taskTitle) {
+      return;
+    }
+
+    const taskPageParam = searchParams.get('taskPage');
+    const taskPage = taskPageParam ? Number(taskPageParam) : undefined;
+
+    const activity = studentActivities.find((act) => act.selectionId === taskSelectionId);
+    const activityTitle = activity?.title || 'Activity';
+
+    let matchedTask: DocumentTask | undefined;
+    if (activity?.ivyExpertDocuments) {
+      for (const doc of activity.ivyExpertDocuments) {
+        matchedTask = doc.tasks.find(
+          (t) =>
+            t.title === taskTitle &&
+            (taskPageParam == null || t.page === taskPage)
+        );
+        if (matchedTask) break;
+      }
+    }
+
+    setSelectedTask({
+      activityTitle,
+      task: matchedTask || {
+        title: taskTitle,
+        page: taskPage,
+        status: 'not-started',
+      },
+      activityId: taskSelectionId,
+    });
+  }, [searchParams, studentActivities, selectedTask]);
 
   const fetchStudentActivities = async () => {
     const studentId = searchParams.get('studentId');
@@ -1124,27 +1248,29 @@ function ActivitiesContent() {
   const availableActivities = adminActivities.filter(a => !alreadyAssignedIds.has(a._id) || selectedActivities.has(a._id));
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50 max-md:h-auto max-md:flex-col max-md:overflow-visible">
       {/* Main Content - Tasks */}
       <div 
-        className={`flex-1 overflow-y-auto transition-all duration-300 ${selectedTask ? 'w-[35%]' : 'w-full'}`}
+        className={`flex-1 overflow-y-auto transition-all duration-300 max-md:overflow-visible ${
+          selectedTask ? 'w-[35%] max-md:hidden' : 'w-full'
+        }`}
         style={{ maxWidth: selectedTask ? '35%' : '100%' }}
       >
-        <div className="py-12 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-6xl mx-auto bg-white rounded-lg shadow-md p-8">
+        <div className={ivyPointerActivitiesOuterPadClass}>
+          <div className={ivyPointerActivitiesShellClass}>
         {/* <h1 className="text-2xl font-bold text-gray-900 mb-6">Activity Management</h1> */}
 
-        <div className="mb-8 pb-6 border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+        <div className="mb-8 border-gray-100 pb-6 max-md:mb-4 max-md:pb-3">
+          <h2 className={ivyPointerActivitiesPageTitleClass}>
           {getPointerLabel(selectedPointer as number)}
           </h2>
         </div>
 
         {/* Tabs */}
-        <div className="flex space-x-4 mb-6 border-b border-gray-200">
+        <div className={ivyPointerActivitiesTabsClass}>
           <button
             onClick={() => setActiveTab('suggestions')}
-            className={`px-4 py-2 font-medium ${activeTab === 'suggestions'
+            className={`${ivyPointerActivitiesTabBtnClass} ${activeTab === 'suggestions'
               ? 'text-brand-600 border-b-2 border-brand-600'
               : 'text-gray-600 hover:text-gray-900'
               }`}
@@ -1153,7 +1279,7 @@ function ActivitiesContent() {
           </button>
           <button
             onClick={() => setActiveTab('evaluate')}
-            className={`px-4 py-2 font-medium ${activeTab === 'evaluate'
+            className={`${ivyPointerActivitiesTabBtnClass} ${activeTab === 'evaluate'
               ? 'text-brand-600 border-b-2 border-brand-600'
               : 'text-gray-600 hover:text-gray-900'
               }`}
@@ -1188,7 +1314,7 @@ function ActivitiesContent() {
                   params.set('pointerNo', String(selectedPointer));
                   router.push(`/ivy-league/ivy-expert/select-activities?${params.toString()}`);
                 }}
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-brand-600 text-white rounded-xl hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 transition-all shadow-sm hover:shadow-md font-semibold text-base"
+                className={ivyPointerSelectActivitiesBtnClass}
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -1211,36 +1337,36 @@ function ActivitiesContent() {
                     .map((activity) => (
                     <div
                       key={activity.selectionId}
-                      className="border border-brand-500 bg-brand-50 rounded-lg p-4 transition-all"
+                      className={ivyPointerAssignedActivityCardClass}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                        <div className="min-w-0 flex-1">
+                          <h3 className={`${ivyPointerActivityTitleClass} mb-1`}>
                             {activity.title}
                           </h3>
-                          <p className="text-gray-700 mb-3 whitespace-pre-wrap text-sm">
+                          <p className="mb-3 whitespace-pre-wrap text-sm text-gray-700 max-md:break-words">
                             {activity.description}
                           </p>
                           {activity.tags && activity.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-2">
+                            <div className="mb-2 flex flex-wrap gap-2">
                               {activity.tags.map((tag, tagIndex) => (
                                 <span
                                   key={tagIndex}
-                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                                  className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800"
                                 >
                                   {tag}
                                 </span>
                               ))}
                             </div>
                           )}
-                          <div className="flex items-center gap-4 mt-2 text-sm">
+                          <div className={ivyPointerActivityMetaRowClass}>
                             {activity.weightage !== undefined && (
-                              <span className="font-semibold text-brand-700 bg-brand-100 px-2 py-0.5 rounded">
+                              <span className="w-fit rounded bg-brand-100 px-2 py-0.5 font-semibold text-brand-700">
                                 Weightage: {activity.weightage}%
                               </span>
                             )}
                             {activity.deadline && (
-                              <span className="text-gray-600">
+                              <span className={ivyPointerActivityDeadlineTextClass}>
                                 ⏰ Deadline: {new Date(activity.deadline).toLocaleString()}
                               </span>
                             )}
@@ -1269,11 +1395,11 @@ function ActivitiesContent() {
               </h2>
             </div> */}
 
-            <div className="flex justify-end">
+            <div className={ivyPointerRefreshRowClass}>
               <button
                 onClick={fetchStudentActivities}
                 disabled={loadingActivities}
-                className="px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className={ivyPointerRefreshBtnClass}
               >
                 {loadingActivities ? 'Refreshing...' : 'Refresh Activities'}
               </button>
@@ -1296,22 +1422,25 @@ function ActivitiesContent() {
                     return (
                     <div
                       key={activity.selectionId}
-                      className="relative border border-gray-200 rounded-lg p-6 overflow-hidden"
+                      className={ivyPointerActivityCardClass}
                     >
-                      {/* Overdue Ribbon */}
+                      {/* Overdue Ribbon — desktop corner ribbon; mobile inline badge */}
                       {isActivityOverdue && (
-                        <div className="absolute top-0 left-0 w-28 h-28 overflow-hidden z-10 pointer-events-none">
-                          <div className="absolute top-[14px] left-[-32px] w-[140px] text-center text-white text-[11px] font-extrabold uppercase tracking-wider py-1.5 bg-red-600 shadow-lg transform -rotate-45">
-                            Overdue
+                        <>
+                          <span className={ivyPointerOverdueBadgeClass}>Overdue</span>
+                          <div className={ivyPointerOverdueRibbonClass}>
+                            <div className="absolute left-[-32px] top-[14px] w-[140px] rotate-[-45deg] transform bg-red-600 py-1.5 text-center text-[11px] font-extrabold uppercase tracking-wider text-white shadow-lg">
+                              Overdue
+                            </div>
                           </div>
-                        </div>
+                        </>
                       )}
                       <div className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900">{activity.title}</h3>
+                        <div className={ivyPointerActivityEvaluateTitleRowClass}>
+                          <h3 className={ivyPointerActivityTitleClass}>{activity.title}</h3>
                           {[2, 3, 4].includes(activity.pointerNo) && (
-                            <div className="flex items-center gap-2">
-                              <div className="w-32 h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div className={ivyPointerActivityProgressTrackClass}>
+                              <div className={ivyPointerActivityProgressBarClass}>
                                 <div 
                                   className={`h-full rounded-full transition-all duration-500 ${
                                     getActivityCompletionPercentage(activity) === 100 
@@ -1323,7 +1452,7 @@ function ActivitiesContent() {
                                   style={{ width: `${getActivityCompletionPercentage(activity)}%` }}
                                 ></div>
                               </div>
-                              <span className={`text-sm font-bold ${
+                              <span className={`shrink-0 text-sm font-bold ${
                                 getActivityCompletionPercentage(activity) === 100 
                                   ? 'text-green-600' 
                                   : getActivityCompletionPercentage(activity) >= 50 
@@ -1335,15 +1464,15 @@ function ActivitiesContent() {
                             </div>
                           )}
                         </div>
-                        <p className="text-sm text-gray-500 mb-2">
+                        <p className="mb-2 text-sm text-gray-500 max-md:text-xs">
                           {getPointerLabel(activity.pointerNo)}
                           {[2, 3, 4].includes(activity.pointerNo) && activity.weightage !== undefined && (
-                            <span className="ml-3 font-semibold text-brand-600">
+                            <span className="ml-0 block font-semibold text-brand-600 sm:ml-3 sm:inline">
                               • Weightage: {activity.weightage}%
                             </span>
                           )}
                         </p>
-                        <p className="text-gray-700 whitespace-pre-wrap mb-4">
+                        <p className="mb-4 whitespace-pre-wrap text-gray-700 max-md:break-words max-md:text-sm">
                           {activity.description}
                         </p>
                       </div>
@@ -1352,42 +1481,44 @@ function ActivitiesContent() {
                       {!activity.proofUploaded && activity.deadline && (() => {
                         const cd = getCountdown(activity.deadline);
                         return (
-                          <div className="mb-4 p-4 bg-brand-50 border border-brand-200 rounded-lg">
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-sm font-bold text-brand-900">⏰ Activity Deadline</p>
+                          <div className={ivyPointerDeadlinePanelClass}>
+                            <div className="mb-2 flex items-center justify-between">
+                              <p className="text-sm font-bold text-brand-900 max-md:text-xs">⏰ Activity Deadline</p>
                             </div>
                             {cd.expired ? (
-                              <div className="flex items-center gap-2 px-3 py-2 bg-red-100 border border-red-300 rounded-lg">
-                                <span className="text-red-700 font-bold text-sm">⚠ Deadline Expired</span>
+                              <div className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-100 px-3 py-2">
+                                <span className="text-sm font-bold text-red-700">⚠ Deadline Expired</span>
                               </div>
                             ) : (
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold text-brand-700 uppercase tracking-wide mr-2">Time Left:</span>
+                              <div className={ivyPointerCountdownBlockClass}>
+                                <span className="text-xs font-semibold uppercase tracking-wide text-brand-700">Time Left:</span>
+                                <div className={ivyPointerCountdownRowClass}>
                                 {[
                                   { value: cd.days, unit: 'Days' },
                                   { value: cd.hours, unit: 'Hrs' },
                                   { value: cd.minutes, unit: 'Min' },
                                   { value: cd.seconds, unit: 'Sec' },
                                 ].map((item) => (
-                                  <div key={item.unit} className="flex flex-col items-center bg-brand-100 border border-brand-300 rounded-lg px-3 py-1.5 min-w-[48px]">
-                                    <span className="text-lg font-black text-brand-700 leading-none">{String(item.value).padStart(2, '0')}</span>
-                                    <span className="text-[10px] font-bold text-brand-500 uppercase">{item.unit}</span>
+                                  <div key={item.unit} className={ivyPointerCountdownUnitClass}>
+                                    <span className={ivyPointerCountdownValueClass}>{String(item.value).padStart(2, '0')}</span>
+                                    <span className="text-[10px] font-bold uppercase text-brand-500">{item.unit}</span>
                                   </div>
                                 ))}
+                                </div>
                               </div>
                             )}
                             {/* Update deadline */}
-                            <div className="flex items-center gap-3 mt-3 pt-3 border-t border-brand-200">
+                            <div className={ivyPointerDeadlineUpdateRowClass}>
                               <input
                                 type="datetime-local"
                                 value={deadlineInputs[activity.selectionId] || new Date(activity.deadline).toISOString().slice(0, 16)}
                                 onChange={(e) => setDeadlineInputs(prev => ({ ...prev, [activity.selectionId]: e.target.value }))}
-                                className="flex-1 px-3 py-1.5 border border-brand-300 rounded-lg text-sm text-gray-900 bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                                className={ivyPointerDeadlineInputClass}
                               />
                               <button
                                 onClick={() => handleSetDeadline(activity.selectionId)}
                                 disabled={savingDeadline === activity.selectionId || !deadlineInputs[activity.selectionId]}
-                                className="px-3 py-1.5 bg-brand-600 text-white text-xs font-semibold rounded-lg hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className={ivyPointerDeadlineUpdateBtnClass}
                               >
                                 {savingDeadline === activity.selectionId ? 'Saving...' : 'Update Deadline'}
                               </button>
@@ -1397,17 +1528,17 @@ function ActivitiesContent() {
                       })()}
 
                       {/* Ivy Expert Documents Section */}
-                      <div className="mb-4 p-4 bg-brand-50 border border-brand-200 rounded-md">
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-sm font-medium text-brand-900">Activity guides for Student</p>
+                      <div className="mb-4 rounded-md border border-brand-200 bg-brand-50 p-4 max-md:p-3">
+                        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <p className="text-sm font-medium text-brand-900 max-md:text-xs">Activity guides for Student</p>
                         </div>
                         {activity.ivyExpertDocuments && activity.ivyExpertDocuments.length > 0 ? (
                           <div className="space-y-3">
                             {activity.ivyExpertDocuments.map((doc, docIdx) => (
                               <div key={docIdx} className="bg-white rounded-lg border border-brand-200 overflow-hidden">
                                 {/* Document Header */}
-                                <div className="flex items-center justify-between p-3 bg-brand-50 border-b border-brand-100">
-                                  <span className="text-sm text-gray-800 font-semibold">📎 Guide {docIdx + 1}</span>
+                                <div className="flex flex-col gap-2 border-b border-brand-100 bg-brand-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+                                  <span className="min-w-0 break-words text-sm font-semibold text-gray-800">📎 Guide {docIdx + 1}</span>
                                   <button
                                     onClick={() => setViewingIvyExpertDocUrl(viewingIvyExpertDocUrl === doc.url ? null : doc.url)}
                                     className={`text-xs font-medium px-3 py-1.5 rounded-md ${viewingIvyExpertDocUrl === doc.url ? 'bg-brand-600 text-white' : 'bg-brand-100 text-brand-700 hover:bg-brand-200'}`}
@@ -1432,7 +1563,7 @@ function ActivitiesContent() {
                                       return (
                                         <div
                                           key={taskIdx}
-                                          className="flex items-start gap-2 p-2 rounded bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer relative"
+                                          className={ivyPointerActivityTaskRowClass}
                                           onClick={() => handleTaskClick(activity.title, task, activity.selectionId)}
                                         >
                                           {task.status === 'completed' && (
@@ -1452,6 +1583,19 @@ function ActivitiesContent() {
                                               <p className="text-xs text-gray-500">Page {task.page}</p>
                                             )}
                                           </div>
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleTaskClick(activity.title, task, activity.selectionId);
+                                            }}
+                                            className={ivyPointerActivityTaskChatBtnClass}
+                                          >
+                                            <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                            </svg>
+                                            Chat
+                                          </button>
                                           <select
                                             value={task.status}
                                             onClick={(e) => e.stopPropagation()}
@@ -1491,7 +1635,7 @@ function ActivitiesContent() {
                                                 setMessage({ type: 'error', text: error.response?.data?.message || 'Failed to update task' });
                                               }
                                             }}
-                                            className={`text-xs font-medium px-3 py-1.5 rounded-md border-2 cursor-pointer transition-all focus:outline-none focus:ring-2 focus:ring-brand-500 ${
+                                            className={`${ivyPointerActivityTaskSelectClass} cursor-pointer rounded-md border-2 px-3 py-1.5 text-xs font-medium transition-all focus:outline-none focus:ring-2 focus:ring-brand-500 ${
                                               task.status === 'completed' 
                                                 ? 'bg-green-100 text-green-800 border-green-300' 
                                                 : task.status === 'in-progress'
@@ -1596,16 +1740,35 @@ function ActivitiesContent() {
 
       {/* Conversation Window */}
       {selectedTask && (
-        <div className="w-[65%] border-l border-gray-200 flex-shrink-0 overflow-hidden">
-          <ConversationWindow
-            activityTitle={selectedTask.activityTitle}
-            task={selectedTask.task}
-            activityId={selectedTask.activityId}
-            studentIvyServiceId={studentIvyServiceId!}
-            onClose={handleCloseConversation}
-            ivyExpertId={ivyExpertId}
-          />
-        </div>
+        <>
+          {!isMobileViewport && (
+            <div className="h-full w-[65%] shrink-0 overflow-hidden border-l border-gray-200">
+              <ConversationWindow
+                activityTitle={selectedTask.activityTitle}
+                task={selectedTask.task}
+                activityId={selectedTask.activityId}
+                studentIvyServiceId={studentIvyServiceId!}
+                onClose={handleCloseConversation}
+                ivyExpertId={ivyExpertId}
+              />
+            </div>
+          )}
+          {isMobileViewport &&
+            portalMounted &&
+            createPortal(
+              <div className={ivyPointerConversationOverlayClass}>
+                <ConversationWindow
+                  activityTitle={selectedTask.activityTitle}
+                  task={selectedTask.task}
+                  activityId={selectedTask.activityId}
+                  studentIvyServiceId={studentIvyServiceId!}
+                  onClose={handleCloseConversation}
+                  ivyExpertId={ivyExpertId}
+                />
+              </div>,
+              document.body
+            )}
+        </>
       )}
     </div>
   );
