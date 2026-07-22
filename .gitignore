@@ -76,3 +76,6 @@ pids
 .eslintcache
 
 /backend/uploads
+
+/docs
+/docs-docx

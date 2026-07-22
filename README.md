@@ -1,212 +1,90 @@
-# Kareer Studio - Service-based Dynamic Form System
+# CORE Platform
 
-A comprehensive platform for managing educational services with dynamic form generation, student registration, and progress tracking.
+> **ADMITra Core Systems Private Limited**
 
-## ?? What's New - Service Form System
+Integrated web platform for educational services, student lifecycle management, Ivy League preparation, CRM, payments, and partner operations.
 
-This platform now includes a complete **Service-based Dynamic Form System** that allows:
-
-- ? **Multiple Services**: Study Abroad, IELTS, GRE, Ivy League, Education Planning
-- ? **Dynamic Forms**: Forms generated from database structure
-- ? **Student Registration**: Register for multiple services
-- ? **Progress Tracking**: Visual progress indicators
-- ? **Repeatable Sections**: Education history, work experience, program applications
-- ? **Beautiful UI**: Modern, responsive design with gradients and animations
-
-## ?? Documentation
-
-- **[Quick Start Guide](QUICK_START_GUIDE.md)** - Get up and running in 10 minutes
-- **[System Documentation](SERVICE_FORM_SYSTEM_DOCUMENTATION.md)** - Complete technical documentation
-- **[System Architecture](SYSTEM_ARCHITECTURE.md)** - Visual diagrams and data flows
-- **[Implementation Summary](IMPLEMENTATION_SUMMARY.md)** - What was built and features
-- **[Project Summary](PROJECT_SUMMARY.md)** - Authentication system details
-- **[Environment Setup](ENVIRONMENT_SETUP.md)** - Environment configuration
-
-## ?? Quick Start
-
-### 1. Backend Setup
-```bash
-cd backend
-npm install
-npm run seed:forms  # Seed services and form structure
-npm run dev         # Start server on port 5000
-```
-
-### 2. Frontend Setup
-```bash
-cd frontend
-npm install
-npm run dev         # Start Next.js on port 3000
-```
-
-### 3. Access the Application
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:5000
-
-## ?? Features
-
-### Authentication System
-- Email-based signup with OTP verification
-- Role-based access control (Student, OPS, Alumni, Admin, etc.)
-- JWT authentication
-- Password reset functionality
-
-### Service Management
-- Multiple educational services
-- Service registration system
-- Service-specific forms
-- Registration tracking
-
-### Dynamic Form System
-- 4-level hierarchy: Parts ? Sections ? SubSections ? Fields
-- 13 field types supported
-- Repeatable sections (education, work, programs)
-- Auto-save functionality
-- Progress tracking
-- File upload support
-
-### Study Abroad Service (Fully Configured)
-- **Profile Part**: Personal details, academic qualification, work experience, test scores
-- **Application Part**: University and program selection
-- **Documents Part**: Document upload management
-
-## ??? Tech Stack
-
-### Backend
-- Node.js + Express
-- TypeScript
-- MongoDB + Mongoose
-- JWT Authentication
-- Nodemailer
-
-### Frontend
-- Next.js 16
-- React 19
-- TypeScript
-- Tailwind CSS
-- Axios
-
-## ?? Database Structure
-
-8 Main Collections:
-- `users` - User accounts
-- `services` - Available services
-- `formparts` - Reusable form parts
-- `serviceformparts` - Service-to-part mappings
-- `formsections` - Form sections
-- `formsubsections` - Form subsections
-- `formfields` - Individual fields
-- `studentserviceregistrations` - Student enrollments
-- `studentformanswers` - Form responses
-
-## ?? User Journey
-
-1. **Sign Up** ? Email verification ? Login
-2. **Dashboard** ? View available services
-3. **Register** for a service (e.g., Study Abroad)
-4. **Fill Forms** ? Profile, Application, Documents
-5. **Track Progress** ? Visual progress indicators
-6. **Complete** ? Submit application
-
-## ?? Environment Variables
-
-### Backend `.env`
-```env
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your-jwt-secret
-JWT_EXPIRES_IN=7d
-EMAIL_ADDRESS=your_email
-EMAIL_PASSWORD=your_email_password
-EMAIL_VERIFICATION_URL=http://localhost:3000/verify-email
-PASSWORD_RESET_URL=http://localhost:3000/reset-password
-```
-
-### Frontend `.env.local`
-```env
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
-```
-
-## ?? Security Features
-
-- JWT-based authentication
-- Role-based authorization
-- Password hashing with bcrypt
-- Email verification
-- Input validation
-- Unique compound indexes
-
-## ?? Scalability
-
-- Service-based architecture
-- Dynamic form generation
-- No code changes for new forms
-- Easy to add new services
-- Efficient database indexing
-- Modular component design
-
-## ?? UI/UX Highlights
-
-- Modern gradient designs
-- Smooth animations
-- Responsive layout
-- Loading states
-- Toast notifications
-- Progress indicators
-- Intuitive navigation
-
-## ?? Testing
-
-```bash
-# Backend
-cd backend
-npm run dev
-
-# Frontend
-cd frontend
-npm run dev
-
-# Seed database
-cd backend
-npm run seed:forms
-```
-
-## ?? What's Included
-
-- ? Complete authentication system
-- ? 5 pre-configured services
-- ? Study Abroad form (80+ fields)
-- ? Dynamic form renderer
-- ? Progress tracking
-- ? Beautiful UI components
-- ? Comprehensive documentation
-
-## ?? Future Enhancements
-
-- Payment integration
-- Parent/OPS views
-- Admin panel
-- Email notifications
-- Analytics dashboard
-- Mobile app
-
-## ?? Support
-
-Check the documentation files for detailed information:
-- Technical issues ? `SERVICE_FORM_SYSTEM_DOCUMENTATION.md`
-- Setup help ? `QUICK_START_GUIDE.md`
-- Architecture ? `SYSTEM_ARCHITECTURE.md`
-
-## ?? License
-
-ISC
-
-## ????? Development
-
-Built with ?? using modern web technologies for scalability and maintainability.
+**Production:** https://core.admitra.io
 
 ---
 
-**Ready to use! Follow the [Quick Start Guide](QUICK_START_GUIDE.md) to get started.** ??
-# CORE
+## Documentation
 
+**Full platform documentation:** [docs/README.md](docs/README.md)
+
+| Quick link | Description |
+|---|---|
+| [Product Overview](docs/02-platform/product-overview.md) | What CORE does |
+| [Quick Start — Local Dev](docs/08-operations/local-development.md) | Get running locally |
+| [User Roles](docs/02-platform/user-roles-and-permissions.md) | All 15 roles |
+| [System Architecture](docs/03-architecture/system-architecture.md) | How it's built |
+| [Module Index](docs/README.md#06--modules) | All 23+ business modules |
+
+---
+
+## Quick start
+
+### Backend
+```bash
+cd backend
+npm install
+npm run seed:forms
+npm run dev          # http://localhost:5000
+```
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev          # http://localhost:3000
+```
+
+See [Local Development](docs/08-operations/local-development.md) for environment variables and full setup.
+
+---
+
+## Platform overview
+
+| Component | Technology |
+|---|---|
+| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS |
+| Backend | Node.js, Express 5, TypeScript |
+| Database | MongoDB (Mongoose) |
+| Payments | Razorpay |
+| Mobile | Capacitor (Android) |
+
+### Key capabilities
+
+- 15 user roles with dedicated portals
+- Student services: Study Abroad, Education Planning, Coaching Classes, Ivy League
+- Dynamic forms, document management, program selection
+- CRM: leads, follow-ups, referrers, B2B pipeline
+- Payments: Razorpay, invoices, ledger, GST
+- Ivy League: 6-pointer coaching, aptitude test, expert workflow
+- Service provider marketplace
+- AI tools: portfolio generation, activity suggestions, grammar check
+
+---
+
+## Repository structure
+
+```
+CORE/
+├── backend/         # Express API
+├── frontend/        # Next.js web app + Capacitor Android
+├── docs/            # Platform documentation
+└── nginx-*.conf     # Production nginx configs
+```
+
+---
+
+## Environments
+
+| Environment | Web | API |
+|---|---|---|
+| Local | http://localhost:3000 | http://localhost:5000/api |
+| Production | https://core.admitra.io | https://api.core.admitra.io/api |
+
+---
+
+**ADMITra Core Systems Private Limited** — All rights reserved.
